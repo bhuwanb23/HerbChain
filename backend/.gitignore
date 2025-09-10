@@ -1,0 +1,61 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+media/
+static/
+staticfiles/
+
+# Local settings
+*local_settings.py
+*settings_local.py
+
+# Environments
+.env
+.env.*
+.venv/
+venv/
+env/
+ENV/
+
+# Virtualenv artifacts (Windows/Linux)
+Scripts/
+Lib/
+Include/
+pyvenv.cfg
+
+# Logs
+*.log
+logs/
+
+# Tests and coverage
+.pytest_cache/
+.mypy_cache/
+.cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# IDE/editor
+.vscode/
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+
