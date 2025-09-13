@@ -24,7 +24,7 @@ import {
 
 const { width } = Dimensions.get('window');
 
-const PerfectLoginScreen = () => {
+const PerfectLoginScreen = ({ navigation }) => {
   const [showIntro, setShowIntro] = useState(true);
   const [selectedRole, setSelectedRole] = useState('');
   const [language, setLanguage] = useState('EN');
@@ -63,7 +63,13 @@ const PerfectLoginScreen = () => {
       Alert.alert('Error', 'Please fill in all fields and select a role');
       return;
     }
-    Alert.alert('Success', `Login successful as ${selectedRole}`);
+    
+    // Check if user is a farmer and navigate to dashboard
+    if (selectedRole === 'Farmer') {
+      navigation.navigate('FarmerDashboard');
+    } else {
+      Alert.alert('Success', `Login successful as ${selectedRole}`);
+    }
   };
 
   const handleSignUp = () => {
