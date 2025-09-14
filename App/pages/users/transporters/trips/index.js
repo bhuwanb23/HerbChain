@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 import BatchScanScreen from './batch_scan/BatchScanScreen';
+import DeliveryConfirmScreen from './delivery_confirm/delivery_confirm';
 
 const TripsPage = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -22,6 +23,8 @@ const TripsPage = ({ navigation }) => {
     switch (page) {
       case 'batch_scan':
         return 'Batch Scanner';
+      case 'delivery_confirm':
+        return 'Delivery Confirmation';
       case 'active_trips':
         return 'Active Trips';
       case 'history_reports':
@@ -35,6 +38,8 @@ const TripsPage = ({ navigation }) => {
     switch (currentPage) {
       case 'batch_scan':
         return <BatchScanScreen />;
+      case 'delivery_confirm':
+        return <DeliveryConfirmScreen />;
       case 'active_trips':
         return (
           <View style={styles.placeholderContainer}>

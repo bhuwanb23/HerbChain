@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import Header from './components/header';
 import BottomNavbar from './components/bottom_navbar';
 import TransporterDashboard from './dashboard/dashboard';
+import TripsPage from './trips';
 
 const TransportersPage = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -19,12 +20,7 @@ const TransportersPage = ({ navigation }) => {
       case 'dashboard':
         return <TransporterDashboard navigation={navigation} />;
       case 'trips':
-        return (
-          <View style={styles.placeholderContainer}>
-            <Text style={styles.placeholderText}>🚚 Trips Page</Text>
-            <Text style={styles.placeholderSubtext}>Batch Scan, Active Trips, Delivery Confirmation</Text>
-          </View>
-        );
+        return <TripsPage navigation={navigation} />;
       case 'history':
         return (
           <View style={styles.placeholderContainer}>
