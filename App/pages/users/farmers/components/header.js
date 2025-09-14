@@ -1,13 +1,20 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 
-const Header = ({ navigation, title = "HerbChain", showNotifications = true }) => {
+const Header = ({ navigation, title = "HerbChain", showNotifications = true, onNotificationPress }) => {
   const handleNotificationPress = () => {
-    Alert.alert(
-      'Notifications',
-      'You have 3 new notifications:\n\n• New payment received\n• Training reminder\n• Weather alert for your crops',
-      [{ text: 'OK' }]
-    );
+    // Use the onNotificationPress prop if provided (for farmer internal navigation)
+    if (onNotificationPress) {
+      onNotificationPress('notifications');
+    } else if (navigation && navigation.navigate) {
+      navigation.navigate('NotificationsScreen');
+    } else {
+      Alert.alert(
+        'Notifications',
+        'You have 3 new notifications:\n\n• New payment received\n• Training reminder\n• Weather alert for your crops',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const handleProfilePress = () => {

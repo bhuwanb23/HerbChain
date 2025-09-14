@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useHerbRegistration } from './hooks';
 import {
   ProgressBar,
@@ -28,7 +29,12 @@ const HerbRegisterScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={['#f0fdf4', '#ecfdf5', '#f9fafb']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
       <ProgressBar currentStep={currentStep} />
       
       <ScrollView
@@ -46,28 +52,27 @@ const HerbRegisterScreen = ({ navigation }) => {
           formData={formData}
           updateFormData={updateFormData}
         />
+        
+        <BottomActions
+          currentStep={currentStep}
+          onGenerateBatch={generateBatchId}
+          isProcessing={isProcessing}
+        />
       </ScrollView>
-      
-      <BottomActions
-        currentStep={currentStep}
-        onGenerateBatch={generateBatchId}
-        isProcessing={isProcessing}
-      />
-    </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
 });
 

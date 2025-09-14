@@ -8,6 +8,7 @@ import HerbRegisterScreen from './herb_register/HerbRegisterScreen';
 import PaymentsScreen from './payments/payements';
 import TrainingScreen from './trainings/training';
 import ProfileScreen from './profile/profile';
+import NotificationsScreen from './notifications/notifications';
 
 // Import bottom navbar and header
 import BottomNavbar from './components/bottom_navbar';
@@ -34,6 +35,8 @@ const FarmerMainPage = ({ navigation }) => {
         return 'Training';
       case 'profile':
         return 'Profile';
+      case 'notifications':
+        return 'Notifications';
       default:
         return 'HerbChain';
     }
@@ -52,6 +55,8 @@ const FarmerMainPage = ({ navigation }) => {
         return <TrainingScreen navigation={navigation} />;
       case 'profile':
         return <ProfileScreen navigation={navigation} />;
+      case 'notifications':
+        return <NotificationsScreen navigation={navigation} />;
       default:
         return <Dashboard navigation={navigation} />;
     }
@@ -60,7 +65,11 @@ const FarmerMainPage = ({ navigation }) => {
   return (
     <SafeAreaWrapper style={styles.container} includeBottom={true}>
       <View style={styles.content}>
-        <Header navigation={navigation} title={getPageTitle()} />
+        <Header 
+          navigation={navigation} 
+          title={getPageTitle()} 
+          onNotificationPress={handleFarmerNavigation}
+        />
         <View style={styles.pageContainer}>
           {renderCurrentPage()}
         </View>

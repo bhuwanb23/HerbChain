@@ -1,27 +1,136 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-// import LinearGradient from 'react-native-linear-gradient';
+
+const { width } = Dimensions.get('window');
 
 const AIRecognition = ({ isProcessing, aiDetection, onCameraPress }) => {
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (isProcessing) {
+      // Spinning animation
+      Animated.loop(
+        Animated.timing(rotateAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        })
+      ).start();
+
+      // Pulse animation
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+      rotateAnim.setValue(0);
+      pulseAnim.setValue(1);
+    }
+  }, [isProcessing]);
+
+  useEffect(() => {
+    if (aiDetection) {
+      // Success animation
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.2,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // Slide in animation for info cards
+      Animated.timing(slideAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [aiDetection]);
+
+  const spin = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const slideIn = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [50, 0],
+  });
+
   const renderCameraButton = () => {
     if (isProcessing) {
       return (
-        <View style={styles.cameraButton}>
-          <Icon name="refresh" size={32} color="white" style={styles.spinningIcon} />
-          <Text style={styles.buttonTitle}>Processing...</Text>
-          <Text style={styles.buttonSubtitle}>AI is analyzing the image</Text>
-        </View>
+        <Animated.View 
+          style={[
+            styles.cameraButton,
+            { transform: [{ scale: pulseAnim }] }
+          ]}
+        >
+          <LinearGradient
+            colors={['#3b82f6', '#1d4ed8']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.gradientButton}
+          >
+            <Animated.View style={{ transform: [{ rotate: spin }] }}>
+              <Icon name="refresh" size={40} color="white" />
+            </Animated.View>
+            <Text style={styles.buttonTitle}>Processing...</Text>
+            <Text style={styles.buttonSubtitle}>AI is analyzing the image</Text>
+            <View style={styles.loadingDots}>
+              <View style={[styles.dot, styles.dot1]} />
+              <View style={[styles.dot, styles.dot2]} />
+              <View style={[styles.dot, styles.dot3]} />
+            </View>
+          </LinearGradient>
+        </Animated.View>
       );
     }
 
     if (aiDetection) {
       return (
-        <View style={[styles.cameraButton, styles.successGradient]}>
-          <Icon name="check-circle" size={32} color="white" />
-          <Text style={styles.buttonTitle}>{aiDetection.species} Detected!</Text>
-          <Text style={styles.buttonSubtitle}>Confidence: {aiDetection.confidence}%</Text>
-        </View>
+        <Animated.View 
+          style={[
+            styles.cameraButton,
+            { transform: [{ scale: scaleAnim }] }
+          ]}
+        >
+          <LinearGradient
+            colors={['#10b981', '#059669']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.gradientButton}
+          >
+            <Icon name="check-circle" size={40} color="white" />
+            <Text style={styles.buttonTitle}>{aiDetection.species} Detected!</Text>
+            <Text style={styles.buttonSubtitle}>Confidence: {aiDetection.confidence}%</Text>
+            <View style={styles.successBadge}>
+              <Icon name="star" size={16} color="#fbbf24" />
+              <Text style={styles.badgeText}>AI Success</Text>
+            </View>
+          </LinearGradient>
+        </Animated.View>
       );
     }
 
@@ -31,11 +140,24 @@ const AIRecognition = ({ isProcessing, aiDetection, onCameraPress }) => {
         onPress={onCameraPress}
         activeOpacity={0.8}
       >
-        <View style={[styles.gradientButton, styles.cameraGradient]}>
-          <Icon name="camera-alt" size={32} color="white" />
+        <LinearGradient
+          colors={['#22c55e', '#16a34a']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradientButton}
+        >
+          <View style={styles.cameraIconContainer}>
+            <Icon name="camera-alt" size={40} color="white" />
+            <View style={styles.cameraRing} />
+          </View>
           <Text style={styles.buttonTitle}>Take Photo</Text>
           <Text style={styles.buttonSubtitle}>AI will identify the herb automatically</Text>
-        </View>
+          <View style={styles.scanLines}>
+            <View style={styles.scanLine} />
+            <View style={styles.scanLine} />
+            <View style={styles.scanLine} />
+          </View>
+        </LinearGradient>
       </TouchableOpacity>
     );
   };
@@ -43,8 +165,18 @@ const AIRecognition = ({ isProcessing, aiDetection, onCameraPress }) => {
   return (
     <View style={styles.container}>
       <View style={styles.sectionHeader}>
-        <Icon name="smart-toy" size={20} color="#16a34a" />
-        <Text style={styles.sectionTitle}>AI Recognition</Text>
+        <LinearGradient
+          colors={['#22c55e', '#16a34a']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.iconContainer}
+        >
+          <Icon name="smart-toy" size={24} color="white" />
+        </LinearGradient>
+        <View style={styles.titleContainer}>
+          <Text style={styles.sectionTitle}>AI Recognition</Text>
+          <Text style={styles.sectionSubtitle}>Advanced herb identification</Text>
+        </View>
       </View>
 
       <View style={styles.cameraSection}>
@@ -52,27 +184,50 @@ const AIRecognition = ({ isProcessing, aiDetection, onCameraPress }) => {
       </View>
 
       {aiDetection && (
-        <View style={styles.autoFillSection}>
+        <Animated.View 
+          style={[
+            styles.autoFillSection,
+            { transform: [{ translateY: slideIn }] }
+          ]}
+        >
           <View style={styles.infoCard}>
-            <View style={styles.infoHeader}>
-              <Icon name="location-on" size={16} color="#2563eb" />
-              <Text style={styles.infoTitle}>Auto-detected Location</Text>
-            </View>
-            <Text style={styles.infoText}>
-              {aiDetection.location}, Coordinates: {aiDetection.coordinates}
-            </Text>
+            <LinearGradient
+              colors={['#eff6ff', '#dbeafe']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.cardGradient}
+            >
+              <View style={styles.infoHeader}>
+                <View style={styles.iconWrapper}>
+                  <Icon name="location-on" size={20} color="#2563eb" />
+                </View>
+                <Text style={styles.infoTitle}>Auto-detected Location</Text>
+              </View>
+              <Text style={styles.infoText}>
+                {aiDetection.location}, Coordinates: {aiDetection.coordinates}
+              </Text>
+            </LinearGradient>
           </View>
 
-          <View style={[styles.infoCard, styles.purpleCard]}>
-            <View style={styles.infoHeader}>
-              <Icon name="access-time" size={16} color="#9333ea" />
-              <Text style={[styles.infoTitle, styles.purpleText]}>Timestamp</Text>
-            </View>
-            <Text style={[styles.infoText, styles.purpleText]}>
-              {aiDetection.timestamp}
-            </Text>
+          <View style={styles.infoCard}>
+            <LinearGradient
+              colors={['#faf5ff', '#e9d5ff']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.cardGradient}
+            >
+              <View style={styles.infoHeader}>
+                <View style={[styles.iconWrapper, styles.purpleIcon]}>
+                  <Icon name="access-time" size={20} color="#9333ea" />
+                </View>
+                <Text style={[styles.infoTitle, styles.purpleText]}>Timestamp</Text>
+              </View>
+              <Text style={[styles.infoText, styles.purpleText]}>
+                {aiDetection.timestamp}
+              </Text>
+            </LinearGradient>
           </View>
-        </View>
+        </Animated.View>
       )}
     </View>
   );
@@ -85,88 +240,177 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    shadowColor: '#22c55e',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  titleContainer: {
+    flex: 1,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '700',
     color: '#1f2937',
-    marginLeft: 8,
+    marginBottom: 2,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontWeight: '500',
   },
   cameraSection: {
     marginBottom: 24,
   },
   cameraButton: {
-    borderRadius: 16,
-    padding: 32,
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: '#86efac',
-    alignItems: 'center',
+    borderRadius: 20,
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
   },
   gradientButton: {
-    borderRadius: 16,
-    padding: 32,
+    padding: 40,
     alignItems: 'center',
     width: '100%',
+    position: 'relative',
   },
-  cameraGradient: {
-    backgroundColor: '#22c55e',
+  cameraIconContainer: {
+    position: 'relative',
+    marginBottom: 16,
   },
-  successGradient: {
-    backgroundColor: '#10b981',
-  },
-  spinningIcon: {
-    transform: [{ rotate: '360deg' }],
+  cameraRing: {
+    position: 'absolute',
+    top: -8,
+    left: -8,
+    right: -8,
+    bottom: -8,
+    borderRadius: 30,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   buttonTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     color: 'white',
-    marginTop: 12,
-    marginBottom: 4,
+    marginBottom: 8,
+    textAlign: 'center',
   },
   buttonSubtitle: {
-    fontSize: 14,
+    fontSize: 16,
     color: 'white',
     opacity: 0.9,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  loadingDots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    marginHorizontal: 4,
+  },
+  dot1: {
+    opacity: 0.4,
+  },
+  dot2: {
+    opacity: 0.7,
+  },
+  dot3: {
+    opacity: 1,
+  },
+  successBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginTop: 8,
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  scanLines: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'space-around',
+    paddingVertical: 20,
+  },
+  scanLine: {
+    height: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    width: '100%',
   },
   autoFillSection: {
     gap: 16,
   },
   infoCard: {
-    backgroundColor: '#eff6ff',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  purpleCard: {
-    backgroundColor: '#faf5ff',
-    borderColor: '#e9d5ff',
+  cardGradient: {
+    padding: 20,
   },
   infoHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
+  },
+  iconWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  purpleIcon: {
+    backgroundColor: 'rgba(147, 51, 234, 0.1)',
   },
   infoTitle: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
     color: '#1e40af',
-    marginLeft: 8,
+    flex: 1,
   },
   purpleText: {
     color: '#7c3aed',
   },
   infoText: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#1d4ed8',
+    lineHeight: 22,
   },
 });
 
