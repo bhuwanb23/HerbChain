@@ -1,7 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const Header = ({ navigation, title = "HerbChain", showNotifications = true, onNotificationPress }) => {
+  const insets = useSafeAreaInsets();
+
   const handleNotificationPress = () => {
     // Use the onNotificationPress prop if provided (for farmer internal navigation)
     if (onNotificationPress) {
@@ -22,66 +27,85 @@ const Header = ({ navigation, title = "HerbChain", showNotifications = true, onN
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.leftSection}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.subtitle}>Welcome back, Ramesh!</Text>
-      </View>
-      
-      <View style={styles.rightSection}>
-        {showNotifications && (
-          <TouchableOpacity
-            style={styles.notificationButton}
-            onPress={handleNotificationPress}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.notificationIcon}>🔔</Text>
-            <View style={styles.notificationBadge}>
-              <Text style={styles.badgeText}>3</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-        
-        <TouchableOpacity
-          style={styles.profileButton}
-          onPress={handleProfilePress}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.profileIcon}>👤</Text>
-        </TouchableOpacity>
-      </View>
+    <View style={[styles.container]}>
+      <LinearGradient
+        colors={['#22c55e', '#16a34a']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.gradient}
+      >
+        <View style={styles.content}>
+          <View style={styles.leftSection}>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.subtitle}>Welcome back, Ramesh!</Text>
+          </View>
+          
+          <View style={styles.rightSection}>
+            {showNotifications && (
+              <TouchableOpacity
+                style={styles.notificationButton}
+                onPress={handleNotificationPress}
+                activeOpacity={0.7}
+              >
+                <Icon name="notifications" size={20} color="white" />
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.badgeText}>3</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+            
+            <TouchableOpacity
+              style={styles.profileButton}
+              onPress={handleProfilePress}
+              activeOpacity={0.7}
+            >
+              <Icon name="person" size={20} color="white" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </LinearGradient>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#22c55e',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    paddingTop: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 4,
+    paddingTop:5,
+  },
+  gradient: {
+    paddingBottom: 12,
+  },
+  content: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   leftSection: {
     flex: 1,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '800',
     color: 'white',
     marginBottom: 2,
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#DCFCE7',
-    opacity: 0.9,
+    opacity: 0.95,
+    fontWeight: '500',
+    letterSpacing: 0.3,
   },
   rightSection: {
     flexDirection: 'row',
@@ -89,33 +113,32 @@ const styles = StyleSheet.create({
   },
   notificationButton: {
     position: 'relative',
-    marginRight: 12,
-    padding: 8,
-  },
-  notificationIcon: {
-    fontSize: 20,
+    marginRight: 8,
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   notificationBadge: {
     position: 'absolute',
-    top: 4,
-    right: 4,
+    top: 2,
+    right: 2,
     backgroundColor: '#ef4444',
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
+    borderRadius: 6,
+    minWidth: 12,
+    height: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   badgeText: {
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: 9,
+    fontWeight: '700',
     color: 'white',
+    letterSpacing: 0.2,
   },
   profileButton: {
-    padding: 8,
-  },
-  profileIcon: {
-    fontSize: 20,
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
 });
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaWrapper } from '../../../../components';
 import { usePayments } from './hooks';
 import { WALLET_DATA } from './constants';
@@ -19,7 +19,11 @@ const PaymentsScreen = ({ navigation }) => {
 
   return (
     <SafeAreaWrapper style={styles.container} includeBottom={true}>
-      <View style={styles.content}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <WalletSummary 
           walletData={WALLET_DATA}
           onWithdrawPress={handleWithdraw}
@@ -34,7 +38,7 @@ const PaymentsScreen = ({ navigation }) => {
           activeTab={activeTab}
           onTransactionPress={handleTransactionPress}
         />
-      </View>
+      </ScrollView>
     </SafeAreaWrapper>
   );
 };
@@ -44,8 +48,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 80, // Add padding to prevent content from going behind navbar
   },
 });
 

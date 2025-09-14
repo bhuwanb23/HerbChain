@@ -33,7 +33,11 @@ const TrainingScreen = ({ navigation }) => {
 
   return (
     <SafeAreaWrapper style={styles.container} includeBottom={true}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <HeroSection stats={TRAINING_STATS} />
         
         <View style={styles.content}>
@@ -83,6 +87,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 80, // Add padding to prevent content from going behind navbar
   },
   content: {
     paddingHorizontal: 16,
