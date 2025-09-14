@@ -53,22 +53,22 @@ const ActivityFeed = () => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingBottom: 100, // Extra padding for bottom action button
+    paddingHorizontal: 12,
+    paddingBottom: 20,
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   activitiesList: {
-    gap: 12,
+    gap: 8,
   },
   activityItem: {
     backgroundColor: 'white',
     borderRadius: 8,
-    padding: 16,
+    padding: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -80,28 +80,28 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   activityIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   activityIconText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
   },
   activityContent: {
     flex: 1,
   },
   activityTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: '#1F2937',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   activityTime: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
   },
 });

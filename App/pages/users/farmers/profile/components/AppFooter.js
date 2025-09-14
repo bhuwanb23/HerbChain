@@ -14,20 +14,20 @@ const AppFooter = () => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingHorizontal: 12,
+    paddingBottom: 16,
     alignItems: 'center',
   },
   footerContent: {
     alignItems: 'center',
   },
   versionText: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#6B7280',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   copyrightText: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#6B7280',
   },
 });

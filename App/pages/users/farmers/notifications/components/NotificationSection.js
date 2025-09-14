@@ -26,14 +26,14 @@ const NotificationSection = ({ title, notifications, onPin, onPress }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#6B7280',
-    marginHorizontal: 16,
-    marginBottom: 12,
+    marginHorizontal: 12,
+    marginBottom: 8,
   },
   notificationsList: {
     gap: 0,

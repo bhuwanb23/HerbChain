@@ -46,50 +46,50 @@ const WalletSummary = ({ walletData, onWithdrawPress }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
-    borderRadius: 16,
-    padding: 20,
+    marginHorizontal: 12,
+    borderRadius: 12,
+    padding: 16,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   balanceSection: {
     flex: 1,
   },
   balanceLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   balanceAmount: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
     color: 'white',
   },
   walletIcon: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    padding: 12,
-    borderRadius: 12,
+    padding: 8,
+    borderRadius: 8,
   },
   statsSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   statItem: {
     flex: 1,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   statValue: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '600',
     color: 'white',
   },
@@ -98,8 +98,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -107,10 +107,10 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   withdrawText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#10B981',
-    marginLeft: 8,
+    marginLeft: 6,
   },
 });
 

@@ -96,9 +96,9 @@ const TransactionCard = ({ transaction, activeTab, onPress }) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   buyerInfo: {
     flexDirection: 'row',
@@ -119,33 +119,33 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   buyerDetails: {
     flex: 1,
   },
   buyerName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#111827',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   batchId: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
   },
   statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
   },
   statusText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '500',
   },
   footer: {
@@ -157,12 +157,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   amountLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   amountValue: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#111827',
   },
@@ -170,12 +170,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   dateLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#6B7280',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   dateValue: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: '#374151',
   },

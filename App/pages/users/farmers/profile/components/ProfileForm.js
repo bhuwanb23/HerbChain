@@ -75,16 +75,16 @@ const ProfileForm = ({ profileData, onUpdateProfile }) => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingHorizontal: 12,
+    paddingBottom: 16,
   },
   formSection: {
-    gap: 16,
+    gap: 12,
   },
   inputGroup: {
     backgroundColor: 'white',
     borderRadius: 8,
-    padding: 16,
+    padding: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -94,23 +94,23 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: '#374151',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   input: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#1F2937',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: '#D1D5DB',
-    borderRadius: 8,
+    borderRadius: 6,
     backgroundColor: '#F9FAFB',
   },
   textArea: {
-    height: 80,
+    height: 60,
     textAlignVertical: 'top',
   },
 });

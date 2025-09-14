@@ -95,9 +95,9 @@ const NotificationCard = ({ notification, onPin, onPress }) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginVertical: 6,
+    borderRadius: 10,
+    marginHorizontal: 12,
+    marginVertical: 4,
     borderWidth: 1,
     borderColor: '#E5E7EB',
     shadowColor: '#000',
@@ -111,40 +111,40 @@ const styles = StyleSheet.create({
   },
   content: {
     flexDirection: 'row',
-    padding: 16,
+    padding: 12,
   },
   leftSection: {
     flex: 1,
     flexDirection: 'row',
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   icon: {
-    fontSize: 18,
+    fontSize: 16,
   },
   textContainer: {
     flex: 1,
   },
   title: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
     color: '#111827',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   message: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
-    marginBottom: 8,
-    lineHeight: 20,
+    marginBottom: 6,
+    lineHeight: 16,
   },
   timestamp: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#9CA3AF',
   },
   rightSection: {
@@ -152,20 +152,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   pinButton: {
-    padding: 4,
-    marginBottom: 8,
+    padding: 3,
+    marginBottom: 6,
   },
   pinIcon: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#9CA3AF',
   },
   pinnedIcon: {
     color: '#F59E0B',
   },
   unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: '#2563EB',
   },
 });

@@ -30,30 +30,30 @@ const LanguageFilter = ({ languages, selectedLanguage, onLanguageChange }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 16,
+    marginTop: 12,
   },
   title: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: '#374151',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   languageContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
   },
   languageButton: {
     backgroundColor: '#E5E7EB',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 16,
   },
   activeButton: {
     backgroundColor: '#22c55e',
   },
   languageText: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#374151',
     fontWeight: '500',
   },

@@ -35,46 +35,46 @@ const GreetingSection = () => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#22c55e',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
   },
   profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   profileImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 2,
     borderColor: 'white',
-    marginRight: 12,
+    marginRight: 10,
   },
   profileInfo: {
     flex: 1,
   },
   greeting: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: 'white',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#DCFCE7',
   },
   summaryCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: 12,
     backdropFilter: 'blur(4px)',
   },
   summaryTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
     color: 'white',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   summaryGrid: {
     flexDirection: 'row',
@@ -85,13 +85,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   summaryValue: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: '700',
     color: 'white',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   summaryLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#DCFCE7',
   },
 });

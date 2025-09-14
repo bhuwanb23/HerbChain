@@ -57,14 +57,14 @@ const ActionButtons = ({ onActionPress }) => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
+    paddingHorizontal: 12,
+    marginBottom: 16,
   },
   button: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -82,24 +82,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   icon: {
-    fontSize: 20,
+    fontSize: 16,
   },
   title: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
     color: '#1F2937',
     flex: 1,
   },
   chevron: {
-    fontSize: 20,
+    fontSize: 16,
     color: '#9CA3AF',
     fontWeight: '300',
   },

@@ -53,39 +53,39 @@ const HeroSection = ({ stats }) => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 0,
-    paddingBottom: 24,
+    paddingBottom: 16,
   },
   content: {
     alignItems: 'center',
   },
   imageContainer: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   image: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
     color: 'white',
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#DCFCE7',
     textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 20,
+    marginBottom: 12,
+    lineHeight: 16,
   },
   statsContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 10,
+    padding: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
@@ -96,18 +96,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statNumber: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: 'white',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#DCFCE7',
   },
   divider: {
     width: 1,
-    height: 32,
+    height: 24,
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
 });

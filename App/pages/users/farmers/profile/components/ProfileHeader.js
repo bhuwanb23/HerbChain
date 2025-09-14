@@ -31,22 +31,22 @@ const ProfileHeader = ({ profileData }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#F0FDF4', // Light green background like HTML
-    paddingVertical: 24,
-    paddingHorizontal: 24,
+    backgroundColor: '#F0FDF4',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
   profileSection: {
     alignItems: 'center',
   },
   imageContainer: {
     position: 'relative',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   profileImage: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 4,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 3,
     borderColor: 'white',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -59,9 +59,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
     backgroundColor: '#22c55e',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -71,17 +71,17 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   cameraIcon: {
-    fontSize: 14,
+    fontSize: 10,
     color: 'white',
   },
   profileName: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   profileTitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
   },
 });

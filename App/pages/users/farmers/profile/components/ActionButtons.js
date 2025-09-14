@@ -42,14 +42,14 @@ const ActionButtons = ({ onSaveChanges, onSignOut }) => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-    gap: 12,
+    paddingHorizontal: 12,
+    paddingBottom: 16,
+    gap: 8,
   },
   saveButton: {
     backgroundColor: '#22c55e',
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 10,
+    borderRadius: 6,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -58,14 +58,14 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   saveButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: 'white',
   },
   signOutButton: {
     backgroundColor: '#EF4444',
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 10,
+    borderRadius: 6,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -76,11 +76,11 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   signOutIcon: {
-    fontSize: 16,
-    marginRight: 8,
+    fontSize: 14,
+    marginRight: 6,
   },
   signOutButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: 'white',
   },

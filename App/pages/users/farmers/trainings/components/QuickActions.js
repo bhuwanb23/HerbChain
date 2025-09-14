@@ -40,36 +40,36 @@ const QuickActions = ({ actions, onActionPress }) => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
+    gap: 8,
+    marginBottom: 16,
   },
   actionButton: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: 10,
     overflow: 'hidden',
   },
   gradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    gap: 12,
+    padding: 12,
+    gap: 8,
   },
   iconContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 8,
-    padding: 8,
+    borderRadius: 6,
+    padding: 6,
   },
   textContainer: {
     flex: 1,
   },
   title: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: 'white',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   subtitle: {
-    fontSize: 12,
+    fontSize: 10,
     color: 'rgba(255, 255, 255, 0.8)',
   },
 });

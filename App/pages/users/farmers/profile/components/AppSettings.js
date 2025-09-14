@@ -115,22 +115,22 @@ const AppSettings = () => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingHorizontal: 12,
+    paddingBottom: 16,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   settingsList: {
-    gap: 12,
+    gap: 8,
   },
   settingItem: {
     backgroundColor: 'white',
     borderRadius: 8,
-    padding: 16,
+    padding: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -148,29 +148,29 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   settingIcon: {
-    fontSize: 18,
-    marginRight: 12,
+    fontSize: 16,
+    marginRight: 10,
     color: '#22c55e',
   },
   settingText: {
     flex: 1,
   },
   settingTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
     color: '#374151',
   },
   settingSubtitle: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
-    marginTop: 2,
+    marginTop: 1,
   },
   settingValue: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#6B7280',
   },
   arrow: {
-    fontSize: 20,
+    fontSize: 16,
     color: '#9CA3AF',
   },
 });

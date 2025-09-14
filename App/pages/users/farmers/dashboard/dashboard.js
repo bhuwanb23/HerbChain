@@ -54,6 +54,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 80, // Add padding to prevent content from going behind navbar
   },
 });
 

@@ -36,20 +36,20 @@ const Tabs = ({ activeTab, onTabChange }) => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    marginTop: 24,
+    paddingHorizontal: 12,
+    marginTop: 16,
   },
   tabsContainer: {
     flexDirection: 'row',
     backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    padding: 4,
+    borderRadius: 10,
+    padding: 3,
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 6,
     alignItems: 'center',
   },
   activeTab: {
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   tabText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: '#6B7280',
   },

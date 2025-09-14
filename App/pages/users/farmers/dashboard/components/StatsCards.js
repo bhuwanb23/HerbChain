@@ -28,8 +28,8 @@ const StatsCards = () => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
   },
   grid: {
     flexDirection: 'row',
@@ -38,10 +38,10 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: 12,
     width: '48%',
-    marginBottom: 16,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -54,17 +54,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   icon: {
-    fontSize: 24,
+    fontSize: 18,
   },
   value: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: '700',
   },
   label: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
   },
 });

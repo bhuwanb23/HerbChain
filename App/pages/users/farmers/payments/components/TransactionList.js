@@ -31,15 +31,15 @@ const TransactionList = ({ activeTab, onTransactionPress }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
-    marginTop: 16,
-    paddingBottom: 24,
+    paddingHorizontal: 12,
+    marginTop: 12,
+    paddingBottom: 16,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 16,
   },
 });
 

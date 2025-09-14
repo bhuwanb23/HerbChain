@@ -36,44 +36,44 @@ const FAQSection = ({ faqs, expandedFAQ, onToggleFAQ }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   title: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#374151',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   faqList: {
-    gap: 8,
+    gap: 6,
   },
   faqItem: {
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    borderRadius: 8,
+    borderRadius: 6,
     overflow: 'hidden',
   },
   faqHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    padding: 12,
   },
   question: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: '#374151',
     flex: 1,
-    marginRight: 12,
+    marginRight: 8,
   },
   faqContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
   },
   answer: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
-    lineHeight: 20,
+    lineHeight: 16,
   },
 });
 
