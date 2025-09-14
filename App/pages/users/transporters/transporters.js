@@ -6,6 +6,7 @@ import Header from './components/header';
 import BottomNavbar from './components/bottom_navbar';
 import TransporterDashboard from './dashboard/dashboard';
 import TripsPage from './trips';
+import PaymentsScreen from './payments/payments';
 
 const TransportersPage = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -29,12 +30,7 @@ const TransportersPage = ({ navigation }) => {
           </View>
         );
       case 'payments':
-        return (
-          <View style={styles.placeholderContainer}>
-            <Text style={styles.placeholderText}>💰 Payments & Incentives</Text>
-            <Text style={styles.placeholderSubtext}>Earnings, sustainability rewards</Text>
-          </View>
-        );
+        return <PaymentsScreen navigation={navigation} />;
       case 'profile':
         return (
           <View style={styles.placeholderContainer}>

@@ -1,0 +1,1 @@
+export { useHistoryData } from './useHistoryData';

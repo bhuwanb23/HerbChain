@@ -66,28 +66,31 @@ const ActionBar = ({ onDeliveryReady }) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    paddingBottom: 12,
+    borderTopColor: '#F3F4F6',
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
   },
   secondaryButton: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E5E7EB',
   },
   primaryButton: {
     backgroundColor: '#3B82F6',
+    borderColor: '#3B82F6',
     shadowColor: '#3B82F6',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -97,18 +100,18 @@ const styles = StyleSheet.create({
   buttonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   buttonIcon: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#6B7280',
   },
   primaryIcon: {
     color: '#FFFFFF',
   },
   buttonText: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '600',
     color: '#6B7280',
   },
   primaryText: {

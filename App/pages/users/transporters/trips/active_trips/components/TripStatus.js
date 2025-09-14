@@ -46,15 +46,8 @@ const TripStatus = ({ currentStatus }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Trip Status</Text>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusBadgeColor() }]}>
-          <Text style={styles.statusBadgeText}>
-            {STATUS_LABELS[currentStatus]}
-          </Text>
-        </View>
-      </View>
-
+      <Text style={styles.title}>Trip Status</Text>
+      
       <View style={styles.statusGrid}>
         {statusSteps.map((step, index) => (
           <Animated.View
@@ -98,6 +91,15 @@ const TripStatus = ({ currentStatus }) => {
           </Animated.View>
         ))}
       </View>
+
+      {/* Current Status Badge */}
+      <View style={styles.currentStatusContainer}>
+        <View style={[styles.currentStatusBadge, { backgroundColor: getStatusBadgeColor() }]}>
+          <Text style={styles.currentStatusText}>
+            {STATUS_LABELS[currentStatus]}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 };
@@ -105,42 +107,28 @@ const TripStatus = ({ currentStatus }) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
   },
   title: {
     fontSize: 16,
     fontWeight: '600',
     color: '#111827',
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
+    marginBottom: 16,
   },
   statusGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 12,
+    marginBottom: 16,
   },
   statusCard: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
     backgroundColor: '#F9FAFB',
-    borderRadius: 6,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
@@ -159,18 +147,18 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   statusIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   iconText: {
-    fontSize: 16,
+    fontSize: 18,
   },
   statusLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '500',
     color: '#6B7280',
     textAlign: 'center',
@@ -181,6 +169,19 @@ const styles = StyleSheet.create({
   },
   currentLabel: {
     color: '#3B82F6',
+    fontWeight: '600',
+  },
+  currentStatusContainer: {
+    alignItems: 'flex-end',
+  },
+  currentStatusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  currentStatusText: {
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '600',
   },
 });
