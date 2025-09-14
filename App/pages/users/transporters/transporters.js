@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import Header from './components/header';
 import BottomNavbar from './components/bottom_navbar';
 import TransporterDashboard from './dashboard/dashboard';
@@ -71,6 +72,7 @@ const TransportersPage = ({ navigation }) => {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar style="dark" backgroundColor="#F9FAFB" />
       <View style={styles.content}>
         <Header
           navigation={navigation}

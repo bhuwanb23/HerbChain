@@ -55,16 +55,6 @@ const Header = ({ navigation, title = "HerbChain", showNotifications = true, onN
     }
   };
 
-  const handleProfilePress = () => {
-    if (onNotificationPress) {
-      onNotificationPress('profile');
-    } else if (navigation && navigation.navigate) {
-      navigation.navigate('ProfileScreen');
-    } else {
-      Alert.alert('Profile', 'Profile settings coming soon!');
-    }
-  };
-
   return (
     <LinearGradient
       colors={['#3B82F6', '#1D4ED8']}
@@ -102,24 +92,6 @@ const Header = ({ navigation, title = "HerbChain", showNotifications = true, onN
               </Animated.View>
             </TouchableOpacity>
           )}
-
-          <TouchableOpacity 
-            style={styles.profileButton}
-            onPress={handleProfilePress}
-            activeOpacity={0.7}
-          >
-            <Animated.View style={[
-              styles.profileIcon,
-              {
-                opacity: glowAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0.9, 1],
-                })
-              }
-            ]}>
-              <Text style={styles.profileEmoji}>👤</Text>
-            </Animated.View>
-          </TouchableOpacity>
         </View>
       </View>
     </LinearGradient>
@@ -146,13 +118,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   appName: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   welcomeText: {
-    fontSize: 14,
+    fontSize: 12,
     color: 'rgba(255, 255, 255, 0.9)',
     fontWeight: '500',
   },
@@ -194,22 +166,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: 'bold',
-  },
-  profileButton: {
-    position: 'relative',
-  },
-  profileIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  profileEmoji: {
-    fontSize: 18,
   },
 });
 

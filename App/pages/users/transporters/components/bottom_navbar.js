@@ -82,12 +82,13 @@ const BottomNavbar = ({ navigation, activeTab = 'dashboard' }) => {
   ];
 
   return (
-    <LinearGradient
-      colors={['#3B82F6', '#1D4ED8']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={[styles.container, { paddingBottom: insets.bottom + 8 }]}
-    >
+    <View style={[styles.wrapper, { paddingBottom: insets.bottom }]}>
+      <LinearGradient
+        colors={['#3B82F6', '#1D4ED8']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.container}
+      >
       <View style={styles.tabsContainer}>
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -146,11 +147,15 @@ const BottomNavbar = ({ navigation, activeTab = 'dashboard' }) => {
           );
         })}
       </View>
-    </LinearGradient>
+      </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  wrapper: {
+    backgroundColor: '#F9FAFB', // Background color to prevent blue bleeding
+  },
   container: {
     paddingTop: 8,
     paddingBottom: 8,
