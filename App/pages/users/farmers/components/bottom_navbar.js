@@ -21,19 +21,15 @@ const BottomNavbar = ({ navigation, activeTab = 'home' }) => {
         navigation.navigate('FarmerDashboard');
         break;
       case 'herb':
-        // Navigate to herb management screen
-        navigation.navigate('HerbManagement');
+        navigation.navigate('HerbRegister');
         break;
       case 'payment':
-        // Navigate to payment screen
-        navigation.navigate('PaymentScreen');
+        navigation.navigate('PaymentsScreen');
         break;
       case 'training':
-        // Navigate to training screen
         navigation.navigate('TrainingScreen');
         break;
       case 'profile':
-        // Navigate to profile screen
         navigation.navigate('ProfileScreen');
         break;
       default:

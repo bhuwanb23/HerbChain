@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { SafeAreaWrapper } from '../../../../components';
-import { BottomNavbar } from '../components';
+import BottomNavbar from '../components/bottom_navbar.js';
 import {
   Header,
   GreetingSection,
