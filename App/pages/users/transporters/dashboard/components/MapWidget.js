@@ -1,34 +1,33 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Animated, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const MapWidget = ({ mapData, isExpanded, onToggleExpanded }) => {
+const MapWidget = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        delay: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        delay: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    // Fade in animation
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
+
+    // Slide up animation
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
 
     // Pulse animation for live indicator
-    const pulseAnimation = Animated.loop(
+    Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
-          toValue: 1.2,
+          toValue: 1.1,
           duration: 1500,
           useNativeDriver: true,
         }),
@@ -38,14 +37,11 @@ const MapWidget = ({ mapData, isExpanded, onToggleExpanded }) => {
           useNativeDriver: true,
         }),
       ])
-    );
-    pulseAnimation.start();
-
-    return () => pulseAnimation.stop();
+    ).start();
   }, []);
 
   return (
-    <Animated.View 
+    <Animated.View
       style={[
         styles.container,
         {
@@ -54,291 +50,122 @@ const MapWidget = ({ mapData, isExpanded, onToggleExpanded }) => {
         },
       ]}
     >
-      <TouchableOpacity
-        style={styles.mapContainer}
-        onPress={onToggleExpanded}
-        activeOpacity={0.8}
-      >
-        <LinearGradient
-          colors={['#FFFFFF', '#F8FAFC']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.mapGradient}
-        >
+      <View style={styles.card}>
+        <View style={styles.header}>
+          <View style={styles.titleContainer}>
+            <Icon name="location-on" size={20} color="#3B82F6" />
+            <Text style={styles.title}>Live Tracking</Text>
+          </View>
+        </View>
+
+        <View style={styles.mapContainer}>
+          <Image
+            source={{
+              uri: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/82c83a9181-2458dae4751cb0efd8b5.png',
+            }}
+            style={styles.mapImage}
+            resizeMode="cover"
+          />
+          
+          <Animated.View
+            style={[
+              styles.liveIndicator,
+              {
+                transform: [{ scale: pulseAnim }],
+              },
+            ]}
+          >
+            <LinearGradient
+              colors={['#10B981', '#059669']}
+              style={styles.indicatorGradient}
+            >
+              <Text style={styles.indicatorText}>3 Active Routes</Text>
+            </LinearGradient>
+          </Animated.View>
+
           {/* Decorative elements */}
-          <View style={styles.decorativePattern} />
-          
-          <View style={styles.mapHeader}>
-            <View style={styles.mapTitleSection}>
-              <View style={styles.titleIconContainer}>
-                <Icon name="map" size={20} color="#3B82F6" />
-              </View>
-              <Text style={styles.mapTitle}>Live Route</Text>
-              <Animated.View 
-                style={[
-                  styles.liveIndicator,
-                  { transform: [{ scale: pulseAnim }] }
-                ]}
-              >
-                <View style={styles.liveDot} />
-                <Text style={styles.liveText}>LIVE</Text>
-              </Animated.View>
-            </View>
-            <View style={styles.expandButton}>
-              <Icon 
-                name={isExpanded ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
-                size={24} 
-                color="#6B7280" 
-              />
-            </View>
-          </View>
-          
-          <View style={styles.mapContent}>
-            <View style={styles.locationInfo}>
-              <View style={styles.currentLocation}>
-                <View style={styles.locationIconContainer}>
-                  <Icon name="my-location" size={18} color="#22c55e" />
-                </View>
-                <Text style={styles.locationText}>{mapData.currentLocation.address}</Text>
-              </View>
-              
-              <View style={styles.routeProgress}>
-                <View style={styles.progressContainer}>
-                  <View style={styles.progressBar}>
-                    <LinearGradient
-                      colors={['#3B82F6', '#1D4ED8']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={[
-                        styles.progressFill, 
-                        { width: `${mapData.routeProgress}%` }
-                      ]}
-                    />
-                  </View>
-                  <Text style={styles.progressText}>{mapData.routeProgress}% Complete</Text>
-                </View>
-              </View>
-              
-              <View style={styles.nextStop}>
-                <View style={styles.nextStopIconContainer}>
-                  <Icon name="place" size={18} color="#3B82F6" />
-                </View>
-                <View style={styles.nextStopInfo}>
-                  <Text style={styles.nextStopAddress}>{mapData.nextStop.address}</Text>
-                  <Text style={styles.nextStopDetails}>
-                    {mapData.nextStop.distance} • ETA: {mapData.nextStop.eta}
-                  </Text>
-                </View>
-              </View>
-            </View>
-            
-            {isExpanded && (
-              <View style={styles.expandedContent}>
-                <View style={styles.mapPlaceholder}>
-                  <LinearGradient
-                    colors={['#F1F5F9', '#E2E8F0']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.mapPlaceholderGradient}
-                  >
-                    <Icon name="map" size={48} color="#94A3B8" />
-                    <Text style={styles.mapPlaceholderText}>Interactive Map View</Text>
-                    <Text style={styles.mapPlaceholderSubtext}>Tap to open full map</Text>
-                  </LinearGradient>
-                </View>
-              </View>
-            )}
-          </View>
-        </LinearGradient>
-      </TouchableOpacity>
+          <View style={styles.decorativeCircle1} />
+          <View style={styles.decorativeCircle2} />
+        </View>
+      </View>
     </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 12,
-    marginBottom: 16, // Reduced margin to minimize spacing
+    marginHorizontal: 16,
+    marginBottom: 16,
   },
-  mapContainer: {
-    borderRadius: 18,
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 6,
+    elevation: 4,
   },
-  mapGradient: {
-    padding: 18,
-    position: 'relative',
+  header: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
   },
-  decorativePattern: {
-    position: 'absolute',
-    top: -10,
-    right: -10,
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(59, 130, 246, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.1)',
-  },
-  mapHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    zIndex: 1,
-  },
-  mapTitleSection: {
+  titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
   },
-  titleIconContainer: {
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    borderRadius: 10,
-    padding: 6,
-    marginRight: 8,
-  },
-  mapTitle: {
+  title: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginRight: 12,
-    letterSpacing: 0.3,
+    fontWeight: '600',
+    color: '#111827',
+    marginLeft: 8,
+  },
+  mapContainer: {
+    height: 180,
+    position: 'relative',
+    backgroundColor: '#F3F4F6',
+  },
+  mapImage: {
+    width: '100%',
+    height: '100%',
   },
   liveIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(34, 197, 94, 0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(34, 197, 94, 0.2)',
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    borderRadius: 8,
+    overflow: 'hidden',
   },
-  liveDot: {
+  indicatorGradient: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  indicatorText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  decorativeCircle1: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#3B82F6',
+    opacity: 0.7,
+  },
+  decorativeCircle2: {
+    position: 'absolute',
+    bottom: 30,
+    right: 30,
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#22c55e',
-    marginRight: 4,
-  },
-  liveText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#22c55e',
-    letterSpacing: 0.5,
-  },
-  expandButton: {
-    backgroundColor: 'rgba(107, 114, 128, 0.1)',
-    borderRadius: 8,
-    padding: 4,
-  },
-  mapContent: {
-    flex: 1,
-    zIndex: 1,
-  },
-  locationInfo: {
-    gap: 12,
-  },
-  currentLocation: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  locationIconContainer: {
-    backgroundColor: 'rgba(34, 197, 94, 0.1)',
-    borderRadius: 8,
-    padding: 6,
-    marginRight: 10,
-  },
-  locationText: {
-    fontSize: 14,
-    color: '#374151',
-    fontWeight: '600',
-    flex: 1,
-    letterSpacing: 0.2,
-  },
-  routeProgress: {
-    marginVertical: 8,
-  },
-  progressContainer: {
-    gap: 6,
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  progressText: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '600',
-    letterSpacing: 0.2,
-  },
-  nextStop: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  nextStopIconContainer: {
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    borderRadius: 8,
-    padding: 6,
-    marginRight: 10,
-    marginTop: 2,
-  },
-  nextStopInfo: {
-    flex: 1,
-  },
-  nextStopAddress: {
-    fontSize: 14,
-    color: '#374151',
-    fontWeight: '600',
-    marginBottom: 2,
-    letterSpacing: 0.2,
-  },
-  nextStopDetails: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '500',
-    letterSpacing: 0.1,
-  },
-  expandedContent: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-  },
-  mapPlaceholder: {
-    height: 140,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  mapPlaceholderGradient: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mapPlaceholderText: {
-    fontSize: 16,
-    color: '#64748B',
-    fontWeight: '600',
-    marginTop: 12,
-    letterSpacing: 0.3,
-  },
-  mapPlaceholderSubtext: {
-    fontSize: 12,
-    color: '#94A3B8',
-    marginTop: 4,
-    fontWeight: '500',
-    letterSpacing: 0.2,
+    backgroundColor: '#10B981',
+    opacity: 0.8,
   },
 });
 

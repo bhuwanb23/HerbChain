@@ -1,141 +1,94 @@
-// Dashboard Data Constants
-export const TRANSPORTER_INFO = {
-  name: 'Rajesh Kumar',
-  vehicleId: 'TN-01-AB-1234',
-  status: 'Active',
-  activeTrips: 2,
-  totalTrips: 15,
-  rating: 4.8,
+export const TRIP_STATUS = {
+  ACTIVE: 'ACTIVE',
+  PENDING: 'PENDING',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
 };
-
-export const STATUS_CARDS = [
-  {
-    id: 'pending-pickups',
-    title: 'Pending Pickups',
-    count: 3,
-    icon: '📦',
-    color: '#F59E0B',
-    gradient: ['#F59E0B', '#D97706'],
-    description: 'Ready for pickup',
-  },
-  {
-    id: 'active-trips',
-    title: 'Active Trips',
-    count: 2,
-    icon: '🚚',
-    color: '#3B82F6',
-    gradient: ['#3B82F6', '#1D4ED8'],
-    description: 'In progress',
-  },
-  {
-    id: 'deliveries',
-    title: 'Deliveries',
-    count: 5,
-    icon: '📍',
-    color: '#22c55e',
-    gradient: ['#22c55e', '#16a34a'],
-    description: 'Completed today',
-  },
-];
 
 export const NOTIFICATION_TYPES = {
-  DELAY: 'delay',
-  HANDOVER: 'handover',
-  INCENTIVE: 'incentive',
-  ROUTE_UPDATE: 'route_update',
-  EMERGENCY: 'emergency',
+  WARNING: 'warning',
+  INFO: 'info',
+  SUCCESS: 'success',
+  ERROR: 'error',
 };
+
+export const QUICK_ACTIONS = {
+  START_TRIP: 'start-trip',
+  SCAN_BATCH: 'scan-batch',
+  CONFIRM: 'confirm',
+};
+
+export const COLORS = {
+  PRIMARY: '#3B82F6',
+  SUCCESS: '#10B981',
+  WARNING: '#F59E0B',
+  ERROR: '#EF4444',
+  GRAY: '#6B7280',
+  LIGHT_GRAY: '#9CA3AF',
+};
+
+export const GRADIENTS = {
+  PRIMARY: ['#3B82F6', '#2563EB'],
+  SUCCESS: ['#10B981', '#059669'],
+  WARNING: ['#F59E0B', '#D97706'],
+  ERROR: ['#EF4444', '#DC2626'],
+};
+
+export const DEFAULT_STATS = {
+  completed: 8,
+  active: 3,
+  pending: 2,
+};
+
+export const SAMPLE_TRIPS = [
+  {
+    id: 'TR-8847',
+    status: TRIP_STATUS.ACTIVE,
+    route: 'Downtown Warehouse → Mall Center',
+    progress: 75,
+    eta: '14:30',
+    distance: '8.2 km',
+    customer: 'Mall Center',
+  },
+  {
+    id: 'TR-8848',
+    status: TRIP_STATUS.PENDING,
+    route: 'Central Hub → Riverside District',
+    progress: 100,
+    scheduled: '15:00',
+    distance: '12.5 km',
+    customer: 'Riverside District',
+  },
+  {
+    id: 'TR-8845',
+    status: TRIP_STATUS.COMPLETED,
+    route: 'North Station → Business Park',
+    progress: 100,
+    delivered: '12:45',
+    customer: 'J. Smith',
+  },
+];
 
 export const SAMPLE_NOTIFICATIONS = [
   {
     id: 1,
-    type: NOTIFICATION_TYPES.DELAY,
-    title: 'Traffic Alert',
-    message: 'Heavy traffic on Route A. Expected delay: 15 mins',
-    timestamp: '2 min ago',
-    isRead: false,
-    priority: 'high',
-    icon: '⚠️',
+    title: 'Route Delay Alert',
+    message: 'Traffic on Route A-102, +15 min delay expected',
+    time: '2 min ago',
+    type: NOTIFICATION_TYPES.WARNING,
   },
   {
     id: 2,
-    type: NOTIFICATION_TYPES.HANDOVER,
-    title: 'Handover Confirmation',
-    message: 'Package #1234 delivered successfully to Green Pharmacy',
-    timestamp: '5 min ago',
-    isRead: true,
-    priority: 'medium',
-    icon: '✅',
+    title: 'Handover Ready',
+    message: 'Package #TR-8847 ready for customer pickup',
+    time: '5 min ago',
+    type: NOTIFICATION_TYPES.INFO,
   },
   {
     id: 3,
-    type: NOTIFICATION_TYPES.INCENTIVE,
-    title: 'Bonus Earned',
-    message: 'You earned ₹500 bonus for on-time delivery streak!',
-    timestamp: '1 hour ago',
-    isRead: true,
-    priority: 'low',
-    icon: '💰',
-  },
-  {
-    id: 4,
-    type: NOTIFICATION_TYPES.ROUTE_UPDATE,
-    title: 'Route Optimization',
-    message: 'New optimized route available. Save 8 minutes.',
-    timestamp: '2 hours ago',
-    isRead: false,
-    priority: 'medium',
-    icon: '🗺️',
+    title: 'Fuel Low Warning',
+    message: 'Consider refueling at next stop',
+    time: '10 min ago',
+    type: NOTIFICATION_TYPES.WARNING,
   },
 ];
-
-export const MAP_WIDGET_DATA = {
-  currentLocation: {
-    latitude: 12.9716,
-    longitude: 77.5946,
-    address: 'Bangalore Central',
-  },
-  nextStop: {
-    latitude: 12.9352,
-    longitude: 77.6245,
-    address: 'Green Pharmacy, Koramangala',
-    distance: '8.2 km',
-    eta: '25 mins',
-  },
-  routeProgress: 65, // percentage
-};
-
-export const QUICK_ACTIONS = [
-  {
-    id: 'start-trip',
-    title: 'Start Trip',
-    icon: '▶️',
-    color: '#22c55e',
-  },
-  {
-    id: 'scan-qr',
-    title: 'Scan QR',
-    icon: '📱',
-    color: '#3B82F6',
-  },
-  {
-    id: 'emergency',
-    title: 'Emergency',
-    icon: '🚨',
-    color: '#EF4444',
-  },
-  {
-    id: 'fuel-log',
-    title: 'Fuel Log',
-    icon: '⛽',
-    color: '#F59E0B',
-  },
-];
-
-export const TRIP_STATS = {
-  todayTrips: 5,
-  weeklyTrips: 28,
-  monthlyEarnings: 15400,
-  averageRating: 4.8,
-  onTimeDelivery: 94,
-};

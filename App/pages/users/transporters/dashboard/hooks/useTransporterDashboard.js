@@ -1,84 +1,100 @@
-import { useState, useCallback } from 'react';
-import { Alert } from 'react-native';
+import { useState, useEffect } from 'react';
 
 export const useTransporterDashboard = () => {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTrips, setActiveTrips] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [isMapExpanded, setIsMapExpanded] = useState(false);
+  const [stats, setStats] = useState({
+    completed: 8,
+    active: 3,
+    pending: 2,
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleCardPress = useCallback((cardId) => {
-    switch (cardId) {
-      case 'pending-pickups':
-        Alert.alert('Pending Pickups', 'Show pending pickup details');
-        break;
-      case 'active-trips':
-        Alert.alert('Active Trips', 'Show active trip details');
-        break;
-      case 'deliveries':
-        Alert.alert('Deliveries', 'Show delivery history');
-        break;
-      default:
-        break;
-    }
+  // Simulate loading dashboard data
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      setIsLoading(true);
+      
+      // Simulate API call
+      setTimeout(() => {
+        setActiveTrips([
+          {
+            id: 'TR-8847',
+            status: 'ACTIVE',
+            route: 'Downtown Warehouse → Mall Center',
+            progress: 75,
+            eta: '14:30',
+            distance: '8.2 km',
+          },
+          {
+            id: 'TR-8848',
+            status: 'PENDING',
+            route: 'Central Hub → Riverside District',
+            progress: 100,
+            scheduled: '15:00',
+            distance: '12.5 km',
+          },
+        ]);
+
+        setNotifications([
+          {
+            id: 1,
+            title: 'Route Delay Alert',
+            message: 'Traffic on Route A-102, +15 min delay expected',
+            time: '2 min ago',
+            type: 'warning',
+          },
+          {
+            id: 2,
+            title: 'Handover Ready',
+            message: 'Package #TR-8847 ready for customer pickup',
+            time: '5 min ago',
+            type: 'info',
+          },
+        ]);
+
+        setIsLoading(false);
+      }, 1000);
+    };
+
+    loadDashboardData();
   }, []);
 
-  const handleNotificationPress = useCallback((notification) => {
-    Alert.alert(
-      notification.title,
-      notification.message,
-      [
-        { text: 'Mark as Read', onPress: () => markNotificationAsRead(notification.id) },
-        { text: 'OK', style: 'default' },
-      ]
-    );
-  }, []);
-
-  const markNotificationAsRead = useCallback((notificationId) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === notificationId 
-          ? { ...notification, isRead: true }
-          : notification
-      )
-    );
-  }, []);
-
-  const handleQuickAction = useCallback((actionId) => {
+  const handleQuickAction = (actionId) => {
+    console.log('Quick action pressed:', actionId);
+    
     switch (actionId) {
       case 'start-trip':
-        Alert.alert('Start Trip', 'Starting new trip...');
+        // Handle start trip logic
         break;
-      case 'scan-qr':
-        Alert.alert('Scan QR', 'Opening QR scanner...');
+      case 'scan-batch':
+        // Handle scan batch logic
         break;
-      case 'emergency':
-        Alert.alert('Emergency', 'Emergency contact activated');
-        break;
-      case 'fuel-log':
-        Alert.alert('Fuel Log', 'Opening fuel log form...');
+      case 'confirm':
+        // Handle confirm logic
         break;
       default:
         break;
     }
-  }, []);
+  };
 
-  const toggleMapExpanded = useCallback(() => {
-    setIsMapExpanded(prev => !prev);
-  }, []);
+  const handleTripPress = (tripId) => {
+    console.log('Trip pressed:', tripId);
+    // Navigate to trip details or handle trip action
+  };
 
-  const handleTabChange = useCallback((tab) => {
-    setActiveTab(tab);
-  }, []);
+  const refreshDashboard = () => {
+    // Refresh dashboard data
+    console.log('Refreshing dashboard...');
+  };
 
   return {
-    activeTab,
+    activeTrips,
     notifications,
-    isMapExpanded,
-    handleCardPress,
-    handleNotificationPress,
-    markNotificationAsRead,
+    stats,
+    isLoading,
     handleQuickAction,
-    toggleMapExpanded,
-    handleTabChange,
+    handleTripPress,
+    refreshDashboard,
   };
 };
