@@ -21,6 +21,24 @@ const FarmerMainPage = ({ navigation }) => {
     setCurrentPage(page);
   };
 
+  // Get page title based on current page
+  const getPageTitle = () => {
+    switch (currentPage) {
+      case 'home':
+        return 'HerbChain';
+      case 'herb':
+        return 'Herb Registration';
+      case 'payment':
+        return 'Transactions';
+      case 'training':
+        return 'Training';
+      case 'profile':
+        return 'Profile';
+      default:
+        return 'HerbChain';
+    }
+  };
+
   // Render the current page based on state
   const renderCurrentPage = () => {
     switch (currentPage) {
@@ -42,7 +60,7 @@ const FarmerMainPage = ({ navigation }) => {
   return (
     <SafeAreaWrapper style={styles.container} includeBottom={true}>
       <View style={styles.content}>
-        <Header navigation={navigation} />
+        <Header navigation={navigation} title={getPageTitle()} />
         <View style={styles.pageContainer}>
           {renderCurrentPage()}
         </View>
