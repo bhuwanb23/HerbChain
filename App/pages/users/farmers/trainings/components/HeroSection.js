@@ -54,7 +54,8 @@ const HeroSection = ({ stats }) => {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
-    paddingVertical: 24,
+    paddingTop: 0,
+    paddingBottom: 24,
   },
   content: {
     alignItems: 'center',

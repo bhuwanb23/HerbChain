@@ -87,6 +87,7 @@ const styles = StyleSheet.create({
   pageContainer: {
     flex: 1,
     backgroundColor: '#F9FAFB',
+    paddingBottom: 20, // Add padding to prevent overlap with bottom navbar
   },
 });
 
