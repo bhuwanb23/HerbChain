@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
-import { SafeAreaWrapper } from '../../../../components';
 import { useHerbRegistration } from './hooks';
 import {
   Header,
@@ -30,7 +29,7 @@ const HerbRegisterScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaWrapper style={styles.container} includeBottom={false}>
+    <View style={styles.container}>
       <Header 
         navigation={navigation} 
         onHelpPress={handleHelpPress}
@@ -60,7 +59,7 @@ const HerbRegisterScreen = ({ navigation }) => {
         onGenerateBatch={generateBatchId}
         isProcessing={isProcessing}
       />
-    </SafeAreaWrapper>
+    </View>
   );
 };
 

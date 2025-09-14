@@ -1,7 +1,5 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
-import { SafeAreaWrapper } from '../../../../components';
-import BottomNavbar from '../components/bottom_navbar.js';
 
 const ProfileScreen = ({ navigation }) => {
   const profileData = {
@@ -85,84 +83,80 @@ const ProfileScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <SafeAreaWrapper style={styles.safeArea} includeBottom={false}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profile</Text>
-          <Text style={styles.headerSubtitle}>Manage your account</Text>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={styles.headerSubtitle}>Manage your account</Text>
+      </View>
+
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Profile Card */}
+        <View style={styles.profileCard}>
+          <Image
+            source={{ uri: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg' }}
+            style={styles.profileImage}
+          />
+          <Text style={styles.profileName}>{profileData.name}</Text>
+          <Text style={styles.profileEmail}>{profileData.email}</Text>
+          <View style={styles.ratingContainer}>
+            <Text style={styles.ratingIcon}>⭐</Text>
+            <Text style={styles.ratingText}>{profileData.rating}</Text>
+          </View>
         </View>
 
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {/* Profile Card */}
-          <View style={styles.profileCard}>
-            <Image
-              source={{ uri: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg' }}
-              style={styles.profileImage}
-            />
-            <Text style={styles.profileName}>{profileData.name}</Text>
-            <Text style={styles.profileEmail}>{profileData.email}</Text>
-            <View style={styles.ratingContainer}>
-              <Text style={styles.ratingIcon}>⭐</Text>
-              <Text style={styles.ratingText}>{profileData.rating}</Text>
+        {/* Stats Card */}
+        <View style={styles.statsCard}>
+          <Text style={styles.statsTitle}>Your Statistics</Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{profileData.experience}</Text>
+              <Text style={styles.statLabel}>Experience</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{profileData.totalHarvest}</Text>
+              <Text style={styles.statLabel}>Total Harvest</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{profileData.totalEarnings}</Text>
+              <Text style={styles.statLabel}>Total Earnings</Text>
             </View>
           </View>
+        </View>
 
-          {/* Stats Card */}
-          <View style={styles.statsCard}>
-            <Text style={styles.statsTitle}>Your Statistics</Text>
-            <View style={styles.statsGrid}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{profileData.experience}</Text>
-                <Text style={styles.statLabel}>Experience</Text>
+        {/* Profile Details */}
+        <View style={styles.detailsCard}>
+          <Text style={styles.detailsTitle}>Profile Information</Text>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Phone</Text>
+            <Text style={styles.detailValue}>{profileData.phone}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Location</Text>
+            <Text style={styles.detailValue}>{profileData.location}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Member Since</Text>
+            <Text style={styles.detailValue}>{profileData.joinDate}</Text>
+          </View>
+        </View>
+
+        {/* Menu Items */}
+        <View style={styles.menuCard}>
+          <Text style={styles.menuTitle}>Account Options</Text>
+          {menuItems.map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.menuItem}
+              onPress={() => handleMenuPress(item.action)}
+            >
+              <View style={styles.menuItemLeft}>
+                <Text style={styles.menuIcon}>{item.icon}</Text>
+                <Text style={styles.menuText}>{item.title}</Text>
               </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{profileData.totalHarvest}</Text>
-                <Text style={styles.statLabel}>Total Harvest</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{profileData.totalEarnings}</Text>
-                <Text style={styles.statLabel}>Total Earnings</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Profile Details */}
-          <View style={styles.detailsCard}>
-            <Text style={styles.detailsTitle}>Profile Information</Text>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Phone</Text>
-              <Text style={styles.detailValue}>{profileData.phone}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Location</Text>
-              <Text style={styles.detailValue}>{profileData.location}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Member Since</Text>
-              <Text style={styles.detailValue}>{profileData.joinDate}</Text>
-            </View>
-          </View>
-
-          {/* Menu Items */}
-          <View style={styles.menuCard}>
-            <Text style={styles.menuTitle}>Account Options</Text>
-            {menuItems.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={styles.menuItem}
-                onPress={() => handleMenuPress(item.action)}
-              >
-                <View style={styles.menuItemLeft}>
-                  <Text style={styles.menuIcon}>{item.icon}</Text>
-                  <Text style={styles.menuText}>{item.title}</Text>
-                </View>
-                <Text style={styles.menuArrow}>›</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
-      </SafeAreaWrapper>
-
-      <BottomNavbar navigation={navigation} activeTab="profile" />
+              <Text style={styles.menuArrow}>›</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
     </View>
   );
 };
@@ -171,9 +165,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
-  },
-  safeArea: {
-    flex: 1,
   },
   header: {
     backgroundColor: '#22c55e',

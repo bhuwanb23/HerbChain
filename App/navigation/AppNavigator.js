@@ -4,11 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 // Import screens
 import PerfectLoginScreen from '../pages/login/PerfectLoginScreen';
-import FarmerDashboard from '../pages/users/farmers/dashboard/dashboard';
-import HerbRegisterScreen from '../pages/users/farmers/herb_register/HerbRegisterScreen';
-import PaymentsScreen from '../pages/users/farmers/payments/payements';
-import TrainingScreen from '../pages/users/farmers/trainings/training';
-import ProfileScreen from '../pages/users/farmers/profile/profile';
+import FarmerMainPage from '../pages/users/farmers/FarmerMainPage';
 import TransporterDashboard from '../pages/users/transporters/dashboard/dashboard';
 import LabDashboard from '../pages/users/labs/dashboard/dashboard';
 import AdminDashboard from '../pages/users/admins/dashboard/dashboard';
@@ -35,77 +31,10 @@ const AppNavigator = () => {
         />
         <Stack.Screen 
           name="FarmerDashboard" 
-          component={FarmerDashboard}
+          component={FarmerMainPage}
           options={{
             title: 'Farmer Dashboard',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: '#22c55e',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-          }}
-        />
-        <Stack.Screen 
-          name="HerbRegister" 
-          component={HerbRegisterScreen}
-          options={{
-            title: 'Register Herb',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: '#22c55e',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-          }}
-        />
-        <Stack.Screen 
-          name="PaymentsScreen" 
-          component={PaymentsScreen}
-          options={{
-            title: 'Payments',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: '#22c55e',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-          }}
-        />
-        <Stack.Screen 
-          name="TrainingScreen" 
-          component={TrainingScreen}
-          options={{
-            title: 'Training',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: '#22c55e',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-          }}
-        />
-        <Stack.Screen 
-          name="ProfileScreen" 
-          component={ProfileScreen}
-          options={{
-            title: 'Profile',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: '#22c55e',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
+            headerShown: false,
           }}
         />
         <Stack.Screen 

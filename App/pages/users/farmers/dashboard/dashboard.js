@@ -1,7 +1,5 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
-import { SafeAreaWrapper } from '../../../../components';
-import BottomNavbar from '../components/bottom_navbar.js';
 import {
   Header,
   GreetingSection,
@@ -33,22 +31,18 @@ const Dashboard = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <SafeAreaWrapper style={styles.safeArea} includeBottom={false}>
-        <Header navigation={navigation} />
-        
-        <ScrollView
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          <GreetingSection />
-          <StatsCards />
-          <ActionButtons onActionPress={handleActionPress} />
-          <ActivityFeed />
-        </ScrollView>
-      </SafeAreaWrapper>
+      <Header navigation={navigation} />
       
-      <BottomNavbar navigation={navigation} activeTab="home" />
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <GreetingSection />
+        <StatsCards />
+        <ActionButtons onActionPress={handleActionPress} />
+        <ActivityFeed />
+      </ScrollView>
     </View>
   );
 };
@@ -57,9 +51,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
-  },
-  safeArea: {
-    flex: 1,
   },
   scrollView: {
     flex: 1,

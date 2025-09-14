@@ -1,7 +1,5 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { SafeAreaWrapper } from '../../../../components';
-import BottomNavbar from '../components/bottom_navbar';
 
 const TrainingScreen = ({ navigation }) => {
   const trainings = [
@@ -78,77 +76,73 @@ const TrainingScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <SafeAreaWrapper style={styles.safeArea} includeBottom={false}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Training</Text>
-          <Text style={styles.headerSubtitle}>Enhance your farming skills</Text>
-        </View>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Training</Text>
+        <Text style={styles.headerSubtitle}>Enhance your farming skills</Text>
+      </View>
 
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          <View style={styles.progressCard}>
-            <Text style={styles.progressTitle}>Learning Progress</Text>
-            <View style={styles.progressStats}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>1</Text>
-                <Text style={styles.statLabel}>Completed</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>1</Text>
-                <Text style={styles.statLabel}>In Progress</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>2</Text>
-                <Text style={styles.statLabel}>Available</Text>
-              </View>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <View style={styles.progressCard}>
+          <Text style={styles.progressTitle}>Learning Progress</Text>
+          <View style={styles.progressStats}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>1</Text>
+              <Text style={styles.statLabel}>Completed</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>1</Text>
+              <Text style={styles.statLabel}>In Progress</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>2</Text>
+              <Text style={styles.statLabel}>Available</Text>
             </View>
           </View>
+        </View>
 
-          <View style={styles.trainingsList}>
-            <Text style={styles.sectionTitle}>Available Trainings</Text>
-            {trainings.map((training) => (
-              <TouchableOpacity
-                key={training.id}
-                style={styles.trainingCard}
-                onPress={() => handleTrainingPress(training)}
-              >
-                <View style={styles.trainingHeader}>
-                  <Text style={styles.trainingTitle}>{training.title}</Text>
-                  <View style={[styles.levelBadge, { backgroundColor: getLevelColor(training.level) }]}>
-                    <Text style={styles.levelText}>{training.level}</Text>
-                  </View>
+        <View style={styles.trainingsList}>
+          <Text style={styles.sectionTitle}>Available Trainings</Text>
+          {trainings.map((training) => (
+            <TouchableOpacity
+              key={training.id}
+              style={styles.trainingCard}
+              onPress={() => handleTrainingPress(training)}
+            >
+              <View style={styles.trainingHeader}>
+                <Text style={styles.trainingTitle}>{training.title}</Text>
+                <View style={[styles.levelBadge, { backgroundColor: getLevelColor(training.level) }]}>
+                  <Text style={styles.levelText}>{training.level}</Text>
+                </View>
+              </View>
+              
+              <Text style={styles.trainingDescription}>{training.description}</Text>
+              
+              <View style={styles.trainingFooter}>
+                <View style={styles.durationContainer}>
+                  <Text style={styles.durationIcon}>⏱️</Text>
+                  <Text style={styles.durationText}>{training.duration}</Text>
                 </View>
                 
-                <Text style={styles.trainingDescription}>{training.description}</Text>
-                
-                <View style={styles.trainingFooter}>
-                  <View style={styles.durationContainer}>
-                    <Text style={styles.durationIcon}>⏱️</Text>
-                    <Text style={styles.durationText}>{training.duration}</Text>
+                <View style={styles.progressContainer}>
+                  <View style={styles.progressBar}>
+                    <View 
+                      style={[
+                        styles.progressFill, 
+                        { width: `${training.progress}%` }
+                      ]} 
+                    />
                   </View>
-                  
-                  <View style={styles.progressContainer}>
-                    <View style={styles.progressBar}>
-                      <View 
-                        style={[
-                          styles.progressFill, 
-                          { width: `${training.progress}%` }
-                        ]} 
-                      />
-                    </View>
-                    <Text style={styles.progressText}>{training.progress}%</Text>
-                  </View>
+                  <Text style={styles.progressText}>{training.progress}%</Text>
                 </View>
-                
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(training.status) }]}>
-                  <Text style={styles.statusText}>{training.status}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
-      </SafeAreaWrapper>
-
-      <BottomNavbar navigation={navigation} activeTab="training" />
+              </View>
+              
+              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(training.status) }]}>
+                <Text style={styles.statusText}>{training.status}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
     </View>
   );
 };
@@ -157,9 +151,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
-  },
-  safeArea: {
-    flex: 1,
   },
   header: {
     backgroundColor: '#22c55e',

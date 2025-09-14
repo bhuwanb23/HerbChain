@@ -1,7 +1,5 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { SafeAreaWrapper } from '../../../../components';
-import BottomNavbar from '../components/bottom_navbar';
 
 const PaymentsScreen = ({ navigation }) => {
   const payments = [
@@ -65,43 +63,39 @@ const PaymentsScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <SafeAreaWrapper style={styles.safeArea} includeBottom={false}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Payments</Text>
-          <Text style={styles.headerSubtitle}>Track your earnings</Text>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Payments</Text>
+        <Text style={styles.headerSubtitle}>Track your earnings</Text>
+      </View>
+
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <View style={styles.summaryCard}>
+          <Text style={styles.summaryTitle}>Total Earnings</Text>
+          <Text style={styles.summaryAmount}>₹8,500</Text>
+          <Text style={styles.summaryPeriod}>This Month</Text>
         </View>
 
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>Total Earnings</Text>
-            <Text style={styles.summaryAmount}>₹8,500</Text>
-            <Text style={styles.summaryPeriod}>This Month</Text>
-          </View>
-
-          <View style={styles.paymentsList}>
-            <Text style={styles.sectionTitle}>Recent Payments</Text>
-            {payments.map((payment) => (
-              <TouchableOpacity
-                key={payment.id}
-                style={styles.paymentCard}
-                onPress={() => handlePaymentPress(payment)}
-              >
-                <View style={styles.paymentHeader}>
-                  <Text style={styles.paymentAmount}>{payment.amount}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(payment.status) }]}>
-                    <Text style={styles.statusText}>{payment.status}</Text>
-                  </View>
+        <View style={styles.paymentsList}>
+          <Text style={styles.sectionTitle}>Recent Payments</Text>
+          {payments.map((payment) => (
+            <TouchableOpacity
+              key={payment.id}
+              style={styles.paymentCard}
+              onPress={() => handlePaymentPress(payment)}
+            >
+              <View style={styles.paymentHeader}>
+                <Text style={styles.paymentAmount}>{payment.amount}</Text>
+                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(payment.status) }]}>
+                  <Text style={styles.statusText}>{payment.status}</Text>
                 </View>
-                <Text style={styles.buyerName}>{payment.buyer}</Text>
-                <Text style={styles.herbInfo}>{payment.herb} - {payment.quantity}</Text>
-                <Text style={styles.paymentDate}>{payment.date}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
-      </SafeAreaWrapper>
-
-      <BottomNavbar navigation={navigation} activeTab="payment" />
+              </View>
+              <Text style={styles.buyerName}>{payment.buyer}</Text>
+              <Text style={styles.herbInfo}>{payment.herb} - {payment.quantity}</Text>
+              <Text style={styles.paymentDate}>{payment.date}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
     </View>
   );
 };
@@ -110,9 +104,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
-  },
-  safeArea: {
-    flex: 1,
   },
   header: {
     backgroundColor: '#22c55e',

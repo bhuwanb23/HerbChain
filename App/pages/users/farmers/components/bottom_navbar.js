@@ -15,25 +15,9 @@ const BottomNavbar = ({ navigation, activeTab = 'home' }) => {
   const handleTabPress = (tabId) => {
     setCurrentTab(tabId);
     
-    // Navigate to different screens based on tab
-    switch (tabId) {
-      case 'home':
-        navigation.navigate('FarmerDashboard');
-        break;
-      case 'herb':
-        navigation.navigate('HerbRegister');
-        break;
-      case 'payment':
-        navigation.navigate('PaymentsScreen');
-        break;
-      case 'training':
-        navigation.navigate('TrainingScreen');
-        break;
-      case 'profile':
-        navigation.navigate('ProfileScreen');
-        break;
-      default:
-        break;
+    // Use internal navigation for farmer pages
+    if (navigation.navigate) {
+      navigation.navigate(tabId);
     }
   };
 
