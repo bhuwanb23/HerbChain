@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import LinearGradient from 'react-native-linear-gradient';
+// import LinearGradient from 'react-native-linear-gradient';
 
 const AIRecognition = ({ isProcessing, aiDetection, onCameraPress }) => {
   const renderCameraButton = () => {
@@ -17,14 +17,11 @@ const AIRecognition = ({ isProcessing, aiDetection, onCameraPress }) => {
 
     if (aiDetection) {
       return (
-        <LinearGradient
-          colors={['#10b981', '#059669']}
-          style={styles.cameraButton}
-        >
+        <View style={[styles.cameraButton, styles.successGradient]}>
           <Icon name="check-circle" size={32} color="white" />
           <Text style={styles.buttonTitle}>{aiDetection.species} Detected!</Text>
           <Text style={styles.buttonSubtitle}>Confidence: {aiDetection.confidence}%</Text>
-        </LinearGradient>
+        </View>
       );
     }
 
@@ -34,14 +31,11 @@ const AIRecognition = ({ isProcessing, aiDetection, onCameraPress }) => {
         onPress={onCameraPress}
         activeOpacity={0.8}
       >
-        <LinearGradient
-          colors={['#22c55e', '#16a34a']}
-          style={styles.gradientButton}
-        >
+        <View style={[styles.gradientButton, styles.cameraGradient]}>
           <Icon name="camera-alt" size={32} color="white" />
           <Text style={styles.buttonTitle}>Take Photo</Text>
           <Text style={styles.buttonSubtitle}>AI will identify the herb automatically</Text>
-        </LinearGradient>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -120,6 +114,12 @@ const styles = StyleSheet.create({
     padding: 32,
     alignItems: 'center',
     width: '100%',
+  },
+  cameraGradient: {
+    backgroundColor: '#22c55e',
+  },
+  successGradient: {
+    backgroundColor: '#10b981',
   },
   spinningIcon: {
     transform: [{ rotate: '360deg' }],
