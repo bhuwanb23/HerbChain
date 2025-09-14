@@ -9,8 +9,9 @@ import PaymentsScreen from './payments/payements';
 import TrainingScreen from './trainings/training';
 import ProfileScreen from './profile/profile';
 
-// Import bottom navbar
+// Import bottom navbar and header
 import BottomNavbar from './components/bottom_navbar';
+import Header from './components/header';
 
 const FarmerMainPage = ({ navigation }) => {
   const [currentPage, setCurrentPage] = useState('home');
@@ -39,10 +40,13 @@ const FarmerMainPage = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <SafeAreaWrapper style={styles.safeArea} includeBottom={false}>
-        {renderCurrentPage()}
-      </SafeAreaWrapper>
+    <SafeAreaWrapper style={styles.container} includeBottom={true}>
+      <View style={styles.content}>
+        <Header navigation={navigation} />
+        <View style={styles.pageContainer}>
+          {renderCurrentPage()}
+        </View>
+      </View>
       <BottomNavbar 
         navigation={{ 
           ...navigation, 
@@ -50,7 +54,7 @@ const FarmerMainPage = ({ navigation }) => {
         }} 
         activeTab={currentPage} 
       />
-    </View>
+    </SafeAreaWrapper>
   );
 };
 
@@ -59,8 +63,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc',
   },
-  safeArea: {
+  content: {
     flex: 1,
+  },
+  pageContainer: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
   },
 });
 

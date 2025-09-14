@@ -76,11 +76,6 @@ const TrainingScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Training</Text>
-        <Text style={styles.headerSubtitle}>Enhance your farming skills</Text>
-      </View>
-
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.progressCard}>
           <Text style={styles.progressTitle}>Learning Progress</Text>
@@ -151,21 +146,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
-  },
-  header: {
-    backgroundColor: '#22c55e',
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: 'white',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#DCFCE7',
   },
   scrollView: {
     flex: 1,

@@ -2,7 +2,6 @@ import React from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useHerbRegistration } from './hooks';
 import {
-  Header,
   ProgressBar,
   AIRecognition,
   ManualEntry,
@@ -30,11 +29,6 @@ const HerbRegisterScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Header 
-        navigation={navigation} 
-        onHelpPress={handleHelpPress}
-      />
-      
       <ProgressBar currentStep={currentStep} />
       
       <ScrollView

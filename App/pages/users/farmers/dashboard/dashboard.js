@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import {
-  Header,
   GreetingSection,
   StatsCards,
   ActionButtons,
@@ -31,8 +30,6 @@ const Dashboard = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Header navigation={navigation} />
-      
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
