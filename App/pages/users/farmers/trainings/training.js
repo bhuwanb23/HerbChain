@@ -1,144 +1,78 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { SafeAreaWrapper } from '../../../../components';
+import { useTraining } from './hooks';
+import {
+  TRAINING_STATS,
+  FEATURED_VIDEO,
+  TRAINING_VIDEOS,
+  SUPPORTED_LANGUAGES,
+  QUICK_ACTIONS,
+  FAQ_DATA,
+} from './constants';
+import {
+  HeroSection,
+  FeaturedVideo,
+  VideoGrid,
+  LanguageFilter,
+  QuickActions,
+  FAQSection,
+  FloatingChatButton,
+} from './components';
 
 const TrainingScreen = ({ navigation }) => {
-  const trainings = [
-    {
-      id: 1,
-      title: 'Organic Farming Basics',
-      duration: '2 hours',
-      level: 'Beginner',
-      progress: 100,
-      status: 'Completed',
-      description: 'Learn the fundamentals of organic farming practices',
-    },
-    {
-      id: 2,
-      title: 'Herb Cultivation Techniques',
-      duration: '3 hours',
-      level: 'Intermediate',
-      progress: 75,
-      status: 'In Progress',
-      description: 'Advanced techniques for growing medicinal herbs',
-    },
-    {
-      id: 3,
-      title: 'Quality Control & Testing',
-      duration: '1.5 hours',
-      level: 'Advanced',
-      progress: 0,
-      status: 'Not Started',
-      description: 'Learn how to test and maintain herb quality',
-    },
-    {
-      id: 4,
-      title: 'Market Trends & Pricing',
-      duration: '2.5 hours',
-      level: 'Intermediate',
-      progress: 0,
-      status: 'Not Started',
-      description: 'Understand market dynamics and pricing strategies',
-    },
-  ];
-
-  const getLevelColor = (level) => {
-    switch (level) {
-      case 'Beginner':
-        return '#22c55e';
-      case 'Intermediate':
-        return '#f59e0b';
-      case 'Advanced':
-        return '#ef4444';
-      default:
-        return '#6b7280';
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Completed':
-        return '#22c55e';
-      case 'In Progress':
-        return '#3b82f6';
-      case 'Not Started':
-        return '#6b7280';
-      default:
-        return '#6b7280';
-    }
-  };
-
-  const handleTrainingPress = (training) => {
-    Alert.alert(
-      training.title,
-      `${training.description}\n\nDuration: ${training.duration}\nLevel: ${training.level}\nProgress: ${training.progress}%`
-    );
-  };
+  const {
+    selectedLanguage,
+    expandedFAQ,
+    handleLanguageChange,
+    handleVideoPress,
+    handleQuickActionPress,
+    toggleFAQ,
+    handleFloatingChatPress,
+  } = useTraining();
 
   return (
-    <View style={styles.container}>
+    <SafeAreaWrapper style={styles.container} includeBottom={true}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.progressCard}>
-          <Text style={styles.progressTitle}>Learning Progress</Text>
-          <View style={styles.progressStats}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>1</Text>
-              <Text style={styles.statLabel}>Completed</Text>
+        <HeroSection stats={TRAINING_STATS} />
+        
+        <View style={styles.content}>
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Training Resources</Text>
+              <Text style={styles.viewAllText}>View All</Text>
             </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>1</Text>
-              <Text style={styles.statLabel}>In Progress</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>2</Text>
-              <Text style={styles.statLabel}>Available</Text>
-            </View>
+            
+            <FeaturedVideo video={FEATURED_VIDEO} onPress={handleVideoPress} />
+            
+            <VideoGrid videos={TRAINING_VIDEOS} onVideoPress={handleVideoPress} />
+            
+            <LanguageFilter
+              languages={SUPPORTED_LANGUAGES}
+              selectedLanguage={selectedLanguage}
+              onLanguageChange={handleLanguageChange}
+            />
+          </View>
+          
+          <View style={styles.supportSection}>
+            <Text style={styles.sectionTitle}>Help & Support</Text>
+            
+            <QuickActions
+              actions={QUICK_ACTIONS}
+              onActionPress={handleQuickActionPress}
+            />
+            
+            <FAQSection
+              faqs={FAQ_DATA}
+              expandedFAQ={expandedFAQ}
+              onToggleFAQ={toggleFAQ}
+            />
           </View>
         </View>
-
-        <View style={styles.trainingsList}>
-          <Text style={styles.sectionTitle}>Available Trainings</Text>
-          {trainings.map((training) => (
-            <TouchableOpacity
-              key={training.id}
-              style={styles.trainingCard}
-              onPress={() => handleTrainingPress(training)}
-            >
-              <View style={styles.trainingHeader}>
-                <Text style={styles.trainingTitle}>{training.title}</Text>
-                <View style={[styles.levelBadge, { backgroundColor: getLevelColor(training.level) }]}>
-                  <Text style={styles.levelText}>{training.level}</Text>
-                </View>
-              </View>
-              
-              <Text style={styles.trainingDescription}>{training.description}</Text>
-              
-              <View style={styles.trainingFooter}>
-                <View style={styles.durationContainer}>
-                  <Text style={styles.durationIcon}>⏱️</Text>
-                  <Text style={styles.durationText}>{training.duration}</Text>
-                </View>
-                
-                <View style={styles.progressContainer}>
-                  <View style={styles.progressBar}>
-                    <View 
-                      style={[
-                        styles.progressFill, 
-                        { width: `${training.progress}%` }
-                      ]} 
-                    />
-                  </View>
-                  <Text style={styles.progressText}>{training.progress}%</Text>
-                </View>
-              </View>
-              
-              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(training.status) }]}>
-                <Text style={styles.statusText}>{training.status}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
       </ScrollView>
-    </View>
+      
+      <FloatingChatButton onPress={handleFloatingChatPress} />
+    </SafeAreaWrapper>
   );
 };
 
@@ -150,142 +84,33 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  progressCard: {
-    backgroundColor: 'white',
-    margin: 16,
-    padding: 20,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  progressTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  progressStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#22c55e',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#6B7280',
-  },
-  trainingsList: {
+  content: {
     paddingHorizontal: 16,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#374151',
+  section: {
+    paddingVertical: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
   },
-  trainingCard: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  trainingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  trainingTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
     color: '#374151',
-    flex: 1,
-    marginRight: 8,
   },
-  levelBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  levelText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: 'white',
-  },
-  trainingDescription: {
+  viewAllText: {
     fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 12,
-    lineHeight: 20,
-  },
-  trainingFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  durationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  durationIcon: {
-    fontSize: 14,
-    marginRight: 4,
-  },
-  durationText: {
-    fontSize: 12,
-    color: '#6B7280',
-  },
-  progressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginLeft: 16,
-  },
-  progressBar: {
-    flex: 1,
-    height: 6,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 3,
-    marginRight: 8,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#22c55e',
-    borderRadius: 3,
-  },
-  progressText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#22c55e',
-    minWidth: 30,
   },
-  statusBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: 'white',
+  supportSection: {
+    backgroundColor: 'white',
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    marginHorizontal: -16,
   },
 });
 
