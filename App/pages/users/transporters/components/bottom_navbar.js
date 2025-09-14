@@ -124,12 +124,12 @@ const BottomNavbar = ({ navigation, activeTab = 'dashboard' }) => {
                   </Text>
                 </Animated.View>
                 
-                <Text style={[
+                {/* <Text style={[
                   styles.label,
                   isActive && styles.activeLabel
                 ]}>
                   {tab.label}
-                </Text>
+                </Text> */}
               </Animated.View>
               
               {isActive && (

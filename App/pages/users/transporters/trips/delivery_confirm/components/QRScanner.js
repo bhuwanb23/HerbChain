@@ -147,7 +147,7 @@ const QRScanner = ({ isScanning, onScanComplete }) => {
 
           {/* Center content */}
           <View style={styles.centerContent}>
-            <Icon name="qr-code-scanner" size={60} color="#FFFFFF" />
+            <Icon name="qr-code-scanner" size={48} color="#FFFFFF" />
             <Text style={styles.instructionText}>Position QR code within frame</Text>
             <Text style={styles.subText}>Auto-scan enabled</Text>
           </View>
@@ -159,11 +159,11 @@ const QRScanner = ({ isScanning, onScanComplete }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   scannerContainer: {
-    borderRadius: 16,
-    padding: 32,
+    borderRadius: 12,
+    padding: 20,
   },
   scannerFrame: {
     aspectRatio: 1,
@@ -236,13 +236,13 @@ const styles = StyleSheet.create({
   },
   instructionText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
-    marginTop: 16,
+    marginTop: 12,
   },
   subText: {
     color: '#9CA3AF',
-    fontSize: 12,
+    fontSize: 10,
     marginTop: 4,
   },
 });

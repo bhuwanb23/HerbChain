@@ -62,7 +62,7 @@ const ReceiverInfo = ({ receiverData, isVisible }) => {
         style={styles.card}
       >
         <View style={styles.header}>
-          <Icon name="person" size={20} color="#2563EB" />
+          <Icon name="person" size={16} color="#2563EB" />
           <Text style={styles.title}>Next Receiver</Text>
         </View>
         
@@ -87,27 +87,27 @@ const ReceiverInfo = ({ receiverData, isVisible }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   card: {
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 8,
+    padding: 12,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   title: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#111827',
-    marginLeft: 8,
+    marginLeft: 6,
   },
   content: {
-    gap: 8,
+    gap: 6,
   },
   row: {
     flexDirection: 'row',
@@ -115,11 +115,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   label: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
   },
   value: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: '#111827',
   },

@@ -15,6 +15,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import BatchScanScreen from './batch_scan/BatchScanScreen';
 import DeliveryConfirmScreen from './delivery_confirm/delivery_confirm';
 import ActiveTripsScreen from './active_trips/active_trips';
+import HistoryScreen from './history/HistoryScreen';
 
 const TripsPage = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -25,6 +26,40 @@ const TripsPage = ({ navigation }) => {
     batchData: null,
     receiverData: null,
   });
+
+  // Mock trip data for demonstration
+  const mockTrips = [
+    {
+      id: 'TRIP-001',
+      status: 'pending',
+      from: 'Green Valley Farm',
+      to: 'Processing Lab',
+      batchId: 'BT-2024-001',
+      time: 'Ready for pickup',
+      icon: 'pending',
+      color: '#F59E0B'
+    },
+    {
+      id: 'TRIP-002', 
+      status: 'active',
+      from: 'Mountain View Farm',
+      to: 'Quality Lab',
+      batchId: 'BT-2024-002',
+      time: 'In transit - 15 min remaining',
+      icon: 'local-shipping',
+      color: '#10B981'
+    },
+    {
+      id: 'TRIP-003',
+      status: 'completed',
+      from: 'Sunrise Farm',
+      to: 'Testing Lab',
+      batchId: 'BT-2024-003',
+      time: 'Completed 2 hours ago',
+      icon: 'check-circle',
+      color: '#6B7280'
+    }
+  ];
 
   const getPageTitle = (page) => {
     switch (page) {
@@ -43,17 +78,32 @@ const TripsPage = ({ navigation }) => {
     }
   };
 
-  // Trip flow navigation functions
-  const navigateToBatchScan = (tripData) => {
-    setTripFlow(prev => ({
-      ...prev,
-      currentTrip: tripData,
-      tripStatus: 'pending'
-    }));
-    setCurrentPage('batch_scan');
+  // Trip flow navigation functions following the specified flow
+  const handleTripSelection = (trip) => {
+    if (trip.status === 'pending') {
+      // Pending trip → Batch Scan Page
+      setTripFlow(prev => ({
+        ...prev,
+        currentTrip: trip,
+        tripStatus: 'pending'
+      }));
+      setCurrentPage('batch_scan');
+    } else if (trip.status === 'active') {
+      // Active trip → Active Trip Details Page
+      setTripFlow(prev => ({
+        ...prev,
+        currentTrip: trip,
+        tripStatus: 'active'
+      }));
+      setCurrentPage('active_trips');
+    } else if (trip.status === 'completed') {
+      // Completed trip → History & Reports Page
+      setCurrentPage('history_reports');
+    }
   };
 
-  const navigateToActiveTrip = (batchData) => {
+  const handleBatchScanSuccess = (batchData) => {
+    // After successful pickup → Active Trip Details Page
     setTripFlow(prev => ({
       ...prev,
       batchData: batchData,
@@ -62,7 +112,8 @@ const TripsPage = ({ navigation }) => {
     setCurrentPage('active_trips');
   };
 
-  const navigateToDeliveryConfirm = (receiverData) => {
+  const handleDeliveryReady = (receiverData) => {
+    // When transporter reaches delivery point → Delivery Confirmation Page
     setTripFlow(prev => ({
       ...prev,
       receiverData: receiverData,
@@ -71,7 +122,8 @@ const TripsPage = ({ navigation }) => {
     setCurrentPage('delivery_confirm');
   };
 
-  const completeTrip = () => {
+  const handleDeliveryComplete = () => {
+    // Trip marked as Completed → History & Reports Page
     setTripFlow(prev => ({
       ...prev,
       tripStatus: 'completed'
@@ -95,44 +147,39 @@ const TripsPage = ({ navigation }) => {
         return (
           <View style={styles.tripsOverview}>
             <View style={styles.tripCards}>
-              {/* Pending Trips */}
-              <TouchableOpacity 
-                style={[styles.tripCard, styles.pendingCard]}
-                onPress={() => navigateToBatchScan({ id: 'TRIP-001', status: 'pending' })}
-              >
-                <View style={styles.tripCardHeader}>
-                  <Icon name="pending" size={24} color="#F59E0B" />
-                  <Text style={styles.tripCardTitle}>Pending Pickup</Text>
-                </View>
-                <Text style={styles.tripCardSubtitle}>Green Valley Farm → Processing Lab</Text>
-                <Text style={styles.tripCardTime}>Ready for pickup</Text>
-              </TouchableOpacity>
-
-              {/* Active Trips */}
-              <TouchableOpacity 
-                style={[styles.tripCard, styles.activeCard]}
-                onPress={() => navigateToActiveTrip({ id: 'TRIP-002', status: 'active' })}
-              >
-                <View style={styles.tripCardHeader}>
-                  <Icon name="local-shipping" size={24} color="#10B981" />
-                  <Text style={styles.tripCardTitle}>Active Trip</Text>
-                </View>
-                <Text style={styles.tripCardSubtitle}>Mountain View Farm → Quality Lab</Text>
-                <Text style={styles.tripCardTime}>In transit - 15 min remaining</Text>
-              </TouchableOpacity>
-
-              {/* Completed Trips */}
-              <TouchableOpacity 
-                style={[styles.tripCard, styles.completedCard]}
-                onPress={() => setCurrentPage('history_reports')}
-              >
-                <View style={styles.tripCardHeader}>
-                  <Icon name="check-circle" size={24} color="#6B7280" />
-                  <Text style={styles.tripCardTitle}>Completed Trips</Text>
-                </View>
-                <Text style={styles.tripCardSubtitle}>View trip history and reports</Text>
-                <Text style={styles.tripCardTime}>3 trips completed today</Text>
-              </TouchableOpacity>
+              {mockTrips.map((trip) => (
+                <TouchableOpacity 
+                  key={trip.id}
+                  style={[styles.tripCard, { borderLeftColor: trip.color }]}
+                  onPress={() => handleTripSelection(trip)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.tripCardHeader}>
+                    <Icon name={trip.icon} size={24} color={trip.color} />
+                    <Text style={styles.tripCardTitle}>
+                      {trip.status === 'pending' ? 'Pending Pickup' : 
+                       trip.status === 'active' ? 'Active Trip' : 'Completed Trip'}
+                    </Text>
+                  </View>
+                  <Text style={styles.tripCardSubtitle}>{trip.from} → {trip.to}</Text>
+                  <Text style={styles.tripCardTime}>{trip.time}</Text>
+                  {trip.status === 'pending' && (
+                    <View style={styles.actionHint}>
+                      <Text style={styles.actionHintText}>Tap to scan batch QR</Text>
+                    </View>
+                  )}
+                  {trip.status === 'active' && (
+                    <View style={styles.actionHint}>
+                      <Text style={styles.actionHintText}>Tap to view trip details</Text>
+                    </View>
+                  )}
+                  {trip.status === 'completed' && (
+                    <View style={styles.actionHint}>
+                      <Text style={styles.actionHintText}>Tap to view history</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
         );
@@ -140,7 +187,7 @@ const TripsPage = ({ navigation }) => {
         return (
           <BatchScanScreen 
             tripData={tripFlow.currentTrip}
-            onScanSuccess={navigateToActiveTrip}
+            onScanSuccess={handleBatchScanSuccess}
             onGoBack={goBackToTrips}
           />
         );
@@ -149,7 +196,7 @@ const TripsPage = ({ navigation }) => {
           <ActiveTripsScreen 
             tripData={tripFlow.currentTrip}
             batchData={tripFlow.batchData}
-            onDeliveryReady={navigateToDeliveryConfirm}
+            onDeliveryReady={handleDeliveryReady}
             onGoBack={goBackToTrips}
           />
         );
@@ -159,22 +206,13 @@ const TripsPage = ({ navigation }) => {
             tripData={tripFlow.currentTrip}
             batchData={tripFlow.batchData}
             receiverData={tripFlow.receiverData}
-            onDeliveryComplete={completeTrip}
+            onDeliveryComplete={handleDeliveryComplete}
             onGoBack={goBackToTrips}
           />
         );
       case 'history_reports':
         return (
-          <View style={styles.placeholderContainer}>
-            <Text style={styles.placeholderText}>📜 Trip History & Reports</Text>
-            <Text style={styles.placeholderSubtext}>Completed trips, receipts, and analytics</Text>
-            <TouchableOpacity 
-              style={styles.backToTripsButton}
-              onPress={goBackToTrips}
-            >
-              <Text style={styles.backToTripsText}>Back to Trips</Text>
-            </TouchableOpacity>
-          </View>
+          <HistoryScreen onGoBack={goBackToTrips} />
         );
       default:
         return (
@@ -266,23 +304,12 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    borderLeftWidth: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-  },
-  pendingCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#F59E0B',
-  },
-  activeCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#10B981',
-  },
-  completedCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#6B7280',
   },
   tripCardHeader: {
     flexDirection: 'row',
@@ -304,6 +331,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9CA3AF',
     fontWeight: '500',
+  },
+  actionHint: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  actionHintText: {
+    fontSize: 11,
+    color: '#6B7280',
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
 });
 

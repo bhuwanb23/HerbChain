@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { ACTION_BUTTONS } from '../constants';
 import { useEmergencyActions } from '../hooks';
 
-const ActionBar = () => {
+const ActionBar = ({ onDeliveryReady }) => {
   const { handleContactDispatch, handleShareLocation } = useEmergencyActions();
 
   const handleButtonPress = (buttonId) => {
@@ -13,6 +13,16 @@ const ActionBar = () => {
         break;
       case 'share':
         handleShareLocation();
+        break;
+      case 'delivery':
+        // Handle delivery ready action
+        if (onDeliveryReady) {
+          onDeliveryReady({
+            name: 'Dr. Sarah Chen',
+            department: 'Processing Lab',
+            id: 'LAB-2024-SC'
+          });
+        }
         break;
       default:
         console.log(`Button ${buttonId} pressed`);
@@ -58,18 +68,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingBottom: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingBottom: 12,
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 10,
+    borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -87,17 +97,17 @@ const styles = StyleSheet.create({
   buttonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   buttonIcon: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#6B7280',
   },
   primaryIcon: {
     color: '#FFFFFF',
   },
   buttonText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: '#6B7280',
   },

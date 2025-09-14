@@ -1,27 +1,27 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-const TripDetails = ({ tripData }) => {
+const TripDetails = ({ tripData, batchData }) => {
   const detailItems = [
     {
       id: 'batch',
       icon: '📊',
       title: 'Batch IDs',
-      value: tripData.batchIds.join(', '),
+      value: tripData?.batchIds?.join(', ') || batchData?.batchId || 'N/A',
       color: '#3B82F6',
     },
     {
       id: 'delivery',
       icon: '⏰',
       title: 'Expected Delivery',
-      value: tripData.expectedDelivery,
+      value: tripData?.expectedDelivery || 'Today, 2:30 PM',
       color: '#F59E0B',
     },
     {
       id: 'compliance',
       icon: '🛡️',
       title: 'Compliance',
-      value: tripData.compliance,
+      value: tripData?.compliance || 'Temperature Controlled',
       color: '#10b981',
       status: 'Active',
     },
@@ -60,28 +60,28 @@ const TripDetails = ({ tripData }) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#111827',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   detailsList: {
-    gap: 16,
+    gap: 10,
   },
   detailItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     backgroundColor: '#F9FAFB',
-    borderRadius: 8,
+    borderRadius: 6,
   },
   detailLeft: {
     flexDirection: 'row',
@@ -89,36 +89,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   detailIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   iconText: {
-    fontSize: 18,
+    fontSize: 16,
   },
   detailContent: {
     flex: 1,
   },
   detailTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: '#111827',
     marginBottom: 2,
   },
   detailValue: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
   statusText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
   },
 });

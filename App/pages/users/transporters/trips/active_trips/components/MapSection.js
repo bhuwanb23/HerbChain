@@ -143,7 +143,7 @@ const MapSection = ({ tripData, onMapControlPress }) => {
 
 const styles = StyleSheet.create({
   container: {
-    height: 200,
+    height: 140,
     position: 'relative',
   },
   mapContainer: {
@@ -228,20 +228,20 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   controlButton: {
-    width: 40,
-    height: 40,
+    width: 32,
+    height: 32,
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 2,
+    elevation: 2,
   },
   controlIcon: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#3B82F6',
   },
   liveStatusContainer: {
@@ -251,22 +251,22 @@ const styles = StyleSheet.create({
   },
   liveStatus: {
     backgroundColor: '#10b981',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
   liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: '#FFFFFF',
   },
   liveText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
   },
   etaContainer: {
@@ -277,13 +277,13 @@ const styles = StyleSheet.create({
   },
   etaCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 8,
+    padding: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 4,
+    elevation: 2,
   },
   etaRow: {
     flexDirection: 'row',
@@ -293,12 +293,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   etaLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#6B7280',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   etaValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#111827',
   },

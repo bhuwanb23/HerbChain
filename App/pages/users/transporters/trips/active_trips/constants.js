@@ -108,9 +108,15 @@ export const ACTION_BUTTONS = [
     type: 'secondary',
   },
   {
+    id: 'delivery',
+    label: 'Ready for Delivery',
+    icon: '🚚',
+    type: 'primary',
+  },
+  {
     id: 'share',
     label: 'Share Location',
     icon: '📤',
-    type: 'primary',
+    type: 'secondary',
   },
 ];

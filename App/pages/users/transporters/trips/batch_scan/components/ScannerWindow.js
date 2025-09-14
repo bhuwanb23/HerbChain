@@ -83,7 +83,7 @@ const ScannerWindow = ({ isScanning, onScanComplete }) => {
 
           {/* Center Instructions */}
           <View style={styles.centerContent}>
-            <Icon name="qr-code-scanner" size={48} color="rgba(255,255,255,0.6)" />
+            <Icon name="qr-code-scanner" size={36} color="rgba(255,255,255,0.6)" />
             <Text style={styles.instructionText}>Position QR code within frame</Text>
           </View>
         </View>
@@ -95,28 +95,28 @@ const ScannerWindow = ({ isScanning, onScanComplete }) => {
 const styles = StyleSheet.create({
   scannerContainer: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
   },
   scannerFrame: {
-    width: width * 0.8,
-    height: width * 0.8,
-    borderRadius: 16,
+    width: width * 0.7,
+    height: width * 0.7,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   scannerInner: {
     flex: 1,
-    margin: 16,
-    borderRadius: 12,
+    margin: 12,
+    borderRadius: 8,
     borderWidth: 2,
     borderColor: 'white',
     position: 'relative',
   },
   corner: {
     position: 'absolute',
-    width: 32,
-    height: 32,
+    width: 24,
+    height: 24,
     borderColor: '#4ade80',
-    borderWidth: 4,
+    borderWidth: 3,
   },
   topLeft: {
     top: 0,
@@ -161,9 +161,9 @@ const styles = StyleSheet.create({
   },
   instructionText: {
     color: 'rgba(255,255,255,0.8)',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
-    marginTop: 12,
+    marginTop: 8,
     textAlign: 'center',
   },
 });

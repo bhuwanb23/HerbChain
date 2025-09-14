@@ -100,9 +100,9 @@ const BatchDetails = ({ batchData, isVisible }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
-    marginBottom: 24,
-    borderRadius: 12,
+    marginHorizontal: 12,
+    marginBottom: 16,
+    borderRadius: 8,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -110,30 +110,30 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   gradient: {
-    padding: 16,
-    borderRadius: 12,
+    padding: 12,
+    borderRadius: 8,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   statusIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#dcfce7',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 8,
   },
   statusText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: '#15803d',
   },
   detailsContainer: {
-    gap: 12,
+    gap: 8,
   },
   detailRow: {
     flexDirection: 'row',
@@ -141,12 +141,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   label: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6b7280',
     flex: 1,
   },
   value: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#111827',
     textAlign: 'right',
