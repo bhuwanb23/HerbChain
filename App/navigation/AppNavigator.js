@@ -5,7 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 // Import screens
 import PerfectLoginScreen from '../pages/login/PerfectLoginScreen';
 import FarmerMainPage from '../pages/users/farmers/FarmerMainPage';
-import TransporterDashboard from '../pages/users/transporters/dashboard/dashboard';
+import TransportersPage from '../pages/users/transporters/transporters';
 import LabDashboard from '../pages/users/labs/dashboard/dashboard';
 import AdminDashboard from '../pages/users/admins/dashboard/dashboard';
 import ConsumerDashboard from '../pages/users/consumers/dashboard/dashboard';
@@ -39,17 +39,10 @@ const AppNavigator = () => {
         />
         <Stack.Screen 
           name="TransporterDashboard" 
-          component={TransporterDashboard}
+          component={TransportersPage}
           options={{
             title: 'Transporter Dashboard',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: '#3B82F6',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
+            headerShown: false,
           }}
         />
         <Stack.Screen 
