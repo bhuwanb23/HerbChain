@@ -1,52 +1,52 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaWrapper, BottomSpacer } from '../../../../components';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const AdminDashboard = ({ navigation }) => {
-  const handleBack = () => {
-    navigation.goBack();
-  };
-
+const AdminDashboard = () => {
   return (
-    <SafeAreaWrapper style={styles.container} includeBottom={true}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>Admin Dashboard</Text>
-          <Text style={styles.subtitle}>Manage the HerbChain ecosystem</Text>
-        </View>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#F9FAFB', '#F3F4F6']}
+        style={styles.gradient}
+      >
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
+            <Text style={styles.title}>Admin Dashboard</Text>
+            <Text style={styles.subtitle}>Manage the HerbChain ecosystem</Text>
+            
+            <View style={styles.statsGrid}>
+              <View style={styles.statCard}>
+                <Text style={styles.cardIcon}>👥</Text>
+                <Text style={styles.cardTitle}>Total Users</Text>
+                <Text style={styles.cardSubtitle}>1,247 registered users</Text>
+              </View>
 
-        <View style={styles.content}>
-          <View style={styles.card}>
-            <Text style={styles.cardIcon}>👥</Text>
-            <Text style={styles.cardTitle}>Total Users</Text>
-            <Text style={styles.cardSubtitle}>1,247 registered users</Text>
+              <View style={styles.statCard}>
+                <Text style={styles.cardIcon}>🌿</Text>
+                <Text style={styles.cardTitle}>Herb Batches</Text>
+                <Text style={styles.cardSubtitle}>3,456 batches tracked</Text>
+              </View>
+
+              <View style={styles.statCard}>
+                <Text style={styles.cardIcon}>📈</Text>
+                <Text style={styles.cardTitle}>System Health</Text>
+                <Text style={styles.cardSubtitle}>99.9% uptime</Text>
+              </View>
+
+              <View style={styles.statCard}>
+                <Text style={styles.cardIcon}>🔒</Text>
+                <Text style={styles.cardTitle}>Security</Text>
+                <Text style={styles.cardSubtitle}>All systems secure</Text>
+              </View>
+            </View>
           </View>
-
-          <View style={styles.card}>
-            <Text style={styles.cardIcon}>🌿</Text>
-            <Text style={styles.cardTitle}>Herb Batches</Text>
-            <Text style={styles.cardSubtitle}>3,456 batches tracked</Text>
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.cardIcon}>📈</Text>
-            <Text style={styles.cardTitle}>System Health</Text>
-            <Text style={styles.cardSubtitle}>99.9% uptime</Text>
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.cardIcon}>🔒</Text>
-            <Text style={styles.cardTitle}>Security</Text>
-            <Text style={styles.cardSubtitle}>All systems secure</Text>
-          </View>
-        </View>
-
-        <BottomSpacer extraPadding={20} />
-      </ScrollView>
-    </SafeAreaWrapper>
+        </ScrollView>
+      </LinearGradient>
+    </View>
   );
 };
 
@@ -55,42 +55,36 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
+  gradient: {
+    flex: 1,
+  },
   scrollView: {
     flex: 1,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+  scrollContent: {
+    paddingBottom: 80,
   },
-  backButton: {
-    marginBottom: 16,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#22c55e',
-    fontWeight: '600',
+  content: {
+    padding: 16,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
-    color: '#1F2937',
+    color: '#111827',
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#6B7280',
+    marginBottom: 24,
   },
-  content: {
-    padding: 20,
+  statsGrid: {
+    gap: 16,
   },
-  card: {
-    backgroundColor: 'white',
+  statCard: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 20,
-    marginBottom: 16,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
