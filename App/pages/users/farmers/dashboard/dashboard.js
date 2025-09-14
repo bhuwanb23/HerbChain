@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { SafeAreaWrapper } from '../../../../components';
+import { BottomNavbar } from '../components';
 import {
   Header,
   GreetingSection,
   StatsCards,
   ActionButtons,
   ActivityFeed,
-  BottomAction,
 } from './components';
 
 const Dashboard = ({ navigation }) => {
@@ -30,13 +30,10 @@ const Dashboard = ({ navigation }) => {
     }
   };
 
-  const handleRegisterHerb = () => {
-    Alert.alert('Register Herb', 'Navigate to Herb Registration');
-  };
 
   return (
-    <SafeAreaWrapper style={styles.container} includeBottom={true}>
-      <View style={styles.container}>
+    <View style={styles.container}>
+      <SafeAreaWrapper style={styles.safeArea} includeBottom={false}>
         <Header navigation={navigation} />
         
         <ScrollView
@@ -49,10 +46,10 @@ const Dashboard = ({ navigation }) => {
           <ActionButtons onActionPress={handleActionPress} />
           <ActivityFeed />
         </ScrollView>
-
-        <BottomAction onRegisterHerb={handleRegisterHerb} />
-      </View>
-    </SafeAreaWrapper>
+      </SafeAreaWrapper>
+      
+      <BottomNavbar navigation={navigation} activeTab="home" />
+    </View>
   );
 };
 
@@ -60,6 +57,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
+  },
+  safeArea: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,

@@ -60,51 +60,31 @@ const PerfectLoginScreen = ({ navigation }) => {
   }, [showIntro]);
 
   const handleLogin = (credentials) => {
-    // Add error handling for undefined credentials
-    if (!credentials) {
-      Alert.alert('Error', 'Login data is missing. Please try again.');
+    // Quick login - just check if role is selected
+    if (!selectedRole) {
+      Alert.alert('Error', 'Please select a role first');
       return;
     }
     
-    if (!credentials.email || !credentials.password || !selectedRole) {
-      Alert.alert('Error', 'Please fill in all fields and select a role');
-      return;
-    }
-    
-    // Demo login for all user roles
-    const demoCredentials = {
-      'Farmer': { email: 'farmer@herbchain.com', password: 'farmer123' },
-      'Transporter': { email: 'transporter@herbchain.com', password: 'transporter123' },
-      'Lab': { email: 'lab@herbchain.com', password: 'lab123' },
-      'AYUSH/Admin': { email: 'admin@herbchain.com', password: 'admin123' },
-      'Consumer': { email: 'consumer@herbchain.com', password: 'consumer123' },
-    };
-
-    const validCredentials = demoCredentials[selectedRole];
-    
-    if (credentials.email === validCredentials.email && credentials.password === validCredentials.password) {
-      // Navigate to respective dashboard based on role
-      switch (selectedRole) {
-        case 'Farmer':
-          navigation.navigate('FarmerDashboard');
-          break;
-        case 'Transporter':
-          navigation.navigate('TransporterDashboard');
-          break;
-        case 'Lab':
-          navigation.navigate('LabDashboard');
-          break;
-        case 'AYUSH/Admin':
-          navigation.navigate('AdminDashboard');
-          break;
-        case 'Consumer':
-          navigation.navigate('ConsumerDashboard');
-          break;
-        default:
-          Alert.alert('Success', `Login successful as ${selectedRole}`);
-      }
-    } else {
-      Alert.alert('Invalid Credentials', `Please use:\nEmail: ${validCredentials.email}\nPassword: ${validCredentials.password}`);
+    // Navigate directly to respective dashboard based on role
+    switch (selectedRole) {
+      case 'Farmer':
+        navigation.navigate('FarmerDashboard');
+        break;
+      case 'Transporter':
+        navigation.navigate('TransporterDashboard');
+        break;
+      case 'Lab':
+        navigation.navigate('LabDashboard');
+        break;
+      case 'AYUSH/Admin':
+        navigation.navigate('AdminDashboard');
+        break;
+      case 'Consumer':
+        navigation.navigate('ConsumerDashboard');
+        break;
+      default:
+        Alert.alert('Success', `Login successful as ${selectedRole}`);
     }
   };
 
@@ -179,15 +159,12 @@ const PerfectLoginScreen = ({ navigation }) => {
           {/* Sign Up Section */}
           <SignUpSection onSignUp={handleSignUp} />
 
-          {/* Demo Credentials Info */}
+          {/* Quick Login Info */}
           <View style={styles.demoCredentialsContainer}>
-            <Text style={styles.demoCredentialsTitle}>Demo Credentials</Text>
+            <Text style={styles.demoCredentialsTitle}>Quick Login</Text>
             <Text style={styles.demoCredentialsText}>
-              Farmer: farmer@herbchain.com / farmer123{'\n'}
-              Transporter: transporter@herbchain.com / transporter123{'\n'}
-              Lab: lab@herbchain.com / lab123{'\n'}
-              Admin: admin@herbchain.com / admin123{'\n'}
-              Consumer: consumer@herbchain.com / consumer123
+              Simply select a role and click Login to navigate to the respective dashboard.{'\n'}
+              No email/password required for testing!
             </Text>
           </View>
 

@@ -29,7 +29,7 @@ const StatsCards = () => {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
-    paddingVertical: 24,
+    paddingVertical: 16,
   },
   grid: {
     flexDirection: 'row',

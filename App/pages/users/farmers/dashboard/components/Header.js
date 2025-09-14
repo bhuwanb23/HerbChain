@@ -5,14 +5,6 @@ const Header = ({ navigation }) => {
   return (
     <View style={styles.header}>
       <View style={styles.leftSection}>
-        {navigation && (
-          <TouchableOpacity 
-            style={styles.backButton} 
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backIcon}>←</Text>
-          </TouchableOpacity>
-        )}
         <View style={styles.syncStatus}>
           <View style={styles.syncIndicator} />
           <Text style={styles.syncText}>Synced</Text>
@@ -48,15 +40,6 @@ const styles = StyleSheet.create({
   leftSection: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  backButton: {
-    marginRight: 12,
-    padding: 4,
-  },
-  backIcon: {
-    fontSize: 20,
-    color: '#374151',
-    fontWeight: '600',
   },
   syncStatus: {
     flexDirection: 'row',

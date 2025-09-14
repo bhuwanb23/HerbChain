@@ -36,12 +36,12 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#22c55e',
     paddingHorizontal: 16,
-    paddingVertical: 24,
+    paddingVertical: 16,
   },
   profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   profileImage: {
     width: 48,
