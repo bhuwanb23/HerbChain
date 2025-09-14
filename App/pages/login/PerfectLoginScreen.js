@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
+  Text,
   StyleSheet,
   ScrollView,
   Alert,
@@ -59,16 +60,51 @@ const PerfectLoginScreen = ({ navigation }) => {
   }, [showIntro]);
 
   const handleLogin = (credentials) => {
+    // Add error handling for undefined credentials
+    if (!credentials) {
+      Alert.alert('Error', 'Login data is missing. Please try again.');
+      return;
+    }
+    
     if (!credentials.email || !credentials.password || !selectedRole) {
       Alert.alert('Error', 'Please fill in all fields and select a role');
       return;
     }
     
-    // Check if user is a farmer and navigate to dashboard
-    if (selectedRole === 'Farmer') {
-      navigation.navigate('FarmerDashboard');
+    // Demo login for all user roles
+    const demoCredentials = {
+      'Farmer': { email: 'farmer@herbchain.com', password: 'farmer123' },
+      'Transporter': { email: 'transporter@herbchain.com', password: 'transporter123' },
+      'Lab': { email: 'lab@herbchain.com', password: 'lab123' },
+      'AYUSH/Admin': { email: 'admin@herbchain.com', password: 'admin123' },
+      'Consumer': { email: 'consumer@herbchain.com', password: 'consumer123' },
+    };
+
+    const validCredentials = demoCredentials[selectedRole];
+    
+    if (credentials.email === validCredentials.email && credentials.password === validCredentials.password) {
+      // Navigate to respective dashboard based on role
+      switch (selectedRole) {
+        case 'Farmer':
+          navigation.navigate('FarmerDashboard');
+          break;
+        case 'Transporter':
+          navigation.navigate('TransporterDashboard');
+          break;
+        case 'Lab':
+          navigation.navigate('LabDashboard');
+          break;
+        case 'AYUSH/Admin':
+          navigation.navigate('AdminDashboard');
+          break;
+        case 'Consumer':
+          navigation.navigate('ConsumerDashboard');
+          break;
+        default:
+          Alert.alert('Success', `Login successful as ${selectedRole}`);
+      }
     } else {
-      Alert.alert('Success', `Login successful as ${selectedRole}`);
+      Alert.alert('Invalid Credentials', `Please use:\nEmail: ${validCredentials.email}\nPassword: ${validCredentials.password}`);
     }
   };
 
@@ -143,6 +179,18 @@ const PerfectLoginScreen = ({ navigation }) => {
           {/* Sign Up Section */}
           <SignUpSection onSignUp={handleSignUp} />
 
+          {/* Demo Credentials Info */}
+          <View style={styles.demoCredentialsContainer}>
+            <Text style={styles.demoCredentialsTitle}>Demo Credentials</Text>
+            <Text style={styles.demoCredentialsText}>
+              Farmer: farmer@herbchain.com / farmer123{'\n'}
+              Transporter: transporter@herbchain.com / transporter123{'\n'}
+              Lab: lab@herbchain.com / lab123{'\n'}
+              Admin: admin@herbchain.com / admin123{'\n'}
+              Consumer: consumer@herbchain.com / consumer123
+            </Text>
+          </View>
+
           {/* Footer Links */}
           <FooterLinks 
             onPrivacyPolicy={handlePrivacyPolicy}
@@ -175,6 +223,28 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  demoCredentialsContainer: {
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 16,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: 'rgba(34, 197, 94, 0.3)',
+  },
+  demoCredentialsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#22c55e',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  demoCredentialsText: {
+    fontSize: 12,
+    color: '#374151',
+    lineHeight: 18,
+    textAlign: 'center',
   },
 });
 

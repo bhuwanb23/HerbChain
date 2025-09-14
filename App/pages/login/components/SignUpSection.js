@@ -4,12 +4,12 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 const SignUpSection = ({ onSignUp }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>
-        Don't have an account?{' '}
+      <View style={styles.textContainer}>
+        <Text style={styles.text}>Don't have an account? </Text>
         <TouchableOpacity onPress={onSignUp}>
           <Text style={styles.signUpLink}>Sign Up</Text>
         </TouchableOpacity>
-      </Text>
+      </View>
     </View>
   );
 };
@@ -17,6 +17,10 @@ const SignUpSection = ({ onSignUp }) => {
 const styles = StyleSheet.create({
   container: {
     marginTop: 32,
+    alignItems: 'center',
+  },
+  textContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
   text: {

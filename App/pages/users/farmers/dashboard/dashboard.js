@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaWrapper } from '../../../../components';
 import {
   Header,
   GreetingSection,
@@ -35,7 +35,7 @@ const Dashboard = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaProvider style={styles.container}>
+    <SafeAreaWrapper style={styles.container} includeBottom={true}>
       <View style={styles.container}>
         <Header navigation={navigation} />
         
@@ -52,7 +52,7 @@ const Dashboard = ({ navigation }) => {
 
         <BottomAction onRegisterHerb={handleRegisterHerb} />
       </View>
-    </SafeAreaProvider>
+    </SafeAreaWrapper>
   );
 };
 

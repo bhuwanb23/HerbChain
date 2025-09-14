@@ -3,11 +3,11 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 const RoleSelection = ({ onRoleSelect, selectedRole }) => {
   const roles = [
-    { id: 'farmer', name: 'Farmer', icon: '🌱' },
-    { id: 'transporter', name: 'Transporter', icon: '🚚' },
-    { id: 'lab', name: 'Lab', icon: '🔬' },
-    { id: 'ayush', name: 'AYUSH/Admin', icon: '🏛️' },
-    { id: 'consumer', name: 'Consumer', icon: '👥' },
+    { id: 'Farmer', name: 'Farmer', icon: '🌱' },
+    { id: 'Transporter', name: 'Transporter', icon: '🚚' },
+    { id: 'Lab', name: 'Lab', icon: '🔬' },
+    { id: 'AYUSH/Admin', name: 'AYUSH/Admin', icon: '🏛️' },
+    { id: 'Consumer', name: 'Consumer', icon: '👥' },
   ];
 
   return (
