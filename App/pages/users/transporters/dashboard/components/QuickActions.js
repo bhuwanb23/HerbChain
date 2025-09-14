@@ -1,8 +1,29 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const QuickActions = ({ quickActions, onActionPress }) => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        delay: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        delay: 400,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
   const getActionIcon = (icon) => {
     switch (icon) {
       case '▶️': return 'play-arrow';
@@ -13,73 +34,115 @@ const QuickActions = ({ quickActions, onActionPress }) => {
     }
   };
 
+  const getActionGradient = (color) => {
+    const gradients = {
+      '#3B82F6': ['#3B82F6', '#1D4ED8'],
+      '#10B981': ['#10B981', '#059669'],
+      '#EF4444': ['#EF4444', '#DC2626'],
+      '#F59E0B': ['#F59E0B', '#D97706'],
+    };
+    return gradients[color] || ['#6B7280', '#4B5563'];
+  };
+
   return (
-    <View style={styles.container}>
+    <Animated.View 
+      style={[
+        styles.container,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        },
+      ]}
+    >
       <Text style={styles.title}>Quick Actions</Text>
       <View style={styles.actionsGrid}>
-        {quickActions.map((action) => (
+        {quickActions.map((action, index) => (
           <TouchableOpacity
             key={action.id}
-            style={[styles.actionButton, { backgroundColor: `${action.color}15` }]}
+            style={styles.actionButton}
             onPress={() => onActionPress(action.id)}
             activeOpacity={0.8}
           >
-            <View style={[styles.actionIconContainer, { backgroundColor: action.color }]}>
-              <Icon name={getActionIcon(action.icon)} size={18} color="white" />
-            </View>
-            <Text style={styles.actionTitle}>{action.title}</Text>
+            <LinearGradient
+              colors={['#FFFFFF', '#F8FAFC']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.actionGradient}
+            >
+              <View style={styles.actionIconContainer}>
+                <LinearGradient
+                  colors={getActionGradient(action.color)}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.iconGradient}
+                >
+                  <Icon name={getActionIcon(action.icon)} size={20} color="white" />
+                </LinearGradient>
+              </View>
+              <Text style={styles.actionTitle}>{action.title}</Text>
+            </LinearGradient>
           </TouchableOpacity>
         ))}
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 12,
-    marginBottom: 16,
+    marginBottom: 16, // Reduced margin to minimize spacing
   },
   title: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 12,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 16,
+    letterSpacing: 0.3,
   },
   actionsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 6, // Reduced gap to give more space for text
+    gap: 8,
   },
   actionButton: {
     flex: 1,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 10, // Reduced padding to give more space for text
-    alignItems: 'center',
+    borderRadius: 16,
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-    minHeight: 70, // Added minimum height to ensure consistent button sizes
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  actionGradient: {
+    padding: 16,
+    alignItems: 'center',
+    minHeight: 90,
+    justifyContent: 'center',
   },
   actionIconContainer: {
-    width: 28, // Slightly reduced icon size
-    height: 28,
-    borderRadius: 14,
+    marginBottom: 8,
+  },
+  iconGradient: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4, // Reduced margin
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   actionTitle: {
-    fontSize: 9, // Reduced font size to prevent wrapping
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '600',
     color: '#374151',
     textAlign: 'center',
-    lineHeight: 11, // Added line height for better text display
+    lineHeight: 14,
+    letterSpacing: 0.2,
   },
 });
 

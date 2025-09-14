@@ -1,8 +1,29 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const NotificationsPanel = ({ notifications, onNotificationPress, onMarkAsRead }) => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        delay: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        delay: 800,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
   const getPriorityColor = (priority) => {
     switch (priority) {
       case 'high': return '#EF4444';
@@ -23,16 +44,38 @@ const NotificationsPanel = ({ notifications, onNotificationPress, onMarkAsRead }
     }
   };
 
+  const getPriorityGradient = (priority) => {
+    const gradients = {
+      'high': ['#EF4444', '#DC2626'],
+      'medium': ['#F59E0B', '#D97706'],
+      'low': ['#22c55e', '#16a34a'],
+    };
+    return gradients[priority] || ['#6B7280', '#4B5563'];
+  };
+
   return (
-    <View style={styles.container}>
+    <Animated.View 
+      style={[
+        styles.container,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        },
+      ]}
+    >
       <View style={styles.header}>
         <View style={styles.titleSection}>
-          <Icon name="notifications" size={18} color="#374151" />
+          <View style={styles.titleIconContainer}>
+            <Icon name="notifications" size={20} color="#3B82F6" />
+          </View>
           <Text style={styles.title}>Notifications</Text>
+          <View style={styles.badgeContainer}>
+            <Text style={styles.badgeText}>{notifications.filter(n => !n.isRead).length}</Text>
+          </View>
         </View>
         <TouchableOpacity style={styles.viewAllButton}>
           <Text style={styles.viewAllText}>View All</Text>
-          <Icon name="arrow-forward" size={14} color="#3B82F6" />
+          <Icon name="arrow-forward" size={16} color="#3B82F6" />
         </TouchableOpacity>
       </View>
       
@@ -41,7 +84,7 @@ const NotificationsPanel = ({ notifications, onNotificationPress, onMarkAsRead }
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {notifications.map((notification) => (
+        {notifications.map((notification, index) => (
           <TouchableOpacity
             key={notification.id}
             style={[
@@ -49,90 +92,130 @@ const NotificationsPanel = ({ notifications, onNotificationPress, onMarkAsRead }
               !notification.isRead && styles.unreadNotification
             ]}
             onPress={() => onNotificationPress(notification)}
-            activeOpacity={0.7}
+            activeOpacity={0.8}
           >
-            <View style={styles.notificationContent}>
-              <View style={styles.notificationHeader}>
-                <View style={[
-                  styles.iconContainer,
-                  { backgroundColor: `${getPriorityColor(notification.priority)}20` }
-                ]}>
-                  <Icon 
-                    name={getNotificationIcon(notification.type)} 
-                    size={16} 
-                    color={getPriorityColor(notification.priority)} 
-                  />
-                </View>
-                <View style={styles.notificationText}>
-                  <Text style={styles.notificationTitle}>{notification.title}</Text>
-                  <Text style={styles.notificationMessage}>{notification.message}</Text>
-                </View>
-                <View style={styles.notificationMeta}>
-                  {!notification.isRead && <View style={styles.unreadDot} />}
-                  <Text style={styles.timestamp}>{notification.timestamp}</Text>
+            <LinearGradient
+              colors={['#FFFFFF', '#F8FAFC']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.notificationGradient}
+            >
+              <View style={styles.notificationContent}>
+                <View style={styles.notificationHeader}>
+                  <View style={styles.iconContainer}>
+                    <LinearGradient
+                      colors={getPriorityGradient(notification.priority)}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.iconGradient}
+                    >
+                      <Icon 
+                        name={getNotificationIcon(notification.type)} 
+                        size={18} 
+                        color="white" 
+                      />
+                    </LinearGradient>
+                  </View>
+                  <View style={styles.notificationText}>
+                    <Text style={styles.notificationTitle}>{notification.title}</Text>
+                    <Text style={styles.notificationMessage}>{notification.message}</Text>
+                  </View>
+                  <View style={styles.notificationMeta}>
+                    {!notification.isRead && <View style={styles.unreadDot} />}
+                    <Text style={styles.timestamp}>{notification.timestamp}</Text>
+                  </View>
                 </View>
               </View>
-            </View>
+            </LinearGradient>
           </TouchableOpacity>
         ))}
       </ScrollView>
-    </View>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 12,
-    marginBottom: 16,
+    marginBottom: 10, // Reduced bottom margin to minimize white space
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   titleSection: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+  },
+  titleIconContainer: {
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    borderRadius: 10,
+    padding: 6,
+    marginRight: 8,
   },
   title: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginLeft: 6,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginRight: 12,
+    letterSpacing: 0.3,
+  },
+  badgeContainer: {
+    backgroundColor: '#EF4444',
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minWidth: 20,
+    alignItems: 'center',
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: 'white',
+    letterSpacing: 0.2,
   },
   viewAllButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.2)',
   },
   viewAllText: {
     fontSize: 12,
     color: '#3B82F6',
-    fontWeight: '500',
-    marginRight: 2,
+    fontWeight: '600',
+    marginRight: 4,
+    letterSpacing: 0.2,
   },
   notificationsList: {
-    maxHeight: 200,
+    maxHeight: 180, // Reduced to account for fixed header and bottom nav
   },
   scrollContent: {
     paddingBottom: 8,
   },
   notificationItem: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
+    borderRadius: 14,
+    marginBottom: 10,
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
   unreadNotification: {
-    borderLeftWidth: 3,
+    borderLeftWidth: 4,
     borderLeftColor: '#3B82F6',
+  },
+  notificationGradient: {
+    padding: 16,
   },
   notificationContent: {
     flex: 1,
@@ -142,41 +225,58 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   iconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    marginRight: 12,
+  },
+  iconGradient: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
   },
   notificationText: {
     flex: 1,
     marginRight: 8,
   },
   notificationTitle: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
     color: '#111827',
-    marginBottom: 2,
+    marginBottom: 4,
+    letterSpacing: 0.2,
   },
   notificationMessage: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#6B7280',
     lineHeight: 16,
+    fontWeight: '500',
+    letterSpacing: 0.1,
   },
   notificationMeta: {
     alignItems: 'flex-end',
   },
   unreadDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: '#3B82F6',
-    marginBottom: 4,
+    marginBottom: 6,
+    shadowColor: '#3B82F6',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 1,
   },
   timestamp: {
-    fontSize: 9,
+    fontSize: 10,
     color: '#9CA3AF',
+    fontWeight: '500',
+    letterSpacing: 0.1,
   },
 });
 

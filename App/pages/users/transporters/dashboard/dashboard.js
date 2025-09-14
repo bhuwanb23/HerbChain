@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { SafeAreaWrapper } from '../../../../components';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTransporterDashboard } from './hooks/useTransporterDashboard';
 import {
   TRANSPORTER_INFO,
@@ -18,6 +18,7 @@ import {
 } from './components';
 
 const TransporterDashboard = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const {
     notifications,
     isMapExpanded,
@@ -28,10 +29,10 @@ const TransporterDashboard = ({ navigation }) => {
   } = useTransporterDashboard();
 
   return (
-    <SafeAreaWrapper style={styles.container} includeBottom={true}>
+    <View style={styles.container}>
       <ScrollView 
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}
         showsVerticalScrollIndicator={false}
       >
         <WelcomeBanner transporterInfo={TRANSPORTER_INFO} />
@@ -57,7 +58,7 @@ const TransporterDashboard = ({ navigation }) => {
           onNotificationPress={handleNotificationPress}
         />
       </ScrollView>
-    </SafeAreaWrapper>
+    </View>
   );
 };
 
@@ -70,7 +71,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 20, // Reduced from 80 to remove unwanted white space
+    paddingTop: 0, // Remove top padding to eliminate white space
   },
 });
 
