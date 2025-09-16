@@ -4,7 +4,7 @@ import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const FiltersSection = ({ filters, onFilterChange, onResetFilters }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const dateRangeOptions = [
     { label: 'Date Range', value: 'all' },
@@ -58,15 +58,15 @@ const FiltersSection = ({ filters, onFilterChange, onResetFilters }) => {
             </View>
           </View>
 
-          {/* Status Filter */}
+          {/* Herb Type Filter */}
           <View style={styles.filterItem}>
             <View style={styles.pickerContainer}>
               <Picker
-                selectedValue={filters.status}
-                onValueChange={(value) => onFilterChange('status', value)}
+                selectedValue={filters.herbType}
+                onValueChange={(value) => onFilterChange('herbType', value)}
                 style={styles.picker}
               >
-                {statusOptions.map((option) => (
+                {herbTypeOptions.map((option) => (
                   <Picker.Item
                     key={option.value}
                     label={option.label}
@@ -78,24 +78,7 @@ const FiltersSection = ({ filters, onFilterChange, onResetFilters }) => {
           </View>
         </View>
 
-        {/* Herb Type Filter */}
-        <View style={styles.fullWidthFilter}>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={filters.herbType}
-              onValueChange={(value) => onFilterChange('herbType', value)}
-              style={styles.picker}
-            >
-              {herbTypeOptions.map((option) => (
-                <Picker.Item
-                  key={option.value}
-                  label={option.label}
-                  value={option.value}
-                />
-              ))}
-            </Picker>
-          </View>
-        </View>
+        {/* Status locked to completed - hidden for cleaner UI */}
       </View>
     </View>
   );

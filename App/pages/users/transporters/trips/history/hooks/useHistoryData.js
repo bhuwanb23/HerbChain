@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { MOCK_TRIPS, DEFAULT_FILTERS } from '../constants';
 
 export const useHistoryData = () => {
-  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState({ ...DEFAULT_FILTERS, status: 'completed' });
   const [isLoading, setIsLoading] = useState(false);
 
   // Filter trips based on current filters

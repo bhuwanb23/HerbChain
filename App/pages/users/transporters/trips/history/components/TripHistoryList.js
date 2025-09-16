@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const TripHistoryList = ({ trips, onExport, onLoadMore }) => {
-  const [selectedTrip, setSelectedTrip] = useState(null);
+const TripHistoryList = ({ trips, onExport, onLoadMore, onSelectTrip }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -39,7 +38,7 @@ const TripHistoryList = ({ trips, onExport, onLoadMore }) => {
       <TouchableOpacity
         key={trip.id}
         style={styles.tripItem}
-        onPress={() => setSelectedTrip(trip)}
+        onPress={() => onSelectTrip && onSelectTrip(trip)}
         activeOpacity={0.7}
       >
         <View style={styles.tripContent}>
@@ -71,53 +70,6 @@ const TripHistoryList = ({ trips, onExport, onLoadMore }) => {
     );
   };
 
-  const renderTripDetails = (trip) => (
-    <View style={styles.detailsModal}>
-      <View style={styles.detailsCard}>
-        <View style={styles.detailsHeader}>
-          <Text style={styles.detailsTitle}>Trip Details</Text>
-          <TouchableOpacity onPress={() => setSelectedTrip(null)}>
-            <Icon name="close" size={24} color="#6B7280" />
-          </TouchableOpacity>
-        </View>
-        
-        <ScrollView style={styles.detailsContent}>
-          <View style={styles.detailSection}>
-            <Text style={styles.sectionTitle}>Trip Information</Text>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Trip ID:</Text>
-              <Text style={styles.detailValue}>{trip.id}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Date:</Text>
-              <Text style={styles.detailValue}>{trip.date}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Status:</Text>
-              <Text style={styles.detailValue}>{trip.status}</Text>
-            </View>
-          </View>
-          
-          <View style={styles.detailSection}>
-            <Text style={styles.sectionTitle}>Route Information</Text>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Route:</Text>
-              <Text style={styles.detailValue}>{trip.route}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Herb Type:</Text>
-              <Text style={styles.detailValue}>{trip.herbType}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Duration:</Text>
-              <Text style={styles.detailValue}>{trip.duration}</Text>
-            </View>
-          </View>
-        </ScrollView>
-      </View>
-    </View>
-  );
-
   return (
     <View style={styles.container}>
       <View style={styles.card}>
@@ -140,8 +92,6 @@ const TripHistoryList = ({ trips, onExport, onLoadMore }) => {
         </View>
       </View>
 
-      {/* Trip Details Modal */}
-      {selectedTrip && renderTripDetails(selectedTrip)}
     </View>
   );
 };
@@ -257,64 +207,6 @@ const styles = StyleSheet.create({
   loadMoreText: {
     fontSize: 12,
     color: '#059669',
-    fontWeight: '500',
-  },
-  detailsModal: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  detailsCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 20,
-    maxHeight: '80%',
-    width: '100%',
-  },
-  detailsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  detailsTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  detailsContent: {
-    maxHeight: 400,
-  },
-  detailSection: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 12,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  detailLabel: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  detailValue: {
-    fontSize: 14,
-    color: '#111827',
     fontWeight: '500',
   },
 });

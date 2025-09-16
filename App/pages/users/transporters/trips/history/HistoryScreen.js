@@ -11,27 +11,24 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 
 // Import components
 import {
-  PerformanceSummary,
-  ChartsSection,
   FiltersSection,
   TripHistoryList,
 } from './components';
 
 // Import hooks and constants
 import { useHistoryData } from './hooks';
-import { PERFORMANCE_STATS, WEEKLY_DATA, SUCCESS_RATE } from './constants';
 
 const HistoryScreen = ({ onGoBack }) => {
   const {
     trips,
     filters,
-    statistics,
     isLoading,
     handleFilterChange,
     resetFilters,
     loadMoreTrips,
     exportData,
   } = useHistoryData();
+  const [selectedTrip, setSelectedTrip] = React.useState(null);
 
   return (
     <View style={styles.container}>
@@ -54,15 +51,6 @@ const HistoryScreen = ({ onGoBack }) => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Performance Summary Cards */}
-          <PerformanceSummary stats={PERFORMANCE_STATS} />
-
-          {/* Charts Section */}
-          <ChartsSection 
-            weeklyData={WEEKLY_DATA} 
-            successRate={SUCCESS_RATE} 
-          />
-
           {/* Filters Section */}
           <FiltersSection
             filters={filters}
@@ -70,12 +58,58 @@ const HistoryScreen = ({ onGoBack }) => {
             onResetFilters={resetFilters}
           />
 
-          {/* Trip History List */}
+          {/* Trip History List (Completed only) */}
           <TripHistoryList
-            trips={trips}
+            trips={trips.filter(t => t.status === 'completed')}
             onExport={exportData}
             onLoadMore={loadMoreTrips}
+            onSelectTrip={setSelectedTrip}
           />
+
+          {selectedTrip && (
+            <View style={styles.detailsModal}>
+              <View style={styles.detailsCard}>
+                <View style={styles.detailsHeader}>
+                  <Text style={styles.detailsTitle}>Trip Details</Text>
+                  <TouchableOpacity onPress={() => setSelectedTrip(null)}>
+                    <Icon name="close" size={24} color="#6B7280" />
+                  </TouchableOpacity>
+                </View>
+                <ScrollView style={styles.detailsContent}>
+                  <View style={styles.detailSection}>
+                    <Text style={styles.sectionTitle}>Trip Information</Text>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Trip ID:</Text>
+                      <Text style={styles.detailValue}>{selectedTrip.id}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Date:</Text>
+                      <Text style={styles.detailValue}>{selectedTrip.date}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Status:</Text>
+                      <Text style={styles.detailValue}>{selectedTrip.status}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.detailSection}>
+                    <Text style={styles.sectionTitle}>Route Information</Text>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Route:</Text>
+                      <Text style={styles.detailValue}>{selectedTrip.route}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Herb Type:</Text>
+                      <Text style={styles.detailValue}>{selectedTrip.herbType}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Duration:</Text>
+                      <Text style={styles.detailValue}>{selectedTrip.duration}</Text>
+                    </View>
+                  </View>
+                </ScrollView>
+              </View>
+            </View>
+          )}
         </ScrollView>
       </LinearGradient>
     </View>
@@ -111,6 +145,64 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 80, // Space for bottom navbar
+  },
+  detailsModal: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  detailsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+    maxHeight: '80%',
+    width: '90%',
+  },
+  detailsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  detailsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  detailsContent: {
+    maxHeight: 400,
+  },
+  detailSection: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  detailLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  detailValue: {
+    fontSize: 14,
+    color: '#111827',
+    fontWeight: '500',
   },
 });
 
