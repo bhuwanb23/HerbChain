@@ -7,6 +7,8 @@ import BottomNavbar from './components/bottom_navbar';
 import TransporterDashboard from './dashboard/dashboard';
 import TripsPage from './trips';
 import PaymentsScreen from './payments/payments';
+import TransporterProfileScreen from './profile/profile';
+import ReportsScreen from './reports/reports';
 
 const TransportersPage = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -23,21 +25,11 @@ const TransportersPage = ({ navigation }) => {
       case 'trips':
         return <TripsPage navigation={navigation} />;
       case 'history':
-        return (
-          <View style={styles.placeholderContainer}>
-            <Text style={styles.placeholderText}>📜 History & Reports</Text>
-            <Text style={styles.placeholderSubtext}>Past trips, receipts, and analytics</Text>
-          </View>
-        );
+        return <ReportsScreen navigation={navigation} />;
       case 'payments':
         return <PaymentsScreen navigation={navigation} />;
       case 'profile':
-        return (
-          <View style={styles.placeholderContainer}>
-            <Text style={styles.placeholderText}>⚙️ Profile & Settings</Text>
-            <Text style={styles.placeholderSubtext}>Vehicle info, language, security, support</Text>
-          </View>
-        );
+        return <TransporterProfileScreen navigation={navigation} />;
       case 'notifications':
         return (
           <View style={styles.placeholderContainer}>
@@ -70,6 +62,7 @@ const TransportersPage = ({ navigation }) => {
           navigation={navigation}
           title={getPageTitle()}
           onNotificationPress={handleTransporterNavigation}
+          showNotifications={currentPage !== 'profile'}
         />
         <View style={styles.pageContainer}>
           {renderCurrentPage()}
