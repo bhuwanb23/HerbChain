@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useComplianceMetrics } from './hooks/useComplianceMetrics'
+import { useComplianceMetrics } from './hooks/useComplianceMetrics.jsx'
 import { ayushStandardsDefault, complianceAlerts } from './constants'
 import MetricsGrid from './components/MetricsGrid.jsx'
 import StandardsGrid from './components/StandardsGrid.jsx'
