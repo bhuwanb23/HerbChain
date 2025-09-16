@@ -12,13 +12,13 @@ const Row = ({ icon, label, rightIcon }) => (
   </TouchableOpacity>
 );
 
-const AccountActions = () => {
+const AccountActions = ({ onLogout }) => {
   return (
     <View style={styles.container}>
       <View style={styles.stack}>
         <Row icon="manage-accounts" label="Account Settings" />
         <Row icon="headset-mic" label="Help & Support" />
-        <TouchableOpacity style={styles.logout} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.logout} activeOpacity={0.8} onPress={onLogout}>
           <Icon name="logout" size={18} color="#DC2626" style={styles.rowIcon} />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>

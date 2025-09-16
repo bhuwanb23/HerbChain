@@ -19,6 +19,14 @@ const TransporterProfileScreen = ({ navigation }) => {
     onUploadDocument,
   } = useProfile();
 
+  const handleLogout = () => {
+    if (navigation && navigation.reset) {
+      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+    } else if (navigation && navigation.navigate) {
+      navigation.navigate('Login');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -40,7 +48,7 @@ const TransporterProfileScreen = ({ navigation }) => {
 
         <DocumentsSection documents={documents} onUploadDocument={onUploadDocument} />
 
-        <AccountActions />
+        <AccountActions onLogout={handleLogout} />
       </ScrollView>
     </View>
   );
