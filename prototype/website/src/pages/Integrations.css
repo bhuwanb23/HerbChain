@@ -1,0 +1,151 @@
+/* src/pages/Integrations.css */
+:root {
+  --green-primary: #4CAF50;
+  --green-dark: #388E3C;
+  --green-light: #E8F5E9;
+  --text-dark: #212121;
+  --text-secondary: #757575;
+  --bg-primary: #F5F5F5;
+  --bg-card: #FFFFFF;
+  --border-light: #E0E0E0;
+  --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --accent-red: #D32F2F;
+  --accent-orange: #FF9800;
+  --connected-color: #2E7D32;
+  --not-configured-color: #FFC107;
+}
+
+.integrations-container {
+  padding: 2rem;
+  font-family: 'Poppins, sans-serif';
+  background-color: var(--bg-primary);
+  min-height: 100vh;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.page-title {
+  font-size: 2.25rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.page-subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.integrations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.integration-card {
+  background-color: var(--bg-card);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-subtle);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.integration-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
+}
+
+.integration-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.integration-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.integration-header h3 {
+  font-size: 1.25rem;
+  margin: 0;
+  color: var(--text-dark);
+}
+
+.integration-description {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  flex-grow: 1;
+}
+
+.integration-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+}
+
+.integration-status-badge {
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.status-connected {
+  border-left: 4px solid var(--connected-color);
+}
+
+.status-not-configured {
+  border-left: 4px solid var(--not-configured-color);
+}
+
+.integration-status-badge {
+  background-color: var(--green-light);
+  color: var(--connected-color);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.status-not-configured .integration-status-badge {
+  background-color: #FFF8E1;
+  color: var(--not-configured-color);
+}
+
+.action-button {
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.primary-button {
+  background-color: var(--green-primary);
+  color: white;
+}
+
+.primary-button:hover {
+  background-color: var(--green-dark);
+}
+
+.secondary-button {
+  background-color: transparent;
+  color: var(--text-dark);
+  border: 1px solid var(--border-light);
+}
+
+.secondary-button:hover {
+  background-color: var(--border-light);
+}

@@ -1,0 +1,72 @@
+/* src/pages/Recalls.css */
+:root {
+  --main-green: #388E3C;
+  --dark-green: #2E7D32;
+  --light-green-bg: #E8F5E9;
+  --header-bg: #F4F8F3;
+  --text-primary: #333;
+  --text-secondary: #666;
+  --border-color: #E0E0E0;
+  --card-bg: #FFFFFF;
+  --accent-red: #D32F2F;
+  --accent-yellow: #FFC107;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.recalls-container {
+  padding: 2rem;
+  font-family: 'Poppins, sans-serif';
+  background-color: var(--header-bg);
+  min-height: 100vh;
+}
+
+.recall-panel {
+  background-color: var(--card-bg);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: var(--box-shadow);
+  max-width: 600px;
+  margin: 0 auto;
+  border-top: 5px solid var(--accent-red);
+}
+
+.recall-details h3 {
+  color: var(--text-primary);
+  margin-top: 0;
+}
+
+.warning-text {
+  color: var(--accent-red);
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.recall-form {
+  margin-top: 2rem;
+}
+
+.recall-form label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.recall-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  resize: vertical;
+}
+
+.recall-success {
+  text-align: center;
+  margin-top: 2rem;
+  padding: 20px;
+  background-color: var(--light-green-bg);
+  border-radius: 8px;
+  color: var(--main-green);
+  border: 1px solid var(--main-green);
+}

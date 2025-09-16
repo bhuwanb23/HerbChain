@@ -1,0 +1,146 @@
+/* src/pages/AlertsAndRecalls.css */
+:root {
+  --main-green: #388E3C;
+  --dark-green: #2E7D32;
+  --light-green-bg: #E8F5E9;
+  --header-bg: #F4F8F3;
+  --text-primary: #333;
+  --text-secondary: #666;
+  --border-color: #E0E0E0;
+  --card-bg: #FFFFFF;
+  --accent-red: #D32F2F;
+  --accent-yellow: #FFC107;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.alerts-container {
+  padding: 2rem;
+  font-family: 'Poppins, sans-serif';
+  background-color: var(--header-bg);
+  min-height: 100vh;
+}
+
+.alerts-header-section {
+  margin-bottom: 2rem;
+}
+
+.alerts-header-title {
+  font-size: 2rem;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.alerts-header-subtitle {
+  color: var(--text-secondary);
+  margin-top: 5px;
+  font-size: 1rem;
+}
+
+.alerts-main-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.alerts-section,
+.recalls-section {
+  background-color: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--box-shadow);
+}
+
+.section-title {
+  color: var(--text-primary);
+  margin-top: 0;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+  margin-bottom: 1rem;
+}
+
+.alert-list,
+.recall-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.alert-item,
+.recall-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.alert-item:last-child,
+.recall-item:last-child {
+  border-bottom: none;
+}
+
+.alert-details,
+.recall-details {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.alert-icon,
+.recall-icon {
+  font-size: 1.8rem;
+}
+
+.alert-type,
+.recall-type {
+  font-weight: bold;
+  margin: 0;
+}
+
+.alert-reason,
+.recall-reason {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 5px 0 0;
+}
+
+.alert-batch-id {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 5px;
+}
+
+.action-button {
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.primary-button {
+  background-color: var(--accent-red);
+  color: white;
+  border: none;
+}
+
+.primary-button:hover {
+  background-color: #b71c1c;
+}
+
+.no-alerts,
+.no-recalls {
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 20px;
+}
+
+.recall-status {
+  background-color: var(--accent-red);
+  color: white;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.8rem;
+}
