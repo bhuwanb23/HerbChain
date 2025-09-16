@@ -1,8 +1,14 @@
-flask==3.0.3
-
-# Orchestration & tooling for blockchain setup
+blinker==1.9.0
 click==8.1.7
-pyyaml==6.0.2
+colorama==0.4.6
+Flask==3.0.3
+itsdangerous==2.2.0
+Jinja2==3.1.6
+markdown-it-py==4.0.0
+MarkupSafe==3.0.2
+mdurl==0.1.2
+Pygments==2.19.2
 python-dotenv==1.0.1
+PyYAML==6.0.2
 rich==13.7.1
-
+Werkzeug==3.1.3
