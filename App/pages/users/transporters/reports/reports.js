@@ -1,28 +1,26 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { REPORT_FILTERS, ANALYTICS_SUMMARY, EARNINGS, COMPLIANCE, IMPACT } from './constants';
-import { FiltersBar, AnalyticsSummary, EarningsSection, ComplianceSection, ImpactSection } from './components';
+import { useReportsData } from './hooks';
+import { TimeFilter, PerformanceOverview, EarningsBreakdown, ChartsSection, ExportOptions, ReceiptsList } from './components';
 
 const ReportsScreen = () => {
-  const [activePeriod, setActivePeriod] = useState(REPORT_FILTERS.activePeriod);
+  const { period, setPeriod, filters, analytics, earnings, charts, receipts } = useReportsData();
 
   return (
     <View style={styles.container}>
       <LinearGradient colors={["#F9FAFB", "#F3F4F6"]} style={styles.gradient}>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <LinearGradient colors={["#059669", "#10B981"]} start={{x:0,y:0}} end={{x:1,y:1}} style={styles.headerCard}>
-            <View>
-              {/* Simple decorative header; main header handled by parent */}
-            </View>
+            <View />
           </LinearGradient>
 
-          <FiltersBar options={REPORT_FILTERS.periodOptions} active={activePeriod} onChange={setActivePeriod} />
-
-          <AnalyticsSummary data={ANALYTICS_SUMMARY} />
-          <EarningsSection data={EARNINGS} />
-          <ComplianceSection data={COMPLIANCE} />
-          <ImpactSection data={IMPACT} />
+          <TimeFilter options={filters} active={period} onChange={setPeriod} />
+          <PerformanceOverview analytics={analytics} />
+          <EarningsBreakdown earnings={earnings} />
+          <ChartsSection charts={charts} />
+          <ExportOptions />
+          <ReceiptsList items={receipts} />
         </ScrollView>
       </LinearGradient>
     </View>

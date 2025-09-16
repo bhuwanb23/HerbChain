@@ -1,10 +1,10 @@
 export const REPORT_FILTERS = {
   periodOptions: [
-    { id: 'week', label: 'This Week' },
-    { id: 'month', label: 'This Month' },
-    { id: 'year', label: 'This Year' },
+    { id: 'day', label: 'Daily' },
+    { id: 'week', label: 'Weekly' },
+    { id: 'month', label: 'Monthly' },
   ],
-  activePeriod: 'month',
+  activePeriod: 'week',
 };
 
 export const ANALYTICS_SUMMARY = {
@@ -23,6 +23,11 @@ export const EARNINGS = {
     { label: 'W2', value: 22000 },
     { label: 'W3', value: 26500 },
     { label: 'W4', value: 31500 },
+  ],
+  breakdown: [
+    { id: 'base', label: 'Base Pay', subtitle: 'Regular trips', amount: 2840, color: '#2563EB', icon: 'currency-usd' },
+    { id: 'bonus', label: 'Bonuses', subtitle: 'Performance rewards', amount: 420, color: '#F59E0B', icon: 'star-outline' },
+    { id: 'eco', label: 'Eco Incentives', subtitle: 'Green driving', amount: 185, color: '#10B981', icon: 'leaf' },
   ],
 };
 
@@ -47,5 +52,22 @@ export const IMPACT = {
     { id: 'ontime', label: 'On-Time', color: '#3B82F6' },
   ],
 };
+
+export const CHARTS = {
+  tripVolume: {
+    categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    data: [28, 35, 42, 38, 45, 32, 29],
+  },
+  deliveryPerformance: {
+    onTime: 94,
+    delayed: 6,
+  },
+};
+
+export const RECEIPTS = [
+  { id: 'TR-2024-001', date: 'Jan 15, 2024', route: 'Downtown Route', amount: 45.50 },
+  { id: 'TR-2024-002', date: 'Jan 14, 2024', route: 'Express Delivery', amount: 62.30 },
+  { id: 'TR-2024-003', date: 'Jan 13, 2024', route: 'Bulk Transport', amount: 89.75 },
+];
 
 
