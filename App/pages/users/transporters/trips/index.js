@@ -5,11 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 import BatchScanScreen from './batch_scan/BatchScanScreen';
@@ -18,7 +15,6 @@ import ActiveTripsScreen from './active_trips/active_trips';
 import HistoryScreen from './history/HistoryScreen';
 
 const TripsPage = ({ navigation }) => {
-  const insets = useSafeAreaInsets();
   const [currentPage, setCurrentPage] = useState('trips_overview');
   const [tripFlow, setTripFlow] = useState({
     currentTrip: null,
@@ -145,43 +141,60 @@ const TripsPage = ({ navigation }) => {
     switch (currentPage) {
       case 'trips_overview':
         return (
-          <View style={styles.tripsOverview}>
-            <View style={styles.tripCards}>
-              {mockTrips.map((trip) => (
-                <TouchableOpacity 
-                  key={trip.id}
-                  style={[styles.tripCard, { borderLeftColor: trip.color }]}
-                  onPress={() => handleTripSelection(trip)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.tripCardHeader}>
-                    <Icon name={trip.icon} size={24} color={trip.color} />
-                    <Text style={styles.tripCardTitle}>
-                      {trip.status === 'pending' ? 'Pending Pickup' : 
-                       trip.status === 'active' ? 'Active Trip' : 'Completed Trip'}
-                    </Text>
-                  </View>
-                  <Text style={styles.tripCardSubtitle}>{trip.from} → {trip.to}</Text>
-                  <Text style={styles.tripCardTime}>{trip.time}</Text>
-                  {trip.status === 'pending' && (
-                    <View style={styles.actionHint}>
-                      <Text style={styles.actionHintText}>Tap to scan batch QR</Text>
+          <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <View style={styles.tripsOverview}>
+              <LinearGradient colors={["#059669", "#10B981"]} start={{x:0,y:0}} end={{x:1,y:1}} style={styles.sectionHeader}>
+                <View style={styles.headerTextWrap}>
+                  <Text style={styles.headerTitle}>Trips Management</Text>
+                  <Text style={styles.headerSubtitle}>Plan, track and complete your deliveries</Text>
+                </View>
+              </LinearGradient>
+
+              <View style={styles.tripCards}>
+                {mockTrips.map((trip) => (
+                  <TouchableOpacity 
+                    key={trip.id}
+                    style={[styles.tripCard, { borderLeftColor: trip.color }]}
+                    onPress={() => handleTripSelection(trip)}
+                    activeOpacity={0.85}
+                  >
+                    <View style={styles.cardTopRow}>
+                      <View style={[styles.iconChip, { backgroundColor: `${trip.color}1A`, borderColor: `${trip.color}33` }]}> 
+                        <Icon name={trip.icon} size={18} color={trip.color} />
+                      </View>
+                      <View style={styles.titleWrap}>
+                        <Text style={styles.tripCardTitle}>
+                          {trip.status === 'pending' ? 'Pending Pickup' : 
+                           trip.status === 'active' ? 'Active Trip' : 'Completed Trip'}
+                        </Text>
+                        <Text style={styles.tripCardSubtitle}>{trip.from} → {trip.to}</Text>
+                      </View>
+                      <View style={[styles.badge, { backgroundColor: `${trip.color}1A`, borderColor: `${trip.color}33` }]}> 
+                        <Text style={[styles.badgeText, { color: trip.color }]}>
+                          {trip.status.charAt(0).toUpperCase() + trip.status.slice(1)}
+                        </Text>
+                      </View>
                     </View>
-                  )}
-                  {trip.status === 'active' && (
-                    <View style={styles.actionHint}>
-                      <Text style={styles.actionHintText}>Tap to view trip details</Text>
+
+                    <View style={styles.divider} />
+                    <Text style={styles.tripCardTime}>{trip.time}</Text>
+
+                    <View style={styles.footerHintRow}>
+                      {trip.status === 'pending' && (
+                        <View style={styles.hintChip}><Text style={styles.hintChipText}>Scan batch QR</Text></View>
+                      )}
+                      {trip.status === 'active' && (
+                        <View style={styles.hintChip}><Text style={styles.hintChipText}>View trip details</Text></View>
+                      )}
+                      {trip.status === 'completed' && (
+                        <View style={styles.hintChip}><Text style={styles.hintChipText}>Open history</Text></View>
+                      )}
                     </View>
-                  )}
-                  {trip.status === 'completed' && (
-                    <View style={styles.actionHint}>
-                      <Text style={styles.actionHintText}>Tap to view history</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              ))}
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
+          </ScrollView>
         );
       case 'batch_scan':
         return (
@@ -224,9 +237,7 @@ const TripsPage = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar style="dark" backgroundColor="#F9FAFB" />
-      
+    <View style={styles.container}>
       <LinearGradient
         colors={['#F9FAFB', '#F3F4F6']}
         style={styles.gradient}
@@ -234,7 +245,7 @@ const TripsPage = ({ navigation }) => {
         {/* Page Content */}
         {renderCurrentPage()}
       </LinearGradient>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -245,6 +256,12 @@ const styles = StyleSheet.create({
   },
   gradient: {
     flex: 1,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 24,
   },
   placeholderContainer: {
     flex: 1,
@@ -279,8 +296,33 @@ const styles = StyleSheet.create({
   tripsOverview: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 0,
     paddingBottom: 24,
+  },
+  sectionHeader: {
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 16,
+    shadowColor: '#059669',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  headerTextWrap: {
+    gap: 2,
+  },
+  headerTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  headerSubtitle: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 12,
+    fontWeight: '500',
   },
   overviewTitle: {
     fontSize: 24,
@@ -301,7 +343,7 @@ const styles = StyleSheet.create({
   tripCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 20,
+    padding: 16,
     borderWidth: 1,
     borderColor: '#E5E7EB',
     borderLeftWidth: 4,
@@ -311,20 +353,46 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  tripCardHeader: {
+  cardTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
+  },
+  iconChip: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  titleWrap: {
+    flex: 1,
+    marginLeft: 10,
   },
   tripCardTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#111827',
-    marginLeft: 12,
   },
   tripCardSubtitle: {
     fontSize: 14,
     color: '#6B7280',
+    marginBottom: 8,
+  },
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
     marginBottom: 8,
   },
   tripCardTime: {
@@ -332,17 +400,20 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     fontWeight: '500',
   },
-  actionHint: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+  footerHintRow: {
+    flexDirection: 'row',
+    marginTop: 10,
   },
-  actionHintText: {
+  hintChip: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  hintChipText: {
     fontSize: 11,
     color: '#6B7280',
-    fontStyle: 'italic',
-    textAlign: 'center',
+    fontWeight: '600',
   },
 });
 

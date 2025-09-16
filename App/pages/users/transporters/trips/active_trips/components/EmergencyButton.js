@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useEmergencyActions } from '../hooks';
 
 const EmergencyButton = () => {
@@ -13,8 +14,8 @@ const EmergencyButton = () => {
         activeOpacity={0.8}
       >
         <View style={styles.buttonContent}>
-          <Text style={styles.emergencyIcon}>⚠️</Text>
-          <Text style={styles.emergencyText}>Emergency Help</Text>
+          <Icon name="alert" size={16} color="#FFFFFF" />
+          <Text style={styles.emergencyText}>Emergency</Text>
         </View>
       </TouchableOpacity>
       <Text style={styles.helpText}>Tap for immediate assistance</Text>
@@ -32,7 +33,7 @@ const styles = StyleSheet.create({
   },
   emergencyButton: {
     backgroundColor: '#EF4444',
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderRadius: 8,
     shadowColor: '#EF4444',
     shadowOffset: { width: 0, height: 2 },
@@ -44,14 +45,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-  },
-  emergencyIcon: {
-    fontSize: 16,
+    gap: 6,
   },
   emergencyText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   helpText: {

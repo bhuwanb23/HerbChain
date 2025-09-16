@@ -38,17 +38,13 @@ const PerformanceSummary = ({ stats }) => {
   return (
     <View style={styles.container}>
       <View style={styles.grid}>
-        {summaryCards.map((card, index) => (
+        {summaryCards.map((card) => (
           <LinearGradient
             key={card.id}
             colors={card.gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={[
-              styles.card,
-              index < 2 && styles.topRow,
-              index >= 2 && styles.bottomRow,
-            ]}
+            style={styles.card}
           >
             <View style={styles.cardContent}>
               <View style={styles.cardInfo}>
@@ -71,18 +67,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     gap: 12,
-  },
-  topRow: {
-    marginBottom: 0,
-  },
-  bottomRow: {
-    marginTop: 0,
   },
   card: {
     borderRadius: 12,
     padding: 16,
     minHeight: 80,
+    width: '48%',
   },
   cardContent: {
     flexDirection: 'row',

@@ -57,7 +57,7 @@ const Header = ({ navigation, title = "HerbChain", showNotifications = true, onN
 
   return (
     <LinearGradient
-      colors={['#3B82F6', '#1D4ED8']}
+      colors={['#059669', '#10B981']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.container}
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 15,
     paddingHorizontal: 20,
-    shadowColor: '#3B82F6',
+    shadowColor: '#059669',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,

@@ -9,7 +9,7 @@ const Timeline = ({ timelineData }) => {
     if (event.completed) {
       return '#10b981';
     } else if (event.isCurrent) {
-      return '#3B82F6';
+      return '#10b981';
     } else {
       return '#D1D5DB';
     }
@@ -19,7 +19,7 @@ const Timeline = ({ timelineData }) => {
     if (event.completed) {
       return '✅';
     } else if (event.isCurrent) {
-      return '📍';
+      return '🟢';
     } else {
       return '⏳';
     }
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     color: '#10b981',
   },
   currentTitle: {
-    color: '#3B82F6',
+    color: '#059669',
     fontWeight: '600',
   },
   eventTime: {
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   currentTime: {
-    color: '#3B82F6',
+    color: '#059669',
     fontWeight: '600',
   },
 });

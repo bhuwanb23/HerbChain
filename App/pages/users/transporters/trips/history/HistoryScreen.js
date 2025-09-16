@@ -3,8 +3,11 @@ import {
   View,
   StyleSheet,
   ScrollView,
+  TouchableOpacity,
+  Text,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 // Import components
 import {
@@ -36,6 +39,16 @@ const HistoryScreen = ({ onGoBack }) => {
         colors={['#F9FAFB', '#F3F4F6']}
         style={styles.gradient}
       >
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => onGoBack && onGoBack()}
+            style={styles.backButton}
+            activeOpacity={0.7}
+          >
+            <Icon name="arrow-back" size={22} color="#111827" />
+            <Text style={styles.headerTitle}>History & Reports</Text>
+          </TouchableOpacity>
+        </View>
         <ScrollView 
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -76,6 +89,22 @@ const styles = StyleSheet.create({
   },
   gradient: {
     flex: 1,
+  },
+  header: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: 'transparent',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginLeft: 8,
   },
   scrollView: {
     flex: 1,

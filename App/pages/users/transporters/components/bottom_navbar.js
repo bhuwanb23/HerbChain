@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const BottomNavbar = ({ navigation, activeTab = 'dashboard' }) => {
@@ -52,39 +53,34 @@ const BottomNavbar = ({ navigation, activeTab = 'dashboard' }) => {
     {
       id: 'dashboard',
       label: 'Dashboard',
-      icon: '🏠',
-      emoji: '🏠',
+      iconName: 'view-dashboard-outline',
     },
     {
       id: 'trips',
       label: 'Trips',
-      icon: '📦',
-      emoji: '📦',
+      iconName: 'truck-fast',
     },
     {
       id: 'history',
       label: 'History',
-      icon: '📜',
-      emoji: '📜',
+      iconName: 'history',
     },
     {
       id: 'payments',
       label: 'Payments',
-      icon: '💰',
-      emoji: '💰',
+      iconName: 'cash-multiple',
     },
     {
       id: 'profile',
       label: 'Profile',
-      icon: '⚙️',
-      emoji: '⚙️',
+      iconName: 'cog',
     },
   ];
 
   return (
     <View style={[styles.wrapper, { paddingBottom: insets.bottom }]}>
       <LinearGradient
-        colors={['#3B82F6', '#1D4ED8']}
+        colors={['#059669', '#10B981']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.container}
@@ -112,16 +108,15 @@ const BottomNavbar = ({ navigation, activeTab = 'dashboard' }) => {
                   {
                     opacity: glowAnim.interpolate({
                       inputRange: [0, 1],
-                      outputRange: isActive ? [0.9, 1] : [0.7, 0.8],
+                      outputRange: isActive ? [0.95, 1] : [0.8, 0.9],
                     })
                   }
                 ]}>
-                  <Text style={[
-                    styles.icon,
-                    isActive && styles.activeIcon
-                  ]}>
-                    {tab.emoji}
-                  </Text>
+                  <Icon
+                    name={tab.iconName}
+                    size={20}
+                    color={isActive ? '#064E3B' : '#FFFFFF'}
+                  />
                 </Animated.View>
                 
                 {/* <Text style={[
@@ -154,13 +149,13 @@ const BottomNavbar = ({ navigation, activeTab = 'dashboard' }) => {
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: '#F9FAFB', // Background color to prevent blue bleeding
+    backgroundColor: '#F9FAFB', // Background color to prevent color bleeding
   },
   container: {
     paddingTop: 8,
     paddingBottom: 8,
     paddingHorizontal: 16,
-    shadowColor: '#3B82F6',
+    shadowColor: '#059669',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -185,29 +180,23 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 2,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.25)',
   },
   activeIconContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    shadowColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderColor: 'rgba(6, 78, 59, 0.15)',
+    shadowColor: 'rgba(6, 78, 59, 0.6)',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
     elevation: 3,
   },
-  icon: {
-    fontSize: 16,
-    opacity: 0.8,
-  },
-  activeIcon: {
-    opacity: 1,
-  },
+  // Labels remain hidden to keep height unchanged
   label: {
     fontSize: 10,
     color: 'rgba(255, 255, 255, 0.7)',
@@ -215,7 +204,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   activeLabel: {
-    color: '#FFFFFF',
+    color: '#065F46',
     fontWeight: '600',
   },
   activeIndicator: {
@@ -225,12 +214,12 @@ const styles = StyleSheet.create({
     marginLeft: -8,
     width: 16,
     height: 3,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: 1.5,
-    shadowColor: '#FFFFFF',
+    shadowColor: 'rgba(6, 78, 59, 0.5)',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 2,
+    shadowOpacity: 0.35,
+    shadowRadius: 3,
     elevation: 2,
   },
 });

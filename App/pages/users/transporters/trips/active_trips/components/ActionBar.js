@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ACTION_BUTTONS } from '../constants';
 import { useEmergencyActions } from '../hooks';
 
@@ -43,16 +44,18 @@ const ActionBar = ({ onDeliveryReady }) => {
             activeOpacity={0.7}
           >
             <View style={styles.buttonContent}>
-              <Text style={[
-                styles.buttonIcon,
-                button.type === 'primary' && styles.primaryIcon,
-              ]}>
-                {button.icon}
-              </Text>
-              <Text style={[
-                styles.buttonText,
-                button.type === 'primary' && styles.primaryText,
-              ]}>
+              <Icon
+                name={button.id === 'contact' ? 'phone' : button.id === 'share' ? 'share-variant' : 'truck-check-outline'}
+                size={16}
+                color={button.type === 'primary' ? '#FFFFFF' : '#065F46'}
+              />
+              <Text
+                numberOfLines={1}
+                style={[
+                  styles.buttonText,
+                  button.type === 'primary' && styles.primaryText,
+                ]}
+              >
                 {button.label}
               </Text>
             </View>
@@ -77,8 +80,8 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -86,12 +89,12 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#E5E7EB',
+    borderColor: '#D1FAE5',
   },
   primaryButton: {
-    backgroundColor: '#3B82F6',
-    borderColor: '#3B82F6',
-    shadowColor: '#3B82F6',
+    backgroundColor: '#059669',
+    borderColor: '#059669',
+    shadowColor: '#059669',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -100,19 +103,16 @@ const styles = StyleSheet.create({
   buttonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  buttonIcon: {
-    fontSize: 16,
-    color: '#6B7280',
+    gap: 6,
   },
   primaryIcon: {
     color: '#FFFFFF',
   },
   buttonText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: '#6B7280',
+    maxWidth: 120,
   },
   primaryText: {
     color: '#FFFFFF',

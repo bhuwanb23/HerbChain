@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 // Import components
 import MapSection from './components/MapSection';
@@ -29,7 +30,7 @@ const ActiveTripsScreen = ({ tripData, batchData, onDeliveryReady, onGoBack }) =
         onPress={onGoBack}
         activeOpacity={0.7}
       >
-        <Text style={styles.backButtonText}>← Back</Text>
+        <Icon name="arrow-left" size={18} color="#FFFFFF" />
       </TouchableOpacity>
 
       <ScrollView 
@@ -75,18 +76,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
   },
   backButton: {
-    backgroundColor: '#3B82F6',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginHorizontal: 16,
+    backgroundColor: '#059669',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginHorizontal: 12,
     marginTop: 8,
-    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#059669',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
     alignSelf: 'flex-start',
-  },
-  backButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
   },
   content: {
     flex: 1,

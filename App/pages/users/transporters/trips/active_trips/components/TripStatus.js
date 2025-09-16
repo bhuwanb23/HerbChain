@@ -36,7 +36,7 @@ const TripStatus = ({ currentStatus }) => {
       case TRIP_STATUS.PICKED_UP:
         return '#10b981';
       case TRIP_STATUS.IN_TRANSIT:
-        return '#3B82F6';
+        return '#10b981';
       case TRIP_STATUS.DELIVERED:
         return '#6B7280';
       default:
@@ -137,10 +137,10 @@ const styles = StyleSheet.create({
     borderColor: '#BBF7D0',
   },
   currentCard: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#3B82F6',
+    backgroundColor: '#ECFDF5',
+    borderColor: '#10b981',
     borderWidth: 2,
-    shadowColor: '#3B82F6',
+    shadowColor: '#10b981',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   currentLabel: {
-    color: '#3B82F6',
+    color: '#059669',
     fontWeight: '600',
   },
   currentStatusContainer: {
