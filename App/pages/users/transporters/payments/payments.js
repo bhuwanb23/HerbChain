@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   PaymentsHeader,
   EarningsOverview,
@@ -15,16 +14,13 @@ import {
 import { MOCK_PAYMENT_DATA, MOCK_INCENTIVES, MOCK_PAYOUT_METHODS, MOCK_TRANSACTIONS } from './constants';
 
 const PaymentsScreen = ({ navigation }) => {
-  const insets = useSafeAreaInsets();
+  // Removed SafeArea padding to eliminate unwanted top gap
   const [paymentData] = useState(MOCK_PAYMENT_DATA);
   const [incentives] = useState(MOCK_INCENTIVES);
   const [payoutMethods] = useState(MOCK_PAYOUT_METHODS);
   const [transactions] = useState(MOCK_TRANSACTIONS);
 
-  const handleNotificationPress = () => {
-    // Navigate to notifications or show notification modal
-    console.log('Notification pressed');
-  };
+  // Removed notification handler as header bell icon is removed
 
   const handlePayoutMethodSelect = (method) => {
     if (method.isActive) {
@@ -63,8 +59,8 @@ const PaymentsScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <PaymentsHeader onNotificationPress={handleNotificationPress} />
+    <View style={styles.container}>
+      <PaymentsHeader />
       
       <ScrollView 
         style={styles.scrollContainer}

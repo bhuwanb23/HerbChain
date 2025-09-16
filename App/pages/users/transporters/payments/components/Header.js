@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
-const PaymentsHeader = ({ onNotificationPress }) => {
+const PaymentsHeader = () => {
   return (
     <View style={styles.container}>
       <View style={styles.leftSection}>
@@ -10,13 +10,6 @@ const PaymentsHeader = ({ onNotificationPress }) => {
         </View>
         <Text style={styles.title}>Payments</Text>
       </View>
-      <TouchableOpacity 
-        style={styles.notificationButton}
-        onPress={() => onNotificationPress && onNotificationPress()}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.notificationIcon}>🔔</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -24,11 +17,11 @@ const PaymentsHeader = ({ onNotificationPress }) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -57,18 +50,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#111827',
   },
-  notificationButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  notificationIcon: {
-    fontSize: 16,
-    color: '#6B7280',
-  },
+  // Removed notification button
 });
 
 export default PaymentsHeader;

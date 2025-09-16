@@ -30,21 +30,21 @@ const SustainabilityRewards = ({ co2Saved, greenBonus }) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#F0FDF4',
-    borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 16,
-    marginTop: 24,
+    borderRadius: 10,
+    padding: 12,
+    marginHorizontal: 12,
+    marginTop: 16,
     borderWidth: 1,
     borderColor: '#BBF7D0',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     backgroundColor: '#DCFCE7',
     borderRadius: 8,
     justifyContent: 'center',
@@ -52,20 +52,20 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   icon: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#16A34A',
   },
   textContainer: {
     flex: 1,
   },
   title: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#14532D',
     marginBottom: 2,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#15803D',
   },
   statsContainer: {
@@ -76,13 +76,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#16A34A',
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#15803D',
   },
 });

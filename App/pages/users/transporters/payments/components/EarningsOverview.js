@@ -31,27 +31,27 @@ const EarningsOverview = ({ totalEarnings, growthPercentage }) => {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 16,
-    padding: 24,
-    marginHorizontal: 16,
-    marginTop: 16,
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 12,
+    marginTop: 12,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   leftSection: {
     flex: 1,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: 4,
   },
   amount: {
-    fontSize: 30,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   chartIcon: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#FFFFFF',
   },
   growthSection: {
@@ -72,12 +72,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   growthIcon: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#34D399',
     marginRight: 8,
   },
   growthText: {
-    fontSize: 14,
+    fontSize: 12,
     color: 'rgba(255, 255, 255, 0.8)',
   },
 });

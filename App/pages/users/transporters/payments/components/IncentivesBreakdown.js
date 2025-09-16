@@ -63,23 +63,23 @@ const IncentivesBreakdown = ({ incentives = [] }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
-    marginTop: 24,
+    marginHorizontal: 12,
+    marginTop: 16,
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#111827',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   scrollContainer: {
-    maxHeight: 300,
+    maxHeight: 240,
   },
   incentiveCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -97,31 +97,31 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   icon: {
-    fontSize: 18,
+    fontSize: 16,
   },
   textContainer: {
     flex: 1,
   },
   incentiveTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
     color: '#111827',
     marginBottom: 2,
   },
   incentiveDescription: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
   },
   amount: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#10B981',
   },
