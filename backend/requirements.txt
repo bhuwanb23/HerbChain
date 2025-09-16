@@ -1,2 +1,8 @@
 flask==3.0.3
 
+# Orchestration & tooling for blockchain setup
+click==8.1.7
+pyyaml==6.0.2
+python-dotenv==1.0.1
+rich==13.7.1
+

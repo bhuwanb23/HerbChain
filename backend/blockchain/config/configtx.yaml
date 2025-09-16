@@ -1,0 +1,116 @@
+# Hyperledger Fabric configtx for HerbChain
+Organizations:
+  - &OrdererOrg
+    Name: OrdererOrg
+    ID: OrdererMSP
+    MSPDir: crypto-config/ordererOrganizations/example.com/msp
+
+  - &Farmers
+    Name: FarmersMSP
+    ID: FarmersMSP
+    MSPDir: crypto-config/peerOrganizations/farmers.herbchain/msp
+
+  - &Labs
+    Name: LabsMSP
+    ID: LabsMSP
+    MSPDir: crypto-config/peerOrganizations/labs.herbchain/msp
+
+  - &Processors
+    Name: ProcessorsMSP
+    ID: ProcessorsMSP
+    MSPDir: crypto-config/peerOrganizations/processors.herbchain/msp
+
+  - &Ayush
+    Name: AyushMSP
+    ID: AyushMSP
+    MSPDir: crypto-config/peerOrganizations/ayush.herbchain/msp
+
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true
+  Orderer: &OrdererCapabilities
+    V2_0: true
+  Application: &ApplicationCapabilities
+    V2_5: true
+
+Application: &ApplicationDefaults
+  Organizations: []
+  Capabilities:
+    <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+  OrdererType: etcdraft
+  Addresses:
+    - orderer.example.com:7050
+  EtcdRaft:
+    Consenters:
+      - Host: orderer.example.com
+        Port: 7050
+        ClientTLSCert: crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+        ServerTLSCert: crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+  Organizations: []
+  Capabilities:
+    <<: *OrdererCapabilities
+
+Channel: &ChannelDefaults
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Profiles:
+  HerbChainGenesis:
+    <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *OrdererOrg
+    Consortiums:
+      HerbConsortium:
+        Organizations:
+          - *Farmers
+          - *Labs
+          - *Processors
+          - *Ayush
+
+  FarmerLabChannel:
+    Consortium: HerbConsortium
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *Farmers
+        - *Labs
+
+  LabProcessorChannel:
+    Consortium: HerbConsortium
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *Labs
+        - *Processors
+
+  ProcessorAyushChannel:
+    Consortium: HerbConsortium
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *Processors
+        - *Ayush
+
+  ConsumerReadChannel:
+    Consortium: HerbConsortium
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *Farmers
+        - *Labs
+        - *Processors
+        - *Ayush

@@ -1,0 +1,34 @@
+OrdererOrgs:
+  - Name: Orderer
+    Domain: example.com
+    Specs:
+      - Hostname: orderer
+
+PeerOrgs:
+  - Name: Farmers
+    Domain: farmers.herbchain
+    Template:
+      Count: 1
+    Users:
+      Count: 1
+
+  - Name: Labs
+    Domain: labs.herbchain
+    Template:
+      Count: 1
+    Users:
+      Count: 1
+
+  - Name: Processors
+    Domain: processors.herbchain
+    Template:
+      Count: 1
+    Users:
+      Count: 1
+
+  - Name: Ayush
+    Domain: ayush.herbchain
+    Template:
+      Count: 1
+    Users:
+      Count: 1

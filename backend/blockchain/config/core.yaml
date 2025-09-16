@@ -1,0 +1,14 @@
+# Peer core config overrides (minimal)
+peer:
+  id: peer
+  networkId: herbchain
+  fileSystemPath: /var/hyperledger/production
+  gossip:
+    useLeaderElection: true
+    orgLeader: false
+  ledger:
+    state:
+      couchDBConfig:
+        couchDBAddress: couchdb:5984
+        username: admin
+        password: adminpw

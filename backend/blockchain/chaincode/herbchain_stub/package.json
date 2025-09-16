@@ -1,0 +1,10 @@
+{
+  "name": "herbchain-stub",
+  "version": "0.1.0",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "fabric-contract-api": "^2.6.0",
+    "fabric-shim": "^2.6.0"
+  }
+}

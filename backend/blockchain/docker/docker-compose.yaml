@@ -1,0 +1,25 @@
+version: '3.8'
+
+networks:
+  herbchain_net:
+    name: ${NETWORK_NAME:-herbchain_net}
+
+services:
+  orderer.example.com:
+    image: hyperledger/fabric-orderer:${FABRIC_VERSION:-2.5}
+    environment:
+      - ORDERER_GENERAL_LOGLEVEL=INFO
+    ports:
+      - "${ORDERER_PORT:-7050}:7050"
+    networks:
+      - herbchain_net
+
+  couchdb:
+    image: couchdb:3.3
+    environment:
+      - COUCHDB_USER=${COUCHDB_USERNAME:-admin}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-adminpw}
+    ports:
+      - "5984:5984"
+    networks:
+      - herbchain_net
