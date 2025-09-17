@@ -30,6 +30,15 @@ def init_app(app):
         TransporterPayment,
         TransporterReport,
     )
+    # Labs models
+    from .labs import (
+        LabProfile,
+        ReceivedBatch,
+        QualityTest,
+        BatchValidation,
+        LabReport,
+        LabPayment,
+    )
     
     return db
 
