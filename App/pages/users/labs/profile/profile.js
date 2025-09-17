@@ -92,7 +92,7 @@ const ProfilePage = ({ navigation }) => {
                 styles.tabButtonText,
                 currentTab === 'support' && styles.activeTabButtonText
               ]}
-              onPress={() => setCurrentTab('support')}
+              onPress={() => handleTabChange('support')}
             >
               🆘 Support
             </Text>

@@ -48,24 +48,32 @@ const LabsPage = ({ navigation }) => {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar style="dark" backgroundColor="#F9FAFB" />
-      <View style={styles.content}>
+      <StatusBar style="dark" backgroundColor="#FFFFFF" />
+      
+      {/* Header */}
+      <View style={styles.header}>
         <Header
           navigation={navigation}
           title={getPageTitle()}
           onNotificationPress={handleLabNavigation}
         />
-        <View style={styles.pageContainer}>
-          {renderCurrentPage()}
-        </View>
       </View>
-      <BottomNavbar
-        navigation={{
-          ...navigation,
-          navigate: handleLabNavigation
-        }}
-        activeTab={currentPage}
-      />
+      
+      {/* Main Content Area */}
+      <View style={styles.content}>
+        {renderCurrentPage()}
+      </View>
+      
+      {/* Bottom Navbar */}
+      <View style={styles.bottomNavbar}>
+        <BottomNavbar
+          navigation={{
+            ...navigation,
+            navigate: handleLabNavigation
+          }}
+          activeTab={currentPage}
+        />
+      </View>
     </View>
   );
 };
@@ -73,13 +81,29 @@ const LabsPage = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8F9FA',
+  },
+  header: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 1000,
   },
   content: {
     flex: 1,
+    backgroundColor: '#F8F9FA',
   },
-  pageContainer: {
-    flex: 1,
+  bottomNavbar: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 1000,
   },
 });
 
