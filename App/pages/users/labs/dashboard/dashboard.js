@@ -1,59 +1,42 @@
-import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { useDashboard } from './hooks';
 import {
-  PendingBatches,
-  UrgentRequests,
-  CompletedAnalyses,
-  Notifications,
+  StatsGrid,
+  QuickActions,
+  NotificationsPanel,
+  RecentActivity,
+  NotificationsModal,
 } from './components';
 
-const DashboardPage = ({ navigation }) => {
-  const [pendingBatches] = useState([]);
-  const [urgentRequests] = useState([]);
-  const [completedAnalyses] = useState([]);
-  const [notifications] = useState([]);
-
-  const handleBatchPress = (batchId) => {
-    console.log('Batch pressed:', batchId);
-    // Navigate to batch verification page
-  };
-
-  const handleRequestPress = (requestId) => {
-    console.log('Request pressed:', requestId);
-    // Navigate to urgent request handling
-  };
-
-  const handleNotificationPress = (notificationId) => {
-    console.log('Notification pressed:', notificationId);
-    // Navigate to notification details or mark as read
-  };
+const DashboardScreen = () => {
+  const {
+    isNotificationsModalVisible,
+    toggleNotificationsModal,
+    handleNavigation,
+    handleNotificationPress,
+  } = useDashboard();
 
   return (
     <View style={styles.container}>
-      <ScrollView 
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        <PendingBatches 
-          batches={pendingBatches}
-          onBatchPress={handleBatchPress}
+      <ScrollView style={styles.mainContent}>
+        <StatsGrid />
+        
+        <QuickActions onActionPress={handleNavigation} />
+        
+        <NotificationsPanel 
+          onViewAllPress={toggleNotificationsModal}
+          onNotificationPress={handleNavigation}
         />
         
-        <UrgentRequests 
-          requests={urgentRequests}
-          onRequestPress={handleRequestPress}
-        />
-        
-        <CompletedAnalyses 
-          analyses={completedAnalyses}
-        />
-        
-        <Notifications 
-          notifications={notifications}
-          onNotificationPress={handleNotificationPress}
-        />
+        <RecentActivity />
       </ScrollView>
+
+      <NotificationsModal
+        visible={isNotificationsModalVisible}
+        onClose={toggleNotificationsModal}
+        onNotificationPress={handleNavigation}
+      />
     </View>
   );
 };
@@ -61,14 +44,13 @@ const DashboardPage = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8F9FA',
   },
-  scrollContainer: {
+  mainContent: {
     flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
   },
 });
 
-export default DashboardPage;
+export default DashboardScreen;

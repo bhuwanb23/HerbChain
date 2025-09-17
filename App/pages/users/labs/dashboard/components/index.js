@@ -1,4 +1,5 @@
-export { default as PendingBatches } from './PendingBatches';
-export { default as UrgentRequests } from './UrgentRequests';
-export { default as CompletedAnalyses } from './CompletedAnalyses';
-export { default as Notifications } from './Notifications';
+export { default as StatsGrid } from './StatsGrid';
+export { default as QuickActions } from './QuickActions';
+export { default as NotificationsPanel } from './NotificationsPanel';
+export { default as RecentActivity } from './RecentActivity';
+export { default as NotificationsModal } from './NotificationsModal';
