@@ -1,41 +1,63 @@
-import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useProfile } from './hooks';
 import {
   ProfileSettings,
   SupportDispute,
 } from './components';
 
 const ProfilePage = ({ navigation }) => {
-  const [currentTab, setCurrentTab] = useState('profile');
-
-  const handleSaveProfile = (profileData) => {
-    console.log('Profile saved:', profileData);
-    // Handle profile save
-  };
-
-  const handleSubmitIssue = (issueData) => {
-    console.log('Issue submitted:', issueData);
-    // Handle issue submission
-  };
+  const {
+    currentTab,
+    isLoading,
+    handleTabChange,
+    handleEditProfile,
+    handleChangePassword,
+    handleLanguageChange,
+    handleNotificationSettings,
+    handleCertificationUploads,
+    handleSupport,
+    handlePrivacyPolicy,
+    handleLogout,
+    handleSaveProfile,
+    handleSubmitIssue,
+    handleSubmitDispute,
+  } = useProfile();
 
   const renderCurrentTab = () => {
     switch (currentTab) {
       case 'profile':
         return (
           <ProfileSettings 
-            onSaveProfile={handleSaveProfile}
+            onEditProfile={handleEditProfile}
+            onChangePassword={handleChangePassword}
+            onLanguageChange={handleLanguageChange}
+            onNotificationSettings={handleNotificationSettings}
+            onCertificationUploads={handleCertificationUploads}
+            onSupport={handleSupport}
+            onPrivacyPolicy={handlePrivacyPolicy}
+            onLogout={handleLogout}
           />
         );
       case 'support':
         return (
           <SupportDispute 
             onSubmitIssue={handleSubmitIssue}
+            onSubmitDispute={handleSubmitDispute}
           />
         );
       default:
         return (
           <ProfileSettings 
-            onSaveProfile={handleSaveProfile}
+            onEditProfile={handleEditProfile}
+            onChangePassword={handleChangePassword}
+            onLanguageChange={handleLanguageChange}
+            onNotificationSettings={handleNotificationSettings}
+            onCertificationUploads={handleCertificationUploads}
+            onSupport={handleSupport}
+            onPrivacyPolicy={handlePrivacyPolicy}
+            onLogout={handleLogout}
           />
         );
     }
@@ -45,38 +67,50 @@ const ProfilePage = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.tabContainer}>
         <View style={styles.tabButtons}>
-          <View
+          <TouchableOpacity
             style={[
               styles.tabButton,
               currentTab === 'profile' && styles.activeTabButton
             ]}
+            onPress={() => handleTabChange('profile')}
+            activeOpacity={0.7}
           >
+            <Ionicons 
+              name="person-outline" 
+              size={20} 
+              color={currentTab === 'profile' ? '#FFFFFF' : '#6B7280'} 
+            />
             <Text
               style={[
                 styles.tabButtonText,
                 currentTab === 'profile' && styles.activeTabButtonText
               ]}
-              onPress={() => setCurrentTab('profile')}
             >
-              👤 Profile
+              Profile
             </Text>
-          </View>
-          <View
+          </TouchableOpacity>
+          <TouchableOpacity
             style={[
               styles.tabButton,
               currentTab === 'support' && styles.activeTabButton
             ]}
+            onPress={() => handleTabChange('support')}
+            activeOpacity={0.7}
           >
+            <Ionicons 
+              name="help-circle-outline" 
+              size={20} 
+              color={currentTab === 'support' ? '#FFFFFF' : '#6B7280'} 
+            />
             <Text
               style={[
                 styles.tabButtonText,
                 currentTab === 'support' && styles.activeTabButtonText
               ]}
-              onPress={() => setCurrentTab('support')}
             >
-              🆘 Support
+              Support
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
       
@@ -114,26 +148,29 @@ const styles = StyleSheet.create({
   },
   tabButton: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    gap: 8,
   },
   activeTabButton: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
+    backgroundColor: '#006B38',
+    shadowColor: '#006B38',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   tabButtonText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#6B7280',
   },
   activeTabButtonText: {
-    color: '#8B5CF6',
+    color: '#FFFFFF',
     fontWeight: '600',
   },
   scrollContainer: {

@@ -1,198 +1,122 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { PROFILE_DATA, ACCOUNT_SETTINGS, SUPPORT_LEGAL, COLORS } from '../constants';
 
-const ProfileSettings = ({ onSaveProfile }) => {
-  const [profileData, setProfileData] = useState({
-    name: 'Dr. Priya Sharma',
-    email: 'priya.sharma@lab.com',
-    phone: '+91 98765 43210',
-    labName: 'Green Herbs Testing Lab',
-    certification: 'AYUSH Certified Lab #12345',
-    experience: '8 years',
-    specialization: 'Herbal Medicine Testing',
-  });
+const SettingItem = ({ setting, onPress }) => {
+  return (
+    <Pressable 
+      onPress={() => onPress(setting.navigateTo)} 
+      style={({ pressed }) => [styles.settingItem, pressed && styles.buttonPressed]}
+    >
+      <View style={styles.settingLeft}>
+        <Ionicons name={setting.icon} size={20} color={setting.iconColor} />
+        <Text style={styles.settingText}>{setting.title}</Text>
+      </View>
+      <Ionicons name="chevron-forward-outline" size={20} color="#9CA3AF" />
+    </Pressable>
+  );
+};
 
-  const [isEditing, setIsEditing] = useState(false);
+const ProfileCard = ({ profileData }) => {
+  return (
+    <View style={styles.profileCard}>
+      <Image
+        source={{ uri: profileData.image }}
+        style={styles.profileImage}
+      />
+      <Text style={styles.profileName}>{profileData.name}</Text>
+      <Text style={styles.profileRole}>{profileData.role}</Text>
+      <Text style={styles.profileEmail}>{profileData.email}</Text>
+    </View>
+  );
+};
 
-  const handleInputChange = (field, value) => {
-    setProfileData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+const SettingsSection = ({ title, settings, onSettingPress }) => {
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {settings.map((setting) => (
+        <SettingItem 
+          key={setting.id} 
+          setting={setting} 
+          onPress={onSettingPress}
+        />
+      ))}
+    </View>
+  );
+};
+
+const LogoutButton = ({ onLogout }) => {
+  return (
+    <View style={styles.logoutSection}>
+      <Pressable 
+        onPress={onLogout} 
+        style={({ pressed }) => [styles.logoutButton, pressed && styles.buttonPressed]}
+      >
+        <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+        <Text style={styles.logoutButtonText}>Logout</Text>
+      </Pressable>
+    </View>
+  );
+};
+
+const ProfileSettings = ({ 
+  onEditProfile,
+  onChangePassword,
+  onLanguageChange,
+  onNotificationSettings,
+  onCertificationUploads,
+  onSupport,
+  onPrivacyPolicy,
+  onLogout,
+}) => {
+  const handleSettingPress = (navigateTo) => {
+    switch (navigateTo) {
+      case 'EditProfile':
+        onEditProfile();
+        break;
+      case 'ChangePassword':
+        onChangePassword();
+        break;
+      case 'LanguageSettings':
+        onLanguageChange();
+        break;
+      case 'NotificationSettings':
+        onNotificationSettings();
+        break;
+      case 'CertificationUploads':
+        onCertificationUploads();
+        break;
+      case 'SupportDisputeScreen':
+        onSupport();
+        break;
+      case 'PrivacyPolicy':
+        onPrivacyPolicy();
+        break;
+      default:
+        console.log('Unknown navigation:', navigateTo);
+    }
   };
-
-  const handleSave = () => {
-    Alert.alert(
-      'Save Profile',
-      'Are you sure you want to save these changes?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Save', 
-          onPress: () => {
-            setIsEditing(false);
-            onSaveProfile && onSaveProfile(profileData);
-            Alert.alert('Success', 'Profile updated successfully!');
-          }
-        },
-      ]
-    );
-  };
-
-  const handleUploadCertification = () => {
-    Alert.alert('Upload Certification', 'Certification upload feature would be implemented here.');
-  };
-
-  const profileFields = [
-    {
-      key: 'name',
-      label: 'Full Name',
-      placeholder: 'Enter your full name',
-    },
-    {
-      key: 'email',
-      label: 'Email',
-      placeholder: 'Enter your email',
-      keyboardType: 'email-address',
-    },
-    {
-      key: 'phone',
-      label: 'Phone Number',
-      placeholder: 'Enter your phone number',
-      keyboardType: 'phone-pad',
-    },
-    {
-      key: 'labName',
-      label: 'Lab Name',
-      placeholder: 'Enter lab name',
-    },
-    {
-      key: 'certification',
-      label: 'Certification',
-      placeholder: 'Enter certification details',
-    },
-    {
-      key: 'experience',
-      label: 'Experience',
-      placeholder: 'Enter years of experience',
-    },
-    {
-      key: 'specialization',
-      label: 'Specialization',
-      placeholder: 'Enter specialization',
-    },
-  ];
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Profile & Settings</Text>
-      
-      <ScrollView style={styles.scrollContainer}>
-        {/* Profile Header */}
-        <View style={styles.profileHeader}>
-          <View style={styles.avatarContainer}>
-            <Text style={styles.avatar}>👩‍🔬</Text>
-          </View>
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{profileData.name}</Text>
-            <Text style={styles.profileRole}>Lab Technician</Text>
-            <Text style={styles.profileLab}>{profileData.labName}</Text>
-          </View>
-        </View>
-
-        {/* Profile Form */}
-        <View style={styles.formSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Personal Information</Text>
-            <TouchableOpacity
-              style={styles.editButton}
-              onPress={() => setIsEditing(!isEditing)}
-            >
-              <Text style={styles.editButtonText}>
-                {isEditing ? 'Cancel' : '✏️ Edit'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          
-          {profileFields.map((field) => (
-            <View key={field.key} style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>{field.label}</Text>
-              <TextInput
-                style={[
-                  styles.textInput,
-                  !isEditing && styles.textInputDisabled
-                ]}
-                placeholder={field.placeholder}
-                value={profileData[field.key]}
-                onChangeText={(value) => handleInputChange(field.key, value)}
-                editable={isEditing}
-                keyboardType={field.keyboardType || 'default'}
-              />
-            </View>
-          ))}
-          
-          {isEditing && (
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={handleSave}
-            >
-              <Text style={styles.saveButtonText}>💾 Save Changes</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Certification Upload */}
-        <View style={styles.certificationSection}>
-          <Text style={styles.sectionTitle}>Certification Documents</Text>
-          <TouchableOpacity
-            style={styles.uploadButton}
-            onPress={handleUploadCertification}
-          >
-            <Text style={styles.uploadIcon}>📄</Text>
-            <Text style={styles.uploadText}>Upload Certification</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Settings Options */}
-        <View style={styles.settingsSection}>
-          <Text style={styles.sectionTitle}>Settings</Text>
-          
-          <TouchableOpacity style={styles.settingItem}>
-            <Text style={styles.settingIcon}>🌐</Text>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>Language</Text>
-              <Text style={styles.settingSubtitle}>English</Text>
-            </View>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.settingItem}>
-            <Text style={styles.settingIcon}>🔔</Text>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>Notifications</Text>
-              <Text style={styles.settingSubtitle}>Manage notification preferences</Text>
-            </View>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.settingItem}>
-            <Text style={styles.settingIcon}>🔒</Text>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>Security</Text>
-              <Text style={styles.settingSubtitle}>Change password, 2FA</Text>
-            </View>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.settingItem}>
-            <Text style={styles.settingIcon}>📱</Text>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>App Settings</Text>
-              <Text style={styles.settingSubtitle}>Theme, offline mode</Text>
-            </View>
-            <Text style={styles.settingArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
+      <ScrollView style={styles.mainContent}>
+        <ProfileCard profileData={PROFILE_DATA} />
+        
+        <SettingsSection 
+          title="Account Settings"
+          settings={ACCOUNT_SETTINGS}
+          onSettingPress={handleSettingPress}
+        />
+        
+        <SettingsSection 
+          title="Support & Legal"
+          settings={SUPPORT_LEGAL}
+          onSettingPress={handleSettingPress}
+        />
+        
+        <LogoutButton onLogout={onLogout} />
       </ScrollView>
     </View>
   );
@@ -200,194 +124,103 @@ const ProfileSettings = ({ onSaveProfile }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
-    marginTop: 16,
+    flex: 1,
+    backgroundColor: '#F8F9FA',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 20,
+  buttonPressed: {
+    opacity: 0.8,
   },
-  scrollContainer: {
-    maxHeight: 600,
+  mainContent: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingBottom: 24,
   },
-  profileHeader: {
+  profileCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 2,
-    elevation: 2,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    padding: 24,
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 20,
   },
-  avatarContainer: {
+  profileImage: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#8B5CF6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  avatar: {
-    fontSize: 32,
-  },
-  profileInfo: {
-    flex: 1,
+    marginBottom: 12,
   },
   profileName: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#111827',
     marginBottom: 4,
   },
   profileRole: {
     fontSize: 14,
-    color: '#8B5CF6',
+    color: '#4B5563',
     marginBottom: 4,
   },
-  profileLab: {
-    fontSize: 12,
+  profileEmail: {
+    fontSize: 14,
     color: '#6B7280',
   },
-  formSection: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+  section: {
+    marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: '#111827',
-  },
-  editButton: {
-    backgroundColor: '#8B5CF6',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  editButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    backgroundColor: '#FFFFFF',
-  },
-  textInputDisabled: {
-    backgroundColor: '#F9FAFB',
-    color: '#6B7280',
-  },
-  saveButton: {
-    backgroundColor: '#10B981',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  saveButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  certificationSection: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  uploadButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-    padding: 16,
-    marginTop: 12,
-  },
-  uploadIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  uploadText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#111827',
-  },
-  settingsSection: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    marginBottom: 12,
+    paddingLeft: 4,
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
   },
-  settingIcon: {
-    fontSize: 20,
-    marginRight: 12,
+  settingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  settingContent: {
-    flex: 1,
-  },
-  settingTitle: {
-    fontSize: 14,
-    fontWeight: '500',
+  settingText: {
+    fontSize: 16,
     color: '#111827',
-    marginBottom: 2,
   },
-  settingSubtitle: {
-    fontSize: 12,
-    color: '#6B7280',
+  logoutSection: {
+    marginTop: 20,
   },
-  settingArrow: {
-    fontSize: 18,
-    color: '#9CA3AF',
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: '#FEE2E2',
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+  },
+  logoutButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#EF4444',
   },
 });
 

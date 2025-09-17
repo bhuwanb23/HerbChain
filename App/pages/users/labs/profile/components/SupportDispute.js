@@ -1,183 +1,208 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { SUPPORT_CATEGORIES, DISPUTE_TYPES, COLORS } from '../constants';
 
-const SupportDispute = ({ onSubmitIssue }) => {
-  const [issueType, setIssueType] = useState('');
-  const [issueTitle, setIssueTitle] = useState('');
+const CategoryCard = ({ category, isSelected, onSelect }) => {
+  return (
+    <TouchableOpacity
+      style={[
+        styles.categoryCard,
+        isSelected && styles.selectedCategoryCard
+      ]}
+      onPress={() => onSelect(category.id)}
+      activeOpacity={0.7}
+    >
+      <View style={styles.categoryIcon}>
+        <Ionicons name={category.icon} size={24} color={category.iconColor} />
+      </View>
+      <Text style={[
+        styles.categoryTitle,
+        isSelected && styles.selectedCategoryTitle
+      ]}>
+        {category.title}
+      </Text>
+      <Text style={[
+        styles.categoryDescription,
+        isSelected && styles.selectedCategoryDescription
+      ]}>
+        {category.description}
+      </Text>
+    </TouchableOpacity>
+  );
+};
+
+const SupportDispute = ({ onSubmitIssue, onSubmitDispute }) => {
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedDisputeType, setSelectedDisputeType] = useState(null);
   const [issueDescription, setIssueDescription] = useState('');
-  const [selectedBatch, setSelectedBatch] = useState('');
+  const [contactInfo, setContactInfo] = useState('');
+  const [currentTab, setCurrentTab] = useState('support'); // 'support' or 'dispute'
 
-  const issueTypes = [
-    { id: 'farmer', label: 'Farmer Issue', icon: '👨‍🌾', description: 'Problems with farmers or suppliers' },
-    { id: 'transporter', label: 'Transporter Issue', icon: '🚛', description: 'Issues with transportation or delivery' },
-    { id: 'compliance', label: 'Compliance Issue', icon: '📋', description: 'AYUSH standards or regulatory concerns' },
-    { id: 'technical', label: 'Technical Issue', icon: '🔧', description: 'App or system problems' },
-    { id: 'dispute', label: 'Dispute Resolution', icon: '⚖️', description: 'Formal dispute for regulatory intervention' },
-  ];
-
-  const mockBatches = [
-    { id: 'BATCH-001', herbType: 'Ashwagandha', farmer: 'Rajesh Kumar' },
-    { id: 'BATCH-002', herbType: 'Tulsi', farmer: 'Priya Sharma' },
-    { id: 'BATCH-003', herbType: 'Neem', farmer: 'Amit Singh' },
-  ];
-
-  const handleSubmitIssue = () => {
-    if (!issueType || !issueTitle || !issueDescription) {
-      Alert.alert('Missing Information', 'Please fill in all required fields.');
-      return;
-    }
-
-    Alert.alert(
-      'Submit Issue',
-      'Are you sure you want to submit this issue?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Submit', 
-          onPress: () => {
-            const issueData = {
-              type: issueType,
-              title: issueTitle,
-              description: issueDescription,
-              batchId: selectedBatch,
-              timestamp: new Date().toISOString(),
-            };
-            
-            onSubmitIssue && onSubmitIssue(issueData);
-            Alert.alert('Success', 'Issue submitted successfully!');
-            
-            // Reset form
-            setIssueType('');
-            setIssueTitle('');
-            setIssueDescription('');
-            setSelectedBatch('');
-          }
-        },
-      ]
-    );
+  const handleCategorySelect = (categoryId) => {
+    setSelectedCategory(categoryId);
   };
+
+  const handleDisputeTypeSelect = (disputeTypeId) => {
+    setSelectedDisputeType(disputeTypeId);
+  };
+
+  const handleSubmit = () => {
+    if (currentTab === 'support') {
+      if (!selectedCategory || !issueDescription.trim()) {
+        Alert.alert('Missing Information', 'Please select a category and provide a description.');
+        return;
+      }
+      const issueData = {
+        category: selectedCategory,
+        description: issueDescription,
+        contactInfo: contactInfo,
+        timestamp: new Date().toISOString(),
+      };
+      onSubmitIssue(issueData);
+    } else {
+      if (!selectedDisputeType || !issueDescription.trim()) {
+        Alert.alert('Missing Information', 'Please select a dispute type and provide a description.');
+        return;
+      }
+      const disputeData = {
+        type: selectedDisputeType,
+        description: issueDescription,
+        contactInfo: contactInfo,
+        timestamp: new Date().toISOString(),
+      };
+      onSubmitDispute(disputeData);
+    }
+    
+    // Reset form
+    setSelectedCategory(null);
+    setSelectedDisputeType(null);
+    setIssueDescription('');
+    setContactInfo('');
+  };
+
+  const renderSupportContent = () => (
+    <View>
+      <Text style={styles.sectionTitle}>What can we help you with?</Text>
+      <View style={styles.categoriesGrid}>
+        {SUPPORT_CATEGORIES.map((category) => (
+          <CategoryCard
+            key={category.id}
+            category={category}
+            isSelected={selectedCategory === category.id}
+            onSelect={handleCategorySelect}
+          />
+        ))}
+      </View>
+    </View>
+  );
+
+  const renderDisputeContent = () => (
+    <View>
+      <Text style={styles.sectionTitle}>What type of dispute do you want to file?</Text>
+      <View style={styles.categoriesGrid}>
+        {DISPUTE_TYPES.map((disputeType) => (
+          <CategoryCard
+            key={disputeType.id}
+            category={disputeType}
+            isSelected={selectedDisputeType === disputeType.id}
+            onSelect={handleDisputeTypeSelect}
+          />
+        ))}
+      </View>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Support & Dispute</Text>
-      
-      <ScrollView style={styles.scrollContainer}>
-        {/* Issue Type Selection */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Issue Type</Text>
-          {issueTypes.map((type) => (
-            <TouchableOpacity
-              key={type.id}
-              style={[
-                styles.issueTypeCard,
-                issueType === type.id && styles.selectedIssueType
-              ]}
-              onPress={() => setIssueType(type.id)}
-            >
-              <Text style={styles.issueTypeIcon}>{type.icon}</Text>
-              <View style={styles.issueTypeContent}>
-                <Text style={styles.issueTypeLabel}>{type.label}</Text>
-                <Text style={styles.issueTypeDescription}>{type.description}</Text>
-              </View>
-              {issueType === type.id && (
-                <Text style={styles.selectedIcon}>✓</Text>
-              )}
-            </TouchableOpacity>
-          ))}
+      {/* Tab Selector */}
+      <View style={styles.tabSelector}>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            currentTab === 'support' && styles.activeTabButton
+          ]}
+          onPress={() => setCurrentTab('support')}
+        >
+          <Ionicons 
+            name="help-circle-outline" 
+            size={20} 
+            color={currentTab === 'support' ? '#FFFFFF' : '#6B7280'} 
+          />
+          <Text style={[
+            styles.tabButtonText,
+            currentTab === 'support' && styles.activeTabButtonText
+          ]}>
+            Support
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            currentTab === 'dispute' && styles.activeTabButton
+          ]}
+          onPress={() => setCurrentTab('dispute')}
+        >
+          <Ionicons 
+            name="alert-circle-outline" 
+            size={20} 
+            color={currentTab === 'dispute' ? '#FFFFFF' : '#6B7280'} 
+          />
+          <Text style={[
+            styles.tabButtonText,
+            currentTab === 'dispute' && styles.activeTabButtonText
+          ]}>
+            Dispute
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.mainContent}>
+        {currentTab === 'support' ? renderSupportContent() : renderDisputeContent()}
+
+        {/* Description Input */}
+        <View style={styles.inputSection}>
+          <Text style={styles.inputLabel}>
+            {currentTab === 'support' ? 'Describe your issue' : 'Describe your dispute'}
+          </Text>
+          <TextInput
+            style={styles.textArea}
+            value={issueDescription}
+            onChangeText={setIssueDescription}
+            placeholder={`Please provide details about your ${currentTab === 'support' ? 'issue' : 'dispute'}...`}
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+          />
         </View>
 
-        {/* Issue Details */}
-        {issueType && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Issue Details</Text>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Issue Title *</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Brief description of the issue"
-                value={issueTitle}
-                onChangeText={setIssueTitle}
-              />
-            </View>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Detailed Description *</Text>
-              <TextInput
-                style={[styles.textInput, styles.textArea]}
-                placeholder="Provide detailed information about the issue..."
-                value={issueDescription}
-                onChangeText={setIssueDescription}
-                multiline
-                numberOfLines={6}
-              />
-            </View>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Related Batch (Optional)</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={styles.batchSelector}>
-                  {mockBatches.map((batch) => (
-                    <TouchableOpacity
-                      key={batch.id}
-                      style={[
-                        styles.batchOption,
-                        selectedBatch === batch.id && styles.selectedBatch
-                      ]}
-                      onPress={() => setSelectedBatch(batch.id)}
-                    >
-                      <Text style={styles.batchId}>{batch.id}</Text>
-                      <Text style={styles.batchHerb}>{batch.herbType}</Text>
-                      <Text style={styles.batchFarmer}>{batch.farmer}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </ScrollView>
-            </View>
-          </View>
-        )}
+        {/* Contact Information */}
+        <View style={styles.inputSection}>
+          <Text style={styles.inputLabel}>Contact Information (Optional)</Text>
+          <TextInput
+            style={styles.textInput}
+            value={contactInfo}
+            onChangeText={setContactInfo}
+            placeholder="Email or phone number for follow-up"
+            keyboardType="email-address"
+          />
+        </View>
 
         {/* Submit Button */}
-        {issueType && issueTitle && issueDescription && (
-          <TouchableOpacity
-            style={styles.submitButton}
-            onPress={handleSubmitIssue}
-          >
-            <Text style={styles.submitButtonText}>📤 Submit Issue</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          
-          <TouchableOpacity style={styles.quickAction}>
-            <Text style={styles.quickActionIcon}>📞</Text>
-            <View style={styles.quickActionContent}>
-              <Text style={styles.quickActionTitle}>Emergency Contact</Text>
-              <Text style={styles.quickActionSubtitle}>Call AYUSH helpline</Text>
-            </View>
-            <Text style={styles.quickActionArrow}>›</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.quickAction}>
-            <Text style={styles.quickActionIcon}>📧</Text>
-            <View style={styles.quickActionContent}>
-              <Text style={styles.quickActionTitle}>Email Support</Text>
-              <Text style={styles.quickActionSubtitle}>support@herchain.com</Text>
-            </View>
-            <Text style={styles.quickActionArrow}>›</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.quickAction}>
-            <Text style={styles.quickActionIcon}>📚</Text>
-            <View style={styles.quickActionContent}>
-              <Text style={styles.quickActionTitle}>Help Center</Text>
-              <Text style={styles.quickActionSubtitle}>FAQs and guides</Text>
-            </View>
-            <Text style={styles.quickActionArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.submitButton}
+          onPress={handleSubmit}
+          activeOpacity={0.8}
+        >
+          <Ionicons 
+            name={currentTab === 'support' ? 'send-outline' : 'alert-circle-outline'} 
+            size={20} 
+            color="#FFFFFF" 
+          />
+          <Text style={styles.submitButtonText}>
+            {currentTab === 'support' ? 'Submit Support Request' : 'File Dispute'}
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -185,168 +210,156 @@ const SupportDispute = ({ onSubmitIssue }) => {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  tabSelector: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
     marginTop: 16,
+    borderRadius: 8,
+    padding: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  title: {
-    fontSize: 20,
+  tabButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    gap: 8,
+  },
+  activeTabButton: {
+    backgroundColor: COLORS.primary,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  tabButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  activeTabButtonText: {
+    color: '#FFFFFF',
+  },
+  mainContent: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: '600',
     color: '#111827',
-    marginBottom: 20,
+    marginTop: 24,
+    marginBottom: 16,
   },
-  scrollContainer: {
-    maxHeight: 600,
+  categoriesGrid: {
+    gap: 12,
   },
-  section: {
+  categoryCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 2,
+    elevation: 1,
+  },
+  selectedCategoryCard: {
+    borderColor: COLORS.primary,
+    backgroundColor: '#F0FDF4',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 2,
   },
-  sectionTitle: {
+  categoryIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  categoryTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#111827',
-    marginBottom: 16,
+    marginBottom: 4,
   },
-  issueTypeCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+  selectedCategoryTitle: {
+    color: COLORS.primary,
   },
-  selectedIssueType: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#8B5CF6',
-  },
-  issueTypeIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  issueTypeContent: {
-    flex: 1,
-  },
-  issueTypeLabel: {
+  categoryDescription: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 2,
-  },
-  issueTypeDescription: {
-    fontSize: 12,
     color: '#6B7280',
+    lineHeight: 20,
   },
-  selectedIcon: {
-    fontSize: 20,
-    color: '#8B5CF6',
-    fontWeight: 'bold',
+  selectedCategoryDescription: {
+    color: '#059669',
   },
-  inputGroup: {
-    marginBottom: 16,
+  inputSection: {
+    marginTop: 24,
   },
   inputLabel: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
     color: '#111827',
     marginBottom: 8,
   },
   textInput: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
     backgroundColor: '#FFFFFF',
-  },
-  textArea: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  batchSelector: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  batchOption: {
-    backgroundColor: '#F9FAFB',
     borderRadius: 8,
     padding: 12,
-    minWidth: 120,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    fontSize: 16,
   },
-  selectedBatch: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#8B5CF6',
-  },
-  batchId: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 2,
-  },
-  batchHerb: {
-    fontSize: 11,
-    color: '#8B5CF6',
-    marginBottom: 2,
-  },
-  batchFarmer: {
-    fontSize: 10,
-    color: '#6B7280',
+  textArea: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    fontSize: 16,
+    minHeight: 100,
   },
   submitButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
     paddingVertical: 16,
-    borderRadius: 12,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: '#8B5CF6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 24,
+    marginBottom: 32,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   submitButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-  },
-  quickAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  quickActionIcon: {
-    fontSize: 20,
-    marginRight: 12,
-  },
-  quickActionContent: {
-    flex: 1,
-  },
-  quickActionTitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#111827',
-    marginBottom: 2,
-  },
-  quickActionSubtitle: {
-    fontSize: 12,
-    color: '#6B7280',
-  },
-  quickActionArrow: {
-    fontSize: 18,
-    color: '#9CA3AF',
   },
 });
 
