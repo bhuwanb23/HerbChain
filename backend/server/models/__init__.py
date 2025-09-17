@@ -21,6 +21,15 @@ def init_app(app):
         TrainingContent,
         TrainingProgress
     )
+    # Transporters models
+    from .transporters import (
+        TransporterProfile,
+        Trip,
+        BatchTransfer,
+        DeliveryConfirmation,
+        TransporterPayment,
+        TransporterReport,
+    )
     
     return db
 
