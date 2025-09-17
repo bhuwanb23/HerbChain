@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { useBatchWorkflow } from '../hooks';
+import BatchTimeline from './BatchTimeline';
 
 const DeliveryConfirmation = ({ batchData, onDeliveryComplete }) => {
+  const { currentStep, nextStep, resetWorkflow } = useBatchWorkflow();
   const [deliveryStatus, setDeliveryStatus] = useState('pending');
 
   const handleDeliveryComplete = () => {
@@ -15,6 +18,7 @@ const DeliveryConfirmation = ({ batchData, onDeliveryComplete }) => {
           onPress: () => {
             setDeliveryStatus('completed');
             onDeliveryComplete && onDeliveryComplete();
+            resetWorkflow();
             Alert.alert('Success', 'Batch delivery completed successfully!');
           }
         },
@@ -23,7 +27,7 @@ const DeliveryConfirmation = ({ batchData, onDeliveryComplete }) => {
   };
 
   const mockBatchData = {
-    id: 'BATCH-001',
+    id: batchData || 'BATCH-001',
     herbType: 'Ashwagandha',
     farmer: 'Rajesh Kumar',
     status: 'approved',
@@ -34,85 +38,87 @@ const DeliveryConfirmation = ({ batchData, onDeliveryComplete }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Delivery Confirmation</Text>
-      
-      <View style={styles.batchSummary}>
-        <Text style={styles.sectionTitle}>Batch Summary</Text>
+      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        <BatchTimeline currentStep="delivery" progress={100} />
         
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Batch ID:</Text>
-          <Text style={styles.summaryValue}>{mockBatchData.id}</Text>
-        </View>
-        
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Herb Type:</Text>
-          <Text style={styles.summaryValue}>{mockBatchData.herbType}</Text>
-        </View>
-        
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Farmer:</Text>
-          <Text style={styles.summaryValue}>{mockBatchData.farmer}</Text>
-        </View>
-        
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Status:</Text>
-          <View style={[styles.statusBadge, { backgroundColor: '#10B981' }]}>
-            <Text style={styles.statusText}>{mockBatchData.status.toUpperCase()}</Text>
+        <View style={styles.batchSummary}>
+          <Text style={styles.sectionTitle}>Batch Summary</Text>
+          
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Batch ID:</Text>
+            <Text style={styles.summaryValue}>{mockBatchData.id}</Text>
+          </View>
+          
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Herb Type:</Text>
+            <Text style={styles.summaryValue}>{mockBatchData.herbType}</Text>
+          </View>
+          
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Farmer:</Text>
+            <Text style={styles.summaryValue}>{mockBatchData.farmer}</Text>
+          </View>
+          
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Status:</Text>
+            <View style={[styles.statusBadge, { backgroundColor: '#10B981' }]}>
+              <Text style={styles.statusText}>{mockBatchData.status.toUpperCase()}</Text>
+            </View>
+          </View>
+          
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Quality Score:</Text>
+            <Text style={styles.summaryValue}>{mockBatchData.qualityScore}%</Text>
+          </View>
+          
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Test Date:</Text>
+            <Text style={styles.summaryValue}>{mockBatchData.testDate}</Text>
+          </View>
+          
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Approved By:</Text>
+            <Text style={styles.summaryValue}>{mockBatchData.approvedBy}</Text>
           </View>
         </View>
-        
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Quality Score:</Text>
-          <Text style={styles.summaryValue}>{mockBatchData.qualityScore}%</Text>
-        </View>
-        
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Test Date:</Text>
-          <Text style={styles.summaryValue}>{mockBatchData.testDate}</Text>
-        </View>
-        
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Approved By:</Text>
-          <Text style={styles.summaryValue}>{mockBatchData.approvedBy}</Text>
-        </View>
-      </View>
 
-      <View style={styles.deliveryActions}>
-        <Text style={styles.sectionTitle}>Delivery Actions</Text>
-        
-        <View style={styles.actionItem}>
-          <Text style={styles.actionIcon}>📋</Text>
-          <View style={styles.actionContent}>
-            <Text style={styles.actionTitle}>Generate Certificate</Text>
-            <Text style={styles.actionDescription}>Create AYUSH compliance certificate</Text>
+        <View style={styles.deliveryActions}>
+          <Text style={styles.sectionTitle}>Delivery Actions</Text>
+          
+          <View style={styles.actionItem}>
+            <Text style={styles.actionIcon}>📋</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Generate Certificate</Text>
+              <Text style={styles.actionDescription}>Create AYUSH compliance certificate</Text>
+            </View>
+            <TouchableOpacity style={styles.actionButton}>
+              <Text style={styles.actionButtonText}>Generate</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>Generate</Text>
-          </TouchableOpacity>
-        </View>
-        
-        <View style={styles.actionItem}>
-          <Text style={styles.actionIcon}>📤</Text>
-          <View style={styles.actionContent}>
-            <Text style={styles.actionTitle}>Forward to AYUSH</Text>
-            <Text style={styles.actionDescription}>Send results to regulatory body</Text>
+          
+          <View style={styles.actionItem}>
+            <Text style={styles.actionIcon}>📤</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Forward to AYUSH</Text>
+              <Text style={styles.actionDescription}>Send results to regulatory body</Text>
+            </View>
+            <TouchableOpacity style={styles.actionButton}>
+              <Text style={styles.actionButtonText}>Send</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>Send</Text>
-          </TouchableOpacity>
-        </View>
-        
-        <View style={styles.actionItem}>
-          <Text style={styles.actionIcon}>📧</Text>
-          <View style={styles.actionContent}>
-            <Text style={styles.actionTitle}>Notify Farmer</Text>
-            <Text style={styles.actionDescription}>Send results to farmer</Text>
+          
+          <View style={styles.actionItem}>
+            <Text style={styles.actionIcon}>📧</Text>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Notify Farmer</Text>
+              <Text style={styles.actionDescription}>Send results to farmer</Text>
+            </View>
+            <TouchableOpacity style={styles.actionButton}>
+              <Text style={styles.actionButtonText}>Notify</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>Notify</Text>
-          </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
 
       <TouchableOpacity
         style={[
@@ -135,20 +141,18 @@ const DeliveryConfirmation = ({ batchData, onDeliveryComplete }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
-    marginTop: 16,
+    flex: 1,
+    backgroundColor: '#F8F9FA',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 20,
+  scrollContainer: {
+    flex: 1,
   },
   batchSummary: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -190,7 +194,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -233,6 +238,8 @@ const styles = StyleSheet.create({
   completeButton: {
     backgroundColor: '#10B981',
     paddingVertical: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
     borderRadius: 12,
     alignItems: 'center',
     shadowColor: '#10B981',

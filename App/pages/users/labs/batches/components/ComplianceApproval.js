@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { useBatchWorkflow } from '../hooks';
+import BatchTimeline from './BatchTimeline';
 
 const ComplianceApproval = ({ batchData, onApproval }) => {
-  const [testResults] = useState({
+  const { currentStep, nextStep } = useBatchWorkflow();
+
+  const [testResults] = React.useState({
     moistureContent: 8.5,
     pesticideResidue: 0.02,
     phytochemicalLevel: 95.2,
@@ -10,7 +14,7 @@ const ComplianceApproval = ({ batchData, onApproval }) => {
     microbialCount: 100,
   });
 
-  const [ayushStandards] = useState({
+  const [ayushStandards] = React.useState({
     moistureContent: { min: 5, max: 12 },
     pesticideResidue: { max: 0.05 },
     phytochemicalLevel: { min: 80 },
@@ -34,7 +38,12 @@ const ComplianceApproval = ({ batchData, onApproval }) => {
         { text: 'Cancel', style: 'cancel' },
         { 
           text: action.charAt(0).toUpperCase() + action.slice(1), 
-          onPress: () => onApproval && onApproval(approved)
+          onPress: () => {
+            onApproval && onApproval(approved);
+            if (approved) {
+              nextStep();
+            }
+          }
         },
       ]
     );
@@ -75,43 +84,45 @@ const ComplianceApproval = ({ batchData, onApproval }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Compliance & Approval</Text>
-      
-      <View style={styles.batchInfo}>
-        <Text style={styles.batchId}>Batch: BATCH-001</Text>
-        <Text style={styles.herbType}>Ashwagandha</Text>
-      </View>
-
-      <ScrollView style={styles.resultsContainer}>
-        <Text style={styles.sectionTitle}>Test Results vs AYUSH Standards</Text>
+      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        <BatchTimeline currentStep="compliance" progress={75} />
         
-        {testItems.map((item, index) => {
-          const compliance = checkCompliance(item.value, item.standard);
-          return (
-            <View key={index} style={styles.testItem}>
-              <View style={styles.testHeader}>
-                <Text style={styles.testName}>{item.name}</Text>
-                <View style={[styles.complianceBadge, { backgroundColor: compliance.color }]}>
-                  <Text style={styles.complianceText}>{compliance.status.toUpperCase()}</Text>
-                </View>
-              </View>
-              
-              <View style={styles.testDetails}>
-                <View style={styles.testValue}>
-                  <Text style={styles.valueText}>{item.value}{item.unit}</Text>
-                  <Text style={styles.valueLabel}>Test Result</Text>
+        <View style={styles.batchInfo}>
+          <Text style={styles.batchId}>Batch: {batchData || 'BATCH-001'}</Text>
+          <Text style={styles.herbType}>Ashwagandha</Text>
+        </View>
+
+        <View style={styles.resultsContainer}>
+          <Text style={styles.sectionTitle}>Test Results vs AYUSH Standards</Text>
+          
+          {testItems.map((item, index) => {
+            const compliance = checkCompliance(item.value, item.standard);
+            return (
+              <View key={index} style={styles.testItem}>
+                <View style={styles.testHeader}>
+                  <Text style={styles.testName}>{item.name}</Text>
+                  <View style={[styles.complianceBadge, { backgroundColor: compliance.color }]}>
+                    <Text style={styles.complianceText}>{compliance.status.toUpperCase()}</Text>
+                  </View>
                 </View>
                 
-                <View style={styles.testStandard}>
-                  <Text style={styles.standardText}>
-                    {item.standard.min ? `${item.standard.min}-${item.standard.max}` : `≤${item.standard.max}`}{item.unit}
-                  </Text>
-                  <Text style={styles.standardLabel}>AYUSH Standard</Text>
+                <View style={styles.testDetails}>
+                  <View style={styles.testValue}>
+                    <Text style={styles.valueText}>{item.value}{item.unit}</Text>
+                    <Text style={styles.valueLabel}>Test Result</Text>
+                  </View>
+                  
+                  <View style={styles.testStandard}>
+                    <Text style={styles.standardText}>
+                      {item.standard.min ? `${item.standard.min}-${item.standard.max}` : `≤${item.standard.max}`}{item.unit}
+                    </Text>
+                    <Text style={styles.standardLabel}>AYUSH Standard</Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          );
-        })}
+            );
+          })}
+        </View>
       </ScrollView>
 
       <View style={styles.actionButtons}>
@@ -135,20 +146,18 @@ const ComplianceApproval = ({ batchData, onApproval }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
-    marginTop: 16,
+    flex: 1,
+    backgroundColor: '#F8F9FA',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 20,
+  scrollContainer: {
+    flex: 1,
   },
   batchInfo: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -169,7 +178,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -240,6 +250,11 @@ const styles = StyleSheet.create({
   actionButtons: {
     flexDirection: 'row',
     gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
   },
   actionButton: {
     flex: 1,

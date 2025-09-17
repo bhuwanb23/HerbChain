@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
+import { useBatchWorkflow } from './hooks';
 import {
   BatchVerification,
   ComplianceApproval,
@@ -7,26 +8,27 @@ import {
 } from './components';
 
 const BatchesPage = ({ navigation }) => {
-  const [currentStep, setCurrentStep] = useState('verification');
+  const { currentStep, goToStep, resetWorkflow } = useBatchWorkflow();
   const [selectedBatch, setSelectedBatch] = useState(null);
 
   const handleBatchLoad = (batchId) => {
     setSelectedBatch(batchId);
-    setCurrentStep('compliance');
+    goToStep('compliance');
   };
 
   const handleApproval = (approved) => {
     if (approved) {
-      setCurrentStep('delivery');
+      goToStep('delivery');
     } else {
-      // Handle rejection
-      console.log('Batch rejected');
+      // Handle rejection - go back to verification
+      goToStep('verification');
+      setSelectedBatch(null);
     }
   };
 
   const handleDeliveryComplete = () => {
     // Reset to verification step
-    setCurrentStep('verification');
+    resetWorkflow();
     setSelectedBatch(null);
   };
 
