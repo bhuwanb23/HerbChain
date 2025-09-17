@@ -1,173 +1,224 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  Pressable, 
+  TouchableOpacity,
+  Alert 
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { SYNC_STATUSES, MOCK_OFFLINE_DATA, COLORS } from '../constants';
 
-const OfflineSync = ({ onSyncComplete }) => {
-  const [isOnline, setIsOnline] = useState(true);
-  const [pendingResults, setPendingResults] = useState([]);
-  const [isSyncing, setIsSyncing] = useState(false);
+const SyncStatusBadge = ({ status }) => {
+  const statusConfig = SYNC_STATUSES.find(s => s.id === status) || SYNC_STATUSES[0];
+  
+  return (
+    <View style={[styles.statusBadge, { backgroundColor: statusConfig.color + '20' }]}>
+      <Ionicons name={statusConfig.icon} size={12} color={statusConfig.color} />
+      <Text style={[styles.statusText, { color: statusConfig.color }]}>
+        {statusConfig.title}
+      </Text>
+    </View>
+  );
+};
 
-  useEffect(() => {
-    // Simulate network status check
-    const checkNetworkStatus = () => {
-      // In real app, this would check actual network connectivity
-      const online = Math.random() > 0.3; // 70% chance of being online
-      setIsOnline(online);
-    };
-
-    checkNetworkStatus();
-    const interval = setInterval(checkNetworkStatus, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const mockPendingResults = [
-    {
-      id: 'OFFLINE-001',
-      batchId: 'BATCH-001',
-      herbType: 'Ashwagandha',
-      farmer: 'Rajesh Kumar',
-      testResults: {
-        moistureContent: 8.5,
-        pesticideResidue: 0.02,
-        phytochemicalLevel: 95.2,
-      },
-      timestamp: '2024-01-15 14:30',
-      status: 'pending',
-    },
-    {
-      id: 'OFFLINE-002',
-      batchId: 'BATCH-002',
-      herbType: 'Tulsi',
-      farmer: 'Priya Sharma',
-      testResults: {
-        moistureContent: 7.2,
-        pesticideResidue: 0.01,
-        phytochemicalLevel: 88.5,
-      },
-      timestamp: '2024-01-15 16:45',
-      status: 'pending',
-    },
-  ];
-
-  const handleSyncAll = () => {
-    if (!isOnline) {
-      Alert.alert('Offline', 'Cannot sync while offline. Please check your internet connection.');
-      return;
-    }
-
-    setIsSyncing(true);
-    
-    // Simulate sync process
-    setTimeout(() => {
-      setIsSyncing(false);
-      setPendingResults([]);
-      onSyncComplete && onSyncComplete();
-      Alert.alert('Success', 'All pending results have been synced successfully!');
-    }, 3000);
+const OfflineEntryCard = ({ entry, onSync, onRetry, onDelete }) => {
+  const getStatusColor = (status) => {
+    const statusConfig = SYNC_STATUSES.find(s => s.id === status);
+    return statusConfig ? statusConfig.color : '#6B7280';
   };
 
-  const handleSyncIndividual = (resultId) => {
-    if (!isOnline) {
-      Alert.alert('Offline', 'Cannot sync while offline. Please check your internet connection.');
-      return;
-    }
-
-    setIsSyncing(true);
-    
-    // Simulate individual sync
-    setTimeout(() => {
-      setIsSyncing(false);
-      setPendingResults(prev => prev.filter(result => result.id !== resultId));
-      Alert.alert('Success', 'Result synced successfully!');
-    }, 1500);
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const displayPendingResults = pendingResults.length > 0 ? pendingResults : mockPendingResults;
+  const getActionButton = () => {
+    switch (entry.status) {
+      case 'pending':
+        return (
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.syncButton]}
+            onPress={() => onSync(entry.id)}
+          >
+            <Ionicons name="sync-outline" size={16} color="#FFFFFF" />
+            <Text style={styles.syncButtonText}>Sync Now</Text>
+          </TouchableOpacity>
+        );
+      case 'syncing':
+        return (
+          <View style={[styles.actionButton, styles.syncingButton]}>
+            <Ionicons name="sync" size={16} color="#3B82F6" />
+            <Text style={styles.syncingButtonText}>Syncing...</Text>
+          </View>
+        );
+      case 'failed':
+        return (
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.retryButton]}
+            onPress={() => onRetry(entry.id)}
+          >
+            <Ionicons name="refresh-outline" size={16} color="#EF4444" />
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        );
+      case 'completed':
+        return (
+          <View style={[styles.actionButton, styles.completedButton]}>
+            <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+            <Text style={styles.completedButtonText}>Synced</Text>
+          </View>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <View style={styles.entryCard}>
+      <View style={styles.entryHeader}>
+        <View style={styles.entryInfo}>
+          <Text style={styles.batchId}>#{entry.batchId}</Text>
+          <Text style={styles.batchName}>{entry.batchName}</Text>
+        </View>
+        <SyncStatusBadge status={entry.status} />
+      </View>
+      
+      <View style={styles.entryDetails}>
+        <View style={styles.detailRow}>
+          <Ionicons name="time-outline" size={14} color="#6B7280" />
+          <Text style={styles.detailText}>{formatTimestamp(entry.timestamp)}</Text>
+        </View>
+        
+        <View style={styles.detailRow}>
+          <Ionicons name="flask-outline" size={14} color="#6B7280" />
+          <Text style={styles.detailText}>
+            {Object.keys(entry.testResults).length} test results
+          </Text>
+        </View>
+        
+        <View style={styles.detailRow}>
+          <Ionicons name="document-outline" size={14} color="#6B7280" />
+          <Text style={styles.detailText}>
+            {entry.files.length} file(s) attached
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.entryActions}>
+        {getActionButton()}
+        
+        {entry.status !== 'syncing' && (
+          <TouchableOpacity 
+            style={styles.deleteButton}
+            onPress={() => {
+              Alert.alert(
+                'Delete Entry',
+                'Are you sure you want to delete this offline entry?',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Delete', style: 'destructive', onPress: () => onDelete(entry.id) }
+                ]
+              );
+            }}
+          >
+            <Ionicons name="trash-outline" size={16} color="#EF4444" />
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+};
+
+const SyncSummary = ({ offlineData }) => {
+  const pendingCount = offlineData.filter(entry => entry.status === 'pending').length;
+  const syncingCount = offlineData.filter(entry => entry.status === 'syncing').length;
+  const completedCount = offlineData.filter(entry => entry.status === 'completed').length;
+  const failedCount = offlineData.filter(entry => entry.status === 'failed').length;
+
+  return (
+    <View style={styles.summaryCard}>
+      <Text style={styles.summaryTitle}>Sync Summary</Text>
+      <View style={styles.summaryGrid}>
+        <View style={styles.summaryItem}>
+          <Text style={styles.summaryNumber}>{pendingCount}</Text>
+          <Text style={styles.summaryLabel}>Pending</Text>
+        </View>
+        <View style={styles.summaryItem}>
+          <Text style={[styles.summaryNumber, { color: '#3B82F6' }]}>{syncingCount}</Text>
+          <Text style={styles.summaryLabel}>Syncing</Text>
+        </View>
+        <View style={styles.summaryItem}>
+          <Text style={[styles.summaryNumber, { color: '#10B981' }]}>{completedCount}</Text>
+          <Text style={styles.summaryLabel}>Completed</Text>
+        </View>
+        <View style={styles.summaryItem}>
+          <Text style={[styles.summaryNumber, { color: '#EF4444' }]}>{failedCount}</Text>
+          <Text style={styles.summaryLabel}>Failed</Text>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const OfflineSync = ({ 
+  offlineData, 
+  onSyncAll, 
+  onSyncEntry, 
+  onRetrySync, 
+  onDeleteEntry 
+}) => {
+  const hasPendingEntries = offlineData.some(entry => entry.status === 'pending');
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Offline Sync</Text>
-      
-      <View style={styles.networkStatus}>
-        <View style={[styles.statusIndicator, { backgroundColor: isOnline ? '#10B981' : '#EF4444' }]}>
-          <Text style={styles.statusIcon}>{isOnline ? '🟢' : '🔴'}</Text>
-        </View>
-        <Text style={styles.statusText}>
-          {isOnline ? 'Online - Ready to sync' : 'Offline - Results stored locally'}
-        </Text>
-      </View>
-
-      <View style={styles.syncActions}>
-        <TouchableOpacity
-          style={[
-            styles.syncAllButton,
-            (!isOnline || isSyncing || displayPendingResults.length === 0) && styles.syncAllButtonDisabled
-          ]}
-          onPress={handleSyncAll}
-          disabled={!isOnline || isSyncing || displayPendingResults.length === 0}
-        >
-          <Text style={[
-            styles.syncAllButtonText,
-            (!isOnline || isSyncing || displayPendingResults.length === 0) && styles.syncAllButtonTextDisabled
-          ]}>
-            {isSyncing ? '🔄 Syncing...' : '📤 Sync All Results'}
+      <ScrollView style={styles.mainContent}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Offline Sync</Text>
+          <Text style={styles.subtitle}>
+            Manage your offline test results and sync them when connected.
           </Text>
-        </TouchableOpacity>
-        
-        <Text style={styles.pendingCount}>
-          {displayPendingResults.length} pending result{displayPendingResults.length !== 1 ? 's' : ''}
-        </Text>
-      </View>
+        </View>
 
-      <ScrollView style={styles.pendingResultsContainer}>
-        <Text style={styles.sectionTitle}>Pending Results</Text>
-        
-        {displayPendingResults.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateIcon}>✅</Text>
-            <Text style={styles.emptyStateText}>No pending results</Text>
-            <Text style={styles.emptyStateSubtext}>All results have been synced</Text>
+        <SyncSummary offlineData={offlineData} />
+
+        {hasPendingEntries && (
+          <View style={styles.syncAllContainer}>
+            <TouchableOpacity 
+              style={styles.syncAllButton}
+              onPress={onSyncAll}
+            >
+              <Ionicons name="sync-outline" size={20} color="#FFFFFF" />
+              <Text style={styles.syncAllButtonText}>Sync All Pending</Text>
+            </TouchableOpacity>
           </View>
-        ) : (
-          displayPendingResults.map((result) => (
-            <View key={result.id} style={styles.pendingResultCard}>
-              <View style={styles.resultHeader}>
-                <Text style={styles.resultId}>{result.id}</Text>
-                <View style={styles.statusBadge}>
-                  <Text style={styles.statusText}>PENDING</Text>
-                </View>
-              </View>
-              
-              <Text style={styles.batchId}>Batch: {result.batchId}</Text>
-              <Text style={styles.herbType}>{result.herbType}</Text>
-              <Text style={styles.farmer}>👨‍🌾 {result.farmer}</Text>
-              
-              <View style={styles.testResults}>
-                <Text style={styles.testResultsTitle}>Test Results:</Text>
-                <Text style={styles.testResult}>Moisture: {result.testResults.moistureContent}%</Text>
-                <Text style={styles.testResult}>Pesticide: {result.testResults.pesticideResidue}ppm</Text>
-                <Text style={styles.testResult}>Phytochemical: {result.testResults.phytochemicalLevel}%</Text>
-              </View>
-              
-              <Text style={styles.timestamp}>📅 {result.timestamp}</Text>
-              
-              <TouchableOpacity
-                style={[
-                  styles.syncButton,
-                  (!isOnline || isSyncing) && styles.syncButtonDisabled
-                ]}
-                onPress={() => handleSyncIndividual(result.id)}
-                disabled={!isOnline || isSyncing}
-              >
-                <Text style={[
-                  styles.syncButtonText,
-                  (!isOnline || isSyncing) && styles.syncButtonTextDisabled
-                ]}>
-                  {isSyncing ? '🔄' : '📤'} Sync
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ))
         )}
+
+        <View style={styles.entriesContainer}>
+          <Text style={styles.entriesTitle}>Offline Entries</Text>
+          
+          {offlineData.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="cloud-offline-outline" size={48} color="#9CA3AF" />
+              <Text style={styles.emptyStateTitle}>No Offline Data</Text>
+              <Text style={styles.emptyStateText}>
+                Test results saved offline will appear here for syncing.
+              </Text>
+            </View>
+          ) : (
+            offlineData.map((entry) => (
+              <OfflineEntryCard
+                key={entry.id}
+                entry={entry}
+                onSync={onSyncEntry}
+                onRetry={onRetrySync}
+                onDelete={onDeleteEntry}
+              />
+            ))
+          )}
+        </View>
       </ScrollView>
     </View>
   );
@@ -175,83 +226,95 @@ const OfflineSync = ({ onSyncComplete }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
-    marginTop: 16,
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  mainContent: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  header: {
+    paddingVertical: 20,
+    alignItems: 'center',
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  summaryCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  summaryTitle: {
+    fontSize: 18,
     fontWeight: '600',
     color: '#111827',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  summaryGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  summaryItem: {
+    alignItems: 'center',
+  },
+  summaryNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  summaryLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  syncAllContainer: {
     marginBottom: 20,
   },
-  networkStatus: {
+  syncAllButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  statusIndicator: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  statusIcon: {
-    fontSize: 20,
-  },
-  statusText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#111827',
-  },
-  syncActions: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  syncAllButton: {
-    backgroundColor: '#8B5CF6',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  syncAllButtonDisabled: {
-    backgroundColor: '#D1D5DB',
+    gap: 8,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   syncAllButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
-  syncAllButtonTextDisabled: {
-    color: '#6B7280',
+  entriesContainer: {
+    marginBottom: 20,
   },
-  pendingCount: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-  },
-  pendingResultsContainer: {
-    maxHeight: 400,
-  },
-  sectionTitle: {
-    fontSize: 16,
+  entriesTitle: {
+    fontSize: 18,
     fontWeight: '600',
     color: '#111827',
     marginBottom: 16,
@@ -260,103 +323,129 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 40,
   },
-  emptyStateIcon: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-  emptyStateText: {
-    fontSize: 16,
+  emptyStateTitle: {
+    fontSize: 18,
     fontWeight: '600',
     color: '#111827',
+    marginTop: 16,
     marginBottom: 8,
   },
-  emptyStateSubtext: {
+  emptyStateText: {
     fontSize: 14,
     color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
   },
-  pendingResultCard: {
+  entryCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 2,
-    elevation: 2,
+    elevation: 1,
   },
-  resultHeader: {
+  entryHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
-  resultId: {
+  entryInfo: {
+    flex: 1,
+  },
+  batchId: {
     fontSize: 16,
     fontWeight: '600',
     color: '#111827',
+    marginBottom: 2,
+  },
+  batchName: {
+    fontSize: 14,
+    color: '#6B7280',
   },
   statusBadge: {
-    backgroundColor: '#F59E0B',
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+    gap: 4,
   },
-  batchId: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 4,
-  },
-  herbType: {
-    fontSize: 14,
+  statusText: {
+    fontSize: 12,
     fontWeight: '500',
-    color: '#8B5CF6',
-    marginBottom: 8,
   },
-  farmer: {
-    fontSize: 12,
+  entryDetails: {
+    marginBottom: 16,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 8,
+  },
+  detailText: {
+    fontSize: 14,
     color: '#6B7280',
-    marginBottom: 12,
   },
-  testResults: {
-    backgroundColor: '#F9FAFB',
+  entryActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  testResultsTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  testResult: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginBottom: 2,
-  },
-  timestamp: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginBottom: 12,
+    gap: 6,
   },
   syncButton: {
-    backgroundColor: '#10B981',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    alignSelf: 'flex-end',
-  },
-  syncButtonDisabled: {
-    backgroundColor: '#D1D5DB',
+    backgroundColor: COLORS.primary,
   },
   syncButtonText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '500',
   },
-  syncButtonTextDisabled: {
-    color: '#6B7280',
+  syncingButton: {
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+  },
+  syncingButtonText: {
+    color: '#3B82F6',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  retryButton: {
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#EF4444',
+  },
+  retryButtonText: {
+    color: '#EF4444',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  completedButton: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#10B981',
+  },
+  completedButtonText: {
+    color: '#10B981',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  deleteButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#FEF2F2',
   },
 });
 

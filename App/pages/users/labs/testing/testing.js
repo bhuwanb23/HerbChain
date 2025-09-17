@@ -1,44 +1,73 @@
-import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { useTesting } from './hooks';
 import {
   TestingResultsEntry,
   OfflineSync,
 } from './components';
 
 const TestingPage = ({ navigation }) => {
-  const [currentTab, setCurrentTab] = useState('results');
-  const [selectedBatch, setSelectedBatch] = useState('BATCH-001');
-
-  const handleResultsSubmit = (results, files) => {
-    console.log('Results submitted:', results, files);
-    // Handle results submission
-  };
-
-  const handleSyncComplete = () => {
-    console.log('Sync completed');
-    // Handle sync completion
-  };
+  const {
+    currentTab,
+    selectedBatch,
+    isOffline,
+    testResults,
+    uploadedFiles,
+    offlineData,
+    handleTabChange,
+    handleBatchSelect,
+    toggleOfflineMode,
+    handleTestResultChange,
+    handleFileUpload,
+    handleFileRemove,
+    handleSaveOffline,
+    handleSubmitResults,
+    handleSyncOfflineData,
+    handleRetrySync,
+    handleDeleteOfflineEntry,
+    handleSyncAll,
+  } = useTesting();
 
   const renderCurrentTab = () => {
     switch (currentTab) {
       case 'results':
         return (
           <TestingResultsEntry 
-            batchData={selectedBatch}
-            onResultsSubmit={handleResultsSubmit}
+            batchId={selectedBatch}
+            isOffline={isOffline}
+            testResults={testResults}
+            uploadedFiles={uploadedFiles}
+            onToggleOffline={toggleOfflineMode}
+            onTestResultChange={handleTestResultChange}
+            onFileUpload={handleFileUpload}
+            onFileRemove={handleFileRemove}
+            onSaveOffline={handleSaveOffline}
+            onSubmitResults={handleSubmitResults}
           />
         );
       case 'sync':
         return (
           <OfflineSync 
-            onSyncComplete={handleSyncComplete}
+            offlineData={offlineData}
+            onSyncAll={handleSyncAll}
+            onSyncEntry={handleSyncOfflineData}
+            onRetrySync={handleRetrySync}
+            onDeleteEntry={handleDeleteOfflineEntry}
           />
         );
       default:
         return (
           <TestingResultsEntry 
-            batchData={selectedBatch}
-            onResultsSubmit={handleResultsSubmit}
+            batchId={selectedBatch}
+            isOffline={isOffline}
+            testResults={testResults}
+            uploadedFiles={uploadedFiles}
+            onToggleOffline={toggleOfflineMode}
+            onTestResultChange={handleTestResultChange}
+            onFileUpload={handleFileUpload}
+            onFileRemove={handleFileRemove}
+            onSaveOffline={handleSaveOffline}
+            onSubmitResults={handleSubmitResults}
           />
         );
     }
@@ -59,7 +88,7 @@ const TestingPage = ({ navigation }) => {
                 styles.tabButtonText,
                 currentTab === 'results' && styles.activeTabButtonText
               ]}
-              onPress={() => setCurrentTab('results')}
+              onPress={() => handleTabChange('results')}
             >
               🧪 Results Entry
             </Text>
@@ -75,7 +104,7 @@ const TestingPage = ({ navigation }) => {
                 styles.tabButtonText,
                 currentTab === 'sync' && styles.activeTabButtonText
               ]}
-              onPress={() => setCurrentTab('sync')}
+              onPress={() => handleTabChange('sync')}
             >
               📱 Offline Sync
             </Text>

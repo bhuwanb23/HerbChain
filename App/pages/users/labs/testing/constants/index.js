@@ -1,0 +1,188 @@
+// Testing Constants
+export const TEST_TYPES = [
+  {
+    id: 'moisture',
+    title: 'Moisture Content',
+    subtitle: 'Percentage (%)',
+    icon: 'water',
+    iconColor: '#00BFFF',
+    iconBg: '#DBEAFE',
+    unit: '%',
+    step: '0.01',
+    placeholder: 'Enter percentage',
+  },
+  {
+    id: 'pesticide',
+    title: 'Pesticide Residues',
+    subtitle: 'mg/kg',
+    icon: 'skull',
+    iconColor: '#EF4444',
+    iconBg: '#FEE2E2',
+    unit: 'mg/kg',
+    step: '0.001',
+    placeholder: 'Enter value',
+  },
+  {
+    id: 'phytochemical',
+    title: 'Phytochemical Levels',
+    subtitle: 'Quantitative markers',
+    icon: 'leaf',
+    iconColor: '#22C55E',
+    iconBg: '#DCFCE7',
+    unit: 'mg/g',
+    step: '0.01',
+    placeholder: 'Enter value',
+  },
+];
+
+export const UPLOAD_TYPES = [
+  {
+    id: 'lab-certificate',
+    title: 'Lab Certificate',
+    subtitle: 'PDF',
+    icon: 'document-lock',
+    iconColor: '#EF4444',
+    required: true,
+  },
+  {
+    id: 'microscope-image',
+    title: 'Microscope Image',
+    subtitle: 'JPG/PNG',
+    icon: 'search',
+    iconColor: '#A855F7',
+    required: false,
+  },
+  {
+    id: 'chromatogram',
+    title: 'Chromatogram',
+    subtitle: 'Image/CSV',
+    icon: 'analytics',
+    iconColor: '#3B82F6',
+    required: false,
+  },
+];
+
+export const BATCH_STATUSES = [
+  { id: 'pending', title: 'Pending', color: '#F59E0B' },
+  { id: 'testing', title: 'Testing', color: '#3B82F6' },
+  { id: 'completed', title: 'Completed', color: '#10B981' },
+  { id: 'failed', title: 'Failed', color: '#EF4444' },
+];
+
+export const SYNC_STATUSES = [
+  { id: 'pending', title: 'Pending Sync', color: '#F59E0B', icon: 'clock-outline' },
+  { id: 'syncing', title: 'Syncing', color: '#3B82F6', icon: 'sync-outline' },
+  { id: 'completed', title: 'Synced', color: '#10B981', icon: 'checkmark-circle-outline' },
+  { id: 'failed', title: 'Sync Failed', color: '#EF4444', icon: 'alert-circle-outline' },
+];
+
+export const MOCK_BATCHES = [
+  {
+    id: 'BT-2024-001',
+    name: 'Echinacea Purpurea Extract',
+    status: 'testing',
+    receivedDate: '2024-01-15',
+    farmer: 'Green Valley Farms',
+    quantity: '50kg',
+    tests: ['moisture', 'pesticide', 'phytochemical'],
+  },
+  {
+    id: 'BT-2024-002',
+    name: 'Ginseng Root Powder',
+    status: 'pending',
+    receivedDate: '2024-01-16',
+    farmer: 'Mountain Herbs Co.',
+    quantity: '25kg',
+    tests: ['moisture', 'pesticide'],
+  },
+  {
+    id: 'BT-2024-003',
+    name: 'Turmeric Extract',
+    status: 'completed',
+    receivedDate: '2024-01-14',
+    farmer: 'Sunrise Agriculture',
+    quantity: '75kg',
+    tests: ['moisture', 'pesticide', 'phytochemical'],
+  },
+];
+
+export const MOCK_OFFLINE_DATA = [
+  {
+    id: '1',
+    batchId: 'BT-2024-001',
+    batchName: 'Echinacea Purpurea Extract',
+    testResults: {
+      moisture: '8.5',
+      pesticide: '0.02',
+      phytochemical: '2.3',
+    },
+    files: ['lab-certificate', 'microscope-image'],
+    timestamp: '2024-01-15T10:30:00Z',
+    status: 'pending',
+  },
+  {
+    id: '2',
+    batchId: 'BT-2024-002',
+    batchName: 'Ginseng Root Powder',
+    testResults: {
+      moisture: '6.2',
+      pesticide: '0.01',
+    },
+    files: ['lab-certificate'],
+    timestamp: '2024-01-16T14:20:00Z',
+    status: 'syncing',
+  },
+];
+
+export const COLORS = {
+  primary: '#006B38',
+  primaryDark: '#004422',
+  primaryLight: '#059669',
+  secondary: '#00BFFF',
+  success: '#10B981',
+  warning: '#F59E0B',
+  error: '#EF4444',
+  info: '#3B82F6',
+  white: '#FFFFFF',
+  gray: {
+    50: '#F8F9FA',
+    100: '#F3F4F6',
+    200: '#E5E7EB',
+    300: '#D1D5DB',
+    400: '#9CA3AF',
+    500: '#6B7280',
+    600: '#4B5563',
+    700: '#374151',
+    800: '#1F2937',
+    900: '#111827',
+  },
+};
+
+export const SPACING = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+};
+
+export const TYPOGRAPHY = {
+  sizes: {
+    xs: 10,
+    sm: 12,
+    md: 14,
+    lg: 16,
+    xl: 18,
+    xxl: 20,
+    xxxl: 22,
+    display: 24,
+  },
+  weights: {
+    normal: '400',
+    medium: '500',
+    semibold: '600',
+    bold: '700',
+  },
+};
