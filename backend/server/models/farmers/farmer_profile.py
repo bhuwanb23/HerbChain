@@ -35,10 +35,8 @@ class FarmerProfile(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
-    # Relationships
+    # Relationships (trimmed to active models)
     herb_batches = db.relationship('HerbBatch', backref='farmer', lazy=True, cascade='all, delete-orphan')
-    payments = db.relationship('Payment', backref='farmer', lazy=True, cascade='all, delete-orphan')
-    training_progress = db.relationship('TrainingProgress', backref='farmer', lazy=True, cascade='all, delete-orphan')
     
     def __repr__(self):
         return f'<FarmerProfile {self.farmer_id}: {self.name}>'

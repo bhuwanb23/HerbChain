@@ -47,8 +47,7 @@ class HerbBatch(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
-    # Relationships
-    payments = db.relationship('Payment', backref='herb_batch', lazy=True)
+    # Relationships (trimmed to active models)
     
     def __repr__(self):
         return f'<HerbBatch {self.batch_id}: {self.species_entered or self.species_detected}>'

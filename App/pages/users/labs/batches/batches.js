@@ -1,69 +1,29 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
-import { useBatchWorkflow } from './hooks';
-import {
-  BatchVerification,
-  ComplianceApproval,
-  DeliveryConfirmation,
-} from './components';
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { useLabBatches } from './hooks/useLabBatches';
+import { LabBatchList } from './components';
 
 const BatchesPage = ({ navigation }) => {
-  const { currentStep, goToStep, resetWorkflow } = useBatchWorkflow();
-  const [selectedBatch, setSelectedBatch] = useState(null);
-
-  const handleBatchLoad = (batchId) => {
-    setSelectedBatch(batchId);
-    goToStep('compliance');
-  };
-
-  const handleApproval = (approved) => {
-    if (approved) {
-      goToStep('delivery');
-    } else {
-      // Handle rejection - go back to verification
-      goToStep('verification');
-      setSelectedBatch(null);
-    }
-  };
-
-  const handleDeliveryComplete = () => {
-    // Reset to verification step
-    resetWorkflow();
-    setSelectedBatch(null);
-  };
-
-  const renderCurrentStep = () => {
-    switch (currentStep) {
-      case 'verification':
-        return <BatchVerification onBatchLoad={handleBatchLoad} />;
-      case 'compliance':
-        return (
-          <ComplianceApproval 
-            batchData={selectedBatch}
-            onApproval={handleApproval}
-          />
-        );
-      case 'delivery':
-        return (
-          <DeliveryConfirmation 
-            batchData={selectedBatch}
-            onDeliveryComplete={handleDeliveryComplete}
-          />
-        );
-      default:
-        return <BatchVerification onBatchLoad={handleBatchLoad} />;
-    }
-  };
+  const [tab, setTab] = useState('all'); // 'all' | 'accepted'
+  const { all, accepted, loading, refresh } = useLabBatches();
 
   return (
     <View style={styles.container}>
-      <ScrollView 
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {renderCurrentStep()}
-      </ScrollView>
+      <View style={styles.tabs}>
+        <TouchableOpacity style={[styles.tab, tab === 'all' && styles.activeTab]} onPress={() => setTab('all')}>
+          <Text style={[styles.tabText, tab === 'all' && styles.activeTabText]}>Batch List</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.tab, tab === 'accepted' && styles.activeTab]} onPress={() => setTab('accepted')}>
+          <Text style={[styles.tabText, tab === 'accepted' && styles.activeTabText]}>Accepted Batches</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={{ flex: 1 }}>
+        {tab === 'all' ? (
+          <LabBatchList data={all} loading={loading} onRefresh={refresh} />
+        ) : (
+          <LabBatchList data={accepted} loading={loading} onRefresh={refresh} />
+        )}
+      </View>
     </View>
   );
 };
@@ -73,11 +33,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
-  scrollContainer: {
-    flex: 1,
+  tabs: {
+    flexDirection: 'row',
+    padding: 12,
+    gap: 8,
   },
-  scrollContent: {
-    paddingBottom: 20,
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    backgroundColor: '#ffffff',
+  },
+  activeTab: {
+    backgroundColor: '#22c55e',
+    borderColor: '#22c55e',
+  },
+  tabText: {
+    color: '#111827',
+    fontWeight: '700',
+  },
+  activeTabText: {
+    color: '#ffffff',
   },
 });
 

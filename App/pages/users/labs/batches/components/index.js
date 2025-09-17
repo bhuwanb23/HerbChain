@@ -6,3 +6,5 @@ export { default as BatchTimeline } from './BatchTimeline';
 export { default as QuickActions } from './QuickActions';
 export { default as BatchCard } from './BatchCard';
 export { default as BatchList } from './BatchList';
+export { default as LabBatchItem } from './LabBatchItem';
+export { default as LabBatchList } from './LabBatchList';

@@ -3,7 +3,7 @@ Admin routes for database management and monitoring
 """
 from flask import Blueprint, render_template, jsonify, request
 from models import db
-from models.farmers import FarmerProfile, HerbBatch, Payment, TrainingContent, TrainingProgress
+from models.farmers import FarmerProfile, HerbBatch
 from config.logging import get_logger, log_database_operation
 import json
 from datetime import datetime, timedelta
@@ -23,10 +23,6 @@ def get_stats():
         stats = {
             'total_farmers': FarmerProfile.query.count(),
             'total_batches': HerbBatch.query.count(),
-            'total_payments': Payment.query.count(),
-            'active_trainings': TrainingContent.query.filter_by(is_active=True).count(),
-            'completed_trainings': TrainingProgress.query.filter_by(status='Completed').count(),
-            'total_earnings': db.session.query(db.func.sum(Payment.amount)).filter_by(status='Completed').scalar() or 0,
             'recent_batches': HerbBatch.query.filter(
                 HerbBatch.created_at >= datetime.utcnow() - timedelta(days=7)
             ).count()
@@ -113,80 +109,6 @@ def get_batches():
         logger.error(f"Error getting batches: {str(e)}")
         return jsonify({'error': 'Failed to get batches'}), 500
 
-@admin_bp.route('/api/payments')
-def get_payments():
-    """Get payments list"""
-    try:
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 10, type=int)
-        status = request.args.get('status')
-        
-        query = Payment.query
-        if status:
-            query = query.filter_by(status=status)
-        
-        payments = query.paginate(page=page, per_page=per_page, error_out=False)
-        
-        payments_data = []
-        for payment in payments.items:
-            payments_data.append({
-                'payment_id': payment.payment_id,
-                'farmer_name': payment.farmer.name if payment.farmer else 'Unknown',
-                'amount': float(payment.amount) if payment.amount else 0,
-                'payment_type': payment.payment_type,
-                'status': payment.status,
-                'payment_date': payment.payment_date.isoformat() if payment.payment_date else None,
-                'transaction_reference': payment.transaction_reference
-            })
-        
-        log_database_operation('SELECT', 'payments', details=f'Page {page}, Status: {status}')
-        return jsonify({
-            'payments': payments_data,
-            'total': payments.total,
-            'pages': payments.pages,
-            'current_page': page
-        })
-    
-    except Exception as e:
-        logger.error(f"Error getting payments: {str(e)}")
-        return jsonify({'error': 'Failed to get payments'}), 500
-
-@admin_bp.route('/api/training')
-def get_training():
-    """Get training content list"""
-    try:
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 10, type=int)
-        
-        training = TrainingContent.query.paginate(
-            page=page, per_page=per_page, error_out=False
-        )
-        
-        training_data = []
-        for content in training.items:
-            training_data.append({
-                'training_id': content.training_id,
-                'title': content.title,
-                'description': content.description,
-                'language': content.language,
-                'content_type': content.content_type,
-                'difficulty_level': content.difficulty_level,
-                'duration_minutes': content.duration_minutes,
-                'is_active': content.is_active,
-                'created_at': content.created_at.isoformat() if content.created_at else None
-            })
-        
-        log_database_operation('SELECT', 'training_content', details=f'Page {page}')
-        return jsonify({
-            'training': training_data,
-            'total': training.total,
-            'pages': training.pages,
-            'current_page': page
-        })
-    
-    except Exception as e:
-        logger.error(f"Error getting training: {str(e)}")
-        return jsonify({'error': 'Failed to get training content'}), 500
 
 @admin_bp.route('/api/logs')
 def get_logs():
@@ -221,9 +143,6 @@ def backup_database():
         backup_data = {
             'farmers': [farmer.to_dict() for farmer in FarmerProfile.query.all()],
             'batches': [batch.to_dict() for batch in HerbBatch.query.all()],
-            'payments': [payment.to_dict() for payment in Payment.query.all()],
-            'training_content': [content.to_dict() for content in TrainingContent.query.all()],
-            'training_progress': [progress.to_dict() for progress in TrainingProgress.query.all()],
             'backup_timestamp': datetime.utcnow().isoformat()
         }
         

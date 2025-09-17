@@ -4,7 +4,7 @@ from flask_cors import CORS
 from models import init_app as init_models
 from config.logging import setup_logging, get_logger
 from routes.admin import admin_bp
-from routes import browse_bp, farmers_api_bp
+from routes import browse_bp, farmers_api_bp, labs_api_bp
 
 def create_app() -> Flask:
     """Application factory for the Flask app."""
@@ -30,6 +30,7 @@ def create_app() -> Flask:
     app.register_blueprint(admin_bp)
     app.register_blueprint(browse_bp)
     app.register_blueprint(farmers_api_bp)
+    app.register_blueprint(labs_api_bp)
 
     @app.get("/")
     def root():
