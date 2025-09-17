@@ -6,7 +6,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import PerfectLoginScreen from '../pages/login/PerfectLoginScreen';
 import FarmerMainPage from '../pages/users/farmers/FarmerMainPage';
 import TransportersPage from '../pages/users/transporters/transporters';
-import LabDashboard from '../pages/users/labs/dashboard/dashboard';
+import LabsPage from '../pages/users/labs/labs';
 import AdminDashboard from '../pages/users/admins/dashboard/dashboard';
 import ConsumerDashboard from '../pages/users/consumers/dashboard/dashboard';
 
@@ -47,17 +47,10 @@ const AppNavigator = () => {
         />
         <Stack.Screen 
           name="LabDashboard" 
-          component={LabDashboard}
+          component={LabsPage}
           options={{
             title: 'Lab Dashboard',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: '#8B5CF6',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
+            headerShown: false,
           }}
         />
         <Stack.Screen 
