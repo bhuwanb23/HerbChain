@@ -17,6 +17,8 @@ class ReceivedBatch(db.Model):
     received_time = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     condition_status = db.Column(db.String(20), nullable=True)  # Good, Damaged, Contaminated
     remarks = db.Column(db.Text, nullable=True)
+    storage_temp_c = db.Column(db.Float, nullable=True)
+    integrity_verified = db.Column(db.Boolean, default=False, nullable=False)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
@@ -32,5 +34,7 @@ class ReceivedBatch(db.Model):
             'received_time': self.received_time.isoformat() if self.received_time else None,
             'condition_status': self.condition_status,
             'remarks': self.remarks,
+            'storage_temp_c': self.storage_temp_c,
+            'integrity_verified': self.integrity_verified,
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }

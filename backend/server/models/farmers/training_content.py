@@ -23,6 +23,9 @@ class TrainingContent(db.Model):
     content_type = db.Column(db.String(50), nullable=True)  # video, pdf, text, interactive
     category = db.Column(db.String(100), nullable=True)  # farming_techniques, sustainability, etc.
     difficulty_level = db.Column(db.String(20), nullable=True)  # beginner, intermediate, advanced
+    thumbnail_url = db.Column(db.String(500), nullable=True)
+    views_count = db.Column(db.Integer, nullable=True)
+    rating = db.Column(db.Float, nullable=True)
     
     # Metadata
     duration_minutes = db.Column(db.Integer, nullable=True)  # estimated duration
@@ -49,6 +52,9 @@ class TrainingContent(db.Model):
             'content_type': self.content_type,
             'category': self.category,
             'difficulty_level': self.difficulty_level,
+            'thumbnail_url': self.thumbnail_url,
+            'views_count': self.views_count,
+            'rating': self.rating,
             'duration_minutes': self.duration_minutes,
             'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None,
@@ -66,6 +72,9 @@ class TrainingContent(db.Model):
             content_type=data.get('content_type'),
             category=data.get('category'),
             difficulty_level=data.get('difficulty_level'),
+            thumbnail_url=data.get('thumbnail_url'),
+            views_count=data.get('views_count'),
+            rating=data.get('rating'),
             duration_minutes=data.get('duration_minutes'),
             is_active=data.get('is_active', True)
         )

@@ -17,7 +17,10 @@ class TransporterReport(db.Model):
     trip_count = db.Column(db.Integer, default=0, nullable=False)
     on_time_percentage = db.Column(db.Float, nullable=True)
     average_distance = db.Column(db.Float, nullable=True)
+    average_delivery_time_minutes = db.Column(db.Integer, nullable=True)
     earnings_total = db.Column(db.Numeric(12, 2), nullable=True)
+    earnings_pending = db.Column(db.Numeric(12, 2), nullable=True)
+    earnings_bonuses = db.Column(db.Numeric(12, 2), nullable=True)
     eco_compliance_score = db.Column(db.Float, nullable=True)
 
     generated_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -35,7 +38,10 @@ class TransporterReport(db.Model):
             'trip_count': self.trip_count,
             'on_time_percentage': self.on_time_percentage,
             'average_distance': self.average_distance,
+            'average_delivery_time_minutes': self.average_delivery_time_minutes,
             'earnings_total': float(self.earnings_total) if self.earnings_total is not None else None,
+            'earnings_pending': float(self.earnings_pending) if self.earnings_pending is not None else None,
+            'earnings_bonuses': float(self.earnings_bonuses) if self.earnings_bonuses is not None else None,
             'eco_compliance_score': self.eco_compliance_score,
             'generated_at': self.generated_at.isoformat() if self.generated_at else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,

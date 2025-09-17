@@ -16,6 +16,8 @@ class TransporterPayment(db.Model):
     amount = db.Column(db.Numeric(10, 2), nullable=False)
     payment_type = db.Column(db.String(50), nullable=False)  # Delivery Fee, Bonus, Incentive
     status = db.Column(db.String(20), default='Pending', nullable=False)  # Pending, Completed, Failed
+    transaction_title = db.Column(db.String(255), nullable=True)  # Weekly Payout, Bonus Payment, etc.
+    transaction_type = db.Column(db.String(20), nullable=True)  # credit, debit, bonus, withdrawal
 
     payment_date = db.Column(db.DateTime, nullable=True)
     transaction_reference = db.Column(db.String(255), nullable=True)
@@ -34,6 +36,8 @@ class TransporterPayment(db.Model):
             'amount': float(self.amount) if self.amount is not None else None,
             'payment_type': self.payment_type,
             'status': self.status,
+            'transaction_title': self.transaction_title,
+            'transaction_type': self.transaction_type,
             'payment_date': self.payment_date.isoformat() if self.payment_date else None,
             'transaction_reference': self.transaction_reference,
             'created_at': self.created_at.isoformat() if self.created_at else None,

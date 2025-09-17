@@ -21,6 +21,7 @@ class Payment(db.Model):
     amount = db.Column(db.Numeric(10, 2), nullable=False)  # Amount in currency
     payment_type = db.Column(db.String(50), nullable=False)  # Incentive, Bonus, Base Price, Sustainability Credit
     status = db.Column(db.String(20), default='Pending', nullable=False)  # Pending, Completed, Failed
+    buyer_name = db.Column(db.String(255), nullable=True)  # For UI display (e.g., Eco Harvest Inc)
     
     # Transaction Details
     payment_date = db.Column(db.DateTime, nullable=True)
@@ -42,6 +43,7 @@ class Payment(db.Model):
             'amount': float(self.amount) if self.amount else None,
             'payment_type': self.payment_type,
             'status': self.status,
+            'buyer_name': self.buyer_name,
             'payment_date': self.payment_date.isoformat() if self.payment_date else None,
             'transaction_reference': self.transaction_reference,
             'created_at': self.created_at.isoformat() if self.created_at else None,
@@ -57,6 +59,7 @@ class Payment(db.Model):
             amount=data.get('amount'),
             payment_type=data.get('payment_type'),
             status=data.get('status', 'Pending'),
+            buyer_name=data.get('buyer_name'),
             payment_date=data.get('payment_date'),
             transaction_reference=data.get('transaction_reference')
         )

@@ -17,6 +17,7 @@ class BatchValidation(db.Model):
     validation_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=True)
     comments = db.Column(db.Text, nullable=True)
     digital_signature = db.Column(db.String(500), nullable=True)
+    certificate_link = db.Column(db.String(500), nullable=True)  # final validation report
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -33,6 +34,7 @@ class BatchValidation(db.Model):
             'validation_date': self.validation_date.isoformat() if self.validation_date else None,
             'comments': self.comments,
             'digital_signature': self.digital_signature,
+            'certificate_link': self.certificate_link,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
         }
