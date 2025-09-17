@@ -10,7 +10,7 @@ const BottomNavbar = ({ navigation, activeTab = 'home' }) => {
 
   const tabs = [
     { id: 'home', label: 'Home', icon: 'home' },
-    { id: 'herb', label: 'Herb', icon: 'eco' },
+    { id: 'herb_list', label: 'Herb', icon: 'eco' },
     { id: 'payment', label: 'Payment', icon: 'payment' },
     { id: 'training', label: 'Training', icon: 'school' },
     { id: 'profile', label: 'Profile', icon: 'person' },

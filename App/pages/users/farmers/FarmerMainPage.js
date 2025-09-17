@@ -5,6 +5,8 @@ import { SafeAreaWrapper } from '../../../components';
 // Import all farmer pages
 import Dashboard from './dashboard/dashboard';
 import HerbRegisterScreen from './herb_register/HerbRegisterScreen';
+import { HerbListScreen } from './herb_register';
+import HerbDetailsScreen from './herb_register/HerbDetailsScreen';
 import PaymentsScreen from './payments/payements';
 import TrainingScreen from './trainings/training';
 import ProfileScreen from './profile/profile';
@@ -16,6 +18,7 @@ import Header from './components/header';
 
 const FarmerMainPage = ({ navigation }) => {
   const [currentPage, setCurrentPage] = useState('home');
+  const [selectedBatch, setSelectedBatch] = useState(null);
 
   // Handle navigation between farmer pages
   const handleFarmerNavigation = (page) => {
@@ -27,8 +30,12 @@ const FarmerMainPage = ({ navigation }) => {
     switch (currentPage) {
       case 'home':
         return 'HerbChain';
-      case 'herb':
+      case 'herb_list':
+        return 'My Herbs';
+      case 'herb_register':
         return 'Herb Registration';
+      case 'herb_detail':
+        return 'Herb Details';
       case 'payment':
         return 'Transactions';
       case 'training':
@@ -47,8 +54,17 @@ const FarmerMainPage = ({ navigation }) => {
     switch (currentPage) {
       case 'home':
         return <Dashboard navigation={navigation} />;
-      case 'herb':
-        return <HerbRegisterScreen navigation={navigation} />;
+      case 'herb_list':
+        return (
+          <HerbListScreen 
+            onAdd={() => setCurrentPage('herb_register')} 
+            onOpenDetails={(batch) => { setSelectedBatch(batch); setCurrentPage('herb_detail'); }} 
+          />
+        );
+      case 'herb_register':
+        return <HerbRegisterScreen navigation={navigation} onBack={() => setCurrentPage('herb_list')} />;
+      case 'herb_detail':
+        return <HerbDetailsScreen batch={selectedBatch} onBack={() => setCurrentPage('herb_list')} />;
       case 'payment':
         return <PaymentsScreen navigation={navigation} />;
       case 'training':

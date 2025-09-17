@@ -128,3 +128,24 @@ def create_batch():
         return jsonify({'error': 'Failed to create batch', 'details': str(e)}), 500
 
 
+@farmers_api_bp.get('/<int:farmer_id>/batches')
+def list_farmer_batches(farmer_id: int):
+    """Return a list of herb batches for a particular farmer."""
+    try:
+        logger.info("List batches for farmer_id=%s", farmer_id)
+        # Validate farmer exists; if not, return empty for dev friendliness
+        farmer = FarmerProfile.query.filter_by(farmer_id=farmer_id).first()
+        if not farmer:
+            logger.warning("Farmer not found for listing batches: %s", farmer_id)
+            return jsonify({'farmer_id': farmer_id, 'batches': []})
+
+        batches = HerbBatch.query.filter_by(farmer_id=farmer_id).order_by(HerbBatch.created_at.desc()).all()
+        return jsonify({
+            'farmer_id': farmer_id,
+            'batches': [b.to_dict() for b in batches]
+        })
+    except Exception as e:
+        logger.exception("Failed to list batches: %s", e)
+        return jsonify({'error': 'Failed to list batches', 'details': str(e)}), 500
+
+

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, Alert, Image } from 'react-native';
+import { View, ScrollView, StyleSheet, Alert, Image, TouchableOpacity, Text } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useHerbRegistration } from './hooks';
 import {
@@ -9,7 +10,7 @@ import {
   BottomActions,
 } from './components';
 
-const HerbRegisterScreen = ({ navigation }) => {
+const HerbRegisterScreen = ({ navigation, onBack }) => {
   const {
     currentStep,
     isProcessing,
@@ -36,6 +37,12 @@ const HerbRegisterScreen = ({ navigation }) => {
       end={{ x: 1, y: 1 }}
       style={styles.container}
     >
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => (onBack ? onBack() : (navigation?.goBack && navigation.goBack()))} style={styles.backBtn}>
+          <Icon name="arrow-back" size={22} color="#111827" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Herb Registration</Text>
+      </View>
       <ProgressBar currentStep={currentStep} />
       
       <ScrollView
@@ -80,6 +87,24 @@ const HerbRegisterScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    marginLeft: 6,
   },
   scrollView: {
     flex: 1,
