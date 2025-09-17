@@ -24,6 +24,23 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow HerbChain to access your photos for herb registration.",
+          "cameraPermission": "Allow HerbChain to access your camera to take herb photos.",
+          "microphonePermission": "Allow HerbChain to use your microphone when recording video."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow HerbChain to access your location to tag herb batches.",
+          "isIosBackgroundLocationEnabled": false
+        }
+      ]
+    ]
   }
 }

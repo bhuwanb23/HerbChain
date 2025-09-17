@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { REGISTRATION_STEPS } from '../constants';
 
-const BottomActions = ({ currentStep, onGenerateBatch, isProcessing }) => {
+const BottomActions = ({ currentStep, onGenerateBatch, isProcessing, batchId }) => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
@@ -48,7 +48,9 @@ const BottomActions = ({ currentStep, onGenerateBatch, isProcessing }) => {
           </View>
           <View style={styles.textContainer}>
             <Text style={styles.buttonText}>Batch ID Generated!</Text>
-            <Text style={styles.batchIdText}>HRB-2024-001523</Text>
+            {batchId ? (
+              <Text style={styles.batchIdText} numberOfLines={1}>{batchId}</Text>
+            ) : null}
           </View>
         </View>
       );

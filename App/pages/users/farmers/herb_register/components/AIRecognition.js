@@ -1,7 +1,9 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions, Image, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
 
 const { width } = Dimensions.get('window');
 
@@ -10,6 +12,7 @@ const AIRecognition = ({ isProcessing, aiDetection, onCameraPress }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     if (isProcessing) {
@@ -78,6 +81,109 @@ const AIRecognition = ({ isProcessing, aiDetection, onCameraPress }) => {
     outputRange: [50, 0],
   });
 
+  const handleAfterPick = async (uri) => {
+    try {
+      setSelectedImage(uri);
+      // Request location and create dynamic detection data
+      let coordsString = '';
+      let readablePlace = '';
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          const { latitude, longitude } = loc.coords;
+          coordsString = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+          const places = await Location.reverseGeocodeAsync({ latitude, longitude });
+          if (places && places.length > 0) {
+            const p = places[0];
+            readablePlace = [p.name, p.city, p.region, p.country].filter(Boolean).join(', ');
+          }
+        }
+      } catch (_) {
+        // ignore location errors and fall back to blanks
+      }
+
+      const detected = {
+        species: 'Basil',
+        confidence: 95,
+        location: readablePlace || 'Near your current position',
+        coordinates: coordsString,
+        timestamp: new Date().toLocaleString(),
+      };
+      // Trigger dummy AI recognition in hook with dynamic data
+      await onCameraPress(detected);
+    } catch (e) {
+      Alert.alert('Error', 'Failed to process image');
+    }
+  };
+
+  const requestPermission = async (type) => {
+    try {
+      if (type === 'camera') {
+        const perm = await ImagePicker.getCameraPermissionsAsync();
+        if (perm.status !== 'granted' && perm.canAskAgain) {
+          const res = await ImagePicker.requestCameraPermissionsAsync();
+          return res.status === 'granted';
+        }
+        return perm.status === 'granted';
+      }
+      const perm = await ImagePicker.getMediaLibraryPermissionsAsync();
+      if (perm.status !== 'granted' && perm.canAskAgain) {
+        const res = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        return res.status === 'granted';
+      }
+      return perm.status === 'granted';
+    } catch (e) {
+      return false;
+    }
+  };
+
+  const pickFromCamera = async () => {
+    const ok = await requestPermission('camera');
+    if (!ok) {
+      Alert.alert('Permission required', 'Camera permission is needed. Opening gallery instead.');
+      await pickFromLibrary();
+      return;
+    }
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        quality: 0.7,
+      });
+      if (!result.canceled && result.assets && result.assets[0]?.uri) {
+        await handleAfterPick(result.assets[0].uri);
+      }
+    } catch (e) {
+      // Some environments (iOS Simulator) don't support camera; fallback to gallery
+      try {
+        await pickFromLibrary();
+      } catch (_) {
+        Alert.alert('Error', 'Unable to open camera or gallery');
+      }
+    }
+  };
+
+  const pickFromLibrary = async () => {
+    const ok = await requestPermission('library');
+    if (!ok) {
+      Alert.alert('Permission required', 'Photo library permission is needed.');
+      return;
+    }
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        quality: 0.7,
+      });
+      if (!result.canceled && result.assets && result.assets[0]?.uri) {
+        await handleAfterPick(result.assets[0].uri);
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Unable to open photo library');
+    }
+  };
+
   const renderCameraButton = () => {
     if (isProcessing) {
       return (
@@ -135,30 +241,57 @@ const AIRecognition = ({ isProcessing, aiDetection, onCameraPress }) => {
     }
 
     return (
-      <TouchableOpacity
-        style={styles.cameraButton}
-        onPress={onCameraPress}
-        activeOpacity={0.8}
-      >
-        <LinearGradient
-          colors={['#22c55e', '#16a34a']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradientButton}
+      <View>
+        <TouchableOpacity
+          style={styles.cameraButton}
+          onPress={pickFromCamera}
+          activeOpacity={0.8}
         >
-          <View style={styles.cameraIconContainer}>
-            <Icon name="camera-alt" size={40} color="white" />
-            <View style={styles.cameraRing} />
+          <LinearGradient
+            colors={['#22c55e', '#16a34a']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.gradientButton}
+          >
+            <View style={styles.cameraIconContainer}>
+              <Icon name="camera-alt" size={40} color="white" />
+              <View style={styles.cameraRing} />
+            </View>
+            <Text style={styles.buttonTitle}>Take Photo</Text>
+            <Text style={styles.buttonSubtitle}>AI will identify the herb automatically</Text>
+            <View style={styles.scanLines}>
+              <View style={styles.scanLine} />
+              <View style={styles.scanLine} />
+              <View style={styles.scanLine} />
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.secondaryButton, { marginTop: 12 }]}
+          onPress={pickFromLibrary}
+          activeOpacity={0.8}
+        >
+          <LinearGradient
+            colors={['#e5e7eb', '#e5e7eb']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[styles.gradientButton, styles.secondaryGradient]}
+          >
+            <View style={styles.cameraIconContainer}>
+              <Icon name="photo-library" size={28} color="#111827" />
+            </View>
+            <Text style={[styles.buttonTitle, { color: '#111827' }]}>Upload from Gallery</Text>
+            <Text style={[styles.buttonSubtitle, { color: '#374151' }]}>Use existing photo</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {selectedImage && (
+          <View style={styles.previewContainer}>
+            <Image source={{ uri: selectedImage }} style={styles.previewImage} />
           </View>
-          <Text style={styles.buttonTitle}>Take Photo</Text>
-          <Text style={styles.buttonSubtitle}>AI will identify the herb automatically</Text>
-          <View style={styles.scanLines}>
-            <View style={styles.scanLine} />
-            <View style={styles.scanLine} />
-            <View style={styles.scanLine} />
-          </View>
-        </LinearGradient>
-      </TouchableOpacity>
+        )}
+      </View>
     );
   };
 
@@ -272,6 +405,15 @@ const styles = StyleSheet.create({
   cameraSection: {
     marginBottom: 24,
   },
+  previewContainer: {
+    marginTop: 12,
+    alignItems: 'center',
+  },
+  previewImage: {
+    width: Math.min(width - 48, 320),
+    height: Math.min(width - 48, 320),
+    borderRadius: 16,
+  },
   cameraButton: {
     borderRadius: 20,
     overflow: 'hidden',
@@ -281,11 +423,23 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 8,
   },
+  secondaryButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
   gradientButton: {
     padding: 40,
     alignItems: 'center',
     width: '100%',
     position: 'relative',
+  },
+  secondaryGradient: {
+    paddingVertical: 18,
   },
   cameraIconContainer: {
     position: 'relative',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet, Alert, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useHerbRegistration } from './hooks';
 import {
@@ -15,6 +15,7 @@ const HerbRegisterScreen = ({ navigation }) => {
     isProcessing,
     aiDetection,
     formData,
+    result,
     handleCameraPress,
     updateFormData,
     generateBatchId,
@@ -57,7 +58,20 @@ const HerbRegisterScreen = ({ navigation }) => {
           currentStep={currentStep}
           onGenerateBatch={generateBatchId}
           isProcessing={isProcessing}
+          batchId={result?.batch?.batch_id}
         />
+
+        {currentStep === 3 && result?.qr_code ? (
+          <View style={{ alignItems: 'center', marginTop: 16 }}>
+            <View style={{ width: 200, height: 200, backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden', elevation: 3 }}>
+              <Image
+                source={{ uri: result.qr_code }}
+                style={{ width: '100%', height: '100%' }}
+                resizeMode="contain"
+              />
+            </View>
+          </View>
+        ) : null}
       </ScrollView>
     </LinearGradient>
   );
