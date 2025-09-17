@@ -1,2 +1,9 @@
 export { default as ReportsAnalytics } from './ReportsAnalytics';
 export { default as HistoryRecords } from './HistoryRecords';
+export { default as TabNavigation } from './TabNavigation';
+export { default as ReportsHeader } from './ReportsHeader';
+export { default as GenerateReports } from './GenerateReports';
+export { default as ChartComponent } from './ChartComponent';
+export { default as SearchFilters } from './SearchFilters';
+export { default as ReportCard } from './ReportCard';
+export { default as ExportShare } from './ExportShare';
