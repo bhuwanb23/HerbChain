@@ -1,32 +1,52 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  TextInput, 
+  Pressable,
+  Alert 
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SUPPORT_CATEGORIES, DISPUTE_TYPES, COLORS } from '../constants';
+import { SUPPORT_CATEGORIES, DISPUTE_TYPES, PRIORITY_LEVELS, COLORS } from '../constants';
 
 const CategoryCard = ({ category, isSelected, onSelect }) => {
   return (
     <TouchableOpacity
       style={[
         styles.categoryCard,
-        isSelected && styles.selectedCategoryCard
+        isSelected && styles.selectedCategoryCard,
+        { borderColor: category.color }
       ]}
       onPress={() => onSelect(category.id)}
-      activeOpacity={0.7}
     >
-      <View style={styles.categoryIcon}>
-        <Ionicons name={category.icon} size={24} color={category.iconColor} />
+      <View style={[styles.categoryIcon, { backgroundColor: category.color }]}>
+        <Ionicons name={category.icon} size={24} color="#FFFFFF" />
       </View>
+      <Text style={styles.categoryTitle}>{category.title}</Text>
+      <Text style={styles.categoryDescription}>{category.description}</Text>
+    </TouchableOpacity>
+  );
+};
+
+const PriorityButton = ({ priority, isSelected, onSelect }) => {
+  return (
+    <TouchableOpacity
+      style={[
+        styles.priorityButton,
+        isSelected && styles.selectedPriorityButton,
+        { borderColor: priority.color }
+      ]}
+      onPress={() => onSelect(priority.id)}
+    >
+      <View style={[styles.priorityIndicator, { backgroundColor: priority.color }]} />
       <Text style={[
-        styles.categoryTitle,
-        isSelected && styles.selectedCategoryTitle
+        styles.priorityText,
+        isSelected && { color: priority.color, fontWeight: '600' }
       ]}>
-        {category.title}
-      </Text>
-      <Text style={[
-        styles.categoryDescription,
-        isSelected && styles.selectedCategoryDescription
-      ]}>
-        {category.description}
+        {priority.title}
       </Text>
     </TouchableOpacity>
   );
@@ -35,176 +55,161 @@ const CategoryCard = ({ category, isSelected, onSelect }) => {
 const SupportDispute = ({ onSubmitIssue, onSubmitDispute }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedDisputeType, setSelectedDisputeType] = useState(null);
+  const [selectedPriority, setSelectedPriority] = useState('medium');
+  const [issueTitle, setIssueTitle] = useState('');
   const [issueDescription, setIssueDescription] = useState('');
   const [contactInfo, setContactInfo] = useState('');
-  const [currentTab, setCurrentTab] = useState('support'); // 'support' or 'dispute'
-
-  const handleCategorySelect = (categoryId) => {
-    setSelectedCategory(categoryId);
-  };
-
-  const handleDisputeTypeSelect = (disputeTypeId) => {
-    setSelectedDisputeType(disputeTypeId);
-  };
 
   const handleSubmit = () => {
-    if (currentTab === 'support') {
-      if (!selectedCategory || !issueDescription.trim()) {
-        Alert.alert('Missing Information', 'Please select a category and provide a description.');
-        return;
-      }
-      const issueData = {
-        category: selectedCategory,
-        description: issueDescription,
-        contactInfo: contactInfo,
-        timestamp: new Date().toISOString(),
-      };
-      onSubmitIssue(issueData);
-    } else {
-      if (!selectedDisputeType || !issueDescription.trim()) {
-        Alert.alert('Missing Information', 'Please select a dispute type and provide a description.');
-        return;
-      }
-      const disputeData = {
-        type: selectedDisputeType,
-        description: issueDescription,
-        contactInfo: contactInfo,
-        timestamp: new Date().toISOString(),
-      };
-      onSubmitDispute(disputeData);
+    if (!selectedCategory || !issueTitle || !issueDescription) {
+      Alert.alert('Missing Information', 'Please fill in all required fields.');
+      return;
     }
-    
+
+    const issueData = {
+      category: selectedCategory,
+      disputeType: selectedDisputeType,
+      priority: selectedPriority,
+      title: issueTitle,
+      description: issueDescription,
+      contactInfo: contactInfo,
+      timestamp: new Date().toISOString(),
+    };
+
+    if (selectedCategory === 'dispute') {
+      onSubmitDispute(issueData);
+    } else {
+      onSubmitIssue(issueData);
+    }
+
     // Reset form
     setSelectedCategory(null);
     setSelectedDisputeType(null);
+    setSelectedPriority('medium');
+    setIssueTitle('');
     setIssueDescription('');
     setContactInfo('');
+
+    Alert.alert('Success', 'Your request has been submitted successfully!');
   };
 
-  const renderSupportContent = () => (
-    <View>
-      <Text style={styles.sectionTitle}>What can we help you with?</Text>
-      <View style={styles.categoriesGrid}>
-        {SUPPORT_CATEGORIES.map((category) => (
-          <CategoryCard
-            key={category.id}
-            category={category}
-            isSelected={selectedCategory === category.id}
-            onSelect={handleCategorySelect}
-          />
-        ))}
-      </View>
-    </View>
-  );
-
-  const renderDisputeContent = () => (
-    <View>
-      <Text style={styles.sectionTitle}>What type of dispute do you want to file?</Text>
-      <View style={styles.categoriesGrid}>
-        {DISPUTE_TYPES.map((disputeType) => (
-          <CategoryCard
-            key={disputeType.id}
-            category={disputeType}
-            isSelected={selectedDisputeType === disputeType.id}
-            onSelect={handleDisputeTypeSelect}
-          />
-        ))}
-      </View>
-    </View>
-  );
-
   return (
-    <View style={styles.container}>
-      {/* Tab Selector */}
-      <View style={styles.tabSelector}>
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            currentTab === 'support' && styles.activeTabButton
-          ]}
-          onPress={() => setCurrentTab('support')}
-        >
-          <Ionicons 
-            name="help-circle-outline" 
-            size={20} 
-            color={currentTab === 'support' ? '#FFFFFF' : '#6B7280'} 
-          />
-          <Text style={[
-            styles.tabButtonText,
-            currentTab === 'support' && styles.activeTabButtonText
-          ]}>
-            Support
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            currentTab === 'dispute' && styles.activeTabButton
-          ]}
-          onPress={() => setCurrentTab('dispute')}
-        >
-          <Ionicons 
-            name="alert-circle-outline" 
-            size={20} 
-            color={currentTab === 'dispute' ? '#FFFFFF' : '#6B7280'} 
-          />
-          <Text style={[
-            styles.tabButtonText,
-            currentTab === 'dispute' && styles.activeTabButtonText
-          ]}>
-            Dispute
-          </Text>
-        </TouchableOpacity>
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Support & Dispute Resolution</Text>
+        <Text style={styles.subtitle}>
+          Select a category and provide details about your issue or dispute.
+        </Text>
       </View>
 
-      <ScrollView style={styles.mainContent}>
-        {currentTab === 'support' ? renderSupportContent() : renderDisputeContent()}
+      {/* Category Selection */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Select Category</Text>
+        <View style={styles.categoriesGrid}>
+          {SUPPORT_CATEGORIES.map((category) => (
+            <CategoryCard
+              key={category.id}
+              category={category}
+              isSelected={selectedCategory === category.id}
+              onSelect={setSelectedCategory}
+            />
+          ))}
+        </View>
+      </View>
 
-        {/* Description Input */}
-        <View style={styles.inputSection}>
-          <Text style={styles.inputLabel}>
-            {currentTab === 'support' ? 'Describe your issue' : 'Describe your dispute'}
-          </Text>
+      {/* Dispute Type (only for disputes) */}
+      {selectedCategory === 'dispute' && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Dispute Type</Text>
+          <View style={styles.disputeTypesContainer}>
+            {DISPUTE_TYPES.map((type) => (
+              <TouchableOpacity
+                key={type.id}
+                style={[
+                  styles.disputeTypeButton,
+                  selectedDisputeType === type.id && styles.selectedDisputeTypeButton
+                ]}
+                onPress={() => setSelectedDisputeType(type.id)}
+              >
+                <Text style={[
+                  styles.disputeTypeText,
+                  selectedDisputeType === type.id && styles.selectedDisputeTypeText
+                ]}>
+                  {type.title}
+                </Text>
+                <Text style={styles.disputeTypeDescription}>{type.description}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* Priority Selection */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Priority Level</Text>
+        <View style={styles.priorityContainer}>
+          {PRIORITY_LEVELS.map((priority) => (
+            <PriorityButton
+              key={priority.id}
+              priority={priority}
+              isSelected={selectedPriority === priority.id}
+              onSelect={setSelectedPriority}
+            />
+          ))}
+        </View>
+      </View>
+
+      {/* Issue Details */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Issue Details</Text>
+        
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Title *</Text>
           <TextInput
-            style={styles.textArea}
+            style={styles.textInput}
+            value={issueTitle}
+            onChangeText={setIssueTitle}
+            placeholder="Brief description of the issue"
+            placeholderTextColor="#9CA3AF"
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Description *</Text>
+          <TextInput
+            style={[styles.textInput, styles.textArea]}
             value={issueDescription}
             onChangeText={setIssueDescription}
-            placeholder={`Please provide details about your ${currentTab === 'support' ? 'issue' : 'dispute'}...`}
+            placeholder="Detailed description of the issue or dispute"
+            placeholderTextColor="#9CA3AF"
             multiline
             numberOfLines={4}
             textAlignVertical="top"
           />
         </View>
 
-        {/* Contact Information */}
-        <View style={styles.inputSection}>
-          <Text style={styles.inputLabel}>Contact Information (Optional)</Text>
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Contact Information</Text>
           <TextInput
             style={styles.textInput}
             value={contactInfo}
             onChangeText={setContactInfo}
-            placeholder="Email or phone number for follow-up"
-            keyboardType="email-address"
+            placeholder="Phone number or additional contact info"
+            placeholderTextColor="#9CA3AF"
           />
         </View>
+      </View>
 
-        {/* Submit Button */}
-        <TouchableOpacity
-          style={styles.submitButton}
-          onPress={handleSubmit}
-          activeOpacity={0.8}
-        >
-          <Ionicons 
-            name={currentTab === 'support' ? 'send-outline' : 'alert-circle-outline'} 
-            size={20} 
-            color="#FFFFFF" 
-          />
+      {/* Submit Button */}
+      <View style={styles.submitContainer}>
+        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+          <Ionicons name="send-outline" size={20} color="#FFFFFF" />
           <Text style={styles.submitButtonText}>
-            {currentTab === 'support' ? 'Submit Support Request' : 'File Dispute'}
+            {selectedCategory === 'dispute' ? 'Submit Dispute' : 'Submit Issue'}
           </Text>
         </TouchableOpacity>
-      </ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
 };
 
@@ -212,88 +217,63 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
+    paddingHorizontal: 16,
   },
-  tabSelector: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 8,
-    padding: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  tabButton: {
-    flex: 1,
-    flexDirection: 'row',
+  header: {
+    paddingVertical: 20,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    gap: 8,
   },
-  activeTabButton: {
-    backgroundColor: COLORS.primary,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  tabButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
+  subtitle: {
+    fontSize: 16,
     color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 24,
   },
-  activeTabButtonText: {
-    color: '#FFFFFF',
-  },
-  mainContent: {
-    flex: 1,
-    paddingHorizontal: 16,
+  section: {
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#111827',
-    marginTop: 24,
     marginBottom: 16,
   },
   categoriesGrid: {
-    gap: 12,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   categoryCard: {
+    width: '48%',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
-    borderWidth: 1,
+    marginBottom: 12,
+    borderWidth: 2,
     borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    alignItems: 'center',
   },
   selectedCategoryCard: {
-    borderColor: COLORS.primary,
-    backgroundColor: '#F0FDF4',
-    shadowColor: COLORS.primary,
+    borderWidth: 2,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
   },
   categoryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 12,
   },
   categoryTitle: {
@@ -301,24 +281,76 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#111827',
     marginBottom: 4,
-  },
-  selectedCategoryTitle: {
-    color: COLORS.primary,
+    textAlign: 'center',
   },
   categoryDescription: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  disputeTypesContainer: {
+    gap: 8,
+  },
+  disputeTypeButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  selectedDisputeTypeButton: {
+    borderColor: COLORS.primary,
+    backgroundColor: '#F0FDF4',
+  },
+  disputeTypeText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  selectedDisputeTypeText: {
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
+  disputeTypeDescription: {
     fontSize: 14,
     color: '#6B7280',
-    lineHeight: 20,
   },
-  selectedCategoryDescription: {
-    color: '#059669',
+  priorityContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
-  inputSection: {
-    marginTop: 24,
+  priorityButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  selectedPriorityButton: {
+    borderWidth: 2,
+  },
+  priorityIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  priorityText: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  inputContainer: {
+    marginBottom: 16,
   },
   inputLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#111827',
     marginBottom: 8,
   },
@@ -329,27 +361,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     fontSize: 16,
+    color: '#111827',
   },
   textArea: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    fontSize: 16,
-    minHeight: 100,
+    height: 100,
+  },
+  submitContainer: {
+    paddingVertical: 20,
+    paddingBottom: 40,
   },
   submitButton: {
     backgroundColor: COLORS.primary,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 24,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginTop: 24,
-    marginBottom: 32,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,

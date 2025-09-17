@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Text } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useProfile } from './hooks';
 import {
   ProfileSettings,
@@ -10,7 +9,6 @@ import {
 const ProfilePage = ({ navigation }) => {
   const {
     currentTab,
-    isLoading,
     handleTabChange,
     handleEditProfile,
     handleChangePassword,
@@ -67,50 +65,38 @@ const ProfilePage = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.tabContainer}>
         <View style={styles.tabButtons}>
-          <TouchableOpacity
+          <View
             style={[
               styles.tabButton,
               currentTab === 'profile' && styles.activeTabButton
             ]}
-            onPress={() => handleTabChange('profile')}
-            activeOpacity={0.7}
           >
-            <Ionicons 
-              name="person-outline" 
-              size={20} 
-              color={currentTab === 'profile' ? '#FFFFFF' : '#6B7280'} 
-            />
             <Text
               style={[
                 styles.tabButtonText,
                 currentTab === 'profile' && styles.activeTabButtonText
               ]}
+              onPress={() => handleTabChange('profile')}
             >
-              Profile
+              👤 Profile
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </View>
+          <View
             style={[
               styles.tabButton,
               currentTab === 'support' && styles.activeTabButton
             ]}
-            onPress={() => handleTabChange('support')}
-            activeOpacity={0.7}
           >
-            <Ionicons 
-              name="help-circle-outline" 
-              size={20} 
-              color={currentTab === 'support' ? '#FFFFFF' : '#6B7280'} 
-            />
             <Text
               style={[
                 styles.tabButtonText,
                 currentTab === 'support' && styles.activeTabButtonText
               ]}
+              onPress={() => setCurrentTab('support')}
             >
-              Support
+              🆘 Support
             </Text>
-          </TouchableOpacity>
+          </View>
         </View>
       </View>
       
@@ -148,29 +134,26 @@ const styles = StyleSheet.create({
   },
   tabButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 6,
-    gap: 8,
+    alignItems: 'center',
   },
   activeTabButton: {
-    backgroundColor: '#006B38',
-    shadowColor: '#006B38',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
   tabButtonText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#6B7280',
   },
   activeTabButtonText: {
-    color: '#FFFFFF',
+    color: '#8B5CF6',
     fontWeight: '600',
   },
   scrollContainer: {

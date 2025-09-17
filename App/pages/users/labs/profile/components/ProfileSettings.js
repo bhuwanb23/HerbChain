@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { PROFILE_DATA, ACCOUNT_SETTINGS, SUPPORT_LEGAL, COLORS } from '../constants';
+import { PROFILE_DATA, ACCOUNT_SETTINGS, SUPPORT_LEGAL_SETTINGS, COLORS } from '../constants';
 
 const SettingItem = ({ setting, onPress }) => {
   return (
     <Pressable 
-      onPress={() => onPress(setting.navigateTo)} 
+      onPress={() => onPress(setting.action)} 
       style={({ pressed }) => [styles.settingItem, pressed && styles.buttonPressed]}
     >
       <View style={styles.settingLeft}>
@@ -71,62 +71,56 @@ const ProfileSettings = ({
   onPrivacyPolicy,
   onLogout,
 }) => {
-  const handleSettingPress = (navigateTo) => {
-    switch (navigateTo) {
-      case 'EditProfile':
+  const handleSettingPress = (action) => {
+    switch (action) {
+      case 'editProfile':
         onEditProfile();
         break;
-      case 'ChangePassword':
+      case 'changePassword':
         onChangePassword();
         break;
-      case 'LanguageSettings':
+      case 'languageChange':
         onLanguageChange();
         break;
-      case 'NotificationSettings':
+      case 'notificationSettings':
         onNotificationSettings();
         break;
-      case 'CertificationUploads':
+      case 'certificationUploads':
         onCertificationUploads();
         break;
-      case 'SupportDisputeScreen':
+      case 'support':
         onSupport();
         break;
-      case 'PrivacyPolicy':
+      case 'privacyPolicy':
         onPrivacyPolicy();
         break;
       default:
-        console.log('Unknown navigation:', navigateTo);
+        console.log('Unknown action:', action);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView style={styles.mainContent}>
-        <ProfileCard profileData={PROFILE_DATA} />
-        
-        <SettingsSection 
-          title="Account Settings"
-          settings={ACCOUNT_SETTINGS}
-          onSettingPress={handleSettingPress}
-        />
-        
-        <SettingsSection 
-          title="Support & Legal"
-          settings={SUPPORT_LEGAL}
-          onSettingPress={handleSettingPress}
-        />
-        
-        <LogoutButton onLogout={onLogout} />
-      </ScrollView>
-    </View>
+    <ScrollView style={styles.mainContent}>
+      <ProfileCard profileData={PROFILE_DATA} />
+      
+      <SettingsSection 
+        title="Account Settings"
+        settings={ACCOUNT_SETTINGS}
+        onSettingPress={handleSettingPress}
+      />
+      
+      <SettingsSection 
+        title="Support & Legal"
+        settings={SUPPORT_LEGAL_SETTINGS}
+        onSettingPress={handleSettingPress}
+      />
+      
+      <LogoutButton onLogout={onLogout} />
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F9FA',
-  },
   buttonPressed: {
     opacity: 0.8,
   },
