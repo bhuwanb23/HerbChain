@@ -1,0 +1,45 @@
+# Python caches
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environments
+env/
+.env/
+.venv/
+venv/
+
+# Environment & secrets
+.env
+.env.*
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+
+# Test/coverage
+.pytest_cache/
+.coverage
+coverage.xml
+
+# Databases & state
+*.sqlite
+*.sqlite3
+*.db
+instance/
+
+# Logs & backups
+logs/
+*.log
+backups/
+
+# Build outputs
+dist/
+build/
+
+# Node (if any scripts here use it)
+node_modules/
+
+# (Optional) Uncomment if you don't want to track migrations
+# migrations/

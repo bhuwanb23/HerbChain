@@ -1,0 +1,34 @@
+# Inherit common Python ignores
+__pycache__/
+*.py[cod]
+
+# Virtual envs
+env/
+.venv/
+
+# Flask instance folder
+instance/
+
+# Logs and backups
+logs/
+*.log
+backups/
+
+# SQLite files
+*.sqlite
+*.sqlite3
+*.db
+
+# Editor/OS
+.DS_Store
+.idea/
+.vscode/
+
+# Coverage/test
+.pytest_cache/
+.coverage
+coverage.xml
+
+# Build outputs
+dist/
+build/
