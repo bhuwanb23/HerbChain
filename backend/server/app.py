@@ -1,10 +1,8 @@
 import os
-from flask import Flask, jsonify, request, render_template, url_for
+from flask import Flask, jsonify, request
 from flask_cors import CORS
-from models import init_app as init_models
 from config.logging import setup_logging, get_logger
 from routes.admin import admin_bp
-from routes import browse_bp, farmers_api_bp, labs_api_bp
 
 def create_app() -> Flask:
     """Application factory for the Flask app."""
@@ -12,15 +10,10 @@ def create_app() -> Flask:
     
     # Configuration
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-        'DATABASE_URL', 
-        'sqlite:///herbchain.db'
-    )
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # Database configuration removed - will be added with new schema
     
     # Initialize extensions
     CORS(app)
-    init_models(app)
     
     # Setup logging
     loggers = setup_logging(app)
@@ -28,25 +21,21 @@ def create_app() -> Flask:
 
     # Register blueprints
     app.register_blueprint(admin_bp)
-    app.register_blueprint(browse_bp)
-    app.register_blueprint(farmers_api_bp)
-    app.register_blueprint(labs_api_bp)
 
     @app.get("/")
     def root():
         logger.info("Root (home) page accessed")
-        links = {
-            "Admin Dashboard": url_for('admin.dashboard'),
-            "Health": url_for('health'),
-            "Ping": url_for('ping'),
-            "API Stats": url_for('admin.get_stats'),
-            "API Farmers": url_for('admin.get_farmers'),
-            "API Batches": url_for('admin.get_batches'),
-            "API Payments": url_for('admin.get_payments'),
-            "API Training": url_for('admin.get_training'),
-            "API Logs": url_for('admin.get_logs')
-        }
-        return render_template('home.html', links=links)
+        return jsonify({
+            "name": "HerbChain Backend",
+            "status": "ready",
+            "version": "0.1.0",
+            "message": "Backend reset - ready for new schema",
+            "endpoints": {
+                "health": "/health",
+                "ping": "/api/v1/ping",
+                "admin": "/admin"
+            }
+        })
 
     # JSON service info at /api
     @app.get("/api")
@@ -54,18 +43,13 @@ def create_app() -> Flask:
         logger.info("API info endpoint accessed")
         return jsonify({
             "name": "HerbChain Backend",
-            "status": "ok",
+            "status": "ready",
             "version": "0.1.0",
-            "admin_dashboard": "/admin",
-            "health": url_for('health'),
-            "ping": url_for('ping'),
+            "message": "Backend reset - ready for new schema",
             "endpoints": {
-                "stats": url_for('admin.get_stats'),
-                "farmers": url_for('admin.get_farmers'),
-                "batches": url_for('admin.get_batches'),
-                "payments": url_for('admin.get_payments'),
-                "training": url_for('admin.get_training'),
-                "logs": url_for('admin.get_logs')
+                "health": "/health",
+                "ping": "/api/v1/ping",
+                "admin": "/admin"
             }
         })
 

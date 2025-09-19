@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert } from 'react-native';
-import { API_BASE_URL } from '../../../../../constants/api';
 
 export const useLabBatches = () => {
   const [all, setAll] = useState([]);
@@ -8,39 +6,61 @@ export const useLabBatches = () => {
   const [loading, setLoading] = useState(false);
 
   const fetchAll = useCallback(async () => {
-    try {
-      const url = `${API_BASE_URL}/api/v1/labs/batches`;
-      console.log('[useLabBatches] Fetching all batches from:', url);
-      const res = await fetch(url);
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(errorData.error || errorData.details || 'Failed to load batches');
+    // Simulate API call with dummy data
+    const dummyBatches = [
+      {
+        batch_id: 'BATCH-001',
+        farmer_id: 1,
+        species_entered: 'Basil',
+        species_detected: 'Ocimum basilicum',
+        weight_kg: 25.5,
+        harvest_date: '2025-09-15',
+        cultivation_method: 'Organic',
+        image_url: null,
+        geo_location: '12.83068, 79.70896',
+        status: 'Registered',
+        created_at: '2025-09-15T10:30:00Z',
+        accepted: false
+      },
+      {
+        batch_id: 'BATCH-002',
+        farmer_id: 1,
+        species_entered: 'Cilantro',
+        species_detected: 'Coriandrum sativum',
+        weight_kg: 18.2,
+        harvest_date: '2025-09-18',
+        cultivation_method: 'Greenhouse',
+        image_url: null,
+        geo_location: '12.83068, 79.70896',
+        status: 'Registered',
+        created_at: '2025-09-18T14:20:00Z',
+        accepted: true
       }
-      const data = await res.json();
-      console.log('[useLabBatches] All batches response:', data);
-      return Array.isArray(data.batches) ? data.batches : [];
-    } catch (e) {
-      console.log('[useLabBatches] Error fetching all batches:', e);
-      throw e;
-    }
+    ];
+    console.log('[useLabBatches] Loaded dummy all batches:', dummyBatches.length);
+    return dummyBatches;
   }, []);
 
   const fetchAccepted = useCallback(async () => {
-    try {
-      const url = `${API_BASE_URL}/api/v1/labs/batches/accepted`;
-      console.log('[useLabBatches] Fetching accepted batches from:', url);
-      const res = await fetch(url);
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(errorData.error || errorData.details || 'Failed to load accepted batches');
+    // Simulate API call with dummy data
+    const dummyAcceptedBatches = [
+      {
+        batch_id: 'BATCH-002',
+        farmer_id: 1,
+        species_entered: 'Cilantro',
+        species_detected: 'Coriandrum sativum',
+        weight_kg: 18.2,
+        harvest_date: '2025-09-18',
+        cultivation_method: 'Greenhouse',
+        image_url: null,
+        geo_location: '12.83068, 79.70896',
+        status: 'Registered',
+        created_at: '2025-09-18T14:20:00Z',
+        accepted: true
       }
-      const data = await res.json();
-      console.log('[useLabBatches] Accepted batches response:', data);
-      return Array.isArray(data.batches) ? data.batches : [];
-    } catch (e) {
-      console.log('[useLabBatches] Error fetching accepted batches:', e);
-      throw e;
-    }
+    ];
+    console.log('[useLabBatches] Loaded dummy accepted batches:', dummyAcceptedBatches.length);
+    return dummyAcceptedBatches;
   }, []);
 
   const refresh = useCallback(async () => {
@@ -53,7 +73,6 @@ export const useLabBatches = () => {
       console.log('[useLabBatches] Refresh completed. All:', a.length, 'Accepted:', b.length);
     } catch (e) {
       console.log('[useLabBatches] Refresh failed:', e);
-      Alert.alert('Error', e.message || 'Failed to load lab batches');
     } finally {
       setLoading(false);
     }

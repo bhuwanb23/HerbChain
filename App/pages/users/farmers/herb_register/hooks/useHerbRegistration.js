@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { Alert } from 'react-native';
-import { API_BASE_URL } from '../../../../../constants/api';
 import { REGISTRATION_STEPS } from '../constants';
 
 export const useHerbRegistration = () => {
@@ -66,50 +65,35 @@ export const useHerbRegistration = () => {
       setIsProcessing(true);
       setResult(null);
 
-      // TODO: Replace with real farmer_id from auth/profile context
-      const farmer_id = 1;
-
-      const url = `${API_BASE_URL}/api/v1/farmers/batches`;
-      const payload = {
-        farmer_id,
-        species: formData.species,
-        species_detected: aiDetection?.species,
-        weight: formData.weight,
-        harvestDate: formData.harvestDate,
-        cultivationMethod: formData.cultivationMethod,
-        notes: formData.notes,
-        ai_model: aiDetection ? 'mock-ai' : undefined,
-        ai_confidence: aiDetection?.confidence,
-        geo_location: aiDetection?.coordinates,
-        image_url: imageUri, // Include the image URI
-      };
-      console.log('[HerbRegister] POST', url, payload);
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const text = await response.text();
-        console.log('[HerbRegister] Error response', response.status, text);
-        let err;
-        try { err = JSON.parse(text); } catch (_) { err = { error: text || 'Unknown error' }; }
-        throw new Error(err.error || 'Failed to create batch');
-      }
-
-      const data = await response.json();
-      console.log('[HerbRegister] Success response', data);
-      setResult({ batch: data.batch, qr_code: data.qr_code });
-      setCurrentStep(REGISTRATION_STEPS.COMPLETE);
+      // Simulate API call with dummy data
+      setTimeout(() => {
+        const dummyBatch = {
+          batch_id: `BATCH-${Date.now()}`,
+          farmer_id: 1,
+          species_entered: formData.species,
+          species_detected: aiDetection?.species,
+          weight_kg: parseFloat(formData.weight),
+          harvest_date: formData.harvestDate,
+          cultivation_method: formData.cultivationMethod,
+          remarks: formData.notes,
+          image_url: imageUri,
+          geo_location: aiDetection?.coordinates,
+          status: 'Registered',
+          created_at: new Date().toISOString(),
+          qr_code: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+        };
+        
+        setResult({ batch: dummyBatch, qr_code: dummyBatch.qr_code });
+        setCurrentStep(REGISTRATION_STEPS.COMPLETE);
+        setIsProcessing(false);
+      }, 1500);
 
     } catch (e) {
       console.log('[HerbRegister] Request failed', e);
       Alert.alert('Error', e.message || 'Failed to create batch');
-    } finally {
       setIsProcessing(false);
     }
-  }, [formData, aiDetection]);
+  }, [formData, aiDetection, imageUri]);
 
   const resetForm = useCallback(() => {
     setCurrentStep(REGISTRATION_STEPS.AI_RECOGNITION);

@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert } from 'react-native';
-import { API_BASE_URL } from '../../../../../constants/api';
 
 export const useHerbList = (farmerId = 1) => {
   const [items, setItems] = useState([]);
@@ -9,21 +7,47 @@ export const useHerbList = (farmerId = 1) => {
   const fetchItems = useCallback(async () => {
     try {
       setLoading(true);
-      const url = `${API_BASE_URL}/api/v1/farmers/${farmerId}/batches`;
-      console.log('[HerbList] GET', url);
-      const res = await fetch(url);
-      if (!res.ok) {
-        const text = await res.text();
-        console.log('[HerbList] Error response', res.status, text);
-        throw new Error('Failed to load herb batches');
-      }
-      const data = await res.json();
-      console.log('[HerbList] Loaded', data?.batches?.length || 0);
-      setItems(Array.isArray(data.batches) ? data.batches : []);
+      
+      // Simulate API call with dummy data
+      setTimeout(() => {
+        const dummyBatches = [
+          {
+            batch_id: 'BATCH-001',
+            farmer_id: farmerId,
+            species_entered: 'Basil',
+            species_detected: 'Ocimum basilicum',
+            weight_kg: 25.5,
+            harvest_date: '2025-09-15',
+            cultivation_method: 'Organic',
+            image_url: null,
+            geo_location: '12.83068, 79.70896',
+            status: 'Registered',
+            created_at: '2025-09-15T10:30:00Z',
+            qr_code: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+          },
+          {
+            batch_id: 'BATCH-002',
+            farmer_id: farmerId,
+            species_entered: 'Cilantro',
+            species_detected: 'Coriandrum sativum',
+            weight_kg: 18.2,
+            harvest_date: '2025-09-18',
+            cultivation_method: 'Greenhouse',
+            image_url: null,
+            geo_location: '12.83068, 79.70896',
+            status: 'Registered',
+            created_at: '2025-09-18T14:20:00Z',
+            qr_code: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+          }
+        ];
+        
+        console.log('[HerbList] Loaded dummy data', dummyBatches.length);
+        setItems(dummyBatches);
+        setLoading(false);
+      }, 1000);
+      
     } catch (e) {
       console.log('[HerbList] Request failed', e);
-      Alert.alert('Error', e.message || 'Failed to load herb batches');
-    } finally {
       setLoading(false);
     }
   }, [farmerId]);

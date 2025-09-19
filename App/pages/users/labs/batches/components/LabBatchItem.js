@@ -1,32 +1,19 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { API_BASE_URL } from '../../../../../constants/api';
 
 const LabBatchItem = ({ item, onAccepted }) => {
   const accept = async () => {
     try {
       console.log('[LabBatchItem] Accepting batch:', item.batch_id);
-      const res = await fetch(`${API_BASE_URL}/api/v1/labs/batches/accept`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          batch_id: item.batch_id,
-          lab_id: 1, // Default lab ID
-          lab_notes: 'Accepted by lab'
-        }),
-      });
       
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(errorData.error || errorData.details || 'Failed to accept batch');
-      }
+      // Simulate API call
+      setTimeout(() => {
+        console.log('[LabBatchItem] Accept successful (dummy)');
+        onAccepted && onAccepted();
+      }, 1000);
       
-      const result = await res.json();
-      console.log('[LabBatchItem] Accept successful:', result);
-      onAccepted && onAccepted();
     } catch (e) {
       console.log('[LabBatchItem] accept failed', e);
-      // You could show an alert here if needed
     }
   };
   return (
