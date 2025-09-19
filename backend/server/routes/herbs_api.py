@@ -521,6 +521,35 @@ def get_transporter_active(transerporter_id=None, transporter_id=None):
     except Exception as e:
         logger.error(f"Error listing active herbs for transporter {transporter_id}: {str(e)}")
         return jsonify({'error': 'Failed to get active trips'}), 500
+
+
+@herbs_api_bp.route('/transporter/<transporter_id>/completed', methods=['GET'])
+def get_transporter_completed(transporter_id):
+    """List herbs delivered by a transporter (transport record delivered)."""
+    try:
+        # Validate transporter exists
+        transporter = User.query.filter_by(user_id=transporter_id, role='transporter').first()
+        if not transporter:
+            return jsonify({'error': 'Transporter not found'}), 404
+
+        # Find delivered transport records
+        delivered = TransportRecord.query.filter_by(transporter_id=transporter_id, status='delivered').order_by(TransportRecord.end_time.desc()).all()
+        batch_ids = [rec.batch_id for rec in delivered]
+        if not batch_ids:
+            return jsonify({'herbs': [], 'total': 0})
+
+        herbs = Herb.query.filter(Herb.batch_id.in_(batch_ids)).all()
+        response = []
+        for herb in herbs:
+            herb_dict = herb.to_dict()
+            # Mark this as completed from transporter perspective
+            herb_dict['transit_status'] = 'completed'
+            response.append(herb_dict)
+
+        return jsonify({'herbs': response, 'total': len(response)})
+    except Exception as e:
+        logger.error(f"Error listing completed herbs for transporter {transporter_id}: {str(e)}")
+        return jsonify({'error': 'Failed to get completed trips'}), 500
 @herbs_api_bp.route('/<batch_id>/deliver', methods=['POST'])
 def deliver_to_lab(batch_id):
     """Transporter delivers herb to lab by scanning Transporter QR (#2).

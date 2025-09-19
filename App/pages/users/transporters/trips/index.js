@@ -1,100 +1,27 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import { API_BASE_URL } from '../../../../constants/api';
-
-// Removed old sub-screens per requirement; embedding pending pickup + scanner + active list in this page
+import { TabBar } from './components/TabBar';
+import { SectionHeader } from './components/SectionHeader';
+import { TripCard } from './components/TripCard';
+import { ScannerOverlay } from './components/ScannerOverlay';
+import { useTrips } from './hooks/useTrips';
 
 const TripsPage = ({ navigation }) => {
-  const [pendingHerbs, setPendingHerbs] = useState([]);
-  const [activeTrips, setActiveTrips] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [scannerVisible, setScannerVisible] = useState(false);
-  const [permission, requestPermission] = useCameraPermissions();
-  const [selectedBatch, setSelectedBatch] = useState(null);
   const [currentTab, setCurrentTab] = useState('pending');
-  const transporterId = 'transporter_001';
+  const {
+    loading,
+    pendingHerbs,
+    activeTrips,
+    completedTrips,
+    scannerVisible,
+    onStartScan,
+    onCloseScanner,
+    onBarcodeScanned,
+  } = useTrips();
 
-  const fetchPendingPickup = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${API_BASE_URL}/api/v1/herbs/pending_pickup`);
-      const json = await res.json();
-      setPendingHerbs(Array.isArray(json.herbs) ? json.herbs : []);
-    } catch (e) {
-      console.log('Failed to load pending pickup herbs', e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPendingPickup();
-    fetchActiveTrips();
-  }, []);
-
-  const fetchActiveTrips = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/herbs/transporter/${transporterId}/active`);
-      const json = await res.json();
-      setActiveTrips(Array.isArray(json.herbs) ? json.herbs : []);
-    } catch (e) {
-      console.log('Failed to load active trips', e);
-    }
-  };
-
-  const handleStartScan = async (herb) => {
-    if (!permission || !permission.granted) {
-      const res = await requestPermission();
-      if (!res.granted) {
-        return;
-      }
-    }
-    setSelectedBatch(herb);
-    setScannerVisible(true);
-  };
-
-  const handleBarCodeScanned = async ({ data }) => {
-    if (!selectedBatch) return;
-    setScannerVisible(false);
-    try {
-      setLoading(true);
-      const res = await fetch(`${API_BASE_URL}/api/v1/herbs/${selectedBatch.batch_id}/pickup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transporter_id: transporterId,
-          scanned_qr_text: data,
-          pickup_location: selectedBatch.location,
-          dropoff_location: 'Lab - TBD',
-        })
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        console.log('Pickup failed', json);
-        return;
-      }
-      // Move from pending to active with new QR
-      setPendingHerbs(prev => prev.filter(h => h.batch_id !== selectedBatch.batch_id));
-      setActiveTrips(prev => [{ ...json.herb, new_qr_code: json.new_qr_code }, ...prev]);
-      // Also sync with backend in case of concurrent updates
-      fetchActiveTrips();
-      setSelectedBatch(null);
-    } catch (e) {
-      console.log('Error during pickup', e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleStartScan = (herb) => onStartScan(herb);
+  const handleBarCodeScanned = ({ data }) => onBarcodeScanned(data);
 
   const renderPendingPickup = () => (
     <View style={styles.tripsOverview}>
@@ -184,23 +111,29 @@ const TripsPage = ({ navigation }) => {
         colors={['#F9FAFB', '#F3F4F6']}
         style={styles.gradient}
       >
-        <View style={{ backgroundColor: '#FFF' }}>
-          <View style={{ flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 8, gap: 8, borderBottomWidth: 1, borderBottomColor: '#E5E7EB' }}>
-            {['pending','active','completed'].map(tab => {
-              const label = tab === 'pending' ? 'Pending' : tab === 'active' ? 'Active' : 'Completed';
-              const isActive = currentTab === tab;
-              return (
-                <TouchableOpacity key={tab} style={[styles.tabButton, isActive && styles.tabButtonActive]} onPress={() => setCurrentTab(tab)}>
-                  <Text style={[styles.tabText, isActive && styles.tabTextActive]}>{label}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
+        <TabBar current={currentTab} onChange={setCurrentTab} tabs={[{ key: 'pending', label: 'Pending' }, { key: 'active', label: 'Active' }, { key: 'completed', label: 'Completed' }]} />
 
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {currentTab === 'pending' && renderPendingPickup()}
-          {currentTab === 'active' && renderActiveTrips()}
+          {currentTab === 'pending' && (
+            <View style={styles.tripsOverview}>
+              <SectionHeader colors={["#059669", "#10B981"]} title="Pending Pickup" subtitle="Scan farmer QR to start trip" />
+              <View style={styles.tripCards}>
+                {pendingHerbs.map((herb) => (
+                  <TripCard key={herb.batch_id} mode="pending" item={herb} onScan={handleStartScan} />
+                ))}
+              </View>
+            </View>
+          )}
+          {currentTab === 'active' && (
+            <View style={styles.tripsOverview}>
+              <SectionHeader colors={["#0EA5E9", "#38BDF8"]} title="Active Trips" subtitle="In Transit" />
+              <View style={styles.tripCards}>
+                {activeTrips.map((trip) => (
+                  <TripCard key={trip.batch_id} mode="active" item={trip} />
+                ))}
+              </View>
+            </View>
+          )}
           {currentTab === 'completed' && (
             <View style={styles.tripsOverview}>
               <LinearGradient colors={["#6B7280", "#9CA3AF"]} start={{x:0,y:0}} end={{x:1,y:1}} style={styles.sectionHeader}>
@@ -209,29 +142,23 @@ const TripsPage = ({ navigation }) => {
                   <Text style={styles.headerSubtitle}>Delivered batches history</Text>
                 </View>
               </LinearGradient>
-              <View style={styles.placeholderContainer}>
-                <Text style={styles.placeholderText}>No completed trips yet.</Text>
-                <Text style={styles.placeholderSubtext}>Deliver batches to see them here.</Text>
+              <View style={styles.tripCards}>
+                {completedTrips.length === 0 ? (
+                  <View style={styles.placeholderContainer}>
+                    <Text style={styles.placeholderText}>No completed trips yet.</Text>
+                    <Text style={styles.placeholderSubtext}>Deliver batches to see them here.</Text>
+                  </View>
+                ) : (
+                  completedTrips.map((trip) => (
+                    <TripCard key={trip.batch_id} mode="active" item={trip} showQR={false} />
+                  ))
+                )}
               </View>
             </View>
           )}
         </ScrollView>
 
-        {scannerVisible && (
-          <View style={styles.scannerOverlay}>
-            <CameraView
-              style={{ flex: 1, width: '100%' }}
-              facing="back"
-              barcodeScannerSettings={{
-                barcodeTypes: ['qr']
-              }}
-              onBarcodeScanned={handleBarCodeScanned}
-            />
-            <TouchableOpacity style={styles.closeScannerBtn} onPress={() => setScannerVisible(false)}>
-              <Text style={styles.closeScannerText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <ScannerOverlay visible={scannerVisible} onClose={() => onCloseScanner()} onScanned={handleBarCodeScanned} />
       </LinearGradient>
     </View>
   );
@@ -401,64 +328,6 @@ const styles = StyleSheet.create({
   hintChipText: {
     fontSize: 11,
     color: '#6B7280',
-    fontWeight: '600',
-  },
-  tabButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  tabButtonActive: {
-    backgroundColor: '#111827',
-    borderColor: '#111827',
-  },
-  tabText: {
-    color: '#374151',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  tabTextActive: {
-    color: '#FFFFFF',
-  },
-  scanButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#3B82F6',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  scanButtonText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
-    marginLeft: 6,
-  },
-  scannerOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeScannerBtn: {
-    position: 'absolute',
-    bottom: 40,
-    backgroundColor: '#111827',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  closeScannerText: {
-    color: '#FFFFFF',
-    fontSize: 14,
     fontWeight: '600',
   },
 });

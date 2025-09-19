@@ -35,7 +35,7 @@ const HerbDetailsScreen = ({ batch, onBack }) => {
         )}
 
         {/* QR Code */}
-        {(batch.qr_code || batch.active_qr) && (
+        {(batch.qr_code || batch.active_qr) && batch.status !== 'Accepted' && batch.quality_status !== 'testing' && (
           <View style={styles.card}>
             <Text style={[styles.label, { marginBottom: 8 }]}>QR Code</Text>
             <View style={styles.qrContainer}>
