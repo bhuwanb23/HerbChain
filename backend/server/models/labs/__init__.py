@@ -1,9 +1,6 @@
 """Labs models package"""
-from .received_batch import ReceivedBatch
-from .batch_validation import BatchValidation
+from .lab_accepted_batch import LabAcceptedBatch
 
 __all__ = [
-    'ReceivedBatch',
-    'BatchValidation',
-    
+    'LabAcceptedBatch',
 ]

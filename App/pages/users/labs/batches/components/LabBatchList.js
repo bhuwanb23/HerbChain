@@ -8,7 +8,7 @@ const LabBatchList = ({ data, loading, onRefresh }) => {
       <FlatList
         data={data}
         keyExtractor={(item, idx) => `${item.batch_id || idx}`}
-        renderItem={({ item }) => <LabBatchItem item={item} />}
+        renderItem={({ item }) => <LabBatchItem item={item} onAccepted={onRefresh} />}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={onRefresh} />}
       />
     </View>

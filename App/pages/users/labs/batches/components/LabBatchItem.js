@@ -1,7 +1,34 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { API_BASE_URL } from '../../../../../constants/api';
 
-const LabBatchItem = ({ item }) => {
+const LabBatchItem = ({ item, onAccepted }) => {
+  const accept = async () => {
+    try {
+      console.log('[LabBatchItem] Accepting batch:', item.batch_id);
+      const res = await fetch(`${API_BASE_URL}/api/v1/labs/batches/accept`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          batch_id: item.batch_id,
+          lab_id: 1, // Default lab ID
+          lab_notes: 'Accepted by lab'
+        }),
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || errorData.details || 'Failed to accept batch');
+      }
+      
+      const result = await res.json();
+      console.log('[LabBatchItem] Accept successful:', result);
+      onAccepted && onAccepted();
+    } catch (e) {
+      console.log('[LabBatchItem] accept failed', e);
+      // You could show an alert here if needed
+    }
+  };
   return (
     <View style={styles.card}>
       <View style={styles.rowBetween}>
@@ -26,8 +53,13 @@ const LabBatchItem = ({ item }) => {
       </View>
       <View style={styles.rowBetween}>
         <Text style={styles.label}>Status</Text>
-        <Text style={styles.value}>{item.status || '-'}</Text>
+        <Text style={styles.value}>{item.accepted ? 'Accepted' : (item.status || 'Pending')}</Text>
       </View>
+      {!item.accepted && (
+        <TouchableOpacity style={styles.acceptBtn} onPress={accept} activeOpacity={0.85}>
+          <Text style={styles.acceptText}>Accept</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -58,6 +90,18 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     flexShrink: 1,
     marginLeft: 12,
+  },
+  acceptBtn: {
+    marginTop: 10,
+    alignSelf: 'flex-end',
+    backgroundColor: '#22c55e',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  acceptText: {
+    color: '#fff',
+    fontWeight: '700',
   },
 });
 

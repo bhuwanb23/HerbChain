@@ -4,7 +4,7 @@ Models browsing routes for quick HTML listing per user module
 from flask import Blueprint, render_template, jsonify, request
 from models import db
 from models.farmers import FarmerProfile, HerbBatch
-from models.labs import ReceivedBatch, BatchValidation
+from models.labs import LabAcceptedBatch
 
 browse_bp = Blueprint('browse', __name__, url_prefix='/browse')
 
@@ -17,8 +17,7 @@ MODULE_MODELS = {
     'transporters': [
     ],
     'labs': [
-        ('ReceivedBatch', ReceivedBatch),
-        ('BatchValidation', BatchValidation),
+        ('LabAcceptedBatch', LabAcceptedBatch),
     ]
 }
 

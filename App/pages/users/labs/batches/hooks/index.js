@@ -1,3 +1,7 @@
+// Active hook for the new simplified lab batches system
+export { useLabBatches } from './useLabBatches';
+
+// Legacy hooks (kept for reference but not actively used)
 import { useState, useMemo } from 'react';
 import { MOCK_BATCHES, BATCH_FILTERS, HERB_FILTERS, LOCATION_FILTERS, STATUS_FILTERS } from '../constants';
 

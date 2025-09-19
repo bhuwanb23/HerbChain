@@ -19,8 +19,7 @@ def init_app(app):
         HerbBatch,
     )
     from .labs import (
-        ReceivedBatch,
-        BatchValidation,
+        LabAcceptedBatch,
     )
     
     return db
