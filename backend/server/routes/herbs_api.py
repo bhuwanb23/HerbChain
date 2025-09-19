@@ -491,3 +491,30 @@ def pickup_herb(batch_id):
         db.session.rollback()
         logger.error(f"Error during pickup for {batch_id}: {str(e)}")
         return jsonify({'error': 'Failed to complete pickup'}), 500
+
+
+@herbs_api_bp.route('/transporter/<transporter_id>/active', methods=['GET'])
+def get_transporter_active(transerporter_id=None, transporter_id=None):
+    """List herbs currently in transit for a transporter (current_owner = transporter_id)."""
+    try:
+        tid = transporter_id or transerporter_id
+        if not tid:
+            return jsonify({'error': 'Transporter ID is required'}), 400
+        # Validate transporter exists
+        transporter = User.query.filter_by(user_id=tid, role='transporter').first()
+        if not transporter:
+            return jsonify({'error': 'Transporter not found'}), 404
+
+        herbs = Herb.query.filter_by(current_owner=tid, quality_status='in_transit').order_by(Herb.updated_at.desc()).all()
+        response = []
+        for herb in herbs:
+            herb_dict = herb.to_dict()
+            herb_dict['farmer'] = User.query.filter_by(user_id=herb.farmer_id).first().to_dict()
+            response.append(herb_dict)
+        return jsonify({
+            'herbs': response,
+            'total': len(response)
+        })
+    except Exception as e:
+        logger.error(f"Error listing active herbs for transporter {transporter_id}: {str(e)}")
+        return jsonify({'error': 'Failed to get active trips'}), 500

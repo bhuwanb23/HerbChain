@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -20,6 +21,7 @@ const TripsPage = ({ navigation }) => {
   const [scannerVisible, setScannerVisible] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [selectedBatch, setSelectedBatch] = useState(null);
+  const [currentTab, setCurrentTab] = useState('pending');
   const transporterId = 'transporter_001';
 
   const fetchPendingPickup = async () => {
@@ -37,7 +39,18 @@ const TripsPage = ({ navigation }) => {
 
   useEffect(() => {
     fetchPendingPickup();
+    fetchActiveTrips();
   }, []);
+
+  const fetchActiveTrips = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/herbs/transporter/${transporterId}/active`);
+      const json = await res.json();
+      setActiveTrips(Array.isArray(json.herbs) ? json.herbs : []);
+    } catch (e) {
+      console.log('Failed to load active trips', e);
+    }
+  };
 
   const handleStartScan = async (herb) => {
     if (!permission || !permission.granted) {
@@ -73,6 +86,8 @@ const TripsPage = ({ navigation }) => {
       // Move from pending to active with new QR
       setPendingHerbs(prev => prev.filter(h => h.batch_id !== selectedBatch.batch_id));
       setActiveTrips(prev => [{ ...json.herb, new_qr_code: json.new_qr_code }, ...prev]);
+      // Also sync with backend in case of concurrent updates
+      fetchActiveTrips();
       setSelectedBatch(null);
     } catch (e) {
       console.log('Error during pickup', e);
@@ -147,14 +162,16 @@ const TripsPage = ({ navigation }) => {
                 <Text style={[styles.badgeText, { color: '#10B981' }]}>In Transit</Text>
               </View>
             </View>
-            {trip.new_qr_code ? (
-              <View style={{ marginTop: 8 }}>
-                <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 6 }}>Transporter QR</Text>
-                <View style={{ backgroundColor: '#F3F4F6', padding: 8, borderRadius: 8 }}>
-                  <Text numberOfLines={2} style={{ fontSize: 12, color: '#111827' }}>{trip.new_qr_code.substring(0, 80)}...</Text>
+            {(() => {
+              const qr = trip.new_qr_code || trip.active_qr;
+              if (!qr) return null;
+              return (
+                <View style={{ marginTop: 8, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 6 }}>Transporter QR</Text>
+                  <Image source={{ uri: qr }} style={{ width: 160, height: 160, backgroundColor: '#FFF', borderRadius: 8 }} />
                 </View>
-              </View>
-            ) : null}
+              );
+            })()}
           </View>
         ))}
       </View>
@@ -167,9 +184,37 @@ const TripsPage = ({ navigation }) => {
         colors={['#F9FAFB', '#F3F4F6']}
         style={styles.gradient}
       >
+        <View style={{ backgroundColor: '#FFF' }}>
+          <View style={{ flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 8, gap: 8, borderBottomWidth: 1, borderBottomColor: '#E5E7EB' }}>
+            {['pending','active','completed'].map(tab => {
+              const label = tab === 'pending' ? 'Pending' : tab === 'active' ? 'Active' : 'Completed';
+              const isActive = currentTab === tab;
+              return (
+                <TouchableOpacity key={tab} style={[styles.tabButton, isActive && styles.tabButtonActive]} onPress={() => setCurrentTab(tab)}>
+                  <Text style={[styles.tabText, isActive && styles.tabTextActive]}>{label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {renderPendingPickup()}
-          {renderActiveTrips()}
+          {currentTab === 'pending' && renderPendingPickup()}
+          {currentTab === 'active' && renderActiveTrips()}
+          {currentTab === 'completed' && (
+            <View style={styles.tripsOverview}>
+              <LinearGradient colors={["#6B7280", "#9CA3AF"]} start={{x:0,y:0}} end={{x:1,y:1}} style={styles.sectionHeader}>
+                <View style={styles.headerTextWrap}>
+                  <Text style={styles.headerTitle}>Completed Trips</Text>
+                  <Text style={styles.headerSubtitle}>Delivered batches history</Text>
+                </View>
+              </LinearGradient>
+              <View style={styles.placeholderContainer}>
+                <Text style={styles.placeholderText}>No completed trips yet.</Text>
+                <Text style={styles.placeholderSubtext}>Deliver batches to see them here.</Text>
+              </View>
+            </View>
+          )}
         </ScrollView>
 
         {scannerVisible && (
@@ -357,6 +402,26 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#6B7280',
     fontWeight: '600',
+  },
+  tabButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  tabButtonActive: {
+    backgroundColor: '#111827',
+    borderColor: '#111827',
+  },
+  tabText: {
+    color: '#374151',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  tabTextActive: {
+    color: '#FFFFFF',
   },
   scanButton: {
     flexDirection: 'row',
