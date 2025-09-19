@@ -3,6 +3,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from config.logging import setup_logging, get_logger
 from routes.admin import admin_bp
+from models import init_app as init_models
 
 def create_app() -> Flask:
     """Application factory for the Flask app."""
@@ -10,10 +11,15 @@ def create_app() -> Flask:
     
     # Configuration
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
-    # Database configuration removed - will be added with new schema
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+        'DATABASE_URL', 
+        'sqlite:///herbchain.db'
+    )
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     # Initialize extensions
     CORS(app)
+    init_models(app)
     
     # Setup logging
     loggers = setup_logging(app)
