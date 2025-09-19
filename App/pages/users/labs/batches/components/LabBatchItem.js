@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Ima
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { API_BASE_URL } from '../../../../../constants/api';
 
-const LabBatchItem = ({ item, onAccepted, acceptHerb }) => {
+const LabBatchItem = ({ item, onAccepted, acceptHerb, variant = 'all', onOpenDetails }) => {
   const [isAccepting, setIsAccepting] = useState(false);
   const [scannerVisible, setScannerVisible] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
@@ -69,8 +69,11 @@ const LabBatchItem = ({ item, onAccepted, acceptHerb }) => {
       setIsScanning(false);
     }
   };
+  const CardWrapper = variant === 'archived' && onOpenDetails ? TouchableOpacity : View;
+  const wrapperProps = variant === 'archived' && onOpenDetails ? { activeOpacity: 0.85, onPress: () => onOpenDetails(item) } : {};
+
   return (
-    <View style={styles.card}>
+    <CardWrapper style={styles.card} {...wrapperProps}>
       <View style={styles.rowBetween}>
         <Text style={styles.label}>Batch ID</Text>
         <Text style={styles.value}>{item.batch_id}</Text>
@@ -95,7 +98,7 @@ const LabBatchItem = ({ item, onAccepted, acceptHerb }) => {
         <Text style={styles.label}>Status</Text>
         <Text style={styles.value}>{item.accepted ? 'Accepted' : (item.status || 'Pending')}</Text>
       </View>
-      {!item.accepted && (
+      {variant !== 'archived' && !item.accepted && (
         <TouchableOpacity 
           style={[styles.acceptBtn, isAccepting && styles.acceptBtnDisabled]} 
           onPress={accept} 
@@ -112,7 +115,7 @@ const LabBatchItem = ({ item, onAccepted, acceptHerb }) => {
           )}
         </TouchableOpacity>
       )}
-      {item.accepted && (
+      {variant === 'accepted' && item.accepted && (
         <TouchableOpacity 
           style={[styles.acceptBtn]}
           onPress={handleStartScan}
@@ -122,7 +125,7 @@ const LabBatchItem = ({ item, onAccepted, acceptHerb }) => {
         </TouchableOpacity>
       )}
 
-      {scannerVisible && (
+      {variant === 'accepted' && scannerVisible && (
         <View style={styles.fullscreenScanner}>
           <CameraView
             style={{ flex: 1, width: '100%' }}
@@ -135,7 +138,7 @@ const LabBatchItem = ({ item, onAccepted, acceptHerb }) => {
           </TouchableOpacity>
         </View>
       )}
-    </View>
+    </CardWrapper>
   );
 };
 

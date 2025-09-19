@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Modal, ScrollView, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLabBatches } from './hooks/useLabBatches';
 import { LabBatchList } from './components';
 
 const BatchesPage = ({ navigation }) => {
   const [tab, setTab] = useState('all'); // 'all' | 'accepted' | 'archived'
+  const [detail, setDetail] = useState(null);
   const { all, accepted, archived, loading, refresh, acceptHerb } = useLabBatches();
 
   const counts = {
@@ -46,13 +47,52 @@ const BatchesPage = ({ navigation }) => {
 
       <View style={styles.listWrap}>
         {tab === 'all' ? (
-          <LabBatchList data={all} loading={loading} onRefresh={refresh} acceptHerb={acceptHerb} />
+          <LabBatchList data={all} loading={loading} onRefresh={refresh} acceptHerb={acceptHerb} variant="all" />
         ) : tab === 'accepted' ? (
-          <LabBatchList data={accepted} loading={loading} onRefresh={refresh} acceptHerb={acceptHerb} />
+          <LabBatchList data={accepted} loading={loading} onRefresh={refresh} acceptHerb={acceptHerb} variant="accepted" />
         ) : (
-          <LabBatchList data={archived} loading={loading} onRefresh={refresh} />
+          <LabBatchList data={archived} loading={loading} onRefresh={refresh} variant="archived" onOpenDetails={setDetail} />
         )}
       </View>
+
+      <Modal visible={!!detail} animationType="slide" onRequestClose={() => setDetail(null)}>
+        <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+          <View style={{ padding: 12, borderBottomWidth: 1, borderColor: '#E5E7EB', backgroundColor: '#FFF' }}>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: '#111827' }}>Herb Details</Text>
+            <TouchableOpacity onPress={() => setDetail(null)} style={{ position: 'absolute', right: 12, top: 12 }}>
+              <Text style={{ color: '#3B82F6', fontWeight: '700' }}>Close</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={{ padding: 16 }}>
+            {detail?.image_url ? (
+              <View style={{ marginBottom: 12, borderRadius: 12, overflow: 'hidden', backgroundColor: '#FFF', borderWidth: 1, borderColor: '#E5E7EB' }}>
+                <Image source={{ uri: detail.image_url }} style={{ width: '100%', height: 220 }} resizeMode="cover" />
+              </View>
+            ) : null}
+            {detail?.active_qr ? (
+              <View style={{ alignItems: 'center', marginBottom: 16 }}>
+                <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 6 }}>Lab QR</Text>
+                <Image source={{ uri: detail.active_qr }} style={{ width: 180, height: 180, backgroundColor: '#FFF', borderRadius: 12 }} />
+              </View>
+            ) : null}
+            <View style={{ backgroundColor: '#FFF', borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB', padding: 12 }}>
+              {[
+                ['Batch ID', detail?.batch_id],
+                ['Species', detail?.species_name],
+                ['Weight', detail?.weight_kg ? `${detail.weight_kg} kg` : '-'],
+                ['Harvest', detail?.harvest_date],
+                ['Location', detail?.location],
+                ['Status', detail?.quality_status],
+              ].map(([k,v]) => (
+                <View key={k} style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+                  <Text style={{ color: '#6B7280', fontSize: 12 }}>{k}</Text>
+                  <Text style={{ color: '#111827', fontSize: 13, fontWeight: '600' }}>{v || '-'}</Text>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 };
