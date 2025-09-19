@@ -10,6 +10,8 @@ from flask import Blueprint, request, jsonify
 from models import db
 from models.herbs import Herb
 from models.ownership_transfers import OwnershipTransfer
+from models.transport_records import TransportRecord
+import ast
 from models.users import User
 from config.logging import get_logger
 
@@ -39,6 +41,19 @@ def generate_qr_code(data):
         return f"data:image/png;base64,{img_base64}"
     except Exception as e:
         logger.error(f"Error generating QR code: {str(e)}")
+        return None
+
+
+def parse_qr_payload(text):
+    """Parse QR payload created via str(dict). Returns dict or None."""
+    try:
+        # The QR payload was created with str(qr_data), so parse safely
+        payload = ast.literal_eval(text) if isinstance(text, str) else text
+        if isinstance(payload, dict):
+            return payload
+        return None
+    except Exception as e:
+        logger.warning(f"Failed to parse QR payload: {e}")
         return None
 
 @herbs_api_bp.route('/', methods=['POST'])
@@ -348,3 +363,131 @@ def get_lab_accepted_herbs(lab_id):
     except Exception as e:
         logger.error(f"Error getting lab accepted herbs for {lab_id}: {str(e)}")
         return jsonify({'error': 'Failed to get lab accepted herbs'}), 500
+
+
+@herbs_api_bp.route('/pending_pickup', methods=['GET'])
+def get_pending_pickup():
+    """List herbs that are awaiting transporter pickup (quality_status = pending_pickup)."""
+    try:
+        herbs = Herb.query.filter_by(quality_status='pending_pickup').order_by(Herb.updated_at.desc()).all()
+        response = []
+        for herb in herbs:
+            herb_dict = herb.to_dict()
+            herb_dict['farmer'] = User.query.filter_by(user_id=herb.farmer_id).first().to_dict()
+            response.append(herb_dict)
+        return jsonify({
+            'herbs': response,
+            'total': len(response)
+        })
+    except Exception as e:
+        logger.error(f"Error listing pending pickup herbs: {str(e)}")
+        return jsonify({'error': 'Failed to get pending pickup herbs'}), 500
+
+
+@herbs_api_bp.route('/<batch_id>/pickup', methods=['POST'])
+def pickup_herb(batch_id):
+    """Transporter scans Farmer QR to pick up the herb.
+    Validates active QR vs payload, deactivates old QR, transfers ownership to transporter,
+    generates new QR #2, sets quality_status to in_transit, and creates TransportRecord.
+    Body: { transporter_id, scanned_qr_text, pickup_location, dropoff_location }
+    """
+    try:
+        data = request.get_json() or {}
+        transporter_id = data.get('transporter_id')
+        scanned_qr_text = data.get('scanned_qr_text')
+        pickup_location = data.get('pickup_location')
+        dropoff_location = data.get('dropoff_location') or 'Lab - TBD'
+
+        if not transporter_id:
+            return jsonify({'error': 'transporter_id is required'}), 400
+
+        # Validate transporter exists
+        transporter = User.query.filter_by(user_id=transporter_id, role='transporter').first()
+        if not transporter:
+            return jsonify({'error': 'Transporter not found'}), 404
+
+        # Load herb
+        herb = Herb.query.filter_by(batch_id=batch_id).first()
+        if not herb:
+            return jsonify({'error': 'Herb batch not found'}), 404
+
+        # Must be awaiting pickup
+        if herb.quality_status != 'pending_pickup':
+            return jsonify({'error': f'Herb is not awaiting pickup. Current status: {herb.quality_status}'}), 400
+
+        # Validate active QR exists
+        if not herb.active_qr:
+            return jsonify({'error': 'No active QR to validate'}), 400
+
+        # Basic check: scanned_qr_text must include batch_id
+        if scanned_qr_text and batch_id not in scanned_qr_text:
+            return jsonify({'error': 'QR does not match this batch'}), 400
+
+        # Deactivate current active transfer QR if present
+        active_transfer = OwnershipTransfer.get_active_transfer(batch_id)
+        if active_transfer:
+            active_transfer.deactivate_qr()
+
+        # Generate new QR #2 for transporter custody
+        qr_payload = {
+            'batch_id': herb.batch_id,
+            'previous_owner': herb.current_owner,
+            'new_owner': transporter_id,
+            'timestamp': datetime.utcnow().isoformat(),
+            'type': 'pickup_transfer'
+        }
+        new_qr_code = generate_qr_code(str(qr_payload))
+        if not new_qr_code:
+            db.session.rollback()
+            return jsonify({'error': 'Failed to generate new QR'}), 500
+
+        # Transfer ownership and set status to in_transit
+        herb.transfer_ownership(transporter_id, new_qr_code)
+        herb.quality_status = 'in_transit'
+        herb.updated_at = datetime.utcnow()
+
+        # Log ownership transfer
+        transfer_id = f"TRANSFER-{uuid.uuid4().hex[:8].upper()}"
+        ownership_transfer = OwnershipTransfer.create_transfer(
+            transfer_id=transfer_id,
+            batch_id=batch_id,
+            from_owner=qr_payload['previous_owner'],
+            to_owner=transporter_id,
+            qr_code=new_qr_code,
+            transfer_reason='Pickup',
+            location=pickup_location or herb.location,
+            notes='Transporter picked up batch from farmer'
+        )
+        db.session.add(ownership_transfer)
+
+        # Create transport record
+        transport_id = f"TRANSPORT-{uuid.uuid4().hex[:8].upper()}"
+        transport_record = TransportRecord.create_transport(
+            transport_id=transport_id,
+            batch_id=batch_id,
+            transporter_id=transporter_id,
+            pickup_location=pickup_location or herb.location,
+            dropoff_location=dropoff_location,
+            start_time=datetime.utcnow(),
+            status='in_transit'
+        )
+        db.session.add(transport_record)
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Pickup successful. Ownership transferred to transporter.',
+            'herb': herb.to_dict(),
+            'new_qr_code': new_qr_code,
+            'ownership_transfer': ownership_transfer.to_dict(),
+            'transport_record': transport_record.to_dict()
+        }), 200
+    except ValueError as e:
+        db.session.rollback()
+        logger.warning(f"Validation error during pickup {batch_id}: {str(e)}")
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error during pickup for {batch_id}: {str(e)}")
+        return jsonify({'error': 'Failed to complete pickup'}), 500

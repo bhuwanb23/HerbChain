@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,233 +8,158 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { API_BASE_URL } from '../../../../constants/api';
 
-import BatchScanScreen from './batch_scan/BatchScanScreen';
-import DeliveryConfirmScreen from './delivery_confirm/delivery_confirm';
-import ActiveTripsScreen from './active_trips/active_trips';
-import HistoryScreen from './history/HistoryScreen';
+// Removed old sub-screens per requirement; embedding pending pickup + scanner + active list in this page
 
 const TripsPage = ({ navigation }) => {
-  const [currentPage, setCurrentPage] = useState('trips_overview');
-  const [tripFlow, setTripFlow] = useState({
-    currentTrip: null,
-    tripStatus: 'pending', // pending, active, completed
-    batchData: null,
-    receiverData: null,
-  });
+  const [pendingHerbs, setPendingHerbs] = useState([]);
+  const [activeTrips, setActiveTrips] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [scannerVisible, setScannerVisible] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
+  const [selectedBatch, setSelectedBatch] = useState(null);
+  const transporterId = 'transporter_001';
 
-  // Mock trip data for demonstration
-  const mockTrips = [
-    {
-      id: 'TRIP-001',
-      status: 'pending',
-      from: 'Green Valley Farm',
-      to: 'Processing Lab',
-      batchId: 'BT-2024-001',
-      time: 'Ready for pickup',
-      icon: 'pending',
-      color: '#F59E0B'
-    },
-    {
-      id: 'TRIP-002', 
-      status: 'active',
-      from: 'Mountain View Farm',
-      to: 'Quality Lab',
-      batchId: 'BT-2024-002',
-      time: 'In transit - 15 min remaining',
-      icon: 'local-shipping',
-      color: '#10B981'
-    },
-    {
-      id: 'TRIP-003',
-      status: 'completed',
-      from: 'Sunrise Farm',
-      to: 'Testing Lab',
-      batchId: 'BT-2024-003',
-      time: 'Completed 2 hours ago',
-      icon: 'check-circle',
-      color: '#6B7280'
-    }
-  ];
-
-  const getPageTitle = (page) => {
-    switch (page) {
-      case 'trips_overview':
-        return 'Trips Management';
-      case 'batch_scan':
-        return 'Batch Scanner';
-      case 'active_trips':
-        return 'Active Trip';
-      case 'delivery_confirm':
-        return 'Delivery Confirmation';
-      case 'history_reports':
-        return 'Trip History';
-      default:
-        return 'Trips';
+  const fetchPendingPickup = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE_URL}/api/v1/herbs/pending_pickup`);
+      const json = await res.json();
+      setPendingHerbs(Array.isArray(json.herbs) ? json.herbs : []);
+    } catch (e) {
+      console.log('Failed to load pending pickup herbs', e);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Trip flow navigation functions following the specified flow
-  const handleTripSelection = (trip) => {
-    if (trip.status === 'pending') {
-      // Pending trip → Batch Scan Page
-      setTripFlow(prev => ({
-        ...prev,
-        currentTrip: trip,
-        tripStatus: 'pending'
-      }));
-      setCurrentPage('batch_scan');
-    } else if (trip.status === 'active') {
-      // Active trip → Active Trip Details Page
-      setTripFlow(prev => ({
-        ...prev,
-        currentTrip: trip,
-        tripStatus: 'active'
-      }));
-      setCurrentPage('active_trips');
-    } else if (trip.status === 'completed') {
-      // Completed trip → History & Reports Page
-      setCurrentPage('history_reports');
+  useEffect(() => {
+    fetchPendingPickup();
+  }, []);
+
+  const handleStartScan = async (herb) => {
+    if (!permission || !permission.granted) {
+      const res = await requestPermission();
+      if (!res.granted) {
+        return;
+      }
+    }
+    setSelectedBatch(herb);
+    setScannerVisible(true);
+  };
+
+  const handleBarCodeScanned = async ({ data }) => {
+    if (!selectedBatch) return;
+    setScannerVisible(false);
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE_URL}/api/v1/herbs/${selectedBatch.batch_id}/pickup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transporter_id: transporterId,
+          scanned_qr_text: data,
+          pickup_location: selectedBatch.location,
+          dropoff_location: 'Lab - TBD',
+        })
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        console.log('Pickup failed', json);
+        return;
+      }
+      // Move from pending to active with new QR
+      setPendingHerbs(prev => prev.filter(h => h.batch_id !== selectedBatch.batch_id));
+      setActiveTrips(prev => [{ ...json.herb, new_qr_code: json.new_qr_code }, ...prev]);
+      setSelectedBatch(null);
+    } catch (e) {
+      console.log('Error during pickup', e);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleBatchScanSuccess = (batchData) => {
-    // After successful pickup → Active Trip Details Page
-    setTripFlow(prev => ({
-      ...prev,
-      batchData: batchData,
-      tripStatus: 'active'
-    }));
-    setCurrentPage('active_trips');
-  };
+  const renderPendingPickup = () => (
+    <View style={styles.tripsOverview}>
+      <LinearGradient colors={["#059669", "#10B981"]} start={{x:0,y:0}} end={{x:1,y:1}} style={styles.sectionHeader}>
+        <View style={styles.headerTextWrap}>
+          <Text style={styles.headerTitle}>Pending Pickup</Text>
+          <Text style={styles.headerSubtitle}>Scan farmer QR to start trip</Text>
+        </View>
+      </LinearGradient>
 
-  const handleDeliveryReady = (receiverData) => {
-    // When transporter reaches delivery point → Delivery Confirmation Page
-    setTripFlow(prev => ({
-      ...prev,
-      receiverData: receiverData,
-      tripStatus: 'active'
-    }));
-    setCurrentPage('delivery_confirm');
-  };
+      {loading && (
+        <Text style={{ textAlign: 'center', color: '#6B7280', marginVertical: 8 }}>Loading...</Text>
+      )}
 
-  const handleDeliveryComplete = () => {
-    // Trip marked as Completed → History & Reports Page
-    setTripFlow(prev => ({
-      ...prev,
-      tripStatus: 'completed'
-    }));
-    setCurrentPage('history_reports');
-  };
-
-  const goBackToTrips = () => {
-    setCurrentPage('trips_overview');
-    setTripFlow({
-      currentTrip: null,
-      tripStatus: 'pending',
-      batchData: null,
-      receiverData: null,
-    });
-  };
-
-  const renderCurrentPage = () => {
-    switch (currentPage) {
-      case 'trips_overview':
-        return (
-          <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.tripsOverview}>
-              <LinearGradient colors={["#059669", "#10B981"]} start={{x:0,y:0}} end={{x:1,y:1}} style={styles.sectionHeader}>
-                <View style={styles.headerTextWrap}>
-                  <Text style={styles.headerTitle}>Trips Management</Text>
-                  <Text style={styles.headerSubtitle}>Plan, track and complete your deliveries</Text>
-                </View>
-              </LinearGradient>
-
-              <View style={styles.tripCards}>
-                {mockTrips.map((trip) => (
-                  <TouchableOpacity 
-                    key={trip.id}
-                    style={[styles.tripCard, { borderLeftColor: trip.color }]}
-                    onPress={() => handleTripSelection(trip)}
-                    activeOpacity={0.85}
-                  >
-                    <View style={styles.cardTopRow}>
-                      <View style={[styles.iconChip, { backgroundColor: `${trip.color}1A`, borderColor: `${trip.color}33` }]}> 
-                        <Icon name={trip.icon} size={18} color={trip.color} />
-                      </View>
-                      <View style={styles.titleWrap}>
-                        <Text style={styles.tripCardTitle}>
-                          {trip.status === 'pending' ? 'Pending Pickup' : 
-                           trip.status === 'active' ? 'Active Trip' : 'Completed Trip'}
-                        </Text>
-                        <Text style={styles.tripCardSubtitle}>{trip.from} → {trip.to}</Text>
-                      </View>
-                      <View style={[styles.badge, { backgroundColor: `${trip.color}1A`, borderColor: `${trip.color}33` }]}> 
-                        <Text style={[styles.badgeText, { color: trip.color }]}>
-                          {trip.status.charAt(0).toUpperCase() + trip.status.slice(1)}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.divider} />
-                    <Text style={styles.tripCardTime}>{trip.time}</Text>
-
-                    <View style={styles.footerHintRow}>
-                      {trip.status === 'pending' && (
-                        <View style={styles.hintChip}><Text style={styles.hintChipText}>Scan batch QR</Text></View>
-                      )}
-                      {trip.status === 'active' && (
-                        <View style={styles.hintChip}><Text style={styles.hintChipText}>View trip details</Text></View>
-                      )}
-                      {trip.status === 'completed' && (
-                        <View style={styles.hintChip}><Text style={styles.hintChipText}>Open history</Text></View>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                ))}
+      <View style={styles.tripCards}>
+        {pendingHerbs.map((herb) => (
+          <View key={herb.batch_id} style={[styles.tripCard, { borderLeftColor: '#F59E0B' }]}> 
+            <View style={styles.cardTopRow}>
+              <View style={[styles.iconChip, { backgroundColor: `#F59E0B1A`, borderColor: `#F59E0B33` }]}> 
+                <Icon name="pending" size={18} color="#F59E0B" />
+              </View>
+              <View style={styles.titleWrap}>
+                <Text style={styles.tripCardTitle}>Batch {herb.batch_id}</Text>
+                <Text style={styles.tripCardSubtitle}>{herb.species_name} • {herb.weight_kg} kg</Text>
+                <Text style={styles.tripCardTime}>Farmer: {herb?.farmer?.name || herb.farmer_id}</Text>
+              </View>
+              <View style={[styles.badge, { backgroundColor: `#F59E0B1A`, borderColor: `#F59E0B33` }]}> 
+                <Text style={[styles.badgeText, { color: '#F59E0B' }]}>Pending</Text>
               </View>
             </View>
-          </ScrollView>
-        );
-      case 'batch_scan':
-        return (
-          <BatchScanScreen 
-            tripData={tripFlow.currentTrip}
-            onScanSuccess={handleBatchScanSuccess}
-            onGoBack={goBackToTrips}
-          />
-        );
-      case 'active_trips':
-        return (
-          <ActiveTripsScreen 
-            tripData={tripFlow.currentTrip}
-            batchData={tripFlow.batchData}
-            onDeliveryReady={handleDeliveryReady}
-            onGoBack={goBackToTrips}
-          />
-        );
-      case 'delivery_confirm':
-        return (
-          <DeliveryConfirmScreen 
-            tripData={tripFlow.currentTrip}
-            batchData={tripFlow.batchData}
-            receiverData={tripFlow.receiverData}
-            onDeliveryComplete={handleDeliveryComplete}
-            onGoBack={goBackToTrips}
-          />
-        );
-      case 'history_reports':
-        return (
-          <HistoryScreen onGoBack={goBackToTrips} />
-        );
-      default:
-        return (
-          <View style={styles.placeholderContainer}>
-            <Text style={styles.placeholderText}>Trips Overview</Text>
+            <View style={styles.footerHintRow}>
+              <TouchableOpacity style={styles.scanButton} onPress={() => handleStartScan(herb)}>
+                <Icon name="qr-code-scanner" size={16} color="#FFFFFF" />
+                <Text style={styles.scanButtonText}>Scan QR</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        );
-    }
-  };
+        ))}
+      </View>
+    </View>
+  );
+
+  const renderActiveTrips = () => (
+    <View style={styles.tripsOverview}>
+      <LinearGradient colors={["#0EA5E9", "#38BDF8"]} start={{x:0,y:0}} end={{x:1,y:1}} style={styles.sectionHeader}>
+        <View style={styles.headerTextWrap}>
+          <Text style={styles.headerTitle}>Active Trips</Text>
+          <Text style={styles.headerSubtitle}>In Transit</Text>
+        </View>
+      </LinearGradient>
+
+      <View style={styles.tripCards}>
+        {activeTrips.map((trip) => (
+          <View key={trip.batch_id} style={[styles.tripCard, { borderLeftColor: '#10B981' }]}> 
+            <View style={styles.cardTopRow}>
+              <View style={[styles.iconChip, { backgroundColor: `#10B9811A`, borderColor: `#10B98133` }]}> 
+                <Icon name="local-shipping" size={18} color="#10B981" />
+              </View>
+              <View style={styles.titleWrap}>
+                <Text style={styles.tripCardTitle}>Batch {trip.batch_id}</Text>
+                <Text style={styles.tripCardSubtitle}>{trip.species_name} • {trip.weight_kg} kg</Text>
+                <Text style={styles.tripCardTime}>Owner: {trip.current_owner}</Text>
+              </View>
+              <View style={[styles.badge, { backgroundColor: `#10B9811A`, borderColor: `#10B98133` }]}> 
+                <Text style={[styles.badgeText, { color: '#10B981' }]}>In Transit</Text>
+              </View>
+            </View>
+            {trip.new_qr_code ? (
+              <View style={{ marginTop: 8 }}>
+                <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 6 }}>Transporter QR</Text>
+                <View style={{ backgroundColor: '#F3F4F6', padding: 8, borderRadius: 8 }}>
+                  <Text numberOfLines={2} style={{ fontSize: 12, color: '#111827' }}>{trip.new_qr_code.substring(0, 80)}...</Text>
+                </View>
+              </View>
+            ) : null}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -242,8 +167,26 @@ const TripsPage = ({ navigation }) => {
         colors={['#F9FAFB', '#F3F4F6']}
         style={styles.gradient}
       >
-        {/* Page Content */}
-        {renderCurrentPage()}
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {renderPendingPickup()}
+          {renderActiveTrips()}
+        </ScrollView>
+
+        {scannerVisible && (
+          <View style={styles.scannerOverlay}>
+            <CameraView
+              style={{ flex: 1, width: '100%' }}
+              facing="back"
+              barcodeScannerSettings={{
+                barcodeTypes: ['qr']
+              }}
+              onBarcodeScanned={handleBarCodeScanned}
+            />
+            <TouchableOpacity style={styles.closeScannerBtn} onPress={() => setScannerVisible(false)}>
+              <Text style={styles.closeScannerText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </LinearGradient>
     </View>
   );
@@ -413,6 +356,44 @@ const styles = StyleSheet.create({
   hintChipText: {
     fontSize: 11,
     color: '#6B7280',
+    fontWeight: '600',
+  },
+  scanButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  scanButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  scannerOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeScannerBtn: {
+    position: 'absolute',
+    bottom: 40,
+    backgroundColor: '#111827',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  closeScannerText: {
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '600',
   },
 });

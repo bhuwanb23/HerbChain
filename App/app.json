@@ -6,14 +6,18 @@
     "orientation": "portrait",
     "icon": "./assets/HerbChain_logo.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow HerbChain to access your camera to scan QR codes and take herb photos.",
+        "NSMicrophoneUsageDescription": "Allow HerbChain to access your microphone when recording videos."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -26,6 +30,14 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow HerbChain to access your camera",
+          "microphonePermission": "Allow HerbChain to access your microphone",
+          "recordAudioAndroid": false
+        }
+      ],
       [
         "expo-image-picker",
         {
