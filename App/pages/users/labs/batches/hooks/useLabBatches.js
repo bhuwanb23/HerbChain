@@ -4,6 +4,7 @@ import { API_BASE_URL } from '../../../../../constants/api';
 export const useLabBatches = () => {
   const [all, setAll] = useState([]);
   const [accepted, setAccepted] = useState([]);
+  const [archived, setArchived] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const fetchAll = useCallback(async () => {
@@ -115,6 +116,35 @@ export const useLabBatches = () => {
     }
   }, []);
 
+  const fetchArchived = useCallback(async () => {
+    try {
+      console.log('[useLabBatches] Fetching archived (received) herbs...');
+      const response = await fetch(`${API_BASE_URL}/api/v1/herbs/lab/lab_001/archived`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch archived herbs');
+      }
+      const data = await response.json();
+      const transformed = (data.herbs || []).map(herb => ({
+        batch_id: herb.batch_id,
+        farmer_id: herb.farmer_id,
+        species_entered: herb.species_name,
+        species_detected: herb.species_name,
+        weight_kg: herb.weight_kg,
+        harvest_date: herb.harvest_date,
+        cultivation_method: 'Organic',
+        image_url: herb.image_url,
+        geo_location: herb.location,
+        status: herb.quality_status,
+        created_at: herb.created_at,
+        accepted: true,
+      }));
+      return transformed;
+    } catch (e) {
+      console.log('[useLabBatches] Error fetching archived herbs:', e);
+      return [];
+    }
+  }, []);
+
   const acceptHerb = useCallback(async (batchId) => {
     try {
       console.log('[useLabBatches] Accepting herb:', batchId);
@@ -152,22 +182,23 @@ export const useLabBatches = () => {
     try {
       setLoading(true);
       console.log('[useLabBatches] Starting refresh...');
-      const [a, b] = await Promise.all([fetchAll(), fetchAccepted()]);
+      const [a, b, c] = await Promise.all([fetchAll(), fetchAccepted(), fetchArchived()]);
       setAll(a);
       setAccepted(b);
-      console.log('[useLabBatches] Refresh completed. All:', a.length, 'Accepted:', b.length);
+      setArchived(c);
+      console.log('[useLabBatches] Refresh completed. All:', a.length, 'Accepted:', b.length, 'Archived:', c.length);
     } catch (e) {
       console.log('[useLabBatches] Refresh failed:', e);
     } finally {
       setLoading(false);
     }
-  }, [fetchAll, fetchAccepted]);
+  }, [fetchAll, fetchAccepted, fetchArchived]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  return { all, accepted, loading, refresh, acceptHerb };
+  return { all, accepted, archived, loading, refresh, acceptHerb };
 };
 
 

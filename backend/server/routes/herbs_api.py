@@ -349,7 +349,10 @@ def get_lab_accepted_herbs(lab_id):
         accepted_herbs = []
         for request in lab_requests:
             herb = Herb.query.filter_by(batch_id=request.batch_id).first()
-            if herb:
+            if not herb:
+                continue
+            # Only show herbs that are not yet received by lab
+            if herb.quality_status in ('pending_pickup', 'in_transit') and herb.current_owner != lab_id:
                 herb_data = herb.to_dict()
                 herb_data['lab_request'] = request.to_dict()
                 herb_data['farmer'] = User.query.filter_by(user_id=herb.farmer_id).first().to_dict()
@@ -518,3 +521,121 @@ def get_transporter_active(transerporter_id=None, transporter_id=None):
     except Exception as e:
         logger.error(f"Error listing active herbs for transporter {transporter_id}: {str(e)}")
         return jsonify({'error': 'Failed to get active trips'}), 500
+@herbs_api_bp.route('/<batch_id>/deliver', methods=['POST'])
+def deliver_to_lab(batch_id):
+    """Transporter delivers herb to lab by scanning Transporter QR (#2).
+    Validates current owner is transporter, deactivates QR, transfers to lab,
+    generates Lab QR (#3), sets quality_status to testing, ends transport.
+    Body: { lab_id, transporter_id, scanned_qr_text, delivery_location }
+    """
+    try:
+        data = request.get_json() or {}
+        lab_id = data.get('lab_id')
+        transporter_id = data.get('transporter_id')  # Optional; will fall back to current_owner
+        scanned_qr_text = data.get('scanned_qr_text')
+        delivery_location = data.get('delivery_location')
+
+        if not lab_id:
+            return jsonify({'error': 'lab_id is required'}), 400
+
+        # Validate lab and transporter
+        lab = User.query.filter_by(user_id=lab_id, role='lab').first()
+        if not lab:
+            return jsonify({'error': 'Lab not found'}), 404
+        # Load herb
+        herb = Herb.query.filter_by(batch_id=batch_id).first()
+        if not herb:
+            return jsonify({'error': 'Herb batch not found'}), 404
+
+        # If transporter_id not provided, infer from current owner
+        effective_transporter_id = transporter_id or herb.current_owner
+        transporter = User.query.filter_by(user_id=effective_transporter_id, role='transporter').first()
+        if not transporter:
+            return jsonify({'error': 'Current owner is not a transporter or transporter not found'}), 400
+
+        # Validate current owner and status
+        if herb.current_owner != effective_transporter_id:
+            return jsonify({'error': 'Herb is not currently owned by the transporter'}), 400
+        if herb.quality_status != 'in_transit':
+            return jsonify({'error': f'Herb is not in transit (status={herb.quality_status})'}), 400
+
+        # Validate QR payload basics
+        if scanned_qr_text and batch_id not in scanned_qr_text:
+            return jsonify({'error': 'QR does not match this batch'}), 400
+
+        # Deactivate current QR
+        active_transfer = OwnershipTransfer.get_active_transfer(batch_id)
+        if active_transfer:
+            active_transfer.deactivate_qr()
+
+        # Generate new Lab QR (#3)
+        qr_payload = {
+            'batch_id': herb.batch_id,
+            'previous_owner': herb.current_owner,
+            'new_owner': lab_id,
+            'timestamp': datetime.utcnow().isoformat(),
+            'type': 'lab_receipt'
+        }
+        new_lab_qr = generate_qr_code(str(qr_payload))
+        if not new_lab_qr:
+            db.session.rollback()
+            return jsonify({'error': 'Failed to generate Lab QR'}), 500
+
+        # Transfer to lab and set status to testing
+        herb.transfer_ownership(lab_id, new_lab_qr)
+        herb.quality_status = 'testing'
+        herb.updated_at = datetime.utcnow()
+
+        # Log ownership transfer
+        transfer_id = f"TRANSFER-{uuid.uuid4().hex[:8].upper()}"
+        ownership_transfer = OwnershipTransfer.create_transfer(
+            transfer_id=transfer_id,
+            batch_id=batch_id,
+            from_owner=qr_payload['previous_owner'],
+            to_owner=lab_id,
+            qr_code=new_lab_qr,
+            transfer_reason='Delivery to Lab',
+            location=delivery_location or herb.location,
+            notes='Transporter delivered batch to lab'
+        )
+        db.session.add(ownership_transfer)
+
+        # End transport record
+        transport_record = TransportRecord.query.filter_by(batch_id=batch_id, transporter_id=effective_transporter_id, status='in_transit').order_by(TransportRecord.start_time.desc()).first()
+        if transport_record:
+            transport_record.status = 'delivered'
+            transport_record.end_time = datetime.utcnow()
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Delivery successful. Ownership transferred to lab.',
+            'herb': herb.to_dict(),
+            'new_qr_code': new_lab_qr,
+            'ownership_transfer': ownership_transfer.to_dict()
+        }), 200
+    except ValueError as e:
+        db.session.rollback()
+        logger.warning(f"Validation error during delivery {batch_id}: {str(e)}")
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error during delivery for {batch_id}: {str(e)}")
+        return jsonify({'error': 'Failed to complete delivery'}), 500
+
+
+@herbs_api_bp.route('/lab/<lab_id>/archived', methods=['GET'])
+def get_lab_archived(lab_id):
+    """List herbs scanned/received by lab (ownership currently lab, status testing or later)."""
+    try:
+        lab = User.query.filter_by(user_id=lab_id, role='lab').first()
+        if not lab:
+            return jsonify({'error': 'Lab not found'}), 404
+
+        herbs = Herb.query.filter(Herb.current_owner == lab_id).order_by(Herb.updated_at.desc()).all()
+        response = [h.to_dict() for h in herbs]
+        return jsonify({'herbs': response, 'total': len(response)})
+    except Exception as e:
+        logger.error(f"Error listing archived herbs for lab {lab_id}: {str(e)}")
+        return jsonify({'error': 'Failed to get archived herbs'}), 500
