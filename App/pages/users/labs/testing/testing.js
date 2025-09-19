@@ -1,14 +1,14 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useTesting } from './hooks';
-import {
-  TestingResultsEntry,
-  OfflineSync,
-} from './components';
+import { TestingResultsEntry, OfflineSync } from './components';
+import HerbChipList from './components/HerbChipList';
+import UploadedResults from './components/UploadedResults';
 
 const TestingPage = ({ navigation }) => {
   const {
     currentTab,
+    archived,
     selectedBatch,
     isOffline,
     testResults,
@@ -28,53 +28,12 @@ const TestingPage = ({ navigation }) => {
     handleSyncAll,
   } = useTesting();
 
-  const renderCurrentTab = () => {
-    switch (currentTab) {
-      case 'results':
-        return (
-          <TestingResultsEntry 
-            batchId={selectedBatch}
-            isOffline={isOffline}
-            testResults={testResults}
-            uploadedFiles={uploadedFiles}
-            onToggleOffline={toggleOfflineMode}
-            onTestResultChange={handleTestResultChange}
-            onFileUpload={handleFileUpload}
-            onFileRemove={handleFileRemove}
-            onSaveOffline={handleSaveOffline}
-            onSubmitResults={handleSubmitResults}
-          />
-        );
-      case 'sync':
-        return (
-          <OfflineSync 
-            offlineData={offlineData}
-            onSyncAll={handleSyncAll}
-            onSyncEntry={handleSyncOfflineData}
-            onRetrySync={handleRetrySync}
-            onDeleteEntry={handleDeleteOfflineEntry}
-          />
-        );
-      default:
-        return (
-          <TestingResultsEntry 
-            batchId={selectedBatch}
-            isOffline={isOffline}
-            testResults={testResults}
-            uploadedFiles={uploadedFiles}
-            onToggleOffline={toggleOfflineMode}
-            onTestResultChange={handleTestResultChange}
-            onFileUpload={handleFileUpload}
-            onFileRemove={handleFileRemove}
-            onSaveOffline={handleSaveOffline}
-            onSubmitResults={handleSubmitResults}
-          />
-        );
-    }
-  };
+  const renderCurrentTab = () => null;
 
   return (
     <View style={styles.container}>
+      <HerbChipList title="Not Uploaded" items={archived.filter(h => h.quality_status === 'testing')} onPress={(h) => { handleBatchSelect(h.batch_id); handleTabChange('results'); }} />
+      <HerbChipList title="Uploaded" items={archived.filter(h => h.quality_status !== 'testing')} onPress={(h) => { handleBatchSelect(h.batch_id); handleTabChange('uploaded'); }} />
       <View style={styles.tabContainer}>
         <View style={styles.tabButtons}>
           <View
@@ -117,7 +76,23 @@ const TestingPage = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {renderCurrentTab()}
+        {currentTab === 'results' && (
+          <TestingResultsEntry 
+            batchId={selectedBatch}
+            isOffline={isOffline}
+            testResults={testResults}
+            uploadedFiles={uploadedFiles}
+            onToggleOffline={toggleOfflineMode}
+            onTestResultChange={handleTestResultChange}
+            onFileUpload={handleFileUpload}
+            onFileRemove={handleFileRemove}
+            onSaveOffline={handleSaveOffline}
+            onSubmitResults={handleSubmitResults}
+          />
+        )}
+        {currentTab === 'uploaded' && (
+          <UploadedResults reports={(archived.find(h => h.batch_id === selectedBatch) && []) || []} />
+        )}
       </ScrollView>
     </View>
   );
@@ -173,6 +148,25 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 20,
+  },
+  badge: {
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  badgeActive: {
+    backgroundColor: '#111827',
+    borderColor: '#111827',
+  },
+  badgeText: {
+    color: '#374151',
+    fontWeight: '700',
+  },
+  badgeTextActive: {
+    color: '#FFFFFF',
   },
 });
 

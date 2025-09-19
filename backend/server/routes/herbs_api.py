@@ -11,6 +11,7 @@ from models import db
 from models.herbs import Herb
 from models.ownership_transfers import OwnershipTransfer
 from models.transport_records import TransportRecord
+from models.lab_reports import LabReport
 import ast
 from models.users import User
 from config.logging import get_logger
@@ -668,3 +669,83 @@ def get_lab_archived(lab_id):
     except Exception as e:
         logger.error(f"Error listing archived herbs for lab {lab_id}: {str(e)}")
         return jsonify({'error': 'Failed to get archived herbs'}), 500
+
+
+@herbs_api_bp.route('/lab/<lab_id>/testing', methods=['GET'])
+def get_lab_testing_queue(lab_id):
+    """Return herbs owned by lab that are in testing state (or later)."""
+    try:
+        lab = User.query.filter_by(user_id=lab_id, role='lab').first()
+        if not lab:
+            return jsonify({'error': 'Lab not found'}), 404
+        herbs = Herb.query.filter(Herb.current_owner == lab_id).order_by(Herb.updated_at.desc()).all()
+        return jsonify({'herbs': [h.to_dict() for h in herbs], 'total': len(herbs)})
+    except Exception as e:
+        logger.error(f"Error getting lab testing queue for {lab_id}: {str(e)}")
+        return jsonify({'error': 'Failed to get testing queue'}), 500
+
+
+@herbs_api_bp.route('/<batch_id>/lab_report', methods=['POST'])
+def create_lab_report(batch_id):
+    """Create or update a lab report for a batch by the current lab owner."""
+    try:
+        data = request.get_json() or {}
+        lab_id = data.get('lab_id')
+        if not lab_id:
+            return jsonify({'error': 'lab_id is required'}), 400
+        lab = User.query.filter_by(user_id=lab_id, role='lab').first()
+        if not lab:
+            return jsonify({'error': 'Lab not found'}), 404
+        herb = Herb.query.filter_by(batch_id=batch_id).first()
+        if not herb:
+            return jsonify({'error': 'Herb not found'}), 404
+        if herb.current_owner != lab_id:
+            return jsonify({'error': 'Herb is not owned by this lab'}), 400
+
+        report_id = f"REPORT-{uuid.uuid4().hex[:8].upper()}"
+        report = LabReport.create_report(
+            report_id=report_id,
+            batch_id=batch_id,
+            lab_id=lab_id,
+            test_type=data.get('test_type', 'general'),
+            results_summary=data.get('results_summary', ''),
+            test_date=datetime.utcnow().date(),
+            certification=bool(data.get('certification', False)),
+            certification_level=data.get('certification_level'),
+            report_url=data.get('report_url'),
+            purity_percentage=data.get('purity_percentage'),
+            moisture_content=data.get('moisture_content'),
+            ash_content=data.get('ash_content'),
+            heavy_metals_present=bool(data.get('heavy_metals_present', False)),
+            pesticides_detected=bool(data.get('pesticides_detected', False)),
+            active_compounds=data.get('active_compounds'),
+            potency_rating=data.get('potency_rating'),
+            notes=data.get('notes'),
+            recommendations=data.get('recommendations')
+        )
+        db.session.add(report)
+
+        new_status = data.get('quality_status')
+        if new_status in ('approved', 'rejected', 'testing'):
+            herb.quality_status = new_status
+            herb.updated_at = datetime.utcnow()
+
+        db.session.commit()
+        return jsonify({'success': True, 'report': report.to_dict(), 'herb': herb.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error creating lab report for {batch_id}: {str(e)}")
+        return jsonify({'error': 'Failed to save lab report'}), 500
+
+
+@herbs_api_bp.route('/<batch_id>/lab_report', methods=['GET'])
+def list_lab_reports(batch_id):
+    try:
+        herb = Herb.query.filter_by(batch_id=batch_id).first()
+        if not herb:
+            return jsonify({'error': 'Herb not found'}), 404
+        reports = LabReport.query.filter_by(batch_id=batch_id).order_by(LabReport.created_at.desc()).all()
+        return jsonify({'reports': [r.to_dict() for r in reports], 'total': len(reports)})
+    except Exception as e:
+        logger.error(f"Error listing lab reports for {batch_id}: {str(e)}")
+        return jsonify({'error': 'Failed to list lab reports'}), 500
