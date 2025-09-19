@@ -1,19 +1,31 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 
-const LabBatchItem = ({ item, onAccepted }) => {
+const LabBatchItem = ({ item, onAccepted, acceptHerb }) => {
+  const [isAccepting, setIsAccepting] = useState(false);
+
   const accept = async () => {
     try {
+      setIsAccepting(true);
       console.log('[LabBatchItem] Accepting batch:', item.batch_id);
       
-      // Simulate API call
-      setTimeout(() => {
-        console.log('[LabBatchItem] Accept successful (dummy)');
+      if (acceptHerb) {
+        await acceptHerb(item.batch_id);
+        Alert.alert('Success', 'Herb accepted for testing successfully!');
         onAccepted && onAccepted();
-      }, 1000);
+      } else {
+        // Fallback to dummy call
+        setTimeout(() => {
+          console.log('[LabBatchItem] Accept successful (dummy)');
+          onAccepted && onAccepted();
+        }, 1000);
+      }
       
     } catch (e) {
       console.log('[LabBatchItem] accept failed', e);
+      Alert.alert('Error', e.message || 'Failed to accept herb');
+    } finally {
+      setIsAccepting(false);
     }
   };
   return (
@@ -43,8 +55,20 @@ const LabBatchItem = ({ item, onAccepted }) => {
         <Text style={styles.value}>{item.accepted ? 'Accepted' : (item.status || 'Pending')}</Text>
       </View>
       {!item.accepted && (
-        <TouchableOpacity style={styles.acceptBtn} onPress={accept} activeOpacity={0.85}>
-          <Text style={styles.acceptText}>Accept</Text>
+        <TouchableOpacity 
+          style={[styles.acceptBtn, isAccepting && styles.acceptBtnDisabled]} 
+          onPress={accept} 
+          activeOpacity={0.85}
+          disabled={isAccepting}
+        >
+          {isAccepting ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#fff" />
+              <Text style={styles.acceptText}>Accepting...</Text>
+            </View>
+          ) : (
+            <Text style={styles.acceptText}>Accept for Testing</Text>
+          )}
         </TouchableOpacity>
       )}
     </View>
@@ -85,6 +109,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
+  },
+  acceptBtnDisabled: {
+    backgroundColor: '#9ca3af',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   acceptText: {
     color: '#fff',

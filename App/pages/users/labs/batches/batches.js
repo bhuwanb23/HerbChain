@@ -5,7 +5,7 @@ import { LabBatchList } from './components';
 
 const BatchesPage = ({ navigation }) => {
   const [tab, setTab] = useState('all'); // 'all' | 'accepted'
-  const { all, accepted, loading, refresh } = useLabBatches();
+  const { all, accepted, loading, refresh, acceptHerb } = useLabBatches();
 
   return (
     <View style={styles.container}>
@@ -19,9 +19,9 @@ const BatchesPage = ({ navigation }) => {
       </View>
       <View style={{ flex: 1 }}>
         {tab === 'all' ? (
-          <LabBatchList data={all} loading={loading} onRefresh={refresh} />
+          <LabBatchList data={all} loading={loading} onRefresh={refresh} acceptHerb={acceptHerb} />
         ) : (
-          <LabBatchList data={accepted} loading={loading} onRefresh={refresh} />
+          <LabBatchList data={accepted} loading={loading} onRefresh={refresh} acceptHerb={acceptHerb} />
         )}
       </View>
     </View>

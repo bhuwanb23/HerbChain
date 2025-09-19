@@ -2,13 +2,19 @@ import React from 'react';
 import { View, FlatList, RefreshControl } from 'react-native';
 import LabBatchItem from './LabBatchItem';
 
-const LabBatchList = ({ data, loading, onRefresh }) => {
+const LabBatchList = ({ data, loading, onRefresh, acceptHerb }) => {
   return (
     <View style={{ flex: 1, padding: 16 }}>
       <FlatList
         data={data}
         keyExtractor={(item, idx) => `${item.batch_id || idx}`}
-        renderItem={({ item }) => <LabBatchItem item={item} onAccepted={onRefresh} />}
+        renderItem={({ item }) => (
+          <LabBatchItem 
+            item={item} 
+            onAccepted={onRefresh} 
+            acceptHerb={acceptHerb}
+          />
+        )}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={onRefresh} />}
       />
     </View>

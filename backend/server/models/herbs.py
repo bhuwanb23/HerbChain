@@ -22,7 +22,7 @@ class Herb(db.Model):
     weight_kg = db.Column(db.Numeric(10, 2), nullable=False)
     
     # Quality and Status
-    quality_status = db.Column(db.Enum('pending', 'approved', 'rejected', name='quality_status'), default='pending', nullable=False)
+    quality_status = db.Column(db.Enum('pending', 'pending_pickup', 'approved', 'rejected', name='quality_status'), default='pending', nullable=False)
     
     # Ownership Information
     current_owner = db.Column(db.String(50), db.ForeignKey('users.user_id'), nullable=False)

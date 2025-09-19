@@ -227,3 +227,124 @@ def get_current_qr(batch_id):
     except Exception as e:
         logger.error(f"Error getting QR code for {batch_id}: {str(e)}")
         return jsonify({'error': 'Failed to get QR code'}), 500
+
+@herbs_api_bp.route('/available', methods=['GET'])
+def get_available_herbs():
+    """Get all herbs available for lab testing (status = pending)"""
+    try:
+        herbs = Herb.query.filter_by(quality_status='pending').order_by(Herb.created_at.desc()).all()
+        
+        # Get farmer details for each herb
+        herbs_with_farmer = []
+        for herb in herbs:
+            farmer = User.query.filter_by(user_id=herb.farmer_id).first()
+            herb_data = herb.to_dict()
+            herb_data['farmer'] = farmer.to_dict() if farmer else None
+            herbs_with_farmer.append(herb_data)
+        
+        return jsonify({
+            'herbs': herbs_with_farmer,
+            'total': len(herbs_with_farmer),
+            'status': 'available'
+        })
+    except Exception as e:
+        logger.error(f"Error getting available herbs: {str(e)}")
+        return jsonify({'error': 'Failed to get available herbs'}), 500
+
+@herbs_api_bp.route('/<batch_id>/accept', methods=['POST'])
+def accept_herb_for_testing(batch_id):
+    """Lab accepts herb for testing/research"""
+    try:
+        data = request.get_json()
+        lab_id = data.get('lab_id')
+        
+        if not lab_id:
+            return jsonify({'error': 'Lab ID is required'}), 400
+        
+        # Validate lab exists
+        lab = User.query.filter_by(user_id=lab_id, role='lab').first()
+        if not lab:
+            return jsonify({'error': 'Lab not found'}), 404
+        
+        # Get herb batch
+        herb = Herb.query.filter_by(batch_id=batch_id).first()
+        if not herb:
+            return jsonify({'error': 'Herb batch not found'}), 404
+        
+        # Check if herb is available for testing
+        if herb.quality_status != 'pending':
+            return jsonify({'error': f'Herb batch is not available for testing. Current status: {herb.quality_status}'}), 400
+        
+        # Update herb status to pending pickup
+        herb.quality_status = 'pending_pickup'
+        herb.updated_at = datetime.utcnow()
+        
+        # Create lab request record (using ownership_transfers table)
+        request_id = f"LAB-REQ-{uuid.uuid4().hex[:8].upper()}"
+        lab_request = OwnershipTransfer.create_transfer(
+            transfer_id=request_id,
+            batch_id=batch_id,
+            from_owner=herb.current_owner,  # Current farmer
+            to_owner=lab_id,  # Lab that will receive
+            qr_code=herb.active_qr,  # Keep current QR for now
+            transfer_reason="Lab Testing Request",
+            location=data.get('lab_location', lab.location),
+            notes=f"Lab {lab.name} accepted herb for testing/research"
+        )
+        db.session.add(lab_request)
+        
+        # Commit changes
+        db.session.commit()
+        
+        logger.info(f"Lab {lab_id} accepted herb {batch_id} for testing")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Herb accepted for testing successfully',
+            'herb': herb.to_dict(),
+            'lab_request': lab_request.to_dict(),
+            'next_step': 'pending_pickup'
+        }), 200
+        
+    except ValueError as e:
+        db.session.rollback()
+        logger.warning(f"Validation error accepting herb: {str(e)}")
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error accepting herb {batch_id}: {str(e)}")
+        return jsonify({'error': 'Failed to accept herb for testing'}), 500
+
+@herbs_api_bp.route('/lab/<lab_id>/accepted', methods=['GET'])
+def get_lab_accepted_herbs(lab_id):
+    """Get herbs accepted by a specific lab"""
+    try:
+        # Validate lab exists
+        lab = User.query.filter_by(user_id=lab_id, role='lab').first()
+        if not lab:
+            return jsonify({'error': 'Lab not found'}), 404
+        
+        # Get herbs accepted by this lab (status = pending_pickup and lab is the intended recipient)
+        lab_requests = OwnershipTransfer.query.filter_by(
+            to_owner=lab_id,
+            transfer_reason='Lab Testing Request'
+        ).order_by(OwnershipTransfer.created_at.desc()).all()
+        
+        # Get herb details for each request
+        accepted_herbs = []
+        for request in lab_requests:
+            herb = Herb.query.filter_by(batch_id=request.batch_id).first()
+            if herb:
+                herb_data = herb.to_dict()
+                herb_data['lab_request'] = request.to_dict()
+                herb_data['farmer'] = User.query.filter_by(user_id=herb.farmer_id).first().to_dict()
+                accepted_herbs.append(herb_data)
+        
+        return jsonify({
+            'herbs': accepted_herbs,
+            'lab': lab.to_dict(),
+            'total': len(accepted_herbs)
+        })
+    except Exception as e:
+        logger.error(f"Error getting lab accepted herbs for {lab_id}: {str(e)}")
+        return jsonify({'error': 'Failed to get lab accepted herbs'}), 500
