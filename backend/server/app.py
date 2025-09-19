@@ -4,6 +4,7 @@ from flask_cors import CORS
 from config.logging import setup_logging, get_logger
 from routes.admin import admin_bp
 from routes.users_api import users_api_bp
+from routes.herbs_api import herbs_api_bp
 from models import init_app as init_models
 
 def create_app() -> Flask:
@@ -29,6 +30,7 @@ def create_app() -> Flask:
     # Register blueprints
     app.register_blueprint(admin_bp)
     app.register_blueprint(users_api_bp)
+    app.register_blueprint(herbs_api_bp)
 
     @app.get("/")
     def root():

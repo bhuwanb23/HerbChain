@@ -4,8 +4,8 @@ import HerbList from './components/HerbList';
 import { useHerbList } from './hooks/useHerbList';
 
 const HerbListScreen = ({ navigation, onAdd, onOpenDetails }) => {
-  // TODO: replace with real farmer id from auth/profile
-  const farmerId = 1;
+  // Default farmer ID for development
+  const farmerId = 'farmer_001';
   const { items, loading, refresh } = useHerbList(farmerId);
 
   return (

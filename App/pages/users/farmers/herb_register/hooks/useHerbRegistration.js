@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { REGISTRATION_STEPS } from '../constants';
+import { API_BASE_URL } from '../../../../../constants/api';
 
 export const useHerbRegistration = () => {
   const [currentStep, setCurrentStep] = useState(REGISTRATION_STEPS.AI_RECOGNITION);
@@ -65,28 +66,43 @@ export const useHerbRegistration = () => {
       setIsProcessing(true);
       setResult(null);
 
-      // Simulate API call with dummy data
-      setTimeout(() => {
-        const dummyBatch = {
-          batch_id: `BATCH-${Date.now()}`,
-          farmer_id: 1,
-          species_entered: formData.species,
-          species_detected: aiDetection?.species,
-          weight_kg: parseFloat(formData.weight),
-          harvest_date: formData.harvestDate,
-          cultivation_method: formData.cultivationMethod,
-          remarks: formData.notes,
-          image_url: imageUri,
-          geo_location: aiDetection?.coordinates,
-          status: 'Registered',
-          created_at: new Date().toISOString(),
-          qr_code: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
-        };
-        
-        setResult({ batch: dummyBatch, qr_code: dummyBatch.qr_code });
-        setCurrentStep(REGISTRATION_STEPS.COMPLETE);
-        setIsProcessing(false);
-      }, 1500);
+      // Prepare API request data
+      const requestData = {
+        farmer_id: 'farmer_001', // Default farmer for development
+        species_name: formData.species,
+        harvest_date: formData.harvestDate,
+        location: aiDetection?.location || 'Current Location',
+        weight_kg: parseFloat(formData.weight),
+        image_url: imageUri,
+        cultivation_method: formData.cultivationMethod,
+        notes: formData.notes
+      };
+
+      console.log('[HerbRegister] Sending request:', requestData);
+
+      const response = await fetch(`${API_BASE_URL}/api/v1/herbs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create herb batch');
+      }
+
+      const resultData = await response.json();
+      console.log('[HerbRegister] API Response:', resultData);
+
+      setResult({ 
+        batch: resultData.herb, 
+        qr_code: resultData.qr_code,
+        ownership_transfer: resultData.ownership_transfer
+      });
+      setCurrentStep(REGISTRATION_STEPS.COMPLETE);
+      setIsProcessing(false);
 
     } catch (e) {
       console.log('[HerbRegister] Request failed', e);
