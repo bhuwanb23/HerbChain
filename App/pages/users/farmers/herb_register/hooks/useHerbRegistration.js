@@ -15,9 +15,15 @@ export const useHerbRegistration = () => {
     notes: '',
   });
   const [result, setResult] = useState(null);
+  const [imageUri, setImageUri] = useState(null);
 
   const handleCameraPress = useCallback(async (detected = null) => {
     setIsProcessing(true);
+    
+    // Store the image URI if provided
+    if (detected?.image_uri) {
+      setImageUri(detected.image_uri);
+    }
     
     // Simulate AI processing
     setTimeout(() => {
@@ -64,7 +70,7 @@ export const useHerbRegistration = () => {
       const farmer_id = 1;
 
       const url = `${API_BASE_URL}/api/v1/farmers/batches`;
-      console.log('[HerbRegister] POST', url, {
+      const payload = {
         farmer_id,
         species: formData.species,
         species_detected: aiDetection?.species,
@@ -75,22 +81,13 @@ export const useHerbRegistration = () => {
         ai_model: aiDetection ? 'mock-ai' : undefined,
         ai_confidence: aiDetection?.confidence,
         geo_location: aiDetection?.coordinates,
-      });
+        image_url: imageUri, // Include the image URI
+      };
+      console.log('[HerbRegister] POST', url, payload);
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          farmer_id,
-          species: formData.species,
-          species_detected: aiDetection?.species,
-          weight: formData.weight,
-          harvestDate: formData.harvestDate,
-          cultivationMethod: formData.cultivationMethod,
-          notes: formData.notes,
-          ai_model: aiDetection ? 'mock-ai' : undefined,
-          ai_confidence: aiDetection?.confidence,
-          geo_location: aiDetection?.coordinates,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -126,6 +123,7 @@ export const useHerbRegistration = () => {
       notes: '',
     });
     setResult(null);
+    setImageUri(null);
   }, []);
 
   return {

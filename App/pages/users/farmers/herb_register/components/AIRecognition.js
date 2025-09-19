@@ -109,6 +109,7 @@ const AIRecognition = ({ isProcessing, aiDetection, onCameraPress }) => {
         location: readablePlace || 'Near your current position',
         coordinates: coordsString,
         timestamp: new Date().toLocaleString(),
+        image_uri: uri, // Include the image URI
       };
       // Trigger dummy AI recognition in hook with dynamic data
       await onCameraPress(detected);

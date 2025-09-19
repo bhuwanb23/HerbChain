@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const Row = ({ label, value }) => (
@@ -20,6 +20,35 @@ const HerbDetailsScreen = ({ batch, onBack }) => {
         <Text style={styles.headerTitle}>Herb Details</Text>
       </View>
       <ScrollView contentContainerStyle={styles.container}>
+        {/* Herb Photo */}
+        {batch.image_url && (
+          <View style={styles.card}>
+            <Text style={[styles.label, { marginBottom: 8 }]}>Herb Photo</Text>
+            <View style={styles.imageContainer}>
+              <Image 
+                source={{ uri: batch.image_url }} 
+                style={styles.herbImage}
+                resizeMode="cover"
+              />
+            </View>
+          </View>
+        )}
+
+        {/* QR Code */}
+        {batch.qr_code && (
+          <View style={styles.card}>
+            <Text style={[styles.label, { marginBottom: 8 }]}>QR Code</Text>
+            <View style={styles.qrContainer}>
+              <Image 
+                source={{ uri: batch.qr_code }} 
+                style={styles.qrCode}
+                resizeMode="contain"
+              />
+            </View>
+            <Text style={styles.qrText}>Scan this QR code to verify batch authenticity</Text>
+          </View>
+        )}
+
         <View style={styles.card}>
           <Row label="Batch ID" value={batch.batch_id} />
           <Row label="Species" value={batch.species_entered || batch.species_detected} />
@@ -92,6 +121,33 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     flexShrink: 1,
     marginLeft: 12,
+  },
+  imageContainer: {
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#f9fafb',
+  },
+  herbImage: {
+    width: '100%',
+    height: 200,
+  },
+  qrContainer: {
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  qrCode: {
+    width: 150,
+    height: 150,
+  },
+  qrText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: '#6b7280',
+    textAlign: 'center',
   },
 });
 

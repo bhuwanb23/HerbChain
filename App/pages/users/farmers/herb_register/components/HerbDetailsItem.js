@@ -1,11 +1,22 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const HerbDetailsItem = ({ batch }) => {
   if (!batch) return null;
   return (
     <View style={styles.card}>
+      {/* Herb Photo */}
+      {batch.image_url && (
+        <View style={styles.imageContainer}>
+          <Image 
+            source={{ uri: batch.image_url }} 
+            style={styles.herbImage}
+            resizeMode="cover"
+          />
+        </View>
+      )}
+      
       <View style={styles.row}>
         <Icon name="qr-code" size={18} color="#22c55e" />
         <Text style={styles.id} numberOfLines={1}>{batch.batch_id}</Text>
@@ -83,6 +94,15 @@ const styles = StyleSheet.create({
   },
   inactive: {
     backgroundColor: '#9ca3af',
+  },
+  imageContainer: {
+    marginBottom: 12,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  herbImage: {
+    width: '100%',
+    height: 120,
   },
 });
 
