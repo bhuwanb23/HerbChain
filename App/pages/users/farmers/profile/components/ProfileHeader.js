@@ -1,17 +1,34 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
 
-const ProfileHeader = ({ profileData }) => {
+const ProfileHeader = ({ profileData, isLoading }) => {
   const handleCameraPress = () => {
     Alert.alert('Change Photo', 'Camera functionality will be implemented');
   };
+
+  // Show loading state
+  if (isLoading || !profileData) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.profileSection}>
+          <View style={styles.imageContainer}>
+            <View style={[styles.profileImage, styles.loadingImage]}>
+              <ActivityIndicator size="small" color="#22c55e" />
+            </View>
+          </View>
+          <Text style={styles.profileName}>Loading...</Text>
+          <Text style={styles.profileTitle}>Please wait</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.profileSection}>
         <View style={styles.imageContainer}>
           <Image
-            source={{ uri: profileData.imageUrl }}
+            source={{ uri: profileData.imageUrl || 'https://via.placeholder.com/72' }}
             style={styles.profileImage}
           />
           <TouchableOpacity
@@ -22,8 +39,8 @@ const ProfileHeader = ({ profileData }) => {
             <Text style={styles.cameraIcon}>📷</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.profileName}>{profileData.name}</Text>
-        <Text style={styles.profileTitle}>{profileData.title}</Text>
+        <Text style={styles.profileName}>{profileData.name || 'Unknown User'}</Text>
+        <Text style={styles.profileTitle}>{profileData.title || 'User'}</Text>
       </View>
     </View>
   );
@@ -53,6 +70,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
+  },
+  loadingImage: {
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cameraButton: {
     position: 'absolute',

@@ -1,10 +1,4 @@
-// Profile Constants
-export const PROFILE_DATA = {
-  name: 'Dr. Arjun Singh',
-  role: 'Lab Technician - HerbChain',
-  email: 'arjun.singh@herbchain.com',
-  image: 'https://randomuser.me/api/portraits/men/32.jpg',
-};
+// Profile Constants - Now using dynamic data from API
 
 export const ACCOUNT_SETTINGS = [
   {

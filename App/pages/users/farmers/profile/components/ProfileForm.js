@@ -1,13 +1,25 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, Alert, ActivityIndicator } from 'react-native';
 
-const ProfileForm = ({ profileData, onUpdateProfile }) => {
+const ProfileForm = ({ profileData, onUpdateProfile, isLoading }) => {
   const [formData, setFormData] = useState({
-    fullName: profileData.name,
-    phoneNumber: profileData.phone,
-    farmAddress: profileData.location,
+    fullName: '',
+    phoneNumber: '',
+    farmAddress: '',
     bankAccount: '****-****-****-1234',
   });
+
+  // Update form data when profileData changes
+  useEffect(() => {
+    if (profileData) {
+      setFormData({
+        fullName: profileData.name || '',
+        phoneNumber: profileData.phone || '',
+        farmAddress: profileData.location || '',
+        bankAccount: '****-****-****-1234',
+      });
+    }
+  }, [profileData]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -20,6 +32,18 @@ const ProfileForm = ({ profileData, onUpdateProfile }) => {
     onUpdateProfile(formData);
     Alert.alert('Success', 'Profile updated successfully!');
   };
+
+  // Show loading state
+  if (isLoading || !profileData) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#22c55e" />
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -112,6 +136,16 @@ const styles = StyleSheet.create({
   textArea: {
     height: 60,
     textAlignVertical: 'top',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#6B7280',
   },
 });
 

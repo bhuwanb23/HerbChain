@@ -1,23 +1,45 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const ProfileInfo = ({ name, phone, avatar, vehicleName, onChangePhoto }) => {
+const ProfileInfo = ({ name, phone, avatar, vehicleName, onChangePhoto, isLoading }) => {
+  // Show loading state
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.row}>
+          <View style={styles.avatarWrap}>
+            <View style={[styles.avatar, styles.loadingAvatar]}>
+              <ActivityIndicator size="small" color="#2563EB" />
+            </View>
+          </View>
+          <View style={styles.infoWrap}>
+            <Text style={styles.name}>Loading...</Text>
+            <Text style={styles.phone}>Please wait</Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.row}>
         <View style={styles.avatarWrap}>
-          <Image source={{ uri: avatar }} style={styles.avatar} />
+          <Image 
+            source={{ uri: avatar || 'https://via.placeholder.com/80' }} 
+            style={styles.avatar} 
+          />
           <TouchableOpacity style={styles.cameraBtn} onPress={onChangePhoto}>
             <Icon name="photo-camera" size={14} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
         <View style={styles.infoWrap}>
-          <Text style={styles.name}>{name}</Text>
-          <Text style={styles.phone}>{phone}</Text>
+          <Text style={styles.name}>{name || 'Unknown User'}</Text>
+          <Text style={styles.phone}>{phone || 'No phone'}</Text>
           <View style={styles.vehicleBadge}>
             <Icon name="local-shipping" size={12} color="#16A34A" />
-            <Text style={styles.vehicleText}>{vehicleName}</Text>
+            <Text style={styles.vehicleText}>{vehicleName || 'No vehicle'}</Text>
           </View>
         </View>
       </View>
@@ -47,6 +69,11 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     borderWidth: 4,
     borderColor: '#DBEAFE',
+  },
+  loadingAvatar: {
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cameraBtn: {
     position: 'absolute',

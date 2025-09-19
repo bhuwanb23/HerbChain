@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { PROFILE_DATA, ACCOUNT_SETTINGS, SUPPORT_LEGAL_SETTINGS, COLORS } from '../constants';
+import { ACCOUNT_SETTINGS, SUPPORT_LEGAL_SETTINGS, COLORS } from '../constants';
 
 const SettingItem = ({ setting, onPress }) => {
   return (
@@ -18,16 +18,30 @@ const SettingItem = ({ setting, onPress }) => {
   );
 };
 
-const ProfileCard = ({ profileData }) => {
+const ProfileCard = ({ profileData, isLoading }) => {
+  // Show loading state
+  if (isLoading || !profileData) {
+    return (
+      <View style={styles.profileCard}>
+        <View style={[styles.profileImage, styles.loadingImage]}>
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+        <Text style={styles.profileName}>Loading...</Text>
+        <Text style={styles.profileRole}>Please wait</Text>
+        <Text style={styles.profileEmail}>Loading profile...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.profileCard}>
       <Image
-        source={{ uri: profileData.image }}
+        source={{ uri: profileData.imageUrl || 'https://via.placeholder.com/80' }}
         style={styles.profileImage}
       />
-      <Text style={styles.profileName}>{profileData.name}</Text>
-      <Text style={styles.profileRole}>{profileData.role}</Text>
-      <Text style={styles.profileEmail}>{profileData.email}</Text>
+      <Text style={styles.profileName}>{profileData.name || 'Unknown User'}</Text>
+      <Text style={styles.profileRole}>{profileData.labName || profileData.role || 'Lab User'}</Text>
+      <Text style={styles.profileEmail}>{profileData.email || 'No email'}</Text>
     </View>
   );
 };
@@ -62,6 +76,8 @@ const LogoutButton = ({ onLogout }) => {
 };
 
 const ProfileSettings = ({ 
+  profileData,
+  isLoading,
   onEditProfile,
   onChangePassword,
   onLanguageChange,
@@ -101,7 +117,7 @@ const ProfileSettings = ({
 
   return (
     <ScrollView style={styles.mainContent}>
-      <ProfileCard profileData={PROFILE_DATA} />
+      <ProfileCard profileData={profileData} isLoading={isLoading} />
       
       <SettingsSection 
         title="Account Settings"
@@ -149,6 +165,15 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     marginBottom: 12,
+  },
+  loadingImage: {
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 12,
+    color: '#6B7280',
   },
   profileName: {
     fontSize: 20,

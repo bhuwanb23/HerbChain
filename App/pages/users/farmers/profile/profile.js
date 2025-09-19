@@ -10,7 +10,7 @@ import {
 } from './components';
 
 const ProfileScreen = ({ navigation }) => {
-  const { profileData, updateProfile } = useProfile();
+  const { profileData, updateProfile, isLoading } = useProfile();
 
   const handleSaveChanges = () => {
     // Handle save changes logic
@@ -28,10 +28,11 @@ const ProfileScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <ProfileHeader profileData={profileData} />
+        <ProfileHeader profileData={profileData} isLoading={isLoading} />
         <ProfileForm 
           profileData={profileData} 
-          onUpdateProfile={updateProfile} 
+          onUpdateProfile={updateProfile}
+          isLoading={isLoading}
         />
         <AppSettings />
         <ActionButtons 

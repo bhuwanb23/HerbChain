@@ -9,6 +9,8 @@ import {
 const ProfilePage = ({ navigation }) => {
   const {
     currentTab,
+    profileData,
+    isLoading,
     handleTabChange,
     handleEditProfile,
     handleChangePassword,
@@ -28,6 +30,8 @@ const ProfilePage = ({ navigation }) => {
       case 'profile':
         return (
           <ProfileSettings 
+            profileData={profileData}
+            isLoading={isLoading}
             onEditProfile={handleEditProfile}
             onChangePassword={handleChangePassword}
             onLanguageChange={handleLanguageChange}
@@ -48,6 +52,8 @@ const ProfilePage = ({ navigation }) => {
       default:
         return (
           <ProfileSettings 
+            profileData={profileData}
+            isLoading={isLoading}
             onEditProfile={handleEditProfile}
             onChangePassword={handleChangePassword}
             onLanguageChange={handleLanguageChange}

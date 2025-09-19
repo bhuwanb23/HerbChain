@@ -15,6 +15,7 @@ const TransporterProfileScreen = ({ navigation }) => {
     vehicle,
     settings,
     documents,
+    isLoading,
     toggleDarkMode,
     onUploadDocument,
   } = useProfile();
@@ -31,10 +32,11 @@ const TransporterProfileScreen = ({ navigation }) => {
     <View style={styles.container}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <ProfileInfo
-          name={profile.name}
-          phone={profile.phone}
-          avatar={profile.avatar}
-          vehicleName={profile.vehicleName}
+          name={profile?.name}
+          phone={profile?.phone}
+          avatar={profile?.avatar}
+          vehicleName={vehicle?.name}
+          isLoading={isLoading}
           onChangePhoto={() => Alert.alert('Change Photo', 'Photo picker coming soon')}
         />
 
