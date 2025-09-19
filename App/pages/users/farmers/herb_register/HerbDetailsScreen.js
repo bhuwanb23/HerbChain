@@ -35,12 +35,12 @@ const HerbDetailsScreen = ({ batch, onBack }) => {
         )}
 
         {/* QR Code */}
-        {batch.qr_code && (
+        {(batch.qr_code || batch.active_qr) && (
           <View style={styles.card}>
             <Text style={[styles.label, { marginBottom: 8 }]}>QR Code</Text>
             <View style={styles.qrContainer}>
               <Image 
-                source={{ uri: batch.qr_code }} 
+                source={{ uri: batch.qr_code || batch.active_qr }} 
                 style={styles.qrCode}
                 resizeMode="contain"
               />
