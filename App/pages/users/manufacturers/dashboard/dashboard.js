@@ -1,13 +1,34 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import DashboardHeader from './components/DashboardHeader';
 import WelcomeBanner from './components/WelcomeBanner';
 import DashboardCard from './components/DashboardCard';
 import NotificationsSection from './components/NotificationsSection';
+import QuickStats from './components/QuickStats';
+import RecentCertifications from './components/RecentCertifications';
+import MonthlyProductionChart from './components/MonthlyProductionChart';
+import QuickActions from './components/QuickActions';
 import useDashboardData from './hooks/useDashboardData';
-import { MANUFACTURER_NAME } from './constants/dashboardConstants';
+import {
+  MANUFACTURER_NAME, 
+  COMPANY_NAME,
+  CURRENT_DATE,
+  CURRENT_WEATHER,
+  WEATHER_STATUS,
+  AVATAR_URL,
+  NOTIFICATIONS_DATA // Keep this as a default for NotificationsSection
+} from './constants/dashboardConstants';
 
-const DashboardPage = () => {
-  const { loading, error, dashboardCards, notifications } = useDashboardData();
+const DashboardPage = ({ navigation }) => {
+  const { 
+    loading, 
+    error, 
+    dashboardCards, 
+    notifications, 
+    recentCertifications, 
+    monthlyProduction, 
+    quickActions 
+  } = useDashboardData();
 
   if (loading) {
     return (
@@ -27,34 +48,47 @@ const DashboardPage = () => {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
-      <WelcomeBanner manufacturerName={MANUFACTURER_NAME} />
+    <View style={styles.fullContainer}> 
+      <DashboardHeader 
+        navigation={navigation}
+        manufacturerName={MANUFACTURER_NAME}
+        avatarUrl={AVATAR_URL}
+        notificationsCount={notifications?.length || 0} // Use optional chaining and default to 0
+      />
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContentContainer} showsVerticalScrollIndicator={false}>
+        <WelcomeBanner 
+          manufacturerName={MANUFACTURER_NAME}
+          companyName={COMPANY_NAME}
+          currentDate={CURRENT_DATE}
+          currentWeather={CURRENT_WEATHER}
+          weatherStatus={WEATHER_STATUS}
+        />
 
-      <View style={styles.cardsContainer}>
-        {dashboardCards.map((card) => (
-          <DashboardCard
-            key={card.id}
-            title={card.title}
-            value={card.value}
-            iconName={card.iconName}
-            color={card.color}
-          />
-        ))}
-      </View>
+        <QuickStats dashboardCards={dashboardCards} />
 
-      <NotificationsSection notifications={notifications} />
-    </ScrollView>
+        <NotificationsSection notifications={notifications} />
+
+        <RecentCertifications certificationData={recentCertifications} />
+
+        <MonthlyProductionChart monthlyProductionData={monthlyProduction} />
+
+        <QuickActions quickActionsData={quickActions} navigation={navigation} />
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  fullContainer: {
     flex: 1,
     backgroundColor: '#F0FDF4',
   },
-  contentContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 25,
+  scrollView: {
+    flex: 1,
+  },
+  scrollContentContainer: {
+    paddingHorizontal: 10, // Adjust padding as needed
+    paddingVertical: 10,
     alignItems: 'center',
   },
   loadingContainer: {
@@ -79,14 +113,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#ef4444',
     textAlign: 'center',
-  },
-  cardsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between', // Changed from space-around to space-between
-    width: '100%',
-    marginBottom: 25,
-    rowGap: 16, // Add vertical gap between rows of cards
   },
 });
 
