@@ -8,7 +8,7 @@ import FarmerMainPage from '../pages/users/farmers/FarmerMainPage';
 import TransportersPage from '../pages/users/transporters/transporters';
 import LabsPage from '../pages/users/labs/labs';
 import AdminDashboard from '../pages/users/admins/dashboard/dashboard';
-import { ConsumerMainPage } from '../pages/users/consumers';
+import { ConsumerMainPage, QRScanScreen, HerbDetailsScreen } from '../pages/users/consumers';
 import ManufacturerMainPage from '../pages/users/manufacturers/ManufacturerMainPage';
 import QRScannerScreen from '../pages/users/manufacturers/raw_herb_management/QRScannerScreen';
 import QRScannerScreenLab from '../pages/users/labs/batches/components/QRScannerScreenLab'; // New import
@@ -76,6 +76,22 @@ const AppNavigator = () => {
           component={ConsumerMainPage}
           options={{
             title: 'Consumer Dashboard',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="QRScanScreen" 
+          component={QRScanScreen}
+          options={{
+            title: 'Scan QR Code',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="HerbDetailsScreen" 
+          component={HerbDetailsScreen}
+          options={{
+            title: 'Herb Details',
             headerShown: false,
           }}
         />

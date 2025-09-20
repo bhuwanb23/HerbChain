@@ -1,118 +1,140 @@
-# Consumer Module
+# Consumer QR Scan Feature
 
-This module provides the consumer interface for the HerbChain application, allowing consumers to track and verify the authenticity of herbal products.
+## Overview
+This module provides QR code scanning functionality for consumers to view detailed herb traceability information. Consumers can scan QR codes on herb products to access comprehensive information about the herb's journey from farm to consumer.
 
 ## Features
-
-- **Product Traceability**: Complete journey tracking from farm to consumer
-- **Farmer Spotlight**: Information about the farmer who grew the herbs
-- **Quality Certifications**: Display of organic and GMP certifications
-- **Interactive Timeline**: Visual representation of the herb's journey
-- **Share Functionality**: Ability to share traceability information
+- **QR Code Scanning**: Camera-based QR code scanning with permission handling
+- **Manual Batch ID Entry**: Fallback option to enter batch ID manually
+- **Comprehensive Herb Details**: Display complete herb information including:
+  - Basic herb information (species, weight, harvest date, location)
+  - Current owner information
+  - Complete ownership history timeline
+  - Quality status and certifications
+  - Verification badges
+- **Share Functionality**: Share herb traceability information
+- **Error Handling**: Comprehensive error handling for various scenarios
 
 ## File Structure
-
 ```
 consumers/
-├── components/           # Reusable UI components
-│   ├── Header.js        # Page header with navigation
-│   ├── JourneyMap.js    # Visual journey representation
-│   ├── FarmerSpotlight.js # Farmer information display
-│   ├── Timeline.js      # Journey timeline component
-│   ├── Certifications.js # Certification badges
-│   ├── BottomNavbar.js  # Bottom navigation
-│   └── index.js         # Component exports
-├── constants/           # Constants and configuration
-│   └── index.js         # Data constants and styles
-├── hooks/              # Custom React hooks
-│   └── index.js        # useHerbTraceability, useConsumerActions
-├── traceability/       # Traceability screen
-│   ├── TraceabilityScreen.js # Main traceability interface
-│   └── index.js        # Screen exports
-├── dashboard/          # Consumer dashboard
-│   └── dashboard.js    # Main dashboard screen
-├── ConsumerMainPage.js # Main consumer page component
-├── index.js           # Module exports
-└── README.md          # This documentation
+├── components/
+│   ├── QRScanner.js              # Reusable QR scanner component
+│   └── HerbDetailsDisplay.js     # Herb details display component
+├── hooks/
+│   └── useConsumerAPI.js         # API hook for consumer functionality
+├── scan/
+│   └── QRScanScreen.js           # Main QR scanning screen
+├── details/
+│   └── HerbDetailsScreen.js      # Herb details display screen
+├── services/
+│   └── consumerAPI.js            # API service for consumer operations
+├── ConsumerMainPage.js           # Main consumer page with navigation
+└── index.js                      # Module exports
 ```
 
 ## Components
 
-### Header
-- Displays product name, batch ID, and verification status
-- Includes back and share buttons
-- Shows verification badge
+### QRScanner
+- **Purpose**: Reusable QR code scanner component
+- **Features**: 
+  - Camera permission handling
+  - QR code detection with visual overlay
+  - Error handling and retry functionality
+  - Customizable scan area
 
-### JourneyMap
-- Visual representation of the farm-to-consumer journey
-- Interactive map with start/end points
-- Route visualization
+### HerbDetailsDisplay
+- **Purpose**: Display comprehensive herb information
+- **Features**:
+  - Herb batch information
+  - Ownership history timeline
+  - Quality certifications
+  - Current owner details
+  - Verification badges
 
-### FarmerSpotlight
-- Farmer profile information
-- Avatar, name, and description
-- Farming experience details
+### QRScanScreen
+- **Purpose**: Main screen for QR code scanning
+- **Features**:
+  - QR scanner integration
+  - Manual batch ID entry
+  - Scan instructions and help text
+  - Navigation to results
 
-### Timeline
-- Step-by-step journey visualization
-- Icons for each stage (harvest, testing, packaging)
-- Detailed descriptions and dates
+### HerbDetailsScreen
+- **Purpose**: Display scanned herb information
+- **Features**:
+  - Complete herb traceability
+  - Share functionality
+  - Navigation back to scanner
 
-### Certifications
-- Display of quality certifications
-- Organic and GMP compliance badges
-- Visual certification indicators
+## API Integration
 
-## Hooks
+### useConsumerAPI Hook
+- **fetchHerbDetails(batchId)**: Fetch herb details by batch ID
+- **validateBatchId(batchId)**: Validate batch ID format
+- **parseQRData(qrData)**: Parse QR code data
+- **showError(message)**: Display error alerts
+- **showSuccess(message)**: Display success alerts
 
-### useHerbTraceability
-- Fetches herb traceability data
-- Manages loading and error states
-- Handles API calls for batch information
+### consumerAPI Service
+- **fetchHerbDetails(batchId)**: Fetch herb details from server
+- **getOwnershipHistory(batchId)**: Get ownership transfer history
+- **getCurrentQR(batchId)**: Get current QR code information
+- **checkBatchExists(batchId)**: Check if batch exists
+- **formatHerbData(herbData)**: Format herb data for display
 
-### useConsumerActions
-- Manages sharing functionality
-- Handles report viewing
-- Navigation actions
+## Navigation Flow
+```
+ConsumerMainPage → Scan Tab → QRScanScreen → HerbDetailsScreen
+```
 
 ## Usage
 
-```javascript
-import { ConsumerMainPage, TraceabilityScreen } from './pages/users/consumers';
+### Basic QR Scanning
+1. User navigates to Consumer Dashboard
+2. Taps "Scan" tab in bottom navigation
+3. Camera opens with QR scanner
+4. User scans QR code on herb product
+5. System fetches herb details from server
+6. User views comprehensive herb information
 
-// In your navigation
-<Stack.Screen 
-  name="ConsumerDashboard" 
-  component={ConsumerMainPage}
-  options={{ title: 'Consumer Dashboard' }}
-/>
+### Manual Batch ID Entry
+1. User taps "Enter Batch ID Manually" option
+2. User enters batch ID in text field
+3. User taps "Search" button
+4. System fetches herb details from server
+5. User views comprehensive herb information
 
-// Direct traceability screen
-<Stack.Screen 
-  name="Traceability" 
-  component={TraceabilityScreen}
-  options={{ title: 'Product Traceability' }}
-/>
-```
+## API Endpoints Used
+- `GET /api/v1/herbs/{batch_id}` - Fetch herb details
+- `GET /api/v1/herbs/{batch_id}/ownership` - Get ownership history
+- `GET /api/v1/herbs/{batch_id}/qr` - Get current QR code
 
-## Data Flow
+## Error Handling
+- **Invalid QR Code**: Shows error message for invalid QR codes
+- **Network Errors**: Handles server connectivity issues
+- **Camera Permissions**: Requests and handles camera permissions
+- **Batch Not Found**: Shows appropriate error for non-existent batches
+- **Data Parsing**: Handles malformed QR code data
 
-1. **Batch ID Input**: User scans QR code or enters batch ID
-2. **Data Fetching**: `useHerbTraceability` hook fetches data
-3. **Component Rendering**: Components display the traceability information
-4. **User Interactions**: Share, view report, or navigate actions
+## Dependencies
+- `expo-camera` - Camera functionality
+- `expo-barcode-scanner` - QR code scanning
+- `@expo/vector-icons` - Icons
+- `react-native` - Core React Native components
 
-## Styling
-
-The module uses a consistent color scheme:
-- **Sage Green**: Primary brand color (#87A96B)
-- **Warm Beige**: Background accents (#F5F1E8)
-- **Earth Brown**: Text accents (#8B7355)
+## Testing
+- Test with valid herb QR codes
+- Test with invalid QR codes
+- Test camera permission scenarios
+- Test network error scenarios
+- Test manual batch ID entry
+- Test data display accuracy
 
 ## Future Enhancements
-
-- QR code scanning integration
-- Offline data caching
-- Push notifications for updates
-- Social sharing features
-- Review and rating system
+- Offline QR code caching
+- Batch history for consumers
+- Push notifications for herb updates
+- Social sharing with custom messages
+- QR code generation for sharing
+- Advanced filtering and search

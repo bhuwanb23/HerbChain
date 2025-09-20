@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 // Import consumer screens
 import TraceabilityScreenSimple from './traceability/TraceabilityScreenSimple';
+import QRScanScreen from './scan/QRScanScreen';
 
 const ConsumerMainPage = ({ navigation }) => {
   const [currentPage, setCurrentPage] = useState('home');
@@ -21,6 +22,8 @@ const ConsumerMainPage = ({ navigation }) => {
         return 'Consumer Dashboard';
       case 'traceability':
         return 'Product Traceability';
+      case 'scan':
+        return 'Scan QR Code';
       default:
         return 'Consumer Dashboard';
     }
@@ -41,6 +44,12 @@ const ConsumerMainPage = ({ navigation }) => {
           <TraceabilityScreenSimple 
             navigation={navigation} 
             route={{ params: { batchId: 'HERB-ASH-001' } }}
+          />
+        );
+      case 'scan':
+        return (
+          <QRScanScreen 
+            navigation={navigation}
           />
         );
       case 'history':
@@ -97,6 +106,18 @@ const ConsumerMainPage = ({ navigation }) => {
             color={currentPage === 'traceability' ? '#87A96B' : '#666'} 
           />
           <Text style={[styles.navLabel, currentPage === 'traceability' && styles.activeNavLabel]}>Trace</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.navItem, currentPage === 'scan' && styles.activeNavItem]}
+          onPress={() => handleConsumerNavigation('scan')}
+        >
+          <Ionicons 
+            name={currentPage === 'scan' ? 'qr-code' : 'qr-code-outline'} 
+            size={24} 
+            color={currentPage === 'scan' ? '#87A96B' : '#666'} 
+          />
+          <Text style={[styles.navLabel, currentPage === 'scan' && styles.activeNavLabel]}>Scan</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
