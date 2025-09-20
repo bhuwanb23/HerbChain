@@ -7,13 +7,12 @@ const AvailableHerbItem = ({ herb, onOrderHerb, getStatusStyle, onPress }) => {
   const latestLabReport = herb.labReports && herb.labReports.length > 0 ? herb.labReports[0] : null;
   const hasCertification = latestLabReport?.certification === true;
 
+  console.log(`Herb ${herb.batch_id}: status=${herb.status}, hasCertification=${hasCertification}, latestLabReport=${JSON.stringify(latestLabReport)}`);
+
   return (
     <TouchableOpacity style={styles.cardContainer} onPress={() => onPress(herb)}>
       <View style={styles.header}>
         <Text style={styles.herbName}>{herb.species_name || 'N/A'}</Text>
-        <View style={[styles.statusBadge, { backgroundColor: statusStyle.backgroundColor }]}>
-          <Text style={[styles.statusText, { color: statusStyle.color }]}>{herb.status}</Text>
-        </View>
       </View>
       <Text style={styles.batchId}>Batch ID: {herb.batch_id}</Text>
       <Text style={styles.farmerInfo}>Farmer: {herb.farmer_id}</Text>
@@ -64,9 +63,8 @@ const AvailableHerbItem = ({ herb, onOrderHerb, getStatusStyle, onPress }) => {
       )}
 
       <TouchableOpacity 
-        style={[styles.orderButton, herb.status !== 'approved' && styles.disabledButton]}
+        style={styles.orderButton}
         onPress={() => onOrderHerb(herb.id)}
-        disabled={herb.status !== 'approved'}
       >
         <Text style={styles.orderButtonText}>Order Herb</Text>
       </TouchableOpacity>

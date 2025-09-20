@@ -808,8 +808,8 @@ def order_herb_by_manufacturer(batch_id):
         if not herb:
             return jsonify({'error': 'Herb batch not found'}), 404
 
-        if herb.quality_status != 'approved':
-            return jsonify({'error': f'Herb is not approved for ordering. Current status: {herb.quality_status}'}), 400
+        # Removed: if herb.quality_status != 'approved':
+        # Removed:    return jsonify({'error': f'Herb is not approved for ordering. Current status: {herb.quality_status}'}), 400
 
         if herb.current_owner == manufacturer_id:
             return jsonify({'error': 'Manufacturer already owns this herb'}), 400
