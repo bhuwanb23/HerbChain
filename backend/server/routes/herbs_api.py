@@ -730,6 +730,27 @@ def create_lab_report(batch_id):
             herb.quality_status = new_status
             herb.updated_at = datetime.utcnow()
 
+        # Log certification/rejection to blockchain via OwnershipTransfer
+        transfer_reason = f"Lab Testing {new_status.capitalize()}"
+        transfer_id = f"TRANSFER-{uuid.uuid4().hex[:8].upper()}"
+        
+        # Deactivate any active QR code for this batch before creating a new ownership transfer for reporting.
+        active_transfer = OwnershipTransfer.get_active_transfer(batch_id)
+        if active_transfer:
+            active_transfer.deactivate_qr()
+
+        ownership_transfer = OwnershipTransfer.create_transfer(
+            transfer_id=transfer_id,
+            batch_id=batch_id,
+            from_owner=lab_id,
+            to_owner=lab_id, # Lab is still the owner, just documenting the event
+            qr_code=herb.active_qr, # Reuse the existing active QR for this logging event
+            transfer_reason=transfer_reason,
+            location=lab.location, # Assuming lab has a location field
+            notes=f"Herb batch {batch_id} marked as {new_status} by lab {lab_id}. Report: {report_id}"
+        )
+        db.session.add(ownership_transfer)
+
         db.session.commit()
         return jsonify({'success': True, 'report': report.to_dict(), 'herb': herb.to_dict()})
     except Exception as e:

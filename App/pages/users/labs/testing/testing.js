@@ -4,6 +4,7 @@ import { useTesting } from './hooks';
 import { TestingResultsEntry, OfflineSync } from './components';
 import HerbChipList from './components/HerbChipList';
 import UploadedResults from './components/UploadedResults';
+import LabReportView from './components/LabReportView';
 
 const TestingPage = ({ navigation }) => {
   const {
@@ -26,74 +27,63 @@ const TestingPage = ({ navigation }) => {
     handleRetrySync,
     handleDeleteOfflineEntry,
     handleSyncAll,
+    herbs_not_uploaded,
+    herbs_with_reports,
+    currentMode,
+    selectedReport,
+    handleViewReport,
+    resetSelection, // New function to reset selected batch and mode
   } = useTesting();
 
-  const renderCurrentTab = () => null;
+  const renderCurrentView = () => {
+    if (currentMode === 'upload' && selectedBatch) {
+      return (
+        <TestingResultsEntry 
+          batchId={selectedBatch}
+          isOffline={isOffline}
+          testResults={testResults}
+          uploadedFiles={uploadedFiles}
+          onToggleOffline={toggleOfflineMode}
+          onTestResultChange={handleTestResultChange}
+          onFileUpload={handleFileUpload}
+          onFileRemove={handleFileRemove}
+          onSaveOffline={handleSaveOffline}
+          onSubmitResults={handleSubmitResults}
+        />
+      );
+    } else if (currentMode === 'view' && selectedReport) {
+      return <LabReportView report={selectedReport} onBack={resetSelection} />;
+    } else {
+      return (
+        <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
+          <HerbChipList 
+            title="Herbs with No Test Uploaded" 
+            items={herbs_not_uploaded}
+            onPress={(h) => handleBatchSelect(h.batch_id, 'upload')}
+          />
+          <HerbChipList 
+            title="Tested/Uploaded Herbs" 
+            items={herbs_with_reports}
+            onPress={(h) => handleBatchSelect(h.batch_id, 'view')}
+          />
+          {/* Optionally add the OfflineSync component here if needed for general lab overview */}
+          {isOffline && <OfflineSync 
+            offlineData={offlineData}
+            onSync={handleSyncOfflineData}
+            onRetry={handleRetrySync}
+            onDelete={handleDeleteOfflineEntry}
+            onSyncAll={handleSyncAll}
+          />}
+        </ScrollView>
+      );
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <HerbChipList title="Not Uploaded" items={archived.filter(h => h.quality_status === 'testing')} onPress={(h) => { handleBatchSelect(h.batch_id); handleTabChange('results'); }} />
-      <HerbChipList title="Uploaded" items={archived.filter(h => h.quality_status !== 'testing')} onPress={(h) => { handleBatchSelect(h.batch_id); handleTabChange('uploaded'); }} />
-      <View style={styles.tabContainer}>
-        <View style={styles.tabButtons}>
-          <View
-            style={[
-              styles.tabButton,
-              currentTab === 'results' && styles.activeTabButton
-            ]}
-          >
-            <Text
-              style={[
-                styles.tabButtonText,
-                currentTab === 'results' && styles.activeTabButtonText
-              ]}
-              onPress={() => handleTabChange('results')}
-            >
-              🧪 Results Entry
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.tabButton,
-              currentTab === 'sync' && styles.activeTabButton
-            ]}
-          >
-            <Text
-              style={[
-                styles.tabButtonText,
-                currentTab === 'sync' && styles.activeTabButtonText
-              ]}
-              onPress={() => handleTabChange('sync')}
-            >
-              📱 Offline Sync
-            </Text>
-          </View>
-        </View>
-      </View>
-      
-      <ScrollView 
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {currentTab === 'results' && (
-          <TestingResultsEntry 
-            batchId={selectedBatch}
-            isOffline={isOffline}
-            testResults={testResults}
-            uploadedFiles={uploadedFiles}
-            onToggleOffline={toggleOfflineMode}
-            onTestResultChange={handleTestResultChange}
-            onFileUpload={handleFileUpload}
-            onFileRemove={handleFileRemove}
-            onSaveOffline={handleSaveOffline}
-            onSubmitResults={handleSubmitResults}
-          />
-        )}
-        {currentTab === 'uploaded' && (
-          <UploadedResults reports={(archived.find(h => h.batch_id === selectedBatch) && []) || []} />
-        )}
-      </ScrollView>
+      {/* Simplified header or title if needed */}
+      <Text style={styles.pageTitle}>Lab Testing Dashboard</Text>
+      {renderCurrentView()}
     </View>
   );
 };
@@ -103,6 +93,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#111827',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  // Remove old tab-related styles if no longer needed
   tabContainer: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
@@ -142,31 +149,6 @@ const styles = StyleSheet.create({
   activeTabButtonText: {
     color: '#8B5CF6',
     fontWeight: '600',
-  },
-  scrollContainer: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 20,
-  },
-  badge: {
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  badgeActive: {
-    backgroundColor: '#111827',
-    borderColor: '#111827',
-  },
-  badgeText: {
-    color: '#374151',
-    fontWeight: '700',
-  },
-  badgeTextActive: {
-    color: '#FFFFFF',
   },
 });
 

@@ -6,7 +6,8 @@ import {
   ScrollView, 
   Pressable, 
   TextInput,
-  TouchableOpacity 
+  TouchableOpacity,
+  Switch
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { TEST_TYPES, UPLOAD_TYPES, MOCK_BATCHES, COLORS } from '../constants';
@@ -50,6 +51,8 @@ const BatchHeaderCard = ({ batchId, onToggleOffline, isOffline }) => {
 };
 
 const TestResultCard = ({ testType, value, onChange }) => {
+  const isBoolean = testType.type === 'boolean';
+
   return (
     <View style={styles.testResultCard}>
       <View style={styles.testResultCardHeader}>
@@ -61,13 +64,23 @@ const TestResultCard = ({ testType, value, onChange }) => {
           <Text style={styles.testResultSubtitle}>{testType.subtitle}</Text>
         </View>
       </View>
-      <TextInput 
-        style={styles.textInput}
-        placeholder={testType.placeholder}
-        keyboardType="numeric"
-        value={value}
-        onChangeText={(text) => onChange(testType.id, text)}
-      />
+      {isBoolean ? (
+        <View style={styles.switchContainer}>
+          <Text style={styles.switchText}>{testType.title}</Text>
+          <Switch
+            onValueChange={(newValue) => onChange(testType.id, newValue)}
+            value={!!value}
+          />
+        </View>
+      ) : (
+        <TextInput 
+          style={styles.textInput}
+          placeholder={testType.placeholder}
+          keyboardType={testType.unit === '%' || testType.unit === 'mg/kg' || testType.step ? 'numeric' : 'default'}
+          value={value}
+          onChangeText={(text) => onChange(testType.id, text)}
+        />
+      )}
     </View>
   );
 };
@@ -166,11 +179,21 @@ const TestingResultsEntry = ({
         <View style={styles.sectionPadding}>
           <Text style={styles.sectionTitle}>Enter Test Results</Text>
           
-          {TEST_TYPES.map((testType) => (
+          {TEST_TYPES.filter(type => type.type !== 'boolean').map((testType) => (
             <TestResultCard
               key={testType.id}
               testType={testType}
               value={testResults[testType.id] || ''}
+              onChange={onTestResultChange}
+            />
+          ))}
+
+          {/* Boolean/Toggle Fields */}
+          {TEST_TYPES.filter(type => type.type === 'boolean').map((testType) => (
+            <TestResultCard
+              key={testType.id}
+              testType={testType}
+              value={testResults[testType.id]}
               onChange={onTestResultChange}
             />
           ))}
@@ -183,10 +206,35 @@ const TestingResultsEntry = ({
               placeholder="Add notes or observations..."
               multiline
               numberOfLines={4}
-              value={testResults.observations || ''}
-              onChangeText={(text) => onTestResultChange('observations', text)}
+              value={testResults.results_summary || ''}
+              onChangeText={(text) => onTestResultChange('results_summary', text)}
             />
           </View>
+          {/* Notes */}
+          <View style={styles.testResultCard}>
+            <Text style={styles.testResultTitle}>Notes</Text>
+            <TextInput 
+              style={styles.textArea}
+              placeholder="Add additional notes..."
+              multiline
+              numberOfLines={4}
+              value={testResults.notes || ''}
+              onChangeText={(text) => onTestResultChange('notes', text)}
+            />
+          </View>
+          {/* Recommendations */}
+          <View style={styles.testResultCard}>
+            <Text style={styles.testResultTitle}>Recommendations</Text>
+            <TextInput 
+              style={styles.textArea}
+              placeholder="Add recommendations..."
+              multiline
+              numberOfLines={4}
+              value={testResults.recommendations || ''}
+              onChangeText={(text) => onTestResultChange('recommendations', text)}
+            />
+          </View>
+
         </View>
 
         {/* Upload Evidence */}
@@ -352,6 +400,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     height: 80,
     textAlignVertical: 'top',
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    paddingVertical: 8,
+  },
+  switchText: {
+    fontSize: 16,
+    color: '#111827',
   },
   uploadCard: {
     backgroundColor: '#FFFFFF',
