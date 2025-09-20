@@ -3,8 +3,26 @@ import { Link } from 'react-router-dom'
 
 function NavGroup({ title, items }) {
   const [open, setOpen] = useState(false)
+  const [timeoutId, setTimeoutId] = useState(null);
+
+  const handleMouseEnter = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      setTimeoutId(null);
+    }
+    setOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    const id = setTimeout(() => {
+      setOpen(false);
+      setTimeoutId(null);
+    }, 300); // 1 seconds delay
+    setTimeoutId(id);
+  };
+
   return (
-    <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+    <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
       <button className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-100 hover:text-white">
         {title}
         <svg className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : 'rotate-0'}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
