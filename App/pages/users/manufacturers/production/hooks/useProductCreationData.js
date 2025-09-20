@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { HERB_OPTIONS, PROCESSING_METHODS, TRACEABILITY_SUMMARY_DATA, QR_CODE_IMAGE_URL, PRODUCT_ID_MOCK, PRODUCTION_STEPS } from '../constants/productionConstants';
+import { HERB_OPTIONS, PROCESSING_METHODS, TRACEABILITY_SUMMARY_DATA, QR_CODE_IMAGE_URL, PRODUCT_ID_MOCK, PRODUCTION_STEPS, PRODUCT_LIST_MOCK, PRODUCT_DETAILS_MOCK } from '../constants/productionConstants';
 
 const useProductCreationData = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -8,6 +8,30 @@ const useProductCreationData = () => {
   const [processingMethod, setProcessingMethod] = useState(PROCESSING_METHODS[0]);
   const [processingNotes, setProcessingNotes] = useState('');
   const [linkedBatches, setLinkedBatches] = useState([]);
+  const [currentView, setCurrentView] = useState('list'); // 'list', 'create', 'details'
+  const [selectedProductForDetails, setSelectedProductForDetails] = useState(null);
+
+  const startNewProductCreation = () => {
+    setCurrentView('create');
+    setCurrentStep(1);
+    setSelectedHerbs([]);
+    setHerbProportions({});
+    setProcessingMethod(PROCESSING_METHODS[0]);
+    setProcessingNotes('');
+    setLinkedBatches([]);
+  };
+
+  const viewProductDetails = (productId) => {
+    setSelectedProductForDetails(PRODUCT_DETAILS_MOCK[productId]);
+    setCurrentView('details');
+  };
+
+  const backToProductList = () => {
+    setCurrentView('list');
+    setSelectedProductForDetails(null);
+    // Also reset creation form if needed, though handleCreateNewProduct does that.
+    // handleCreateNewProduct(); // Can be called here if navigating from creation back to list requires a full reset
+  };
 
   const handleNextStep = () => {
     if (currentStep === 1) {
@@ -61,6 +85,7 @@ const useProductCreationData = () => {
     setProcessingMethod(PROCESSING_METHODS[0]);
     setProcessingNotes('');
     setLinkedBatches([]);
+    setCurrentView('list'); // Go back to product list after creating a new product
   };
 
   // Mock linking batches based on selected herbs
@@ -90,6 +115,12 @@ const useProductCreationData = () => {
     productId: PRODUCT_ID_MOCK,
     handleCreateNewProduct,
     productionSteps: PRODUCTION_STEPS,
+    currentView,
+    startNewProductCreation,
+    viewProductDetails,
+    backToProductList,
+    selectedProductForDetails,
+    productList: PRODUCT_LIST_MOCK, // Provide the mock product list
   };
 };
 

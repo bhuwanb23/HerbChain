@@ -2,10 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const DashboardCard = ({ title, value, iconName, color = '#22c55e' }) => {
+const DashboardCard = ({ title, value, iconName, color, iconBgColor }) => {
   return (
-    <View style={[styles.cardContainer, { borderColor: color }]}>
-      <View style={[styles.iconWrapper, { backgroundColor: color + '1A' }]}>
+    <View style={styles.cardContainer}>
+      <View style={[styles.iconWrapper, { backgroundColor: iconBgColor }]}>
         <Icon name={iconName} size={24} color={color} />
       </View>
       <Text style={styles.title}>{title}</Text>
@@ -18,19 +18,18 @@ const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#ffffff',
     borderRadius: 15,
-    padding: 18,
+    padding: 20, // Increased padding slightly
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
-    margin: 8,
-    borderWidth: 0, // Remove explicit border
+    // Removed: margin: 8,
+    borderWidth: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
-    minWidth: 160,
-    maxWidth: '48%', // Allow two cards per row with some space
+    // maxWidth: '48%' is handled by FlatList's columnWrapperStyle
   },
   iconWrapper: {
     width: 50,

@@ -1,66 +1,96 @@
 import React from 'react';
-import { View, StyleSheet, FlatList, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, StyleSheet } from 'react-native';
+// Removed: import { SafeAreaView } from 'react-native-safe-area-context';
 
-import RawHerbHeader from './components/RawHerbHeader';
-import FilterBar from './components/FilterBar';
-import BatchCard from './components/BatchCard';
-import BatchDetailsModal from './components/BatchDetailsModal';
-import QRScannerModal from './components/QRScannerModal';
+// Removed: import RawHerbHeader from './components/RawHerbHeader';
+// Removed: import FilterBar from './components/FilterBar';
+// Removed: import BatchCard from './components/BatchCard';
+// Removed: import BatchDetailsModal from './components/BatchDetailsModal';
+// Removed: import QRScannerModal from './components/QRScannerModal';
+
+import AvailableHerbList from './components/AvailableHerbList';
+import OrderedHerbList from './components/OrderedHerbList';
+import ScannedHerbDetails from './components/ScannedHerbDetails';
+import RawHerbSectionTabs from './components/RawHerbSectionTabs'; // New import
+import HerbDetailsModal from './components/HerbDetailsModal'; // New Import
+
 import useRawHerbData from './hooks/useRawHerbData';
 
 const RawHerbManagementPage = () => {
   const {
-    selectedFilter,
-    setSelectedFilter,
-    filteredBatches,
-    isBatchDetailsModalVisible,
-    openBatchDetails,
-    closeBatchDetails,
-    isQRScannerModalVisible,
-    openQRScanner,
-    closeQRScanner,
-    selectedBatch,
+    activeSection,
+    setActiveSection,
+    availableHerbs,
+    orderedHerbs,
+    scannedHerbDetails,
+    handleOrderHerb,
+    handleScanQRCode, // Get handleScanQRCode from hook
+    clearScannedDetails,
+    getStatusStyle,
+    isDetailsModalVisible,
+    selectedHerbForDetails,
+    openDetailsModal,
+    closeDetailsModal,
   } = useRawHerbData();
 
+  const renderContent = () => {
+    switch (activeSection) {
+      case 'available_herbs':
+        return (
+          <AvailableHerbList
+            availableHerbs={availableHerbs}
+            onOrderHerb={handleOrderHerb}
+            getStatusStyle={getStatusStyle}
+            onItemPress={openDetailsModal} // Pass openDetailsModal
+          />
+        );
+      case 'ordered_herbs':
+        return (
+          <OrderedHerbList
+            orderedHerbs={orderedHerbs}
+            getStatusStyle={getStatusStyle}
+            onScanQRCode={handleScanQRCode} // Pass handleScanQRCode
+            onItemPress={openDetailsModal} // Pass openDetailsModal
+          />
+        );
+      case 'scanned_details':
+        return (
+          <ScannedHerbDetails
+            scannedHerb={scannedHerbDetails}
+            getStatusStyle={getStatusStyle}
+            onClearScannedDetails={clearScannedDetails}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <RawHerbHeader onScanQR={openQRScanner} />
-      <FilterBar selectedFilter={selectedFilter} onSelectFilter={setSelectedFilter} />
-      <FlatList
-        data={filteredBatches}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <BatchCard batch={item} onPress={openBatchDetails} />}
-        contentContainerStyle={styles.batchListContent}
-        style={styles.batchList}
-      />
+    <View style={styles.container}>
+      <RawHerbSectionTabs activeSection={activeSection} onSelectSection={setActiveSection} />
+      {/* Replaced ScrollView with a View */}
+      <View style={styles.contentContainerWrapper}>
+        {renderContent()}
+      </View>
 
-      <BatchDetailsModal
-        isVisible={isBatchDetailsModalVisible}
-        onClose={closeBatchDetails}
-        batch={selectedBatch}
+      <HerbDetailsModal
+        isVisible={isDetailsModalVisible}
+        onClose={closeDetailsModal}
+        herb={selectedHerbForDetails}
+        getStatusStyle={getStatusStyle}
       />
-
-      <QRScannerModal
-        isVisible={isQRScannerModalVisible}
-        onClose={closeQRScanner}
-      />
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: '#f9fafb', // bg-gray-50
   },
-  batchList: {
-    flex: 1,
-  },
-  batchListContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    rowGap: 12, // space-y-3
+  contentContainerWrapper: {
+    flex: 1, // Ensure it takes up available space
   },
 });
 

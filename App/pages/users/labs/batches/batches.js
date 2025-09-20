@@ -3,6 +3,10 @@ import { View, StyleSheet, TouchableOpacity, Text, Modal, ScrollView, Image } fr
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLabBatches } from './hooks/useLabBatches';
 import { LabBatchList } from './components';
+import { useEffect } from 'react';
+import { Alert } from 'react-native';
+import { useRoute } from '@react-navigation/native';
+import { API_BASE_URL } from '../../../../constants/api';
 
 const BatchesPage = ({ navigation }) => {
   const [tab, setTab] = useState('all'); // 'all' | 'accepted' | 'archived'
@@ -14,6 +18,37 @@ const BatchesPage = ({ navigation }) => {
     accepted: Array.isArray(accepted) ? accepted.length : 0,
     archived: Array.isArray(archived) ? archived.length : 0,
   };
+
+  const route = useRoute();
+  const { scannedData, batchId } = route.params || {};
+
+  useEffect(() => {
+    const handleDelivery = async () => {
+      if (scannedData && batchId) {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/v1/herbs/${batchId}/deliver`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              lab_id: 'lab_001',
+              scanned_qr_text: scannedData,
+              delivery_location: 'Lab Facility'
+            })
+          });
+          const json = await res.json();
+          if (!res.ok) {
+            Alert.alert('Delivery Failed', json.error || 'Unable to validate QR');
+            return;
+          }
+          Alert.alert('Delivery Success', 'Ownership transferred to lab.');
+          refresh(); // Refresh the list after successful delivery
+        } catch (e) {
+          Alert.alert('Error', 'Failed to complete delivery');
+        }
+      }
+    };
+    handleDelivery();
+  }, [scannedData, batchId, refresh]);
 
   return (
     <View style={styles.container}>

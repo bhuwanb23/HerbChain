@@ -10,6 +10,8 @@ import LabsPage from '../pages/users/labs/labs';
 import AdminDashboard from '../pages/users/admins/dashboard/dashboard';
 import { ConsumerMainPage } from '../pages/users/consumers';
 import ManufacturerMainPage from '../pages/users/manufacturers/ManufacturerMainPage';
+import QRScannerScreen from '../pages/users/manufacturers/raw_herb_management/QRScannerScreen';
+import QRScannerScreenLab from '../pages/users/labs/batches/components/QRScannerScreenLab'; // New import
 
 const Stack = createStackNavigator();
 
@@ -47,7 +49,7 @@ const AppNavigator = () => {
           }}
         />
         <Stack.Screen 
-          name="LabDashboard" 
+          name="LabBatchesPage" 
           component={LabsPage}
           options={{
             title: 'Lab Dashboard',
@@ -82,6 +84,22 @@ const AppNavigator = () => {
           component={ManufacturerMainPage}
           options={{
             title: 'Manufacturer Dashboard',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="QRScannerScreen"
+          component={QRScannerScreen}
+          options={{
+            title: 'Scan QR Code',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="QRScannerScreenLab"
+          component={QRScannerScreenLab}
+          options={{
+            title: 'Scan QR Code',
             headerShown: false,
           }}
         />
