@@ -1,0 +1,1 @@
+export { default } from './raw_herb_management';

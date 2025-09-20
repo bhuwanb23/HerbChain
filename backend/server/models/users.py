@@ -12,7 +12,7 @@ class User(db.Model):
     user_id = db.Column(db.String(50), primary_key=True)
     
     # User Role (farmer, transporter, lab, processor, consumer, admin)
-    role = db.Column(db.Enum('farmer', 'transporter', 'lab', 'processor', 'consumer', 'admin', name='user_role'), nullable=False)
+    role = db.Column(db.Enum('farmer', 'transporter', 'lab', 'processor', 'consumer', 'admin', 'manufacturer', name='user_role'), nullable=False)
     
     # Basic Information
     name = db.Column(db.String(100), nullable=False)
@@ -63,7 +63,7 @@ class User(db.Model):
         if not all([user_id, role, name, email, password_hash]):
             raise ValueError("Missing required fields")
         
-        if role not in ['farmer', 'transporter', 'lab', 'processor', 'consumer', 'admin']:
+        if role not in ['farmer', 'transporter', 'lab', 'processor', 'consumer', 'admin', 'manufacturer']:
             raise ValueError("Invalid role")
         
         user = cls(
