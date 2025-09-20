@@ -1,23 +1,55 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Alert } from 'react-native'; // Import Alert
-import { AVAILABLE_HERBS, ORDERED_HERBS_MOCK, SCANNED_HERB_DETAILS_MOCK } from '../constants/rawHerbConstants';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { API_BASE_URL } from '../../../../../constants/api'; // Import API_BASE_URL
 
 const useRawHerbData = () => {
   const navigation = useNavigation();
   const route = useRoute();
 
-  const [activeSection, setActiveSection] = useState('available_herbs'); // 'available_herbs', 'ordered_herbs', 'scanned_details'
-  const [availableHerbs, setAvailableHerbs] = useState(AVAILABLE_HERBS);
-  const [orderedHerbs, setOrderedHerbs] = useState(ORDERED_HERBS_MOCK);
+  const [activeSection, setActiveSection] = useState('available_herbs');
+  const [approvedHerbs, setApprovedHerbs] = useState([]); // New state for approved herbs
+  const [availableHerbs, setAvailableHerbs] = useState([]); // Will be derived from approvedHerbs
+  const [orderedHerbs, setOrderedHerbs] = useState([]); // This will also likely come from a backend call in a real app
   const [scannedHerbDetails, setScannedHerbDetails] = useState(null);
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
   const [selectedHerbForDetails, setSelectedHerbForDetails] = useState(null);
 
+  // Function to fetch approved herbs from the backend
+  const fetchApprovedHerbs = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/herbs/approved_for_manufacturer`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('API Response data:', data); // Log the raw API response
+      const herbs = data.herbs || [];
+      setApprovedHerbs(herbs);
+      const processedHerbs = herbs.map(herb => ({
+        id: herb.batch_id, // Ensure id is batch_id
+        name: herb.species_name,
+        ...herb, // Keep all herb data
+        status: herb.quality_status // Ensure status is quality_status
+      }));
+      console.log('Processed availableHerbs:', processedHerbs); // Log the processed herbs
+      setAvailableHerbs(processedHerbs);
+    } catch (error) {
+      console.error("Failed to fetch approved herbs:", error);
+      Alert.alert("Error", "Failed to load available herbs. Please try again later.");
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchApprovedHerbs();
+  }, [fetchApprovedHerbs]);
+
   useEffect(() => {
     if (route.params?.scannedData) {
       const { scannedData } = route.params;
-      const foundHerb = orderedHerbs.find(herb => herb.id === scannedData) || AVAILABLE_HERBS.find(herb => herb.id === scannedData);
+      // In a real app, you would fetch details for scannedData from an API
+      // For now, let's try to find it in our approved/ordered lists
+      const foundHerb = approvedHerbs.find(herb => herb.id === scannedData) || orderedHerbs.find(herb => herb.id === scannedData);
 
       if (foundHerb) {
         setScannedHerbDetails(foundHerb);
@@ -25,7 +57,8 @@ const useRawHerbData = () => {
         openDetailsModal(foundHerb);
         Alert.alert('Scan Successful', `Details for ${foundHerb.name} (${foundHerb.id}) loaded.`);
       } else {
-        const mockScannedHerb = { ...SCANNED_HERB_DETAILS_MOCK[0], id: scannedData, name: `Unknown Herb (${scannedData})` };
+        // Fallback for not found or mock data
+        const mockScannedHerb = { id: scannedData, name: `Unknown Herb (${scannedData})`, status: 'Unknown', description: 'No details found for this scanned herb.' };
         setScannedHerbDetails(mockScannedHerb);
         setActiveSection('scanned_details');
         openDetailsModal(mockScannedHerb);
@@ -33,50 +66,55 @@ const useRawHerbData = () => {
       }
       navigation.setParams({ scannedData: undefined });
     }
-  }, [route.params?.scannedData, orderedHerbs, availableHerbs]);
+  }, [route.params?.scannedData, approvedHerbs, orderedHerbs, openDetailsModal, navigation]);
 
-  const openDetailsModal = (herb) => {
+  const openDetailsModal = useCallback((herb) => {
     setSelectedHerbForDetails(herb);
     setIsDetailsModalVisible(true);
-  };
+  }, []);
 
-  const closeDetailsModal = () => {
+  const closeDetailsModal = useCallback(() => {
     setIsDetailsModalVisible(false);
     setSelectedHerbForDetails(null);
-  };
+  }, []);
 
-  const handleOrderHerb = (herbId) => {
+  const handleOrderHerb = useCallback((herbId) => {
     const herbToOrder = availableHerbs.find(herb => herb.id === herbId);
     if (herbToOrder) {
+      // In a real app, this would be an API call to order the herb
       setOrderedHerbs(prev => [...prev, { ...herbToOrder, orderDate: new Date().toISOString() }]);
       setAvailableHerbs(prev => prev.filter(herb => herb.id !== herbId));
       openDetailsModal({ ...herbToOrder, orderDate: new Date().toISOString() });
       Alert.alert('Order Placed', `${herbToOrder.name} has been added to your ordered list.`);
     }
-  };
+  }, [availableHerbs, openDetailsModal]);
 
-  const handleScanQRCode = () => {
+  const handleScanQRCode = useCallback(() => {
     navigation.navigate('QRScannerScreen');
-  };
+  }, [navigation]);
 
-  const clearScannedDetails = () => {
+  const clearScannedDetails = useCallback(() => {
     setScannedHerbDetails(null);
-    setActiveSection('ordered_herbs');
+    setActiveSection('available_herbs'); // Go back to available herbs after clearing
     closeDetailsModal();
     Alert.alert('Cleared', 'Scanned herb details have been cleared.');
-  };
+  }, [closeDetailsModal]);
 
-  const getStatusStyle = (status) => {
+  const getStatusStyle = useCallback((status) => {
     switch (status) {
-      case 'Approved':
-      case 'Certified':
-        return { backgroundColor: '#dcfce7', color: '#16a34a' };
-      case 'Pending':
-        return { backgroundColor: '#fef9c3', color: '#a16207' };
+      case 'approved':
+      case 'Certified': // API might return 'approved', mock data might use 'Certified'
+        return { backgroundColor: '#D4EDDA', color: '#155724' };
+      case 'pending':
+      case 'pending_pickup':
+      case 'testing':
+        return { backgroundColor: '#FFF3CD', color: '#856404' };
+      case 'rejected':
+        return { backgroundColor: '#F8D7DA', color: '#721C24' };
       default:
-        return { backgroundColor: '#e5e7eb', color: '#4b5563' };
+        return { backgroundColor: '#F9FAFB', color: '#4B5563' };
     }
-  };
+  }, []);
 
   return {
     activeSection,
@@ -92,6 +130,7 @@ const useRawHerbData = () => {
     selectedHerbForDetails,
     openDetailsModal,
     closeDetailsModal,
+    approvedHerbs, // Expose approvedHerbs
   };
 };
 

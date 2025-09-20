@@ -1,26 +1,18 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 // Removed: import { SafeAreaView } from 'react-native-safe-area-context';
-
-// Removed: import RawHerbHeader from './components/RawHerbHeader';
-// Removed: import FilterBar from './components/FilterBar';
-// Removed: import BatchCard from './components/BatchCard';
-// Removed: import BatchDetailsModal from './components/BatchDetailsModal';
-// Removed: import QRScannerModal from './components/QRScannerModal';
-
 import AvailableHerbList from './components/AvailableHerbList';
 import OrderedHerbList from './components/OrderedHerbList';
 import ScannedHerbDetails from './components/ScannedHerbDetails';
 import RawHerbSectionTabs from './components/RawHerbSectionTabs'; // New import
 import HerbDetailsModal from './components/HerbDetailsModal'; // New Import
-
 import useRawHerbData from './hooks/useRawHerbData';
 
 const RawHerbManagementPage = () => {
   const {
     activeSection,
     setActiveSection,
-    availableHerbs,
+    availableHerbs, // This now comes from approvedHerbs in the hook
     orderedHerbs,
     scannedHerbDetails,
     handleOrderHerb,
@@ -87,7 +79,7 @@ const RawHerbManagementPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb', // bg-gray-50
+    backgroundColor: '#F9FAFB', // Use a hardcoded value for COLORS.gray[50]
   },
   contentContainerWrapper: {
     flex: 1, // Ensure it takes up available space

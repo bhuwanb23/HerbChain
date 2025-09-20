@@ -4,28 +4,64 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const AvailableHerbItem = ({ herb, onOrderHerb, getStatusStyle, onPress }) => {
   const statusStyle = getStatusStyle(herb.status);
+  const hasCertification = herb.latest_lab_report?.certification === true;
 
   return (
     <TouchableOpacity style={styles.cardContainer} onPress={() => onPress(herb)}>
       <View style={styles.header}>
-        <Text style={styles.herbName}>{herb.name}</Text>
+        <Text style={styles.herbName}>{herb.species_name || 'N/A'}</Text>
         <View style={[styles.statusBadge, { backgroundColor: statusStyle.backgroundColor }]}>
           <Text style={[styles.statusText, { color: statusStyle.color }]}>{herb.status}</Text>
         </View>
       </View>
-      <Text style={styles.farmerName}>{herb.farmer}</Text>
+      <Text style={styles.batchId}>Batch ID: {herb.batch_id}</Text>
+      <Text style={styles.farmerInfo}>Farmer: {herb.farmer_id}</Text>
+      
       <View style={styles.detailsRow}>
         <View style={styles.detailItem}>
-          <Icon name="grass" size={16} color="#16a34a" />
-          <Text style={styles.detailText}>{herb.weight}</Text>
+          <Icon name="fitness-center" size={16} color={'gray'} />
+          <Text style={styles.detailText}>{herb.weight_kg} kg</Text>
         </View>
-        {herb.certifications && herb.certifications.length > 0 && (
-          <View style={styles.detailItem}>
-            <Icon name="verified" size={16} color="#22c55e" />
-            <Text style={styles.detailText}>Certified</Text>
-          </View>
-        )}
+        <View style={styles.detailItem}>
+          <Icon name="event" size={16} color={'gray'} />
+          <Text style={styles.detailText}>Harvest: {new Date(herb.harvest_date).toLocaleDateString()}</Text>
+        </View>
       </View>
+
+      {herb.latest_lab_report && (
+        <View style={styles.labReportSection}>
+          <View style={styles.labReportHeader}>
+            <Icon name="flask" size={18} color={'#006B38'} style={styles.mr2} />
+            <Text style={styles.labReportTitle}>Latest Lab Report:</Text>
+          </View>
+          <View style={styles.labReportDetails}>
+            {hasCertification ? (
+              <View style={styles.detailItem}>
+                <Icon name="verified" size={16} color={'green'} />
+                <Text style={[styles.detailText, { color: 'darkgreen' }]}>Certified ({herb.latest_lab_report.certification_level || 'Standard'})</Text>
+              </View>
+            ) : (
+              <View style={styles.detailItem}>
+                <Icon name="cancel" size={16} color={'red'} />
+                <Text style={[styles.detailText, { color: 'darkred' }]}>Not Certified</Text>
+              </View>
+            )}
+            {herb.latest_lab_report.purity_percentage && (
+              <View style={styles.detailItem}>
+                <Icon name="science" size={16} color={'gray'} />
+                <Text style={styles.detailText}>Purity: {herb.latest_lab_report.purity_percentage}%</Text>
+              </View>
+            )}
+            {herb.latest_lab_report.heavy_metals_present && (
+              <View style={styles.detailItem}>
+                <Icon name="warning" size={16} color={'red'} />
+                <Text style={[styles.detailText, { color: 'darkred' }]}>Heavy Metals: Yes</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
+
       <TouchableOpacity style={styles.orderButton} onPress={() => onOrderHerb(herb.id)}>
         <Text style={styles.orderButtonText}>Order Herb</Text>
       </TouchableOpacity>
@@ -35,15 +71,15 @@ const AvailableHerbItem = ({ herb, onOrderHerb, getStatusStyle, onPress }) => {
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowColor: '#111827',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 1.41,
+    shadowRadius: 5,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: '#E5E7EB',
     padding: 16,
   },
   header: {
@@ -53,50 +89,83 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   herbName: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#111827',
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 9999,
   },
   statusText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
   },
-  farmerName: {
+  batchId: {
     fontSize: 14,
-    color: '#4b5563',
+    color: '#4B5563',
+    marginBottom: 4,
+  },
+  farmerInfo: {
+    fontSize: 14,
+    color: '#4B5563',
     marginBottom: 12,
   },
   detailsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    columnGap: 16, // space-x-4 equivalent
-    marginBottom: 16,
+    columnGap: 16,
+    marginBottom: 12,
   },
   detailItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    columnGap: 4, // space-x-1 equivalent
+    columnGap: 4,
   },
   detailText: {
-    fontSize: 12,
-    color: '#4b5563',
+    fontSize: 13,
+    color: '#374151',
+  },
+  labReportSection: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  labReportHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  labReportTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  labReportDetails: {
+    marginLeft: 2,
+    rowGap: 6,
   },
   orderButton: {
-    backgroundColor: '#059669', // primary
-    borderRadius: 8,
-    paddingVertical: 10,
+    backgroundColor: '#006B38',
+    borderRadius: 10,
+    paddingVertical: 12,
     alignItems: 'center',
+    shadowColor: '#006B38',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3,
   },
   orderButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
+  mr2: { marginRight: 8 },
 });
 
 export default AvailableHerbItem;

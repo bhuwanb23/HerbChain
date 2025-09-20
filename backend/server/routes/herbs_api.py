@@ -770,3 +770,22 @@ def list_lab_reports(batch_id):
     except Exception as e:
         logger.error(f"Error listing lab reports for {batch_id}: {str(e)}")
         return jsonify({'error': 'Failed to list lab reports'}), 500
+
+
+@herbs_api_bp.route('/approved_for_manufacturer', methods=['GET'])
+def get_approved_herbs_for_manufacturer():
+    """List herbs with quality_status 'approved', along with their latest lab report, for manufacturers."""
+    try:
+        herbs = Herb.query.filter(Herb.quality_status.in_(['approved', 'rejected'])).order_by(Herb.updated_at.desc()).all()
+        response = []
+        for herb in herbs:
+            herb_dict = herb.to_dict()
+            # Fetch the latest lab report for each approved herb
+            latest_report = LabReport.query.filter_by(batch_id=herb.batch_id).order_by(LabReport.created_at.desc()).first()
+            herb_dict['latest_lab_report'] = latest_report.to_dict() if latest_report else None
+            response.append(herb_dict)
+        
+        return jsonify({'herbs': response, 'total': len(response)})
+    except Exception as e:
+        logger.error(f"Error getting approved herbs for manufacturer: {str(e)}")
+        return jsonify({'error': 'Failed to get approved herbs'}), 500
