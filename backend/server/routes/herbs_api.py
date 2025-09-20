@@ -371,9 +371,9 @@ def get_lab_accepted_herbs(lab_id):
 
 @herbs_api_bp.route('/pending_pickup', methods=['GET'])
 def get_pending_pickup():
-    """List herbs that are awaiting transporter pickup (quality_status = pending_pickup)."""
+    """List herbs that are awaiting transporter pickup (quality_status = pending_pickup or manufacturer_ordered_pending_pickup)."""
     try:
-        herbs = Herb.query.filter_by(quality_status='pending_pickup').order_by(Herb.updated_at.desc()).all()
+        herbs = Herb.query.filter(Herb.quality_status.in_(['pending_pickup', 'manufacturer_ordered_pending_pickup'])).order_by(Herb.updated_at.desc()).all()
         response = []
         for herb in herbs:
             herb_dict = herb.to_dict()
@@ -416,7 +416,7 @@ def pickup_herb(batch_id):
             return jsonify({'error': 'Herb batch not found'}), 404
 
         # Must be awaiting pickup
-        if herb.quality_status != 'pending_pickup':
+        if herb.quality_status not in ['pending_pickup', 'manufacturer_ordered_pending_pickup']:
             return jsonify({'error': f'Herb is not awaiting pickup. Current status: {herb.quality_status}'}), 400
 
         # Validate active QR exists
@@ -774,7 +774,7 @@ def list_lab_reports(batch_id):
 
 @herbs_api_bp.route('/approved_for_manufacturer', methods=['GET'])
 def get_approved_herbs_for_manufacturer():
-    """List herbs with quality_status 'approved', along with their latest lab report, for manufacturers."""
+    """List herbs with quality_status 'approved' or 'rejected', along with their latest lab report, for manufacturers."""
     try:
         herbs = Herb.query.filter(Herb.quality_status.in_(['approved', 'rejected'])).order_by(Herb.updated_at.desc()).all()
         response = []
@@ -789,3 +789,64 @@ def get_approved_herbs_for_manufacturer():
     except Exception as e:
         logger.error(f"Error getting approved herbs for manufacturer: {str(e)}")
         return jsonify({'error': 'Failed to get approved herbs'}), 500
+
+@herbs_api_bp.route('/<batch_id>/order_by_manufacturer', methods=['POST'])
+def order_herb_by_manufacturer(batch_id):
+    """Manufacturer orders an approved herb, marking it as pending for transporter pickup."""
+    try:
+        data = request.get_json()
+        manufacturer_id = data.get('manufacturer_id')
+
+        if not manufacturer_id:
+            return jsonify({'error': 'Manufacturer ID is required'}), 400
+
+        manufacturer = User.query.filter_by(user_id=manufacturer_id, role='manufacturer').first()
+        if not manufacturer:
+            return jsonify({'error': 'Manufacturer not found'}), 404
+
+        herb = Herb.query.filter_by(batch_id=batch_id).first()
+        if not herb:
+            return jsonify({'error': 'Herb batch not found'}), 404
+
+        if herb.quality_status != 'approved':
+            return jsonify({'error': f'Herb is not approved for ordering. Current status: {herb.quality_status}'}), 400
+
+        if herb.current_owner == manufacturer_id:
+            return jsonify({'error': 'Manufacturer already owns this herb'}), 400
+        
+        # Check if the herb is already pending pickup for a lab or manufacturer
+        if herb.quality_status in ['pending_pickup', 'in_transit', 'manufacturer_ordered_pending_pickup']:
+            return jsonify({'error': f'Herb is already in a transfer process. Current status: {herb.quality_status}'}), 400
+
+        previous_owner = herb.current_owner
+        herb.quality_status = 'manufacturer_ordered_pending_pickup'
+        herb.updated_at = datetime.utcnow()
+
+        # Log ownership transfer intent
+        transfer_id = f"TRANSFER-{uuid.uuid4().hex[:8].upper()}"
+        ownership_transfer = OwnershipTransfer.create_transfer(
+            transfer_id=transfer_id,
+            batch_id=batch_id,
+            from_owner=previous_owner,
+            to_owner=manufacturer_id,
+            qr_code=herb.active_qr, # Reuse the existing active QR for this logging event
+            transfer_reason="Manufacturer Order",
+            location=herb.location,
+            notes=f"Manufacturer {manufacturer_id} ordered herb batch {batch_id}"
+        )
+        db.session.add(ownership_transfer)
+        db.session.commit()
+
+        logger.info(f"Manufacturer {manufacturer_id} ordered herb batch {batch_id}. Status: {herb.quality_status}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Herb ordered successfully. Awaiting transporter pickup.',
+            'herb': herb.to_dict(),
+            'ownership_transfer': ownership_transfer.to_dict()
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error ordering herb {batch_id} by manufacturer {manufacturer_id}: {str(e)}")
+        return jsonify({'error': 'Failed to order herb'}), 500

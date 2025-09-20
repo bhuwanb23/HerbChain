@@ -78,14 +78,39 @@ const useRawHerbData = () => {
     setSelectedHerbForDetails(null);
   }, []);
 
-  const handleOrderHerb = useCallback((herbId) => {
+  const handleOrderHerb = useCallback(async (herbId) => {
     const herbToOrder = availableHerbs.find(herb => herb.id === herbId);
     if (herbToOrder) {
-      // In a real app, this would be an API call to order the herb
-      setOrderedHerbs(prev => [...prev, { ...herbToOrder, orderDate: new Date().toISOString() }]);
-      setAvailableHerbs(prev => prev.filter(herb => herb.id !== herbId));
-      openDetailsModal({ ...herbToOrder, orderDate: new Date().toISOString() });
-      Alert.alert('Order Placed', `${herbToOrder.name} has been added to your ordered list.`);
+      try {
+        // Assuming a manufacturer_id is available, e.g., from context or props
+        // For now, using a placeholder. In a real app, this would come from authentication context.
+        const manufacturerId = 'manufacturer_001'; 
+        const response = await fetch(`${API_BASE_URL}/api/v1/herbs/${herbId}/order_by_manufacturer`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({'manufacturer_id': manufacturerId}),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('Order API response:', result);
+
+        // Update local state after successful API call
+        setOrderedHerbs(prev => [...prev, { ...herbToOrder, orderDate: new Date().toISOString(), status: 'manufacturer_ordered_pending_pickup' }]);
+        setAvailableHerbs(prev => prev.filter(herb => herb.id !== herbId));
+        openDetailsModal({ ...herbToOrder, orderDate: new Date().toISOString(), status: 'manufacturer_ordered_pending_pickup' });
+        Alert.alert('Order Placed', `${herbToOrder.name} has been added to your ordered list. Reference: ${result.ownership_transfer.transfer_id || 'N/A'}`);
+
+      } catch (error) {
+        console.error("Failed to order herb:", error);
+        Alert.alert("Error", `Failed to place order for ${herbToOrder.name}. ${error.message || 'Please try again later.'}`);
+      }
     }
   }, [availableHerbs, openDetailsModal]);
 

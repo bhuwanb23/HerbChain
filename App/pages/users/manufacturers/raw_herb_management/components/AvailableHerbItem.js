@@ -62,7 +62,11 @@ const AvailableHerbItem = ({ herb, onOrderHerb, getStatusStyle, onPress }) => {
         </View>
       )}
 
-      <TouchableOpacity style={styles.orderButton} onPress={() => onOrderHerb(herb.id)}>
+      <TouchableOpacity 
+        style={[styles.orderButton, herb.status !== 'approved' && styles.disabledButton]}
+        onPress={() => onOrderHerb(herb.id)}
+        disabled={herb.status !== 'approved'}
+      >
         <Text style={styles.orderButtonText}>Order Herb</Text>
       </TouchableOpacity>
     </TouchableOpacity>
@@ -166,6 +170,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   mr2: { marginRight: 8 },
+  disabledButton: {
+    backgroundColor: '#9CA3AF',
+  },
 });
 
 export default AvailableHerbItem;

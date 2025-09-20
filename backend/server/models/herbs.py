@@ -23,7 +23,7 @@ class Herb(db.Model):
     
     # Quality and Status
     quality_status = db.Column(
-        db.Enum('pending', 'pending_pickup', 'in_transit', 'testing', 'approved', 'rejected', name='quality_status'),
+        db.Enum('pending', 'pending_pickup', 'in_transit', 'testing', 'approved', 'rejected', 'manufacturer_ordered_pending_pickup', name='quality_status'),
         default='pending',
         nullable=False
     )
