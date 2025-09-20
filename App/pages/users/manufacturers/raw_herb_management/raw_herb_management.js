@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 // Removed: import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Removed: import RawHerbHeader from './components/RawHerbHeader';
@@ -69,9 +69,10 @@ const RawHerbManagementPage = () => {
   return (
     <View style={styles.container}>
       <RawHerbSectionTabs activeSection={activeSection} onSelectSection={setActiveSection} />
-      <ScrollView style={styles.contentScroll} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      {/* Replaced ScrollView with a View */}
+      <View style={styles.contentContainerWrapper}>
         {renderContent()}
-      </ScrollView>
+      </View>
 
       <HerbDetailsModal
         isVisible={isDetailsModalVisible}
@@ -88,12 +89,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f9fafb', // bg-gray-50
   },
-  contentScroll: {
-    flex: 1,
-  },
-  contentContainer: {
-    // paddingHorizontal: 16, // Handled by individual list components
-    paddingVertical: 10, // Adjust as needed
+  contentContainerWrapper: {
+    flex: 1, // Ensure it takes up available space
   },
 });
 

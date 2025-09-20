@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Alert } from 'react-native'; // Import Alert
 import { AVAILABLE_HERBS, ORDERED_HERBS_MOCK, SCANNED_HERB_DETAILS_MOCK } from '../constants/rawHerbConstants';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
@@ -16,22 +17,20 @@ const useRawHerbData = () => {
   useEffect(() => {
     if (route.params?.scannedData) {
       const { scannedData } = route.params;
-      // In a real app, you'd fetch herb details based on scannedData
-      // For now, let's mock finding a herb or create a new scanned detail
       const foundHerb = orderedHerbs.find(herb => herb.id === scannedData) || AVAILABLE_HERBS.find(herb => herb.id === scannedData);
 
       if (foundHerb) {
         setScannedHerbDetails(foundHerb);
         setActiveSection('scanned_details');
         openDetailsModal(foundHerb);
+        Alert.alert('Scan Successful', `Details for ${foundHerb.name} (${foundHerb.id}) loaded.`);
       } else {
-        // If not found, use a mock for demonstration or handle as a new entry
         const mockScannedHerb = { ...SCANNED_HERB_DETAILS_MOCK[0], id: scannedData, name: `Unknown Herb (${scannedData})` };
         setScannedHerbDetails(mockScannedHerb);
         setActiveSection('scanned_details');
         openDetailsModal(mockScannedHerb);
+        Alert.alert('Scan Successful', `No matching herb found. Displaying mock details for ${scannedData}.`);
       }
-      // Clear the scannedData param after processing to prevent re-triggering
       navigation.setParams({ scannedData: undefined });
     }
   }, [route.params?.scannedData, orderedHerbs, availableHerbs]);
@@ -51,8 +50,8 @@ const useRawHerbData = () => {
     if (herbToOrder) {
       setOrderedHerbs(prev => [...prev, { ...herbToOrder, orderDate: new Date().toISOString() }]);
       setAvailableHerbs(prev => prev.filter(herb => herb.id !== herbId));
-      // Optionally, show details of the ordered herb immediately in the modal
       openDetailsModal({ ...herbToOrder, orderDate: new Date().toISOString() });
+      Alert.alert('Order Placed', `${herbToOrder.name} has been added to your ordered list.`);
     }
   };
 
@@ -62,19 +61,20 @@ const useRawHerbData = () => {
 
   const clearScannedDetails = () => {
     setScannedHerbDetails(null);
-    setActiveSection('ordered_herbs'); // Go back to ordered herbs after clearing
-    closeDetailsModal(); // Close modal if open
+    setActiveSection('ordered_herbs');
+    closeDetailsModal();
+    Alert.alert('Cleared', 'Scanned herb details have been cleared.');
   };
 
   const getStatusStyle = (status) => {
     switch (status) {
       case 'Approved':
       case 'Certified':
-        return { backgroundColor: '#dcfce7', color: '#16a34a' }; // green-100, green-700
+        return { backgroundColor: '#dcfce7', color: '#16a34a' };
       case 'Pending':
-        return { backgroundColor: '#fef9c3', color: '#a16207' }; // yellow-100, yellow-700
+        return { backgroundColor: '#fef9c3', color: '#a16207' };
       default:
-        return { backgroundColor: '#e5e7eb', color: '#4b5563' }; // gray-200, gray-600
+        return { backgroundColor: '#e5e7eb', color: '#4b5563' };
     }
   };
 
