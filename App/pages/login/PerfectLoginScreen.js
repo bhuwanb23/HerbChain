@@ -75,7 +75,7 @@ const PerfectLoginScreen = ({ navigation }) => {
         navigation.navigate('TransporterDashboard');
         break;
       case 'Lab':
-        navigation.navigate('LabDashboard');
+        navigation.navigate('LabBatchesPage');
         break;
       case 'AYUSH/Admin':
         navigation.navigate('AdminDashboard');

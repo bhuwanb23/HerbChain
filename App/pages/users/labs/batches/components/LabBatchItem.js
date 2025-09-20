@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Image } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useNavigation } from '@react-navigation/native';
 import { API_BASE_URL } from '../../../../../constants/api';
 
 const LabBatchItem = ({ item, onAccepted, acceptHerb, variant = 'all', onOpenDetails }) => {
   const [isAccepting, setIsAccepting] = useState(false);
-  const [scannerVisible, setScannerVisible] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
-  const [permission, requestPermission] = useCameraPermissions();
+  const navigation = useNavigation();
 
   const accept = async () => {
     try {
@@ -33,41 +31,9 @@ const LabBatchItem = ({ item, onAccepted, acceptHerb, variant = 'all', onOpenDet
       setIsAccepting(false);
     }
   };
-  const handleStartScan = async () => {
-    if (!permission || !permission.granted) {
-      const res = await requestPermission();
-      if (!res.granted) return;
-    }
-    setScannerVisible(true);
-  };
 
-  const handleBarcode = async ({ data }) => {
-    if (isScanning) return;
-    setIsScanning(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/herbs/${item.batch_id}/deliver`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lab_id: 'lab_001',
-          scanned_qr_text: data,
-          delivery_location: 'Lab Facility'
-        })
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        Alert.alert('Delivery Failed', json.error || 'Unable to validate QR');
-        setIsScanning(false);
-        return;
-      }
-      Alert.alert('Delivery Success', 'Ownership transferred to lab.');
-      setScannerVisible(false);
-      setIsScanning(false);
-      onAccepted && onAccepted();
-    } catch (e) {
-      Alert.alert('Error', 'Failed to complete delivery');
-      setIsScanning(false);
-    }
+  const handleStartScan = () => {
+    navigation.navigate('QRScannerScreenLab', { batchId: item.batch_id });
   };
   const CardWrapper = variant === 'archived' && onOpenDetails ? TouchableOpacity : View;
   const wrapperProps = variant === 'archived' && onOpenDetails ? { activeOpacity: 0.85, onPress: () => onOpenDetails(item) } : {};
@@ -124,20 +90,6 @@ const LabBatchItem = ({ item, onAccepted, acceptHerb, variant = 'all', onOpenDet
           <Text style={styles.acceptText}>Scan Transporter QR</Text>
         </TouchableOpacity>
       )}
-
-      {variant === 'accepted' && scannerVisible && (
-        <View style={styles.fullscreenScanner}>
-          <CameraView
-            style={{ flex: 1, width: '100%' }}
-            facing="back"
-            barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-            onBarcodeScanned={handleBarcode}
-          />
-          <TouchableOpacity style={styles.closeScannerBtn} onPress={() => { setScannerVisible(false); setIsScanning(false); }}>
-            <Text style={styles.closeScannerText}>Close</Text>
-          </TouchableOpacity>
-        </View>
-      )}
     </CardWrapper>
   );
 };
@@ -186,24 +138,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   acceptText: {
-    color: '#fff',
-    fontWeight: '700',
-  },
-  scannerOverlay: {
-    marginTop: 12,
-    backgroundColor: '#111827',
-    padding: 12,
-    borderRadius: 12,
-  },
-  closeScannerBtn: {
-    alignSelf: 'center',
-    marginTop: 10,
-    backgroundColor: '#374151',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  closeScannerText: {
     color: '#fff',
     fontWeight: '700',
   },
