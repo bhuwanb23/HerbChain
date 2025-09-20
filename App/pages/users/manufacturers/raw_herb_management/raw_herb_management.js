@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, FlatList, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, StyleSheet, FlatList } from 'react-native';
+// Removed: import { SafeAreaView } from 'react-native-safe-area-context';
 
-import RawHerbHeader from './components/RawHerbHeader';
+// Removed: import RawHerbHeader from './components/RawHerbHeader';
 import FilterBar from './components/FilterBar';
 import BatchCard from './components/BatchCard';
 import BatchDetailsModal from './components/BatchDetailsModal';
@@ -24,8 +24,8 @@ const RawHerbManagementPage = () => {
   } = useRawHerbData();
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <RawHerbHeader onScanQR={openQRScanner} />
+    <View style={styles.container}> {/* Changed from SafeAreaView to View */}
+      {/* Removed: <RawHerbHeader onScanQR={openQRScanner} /> */}
       <FilterBar selectedFilter={selectedFilter} onSelectFilter={setSelectedFilter} />
       <FlatList
         data={filteredBatches}
@@ -45,12 +45,12 @@ const RawHerbManagementPage = () => {
         isVisible={isQRScannerModalVisible}
         onClose={closeQRScanner}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: { // Changed from safeArea to container
     flex: 1,
     backgroundColor: '#f9fafb', // bg-gray-50
   },

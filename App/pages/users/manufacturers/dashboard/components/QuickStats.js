@@ -1,21 +1,30 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Dimensions } from 'react-native';
 import DashboardCard from './DashboardCard';
 
-const QuickStats = () => {
+const screenWidth = Dimensions.get('window').width;
+
+const QuickStats = ({ dashboardCards }) => {
+  const renderCard = ({ item }) => (
+    <DashboardCard
+      title={item.title}
+      value={item.value}
+      iconName={item.iconName}
+      color={item.color}
+      iconBgColor={item.iconBgColor}
+    />
+  );
+
   return (
     <View style={styles.container}>
-      <DashboardCard
-        title="Active Batches"
-        value="12"
-        iconName="spa"
-        color="#7C9885" // herb-green
-      />
-      <DashboardCard
-        title="Pending Deliveries"
-        value="8"
-        iconName="local-shipping"
-        color="#f59e0b" // amber
+      <FlatList
+        data={dashboardCards}
+        renderItem={renderCard}
+        keyExtractor={(item) => item.id}
+        numColumns={2} // Display 2 cards per row
+        columnWrapperStyle={styles.row}
+        contentContainerStyle={styles.flatListContent}
+        scrollEnabled={false} // Disable scrolling for this internal FlatList
       />
     </View>
   );
@@ -23,11 +32,15 @@ const QuickStats = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
     marginBottom: 20,
-    paddingHorizontal: 10, // Add some horizontal padding to match HTML
+  },
+  flatListContent: {
+    justifyContent: 'space-between',
+  },
+  row: {
+    flex: 1,
+    justifyContent: 'space-around',
+    marginBottom: 10, // Space between rows
   },
 });
 

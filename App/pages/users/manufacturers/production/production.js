@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import ProductionHeader from './components/ProductionHeader';
+// Removed: import { SafeAreaView } from 'react-native-safe-area-context';
+// Removed: import ProductionHeader from './components/ProductionHeader';
 import ProgressBar from './components/ProgressBar';
 import Step1SelectHerbs from './components/Step1SelectHerbs';
 import Step2Formulation from './components/Step2Formulation';
@@ -80,18 +80,18 @@ const ProductionPage = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ProductionHeader />
+    <View style={styles.container}>
+      {/* Removed: <ProductionHeader /> */}
       <ProgressBar currentStep={currentStep} steps={productionSteps} />
       <ScrollView style={styles.contentScroll} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         {renderCurrentStep()}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: '#f9fafb', // bg-gray-50
   },
