@@ -99,6 +99,7 @@ const useRawHerbData = () => {
   const handleOrderHerb = useCallback(async (herbId) => {
     const herbToOrder = availableHerbs.find(herb => herb.id === herbId);
     if (herbToOrder) {
+      console.log('Attempting to order herb:', herbToOrder);
       try {
         // Assuming a manufacturer_id is available, e.g., from context or props
         // For now, using a placeholder. In a real app, this would come from authentication context.
@@ -151,6 +152,7 @@ const useRawHerbData = () => {
       case 'pending':
       case 'pending_pickup':
       case 'testing':
+      case 'manufacturer_ordered_pending_pickup': // Added new status
         return { backgroundColor: '#FFF3CD', color: '#856404' };
       case 'rejected':
         return { backgroundColor: '#F8D7DA', color: '#721C24' };

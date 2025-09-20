@@ -796,11 +796,13 @@ def order_herb_by_manufacturer(batch_id):
     try:
         data = request.get_json()
         manufacturer_id = data.get('manufacturer_id')
+        logger.info(f"Attempting to order herb {batch_id} with manufacturer_id: {manufacturer_id}")
 
         if not manufacturer_id:
             return jsonify({'error': 'Manufacturer ID is required'}), 400
 
         manufacturer = User.query.filter_by(user_id=manufacturer_id, role='manufacturer').first()
+        logger.info(f"Manufacturer {manufacturer_id} found: {bool(manufacturer)}")
         if not manufacturer:
             return jsonify({'error': 'Manufacturer not found'}), 404
 
@@ -810,13 +812,6 @@ def order_herb_by_manufacturer(batch_id):
 
         # Removed: if herb.quality_status != 'approved':
         # Removed:    return jsonify({'error': f'Herb is not approved for ordering. Current status: {herb.quality_status}'}), 400
-
-        if herb.current_owner == manufacturer_id:
-            return jsonify({'error': 'Manufacturer already owns this herb'}), 400
-        
-        # Check if the herb is already pending pickup for a lab or manufacturer
-        if herb.quality_status in ['pending_pickup', 'in_transit', 'manufacturer_ordered_pending_pickup']:
-            return jsonify({'error': f'Herb is already in a transfer process. Current status: {herb.quality_status}'}), 400
 
         previous_owner = herb.current_owner
         herb.quality_status = 'manufacturer_ordered_pending_pickup'

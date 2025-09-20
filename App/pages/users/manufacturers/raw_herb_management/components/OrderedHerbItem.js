@@ -8,16 +8,16 @@ const OrderedHerbItem = ({ herb, getStatusStyle, onPress, onScanQRCode }) => {
   return (
     <TouchableOpacity style={styles.cardContainer} onPress={() => onPress(herb)}>
       <View style={styles.header}>
-        <Text style={styles.herbName}>{herb.name}</Text>
+        <Text style={styles.herbName}>{herb.species_name || 'N/A'}</Text>
         <View style={[styles.statusBadge, { backgroundColor: statusStyle.backgroundColor }]}>
           <Text style={[styles.statusText, { color: statusStyle.color }]}>{herb.status}</Text>
         </View>
       </View>
-      <Text style={styles.farmerName}>{herb.farmer}</Text>
+      <Text style={styles.farmerName}>Farmer: {herb?.farmer_user?.name || herb.farmer_id || 'N/A'}</Text>
       <View style={styles.detailsRow}>
         <View style={styles.detailItem}>
           <Icon name="inventory" size={16} color="#4b5563" />
-          <Text style={styles.detailText}>{herb.weight}</Text>
+          <Text style={styles.detailText}>{herb.weight_kg ? `${herb.weight_kg} kg` : 'N/A'}</Text>
         </View>
         {herb.orderDate && (
           <View style={styles.detailItem}>
@@ -25,7 +25,7 @@ const OrderedHerbItem = ({ herb, getStatusStyle, onPress, onScanQRCode }) => {
             <Text style={styles.detailText}>Ordered: {new Date(herb.orderDate).toLocaleDateString()}</Text>
           </View>
         )}
-        {herb.certifications && herb.certifications.length > 0 && (
+        {herb.labReports && herb.labReports.length > 0 && herb.labReports[0]?.certification && (
           <View style={styles.detailItem}>
             <Icon name="verified" size={16} color="#22c55e" />
             <Text style={styles.detailText}>Certified</Text>
