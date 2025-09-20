@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const BottomNavbar = ({ navigation, activeTab = 'home' }) => {
+const BottomNavbar = ({ activeTab = 'home', onTabChange }) => {
   const [currentTab, setCurrentTab] = useState(activeTab);
   const insets = useSafeAreaInsets();
 
@@ -19,9 +19,8 @@ const BottomNavbar = ({ navigation, activeTab = 'home' }) => {
   const handleTabPress = (tabId) => {
     setCurrentTab(tabId);
     
-    // Use internal navigation for manufacturer pages
-    if (navigation.navigate) {
-      navigation.navigate(tabId);
+    if (onTabChange) {
+      onTabChange(tabId);
     }
   };
 

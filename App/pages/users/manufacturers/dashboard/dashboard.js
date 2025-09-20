@@ -1,16 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import DashboardHeader from './components/DashboardHeader';
 import WelcomeBanner from './components/WelcomeBanner';
-import DashboardCard from './components/DashboardCard';
-import NotificationsSection from './components/NotificationsSection';
 import QuickStats from './components/QuickStats';
+import NotificationsSection from './components/NotificationsSection';
 import RecentCertifications from './components/RecentCertifications';
 import MonthlyProductionChart from './components/MonthlyProductionChart';
 import QuickActions from './components/QuickActions';
 import useDashboardData from './hooks/useDashboardData';
 import {
-  MANUFACTURER_NAME, 
+  MANUFACTURER_NAME,
   COMPANY_NAME,
   CURRENT_DATE,
   CURRENT_WEATHER,
@@ -20,15 +19,48 @@ import {
 } from './constants/dashboardConstants';
 
 const DashboardPage = ({ navigation }) => {
-  const { 
-    loading, 
-    error, 
-    dashboardCards, 
-    notifications, 
-    recentCertifications, 
-    monthlyProduction, 
-    quickActions 
+  const {
+    loading,
+    error,
+    dashboardCards,
+    notifications,
+    recentCertifications,
+    monthlyProduction,
+    quickActions
   } = useDashboardData();
+
+  const dashboardSections = [
+    {
+      key: 'welcome',
+      component: <WelcomeBanner
+        manufacturerName={MANUFACTURER_NAME}
+        companyName={COMPANY_NAME}
+        currentDate={CURRENT_DATE}
+        currentWeather={CURRENT_WEATHER}
+        weatherStatus={WEATHER_STATUS}
+      />
+    },
+    {
+      key: 'quickStats',
+      component: <QuickStats dashboardCards={dashboardCards} />
+    },
+    {
+      key: 'notifications',
+      component: <NotificationsSection notifications={notifications} />
+    },
+    {
+      key: 'recentCertifications',
+      component: <RecentCertifications certificationData={recentCertifications} />
+    },
+    {
+      key: 'monthlyProduction',
+      component: <MonthlyProductionChart monthlyProductionData={monthlyProduction} />
+    },
+    {
+      key: 'quickActions',
+      component: <QuickActions quickActionsData={quickActions} navigation={navigation} />
+    },
+  ];
 
   if (loading) {
     return (
@@ -47,33 +79,27 @@ const DashboardPage = ({ navigation }) => {
     );
   }
 
+  const renderDashboardItem = ({ item }) => (
+    <View style={styles.sectionWrapper}>
+      {item.component}
+    </View>
+  );
+
   return (
-    <View style={styles.fullContainer}> 
-      <DashboardHeader 
+    <View style={styles.fullContainer}>
+      <DashboardHeader
         navigation={navigation}
         manufacturerName={MANUFACTURER_NAME}
         avatarUrl={AVATAR_URL}
         notificationsCount={notifications?.length || 0} // Use optional chaining and default to 0
       />
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContentContainer} showsVerticalScrollIndicator={false}>
-        <WelcomeBanner 
-          manufacturerName={MANUFACTURER_NAME}
-          companyName={COMPANY_NAME}
-          currentDate={CURRENT_DATE}
-          currentWeather={CURRENT_WEATHER}
-          weatherStatus={WEATHER_STATUS}
-        />
-
-        <QuickStats dashboardCards={dashboardCards} />
-
-        <NotificationsSection notifications={notifications} />
-
-        <RecentCertifications certificationData={recentCertifications} />
-
-        <MonthlyProductionChart monthlyProductionData={monthlyProduction} />
-
-        <QuickActions quickActionsData={quickActions} navigation={navigation} />
-      </ScrollView>
+      <FlatList
+        data={dashboardSections}
+        renderItem={renderDashboardItem}
+        keyExtractor={(item) => item.key}
+        contentContainerStyle={styles.flatListContentContainer}
+        showsVerticalScrollIndicator={false}
+      />
     </View>
   );
 };
@@ -83,13 +109,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F0FDF4',
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContentContainer: {
-    paddingHorizontal: 10, // Adjust padding as needed
+  flatListContentContainer: {
+    paddingHorizontal: 10,
     paddingVertical: 10,
-    alignItems: 'center',
+  },
+  sectionWrapper: {
+    marginBottom: 20, // Add spacing between sections
   },
   loadingContainer: {
     flex: 1,

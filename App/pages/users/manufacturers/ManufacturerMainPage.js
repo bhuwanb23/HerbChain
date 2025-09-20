@@ -39,7 +39,7 @@ const ManufacturerMainPage = ({ navigation }) => {
       <View style={styles.body}>
         {renderContent()}
       </View>
-      <BottomNavbar navigation={{ navigate: handleNavbarNavigate }} activeTab={activeTab} />
+      <BottomNavbar activeTab={activeTab} onTabChange={handleNavbarNavigate} />
     </SafeAreaView>
   );
 };
@@ -52,9 +52,6 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     backgroundColor: '#F0FDF4',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
   },
   contentContainer: {
     flex: 1,

@@ -1,34 +1,66 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet, FlatList, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import RawHerbHeader from './components/RawHerbHeader';
+import FilterBar from './components/FilterBar';
+import BatchCard from './components/BatchCard';
+import BatchDetailsModal from './components/BatchDetailsModal';
+import QRScannerModal from './components/QRScannerModal';
+import useRawHerbData from './hooks/useRawHerbData';
 
 const RawHerbManagementPage = () => {
+  const {
+    selectedFilter,
+    setSelectedFilter,
+    filteredBatches,
+    isBatchDetailsModalVisible,
+    openBatchDetails,
+    closeBatchDetails,
+    isQRScannerModalVisible,
+    openQRScanner,
+    closeQRScanner,
+    selectedBatch,
+  } = useRawHerbData();
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Raw Herb Management</Text>
-      <Text style={styles.subtitle}>Manage incoming herbs and their quality/storage conditions.</Text>
-      {/* Further components for Incoming Batches, Batch Details View, etc., will be added here */}
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <RawHerbHeader onScanQR={openQRScanner} />
+      <FilterBar selectedFilter={selectedFilter} onSelectFilter={setSelectedFilter} />
+      <FlatList
+        data={filteredBatches}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <BatchCard batch={item} onPress={openBatchDetails} />}
+        contentContainerStyle={styles.batchListContent}
+        style={styles.batchList}
+      />
+
+      <BatchDetailsModal
+        isVisible={isBatchDetailsModalVisible}
+        onClose={closeBatchDetails}
+        batch={selectedBatch}
+      />
+
+      <QRScannerModal
+        isVisible={isQRScannerModalVisible}
+        onClose={closeQRScanner}
+      />
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#f9fafb', // bg-gray-50
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#22c55e',
-    marginBottom: 10,
+  batchList: {
+    flex: 1,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
+  batchListContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    rowGap: 12, // space-y-3
   },
 });
 

@@ -3,7 +3,7 @@ export const DASHBOARD_CARDS = [
     id: 'active_batches',
     title: 'Active Batches',
     value: '12',
-    iconName: 'leaf',
+    iconName: 'grass',
     color: '#7C9885', // herb-green
     iconBgColor: '#E8F5E8', // mint
   },
@@ -11,7 +11,7 @@ export const DASHBOARD_CARDS = [
     id: 'pending_deliveries',
     title: 'Pending Deliveries',
     value: '8',
-    iconName: 'truck',
+    iconName: 'local_shipping',
     color: '#f59e0b', // amber
     iconBgColor: '#FFFBEB', // yellow-100 equivalent
   },
@@ -78,13 +78,13 @@ export const QUICK_ACTIONS_DATA = [
   {
     id: 'herb_inventory',
     label: 'Herb Inventory',
-    icon: 'boxes-stacked',
+    icon: 'inventory_2',
     bgColor: '#7C9885',
   },
   {
     id: 'create_product',
     label: 'Create Product',
-    icon: 'plus',
+    icon: 'add',
     bgColor: '#9CAF88',
   },
 ];
