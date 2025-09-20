@@ -1,10 +1,10 @@
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  Pressable, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Pressable,
   TextInput,
   TouchableOpacity,
   Switch
@@ -18,7 +18,7 @@ const OfflineBanner = ({ isOffline }) => {
   return (
     <View style={styles.offlineBanner}>
       <View style={styles.offlineBannerContent}>
-        <Ionicons name="wifi-off" size={16} color="#B45309" style={styles.mr2} />
+        <Ionicons name="wifi-off" size={16} color={COLORS.warning[700]} style={styles.mr2} />
         <Text style={styles.offlineBannerText}>Working offline - Changes will sync when connected</Text>
         <View style={styles.mlAuto}>
           <View style={styles.offlinePulse} />
@@ -28,8 +28,8 @@ const OfflineBanner = ({ isOffline }) => {
   );
 };
 
-const BatchHeaderCard = ({ batchId, onToggleOffline, isOffline }) => {
-  const batch = MOCK_BATCHES.find(b => b.id === batchId) || MOCK_BATCHES[0];
+const BatchHeaderCard = ({ batchId, isOffline }) => {
+  const batch = MOCK_BATCHES.find(b => b.id === batchId) || MOCK_BATCHES[0]; // Assuming MOCK_BATCHES is available from constants
 
   return (
     <View style={styles.batchHeaderCard}>
@@ -38,12 +38,12 @@ const BatchHeaderCard = ({ batchId, onToggleOffline, isOffline }) => {
           <Text style={styles.batchHeaderTitle}>Batch #{batch.id}</Text>
           <Text style={styles.batchHeaderSubtitle}>{batch.name}</Text>
         </View>
-        <View style={styles.batchStatusTag}>
-          <Text style={styles.batchStatusText}>{batch.status}</Text>
+        <View style={[styles.batchStatusTag, { backgroundColor: COLORS.info[100] }]}>
+          <Text style={[styles.batchStatusText, { color: COLORS.info[700] }]}>{batch.status}</Text>
         </View>
       </View>
       <View style={styles.batchReceivedInfo}>
-        <Ionicons name="calendar-outline" size={16} color="#808080" style={styles.mr2} />
+        <Ionicons name="calendar-outline" size={16} color={COLORS.gray[500]} style={styles.mr2} />
         <Text style={styles.batchReceivedText}>Received: {batch.receivedDate}</Text>
       </View>
     </View>
@@ -61,7 +61,7 @@ const TestResultCard = ({ testType, value, onChange }) => {
         </View>
         <View>
           <Text style={styles.testResultTitle}>{testType.title}</Text>
-          <Text style={styles.testResultSubtitle}>{testType.subtitle}</Text>
+          {testType.subtitle && <Text style={styles.testResultSubtitle}>{testType.subtitle}</Text>}
         </View>
       </View>
       {isBoolean ? (
@@ -70,15 +70,18 @@ const TestResultCard = ({ testType, value, onChange }) => {
           <Switch
             onValueChange={(newValue) => onChange(testType.id, newValue)}
             value={!!value}
+            trackColor={{ false: COLORS.gray[300], true: COLORS.primaryLight }}
+            thumbColor={value ? COLORS.primary : COLORS.gray[500]}
           />
         </View>
       ) : (
-        <TextInput 
+        <TextInput
           style={styles.textInput}
           placeholder={testType.placeholder}
           keyboardType={testType.unit === '%' || testType.unit === 'mg/kg' || testType.step ? 'numeric' : 'default'}
-          value={value}
+          value={String(value)}
           onChangeText={(text) => onChange(testType.id, text)}
+          placeholderTextColor={COLORS.gray[400]}
         />
       )}
     </View>
@@ -99,13 +102,13 @@ const UploadCard = ({ uploadType, isUploaded, onUpload, onRemove }) => {
         {isUploaded ? (
           <View style={styles.uploadedFileContainer}>
             <View style={styles.flexRowCenter}>
-              <Ionicons name="checkmark-circle" size={16} color="#22C55E" style={styles.mr2} />
+              <Ionicons name="checkmark-circle" size={16} color={COLORS.success} style={styles.mr2} />
               <Text style={styles.uploadedFileText}>File uploaded successfully</Text>
             </View>
             <Pressable onPress={() => onRemove(uploadType.id)} style={({ pressed }) => [
               pressed && styles.buttonPressed
             ]}>
-              <Ionicons name="trash" size={16} color="#EF4444" />
+              <Ionicons name="trash" size={16} color={COLORS.error} />
             </Pressable>
           </View>
         ) : (
@@ -113,7 +116,7 @@ const UploadCard = ({ uploadType, isUploaded, onUpload, onRemove }) => {
             styles.uploadPrompt,
             pressed && styles.buttonPressed
           ]}>
-            <Ionicons name="cloud-upload" size={30} color="#808080" style={styles.mb2} />
+            <Ionicons name="cloud-upload" size={30} color={COLORS.gray[500]} style={styles.mb2} />
             <Text style={styles.uploadPromptText}>Drag & drop or tap to upload</Text>
             <Text style={styles.chooseFileButton}>Choose File</Text>
           </Pressable>
@@ -126,33 +129,33 @@ const UploadCard = ({ uploadType, isUploaded, onUpload, onRemove }) => {
 const ActionButtons = ({ onSaveOffline, onSubmitResults, isOffline }) => {
   return (
     <View style={styles.actionButtonsContainer}>
-      <Pressable 
-        onPress={onSaveOffline} 
+      <Pressable
+        onPress={onSaveOffline}
         style={({ pressed }) => [
           styles.actionButton,
-          styles.grayBg,
+          styles.secondaryButton,
           pressed && styles.buttonPressed
         ]}
       >
-        <Ionicons name="save" size={20} color="#4B5563" style={styles.mr2} />
-        <Text style={styles.actionButtonTextGray}>Save Offline</Text>
+        <Ionicons name="save" size={20} color={COLORS.info} style={styles.mr2} />
+        <Text style={styles.actionButtonTextSecondary}>Save Offline</Text>
       </Pressable>
-      <Pressable 
-        onPress={onSubmitResults} 
+      <Pressable
+        onPress={onSubmitResults}
         style={({ pressed }) => [
           styles.actionButton,
-          styles.skyBlueBg,
+          styles.primaryButton,
           pressed && styles.buttonPressed
         ]}
       >
-        <Ionicons name="paper-plane" size={20} color="#FFFFFF" style={styles.mr2} />
-        <Text style={styles.actionButtonTextWhite}>Submit Results</Text>
+        <Ionicons name="paper-plane" size={20} color={COLORS.white} style={styles.mr2} />
+        <Text style={styles.actionButtonTextPrimary}>Submit Results</Text>
       </Pressable>
     </View>
   );
 };
 
-const TestingResultsEntry = ({ 
+const TestingResultsEntry = ({
   batchId,
   isOffline,
   testResults,
@@ -167,18 +170,16 @@ const TestingResultsEntry = ({
   return (
     <View style={styles.container}>
       <OfflineBanner isOffline={isOffline} />
-      
-      <BatchHeaderCard 
+
+      <BatchHeaderCard
         batchId={batchId}
-        onToggleOffline={onToggleOffline}
         isOffline={isOffline}
       />
 
       <ScrollView style={styles.mainContent}>
-        {/* Test Results Entry */}
-        <View style={styles.sectionPadding}>
+        <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Enter Test Results</Text>
-          
+
           {TEST_TYPES.filter(type => type.type !== 'boolean').map((testType) => (
             <TestResultCard
               key={testType.id}
@@ -188,7 +189,6 @@ const TestingResultsEntry = ({
             />
           ))}
 
-          {/* Boolean/Toggle Fields */}
           {TEST_TYPES.filter(type => type.type === 'boolean').map((testType) => (
             <TestResultCard
               key={testType.id}
@@ -197,50 +197,48 @@ const TestingResultsEntry = ({
               onChange={onTestResultChange}
             />
           ))}
+        </View>
 
-          {/* Special Observations */}
-          <View style={styles.testResultCard}>
-            <Text style={styles.testResultTitle}>Special Observations</Text>
-            <TextInput 
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Detailed Observations</Text>
+          <View style={styles.textAreaCard}>
+            <TextInput
               style={styles.textArea}
-              placeholder="Add notes or observations..."
+              placeholder="Add a summary of the test results..."
               multiline
               numberOfLines={4}
               value={testResults.results_summary || ''}
               onChangeText={(text) => onTestResultChange('results_summary', text)}
+              placeholderTextColor={COLORS.gray[400]}
             />
           </View>
-          {/* Notes */}
-          <View style={styles.testResultCard}>
-            <Text style={styles.testResultTitle}>Notes</Text>
-            <TextInput 
+          <View style={styles.textAreaCard}>
+            <TextInput
               style={styles.textArea}
-              placeholder="Add additional notes..."
+              placeholder="Add any additional notes..."
               multiline
               numberOfLines={4}
               value={testResults.notes || ''}
               onChangeText={(text) => onTestResultChange('notes', text)}
+              placeholderTextColor={COLORS.gray[400]}
             />
           </View>
-          {/* Recommendations */}
-          <View style={styles.testResultCard}>
-            <Text style={styles.testResultTitle}>Recommendations</Text>
-            <TextInput 
+          <View style={styles.textAreaCard}>
+            <TextInput
               style={styles.textArea}
-              placeholder="Add recommendations..."
+              placeholder="Enter recommendations for the herb batch..."
               multiline
               numberOfLines={4}
               value={testResults.recommendations || ''}
               onChangeText={(text) => onTestResultChange('recommendations', text)}
+              placeholderTextColor={COLORS.gray[400]}
             />
           </View>
-
         </View>
 
-        {/* Upload Evidence */}
-        <View style={styles.sectionPadding}>
+        <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Upload Evidence</Text>
-          
+
           {UPLOAD_TYPES.map((uploadType) => (
             <UploadCard
               key={uploadType.id}
@@ -252,7 +250,7 @@ const TestingResultsEntry = ({
           ))}
         </View>
 
-        <ActionButtons 
+        <ActionButtons
           onSaveOffline={onSaveOffline}
           onSubmitResults={onSubmitResults}
           isOffline={isOffline}
@@ -265,13 +263,13 @@ const TestingResultsEntry = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: COLORS.gray[50],
   },
   // Offline Status Banner
   offlineBanner: {
-    backgroundColor: '#FEF9C3',
+    backgroundColor: COLORS.warning[100],
     borderLeftWidth: 4,
-    borderLeftColor: '#EAB308',
+    borderLeftColor: COLORS.warning[500],
     padding: 12,
   },
   offlineBannerContent: {
@@ -280,45 +278,48 @@ const styles = StyleSheet.create({
   },
   offlineBannerText: {
     fontSize: 14,
-    color: '#A16207',
+    color: COLORS.warning[800],
   },
   offlinePulse: {
     width: 16,
     height: 16,
-    backgroundColor: '#EAB308',
+    backgroundColor: COLORS.warning[500],
     borderRadius: 9999,
   },
   // Batch Header Card
   batchHeaderCard: {
-    padding: 20,
+    padding: 15,
+    backgroundColor: COLORS.white,
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray[200],
   },
   batchHeaderContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    borderColor: COLORS.gray[200],
+    padding: 15,
+    shadowColor: COLORS.gray[900],
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowRadius: 5,
+    elevation: 2,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   batchHeaderTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111827',
+    color: COLORS.gray[900],
   },
   batchHeaderSubtitle: {
     fontSize: 14,
-    color: '#808080',
+    color: COLORS.gray[600],
   },
   batchStatusTag: {
-    backgroundColor: '#FEF9C3',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 9999,
@@ -326,102 +327,131 @@ const styles = StyleSheet.create({
   batchStatusText: {
     fontSize: 12,
     fontWeight: 'medium',
-    color: '#B45309',
   },
   batchReceivedInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     fontSize: 14,
-    color: '#808080',
+    color: COLORS.gray[600],
   },
   batchReceivedText: {
     fontSize: 14,
-    color: '#808080',
+    color: COLORS.gray[600],
+    marginLeft: 5,
   },
-  // Test Results Entry & Upload Evidence Sections
-  sectionPadding: { 
-    paddingHorizontal: 20, 
-    paddingBottom: 20 
+  // Section Container
+  sectionContainer: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    marginHorizontal: 15,
+    marginBottom: 15,
+    padding: 15,
+    shadowColor: COLORS.gray[900],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: COLORS.gray[200],
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 16,
+    color: COLORS.gray[900],
+    marginBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray[200],
+    paddingBottom: 10,
   },
   testResultCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.gray[50],
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
+    borderColor: COLORS.gray[200],
+    padding: 12,
+    marginBottom: 10,
+    shadowColor: COLORS.gray[900],
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.03,
     shadowRadius: 2,
     elevation: 1,
   },
   testResultCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   testResultIconBg: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   testResultTitle: {
-    fontWeight: 'bold',
-    color: '#111827',
+    fontWeight: '600',
+    color: COLORS.gray[800],
+    fontSize: 15,
   },
   testResultSubtitle: {
-    fontSize: 14,
-    color: '#808080',
+    fontSize: 12,
+    color: COLORS.gray[500],
   },
   textInput: {
     width: '100%',
-    padding: 12,
+    padding: 10,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: COLORS.gray[300],
     borderRadius: 8,
-    fontSize: 16,
+    fontSize: 15,
+    color: COLORS.gray[800],
+  },
+  textAreaCard: {
+    backgroundColor: COLORS.gray[50],
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.gray[200],
+    padding: 12,
+    marginBottom: 10,
+    shadowColor: COLORS.gray[900],
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
   },
   textArea: {
     width: '100%',
-    padding: 12,
+    padding: 10,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: COLORS.gray[300],
     borderRadius: 8,
-    fontSize: 16,
-    height: 80,
+    fontSize: 15,
+    height: 100,
     textAlignVertical: 'top',
+    color: COLORS.gray[800],
   },
   switchContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    paddingVertical: 8,
+    paddingVertical: 5,
   },
   switchText: {
-    fontSize: 16,
-    color: '#111827',
+    fontSize: 15,
+    color: COLORS.gray[800],
   },
   uploadCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.gray[50],
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
+    borderColor: COLORS.gray[200],
+    padding: 12,
+    marginBottom: 10,
+    shadowColor: COLORS.gray[900],
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.03,
     shadowRadius: 2,
     elevation: 1,
   },
@@ -429,81 +459,96 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   uploadTitle: {
-    fontWeight: 'medium',
-    color: '#111827',
+    fontWeight: '600',
+    color: COLORS.gray[800],
+    fontSize: 15,
   },
   uploadSubtitle: {
-    fontSize: 14,
-    color: '#808080',
+    fontSize: 12,
+    color: COLORS.gray[500],
   },
   uploadZone: {
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#D1D5DB',
+    borderColor: COLORS.gray[300],
     borderRadius: 8,
-    padding: 24,
+    padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
     textAlign: 'center',
+    backgroundColor: COLORS.gray[100],
   },
   uploadedFileContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 12,
-    backgroundColor: '#F0FDF4',
+    padding: 10,
+    backgroundColor: COLORS.success[100],
     borderRadius: 4,
     width: '100%',
   },
   uploadedFileText: {
     fontSize: 14,
-    color: '#16A34A',
+    color: COLORS.success[700],
   },
   uploadPrompt: {
     alignItems: 'center',
   },
   uploadPromptText: {
     fontSize: 14,
-    color: '#808080',
+    color: COLORS.gray[600],
     marginBottom: 8,
   },
   chooseFileButton: {
     fontSize: 14,
     fontWeight: 'medium',
-    color: '#00BFFF',
+    color: COLORS.info,
   },
   // Action Buttons
   actionButtonsContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 80,
+    marginHorizontal: 15,
+    paddingTop: 10,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.gray[200],
+    marginTop: 15,
   },
   actionButton: {
     width: '100%',
-    paddingVertical: 16,
-    borderRadius: 8,
+    paddingVertical: 14,
+    borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
-  grayBg: { 
-    backgroundColor: '#E5E7EB' 
+  primaryButton: {
+    backgroundColor: COLORS.primary,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 3,
   },
-  skyBlueBg: { 
-    backgroundColor: '#00BFFF' 
+  secondaryButton: {
+    backgroundColor: COLORS.info[50],
+    borderWidth: 1,
+    borderColor: COLORS.info[300],
   },
-  actionButtonTextGray: {
-    color: '#4B5563',
+  actionButtonTextPrimary: {
+    color: COLORS.white,
     fontSize: 16,
-    fontWeight: 'medium',
+    fontWeight: '600',
+    marginLeft: 8,
   },
-  actionButtonTextWhite: {
-    color: '#FFFFFF',
+  actionButtonTextSecondary: {
+    color: COLORS.info[700],
     fontSize: 16,
-    fontWeight: 'medium',
+    fontWeight: '600',
+    marginLeft: 8,
   },
   // Utility styles
   flexRowCenter: {

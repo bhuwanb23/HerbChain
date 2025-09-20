@@ -16,22 +16,28 @@ const LabReportView = ({ report, onBack }) => {
     );
   }
 
-  const renderDetail = (label, value) => {
+  const renderDetail = (label, value, iconName = null, valueColor = COLORS.gray[600]) => {
     if (value === null || value === undefined || value === '') return null;
     return (
       <View style={styles.detailRow}>
+        {iconName && <Ionicons name={iconName} size={16} color={COLORS.gray[500]} style={styles.detailIcon} />}
         <Text style={styles.detailLabel}>{label}:</Text>
-        <Text style={styles.detailValue}>{String(value)}</Text>
+        <Text style={[styles.detailValue, { color: valueColor }]}>{String(value)}</Text>
       </View>
     );
   };
 
-  const renderBooleanDetail = (label, value) => {
+  const renderBooleanDetail = (label, value, iconNameTrue = null, iconNameFalse = null) => {
     if (value === null || value === undefined) return null;
+    const icon = value ? iconNameTrue || "checkmark-circle" : iconNameFalse || "close-circle";
+    const color = value ? COLORS.success : COLORS.error;
+    const textValue = value ? 'Yes' : 'No';
+
     return (
       <View style={styles.detailRow}>
+        <Ionicons name={icon} size={16} color={color} style={styles.detailIcon} />
         <Text style={styles.detailLabel}>{label}:</Text>
-        <Text style={styles.detailValue}>{value ? 'Yes' : 'No'}</Text>
+        <Text style={[styles.detailValue, { color }]}>{textValue}</Text>
       </View>
     );
   };
@@ -40,38 +46,52 @@ const LabReportView = ({ report, onBack }) => {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
         <Pressable onPress={onBack} style={styles.backButtonTop}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+          <Ionicons name="arrow-back" size={24} color={COLORS.gray[700]} />
         </Pressable>
-        <Text style={styles.title}>Lab Report for Batch {report.batch_id}</Text>
+        <Text style={styles.title}>Lab Report</Text>
+      </View>
+
+      <View style={styles.statusSection}>
+        <View style={styles.statusBadgeContainer}>
+          <Ionicons 
+            name={report.certification ? "shield-checkmark" : "alert-circle"}
+            size={22}
+            color={report.certification ? COLORS.success : COLORS.error}
+            style={styles.statusMainIcon}
+          />
+          <Text style={[styles.statusText, { color: report.certification ? COLORS.success : COLORS.error }]}>
+            {report.certification ? 'CERTIFIED' : ''}
+          </Text>
+        </View>
+        {report.certification && renderDetail('Certification Level', report.certification_level, "star")} 
       </View>
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>General Information</Text>
-        {renderDetail('Report ID', report.report_id)}
-        {renderDetail('Lab ID', report.lab_id)}
-        {renderDetail('Test Type', report.test_type)}
-        {renderDetail('Test Date', report.test_date ? new Date(report.test_date).toDateString() : '')}
-        {renderDetail('Certification Issued', report.certification ? 'Yes' : 'No')}
-        {report.certification && renderDetail('Certification Level', report.certification_level)}
-        {renderDetail('Report URL', report.report_url)}
+        {renderDetail('Batch ID', report.batch_id, "cube-outline")}
+        {renderDetail('Report ID', report.report_id, "receipt-outline")}
+        {renderDetail('Lab ID', report.lab_id, "flask-outline")}
+        {renderDetail('Test Type', report.test_type, "build-outline")}
+        {renderDetail('Test Date', report.test_date ? new Date(report.test_date).toDateString() : '', "calendar-outline")}
+        {renderDetail('Report URL', report.report_url, "link-outline")}
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Test Results</Text>
-        {renderDetail('Purity Percentage', report.purity_percentage ? `${report.purity_percentage}%` : '')}
-        {renderDetail('Moisture Content', report.moisture_content ? `${report.moisture_content}%` : '')}
-        {renderDetail('Ash Content', report.ash_content ? `${report.ash_content}%` : '')}
-        {renderBooleanDetail('Heavy Metals Present', report.heavy_metals_present)}
-        {renderBooleanDetail('Pesticides Detected', report.pesticides_detected)}
-        {renderDetail('Active Compounds', report.active_compounds)}
-        {renderDetail('Potency Rating', report.potency_rating)}
+        <Text style={styles.cardTitle}>Detailed Test Results</Text>
+        {renderDetail('Purity Percentage', report.purity_percentage ? `${report.purity_percentage}%` : '', "color-fill-outline")}
+        {renderDetail('Moisture Content', report.moisture_content ? `${report.moisture_content}%` : '', "water-outline")}
+        {renderDetail('Ash Content', report.ash_content ? `${report.ash_content}%` : '', "thermometer-outline")}
+        {renderBooleanDetail('Heavy Metals Present', report.heavy_metals_present, "radio-button-on", "close-circle")}
+        {renderBooleanDetail('Pesticides Detected', report.pesticides_detected, "bug-outline", "close-circle")}
+        {renderDetail('Active Compounds', report.active_compounds, "leaf-outline")}
+        {renderDetail('Potency Rating', report.potency_rating, "flash-outline")}
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Summary & Notes</Text>
-        {renderDetail('Results Summary', report.results_summary)}
-        {renderDetail('Notes', report.notes)}
-        {renderDetail('Recommendations', report.recommendations)}
+        <Text style={styles.cardTitle}>Summary & Recommendations</Text>
+        {renderDetail('Results Summary', report.results_summary, "text-outline")}
+        {renderDetail('Notes', report.notes, "document-text-outline")}
+        {renderDetail('Recommendations', report.recommendations, "bulb-outline")}
       </View>
 
     </ScrollView>
@@ -84,17 +104,28 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gray[100],
   },
   contentContainer: {
-    padding: 20,
+    padding: 15,
+    paddingBottom: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
     position: 'relative',
+    backgroundColor: COLORS.white,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray[200],
+    shadowColor: COLORS.gray[900],
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   backButtonTop: {
-    position: 'absolute',
-    left: 0,
+    position: 'relative',
+    left: -10,
     padding: 10,
     zIndex: 10,
   },
@@ -105,16 +136,44 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
-  card: {
+  statusSection: {
     backgroundColor: COLORS.white,
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 20,
     marginBottom: 15,
+    alignItems: 'center',
     shadowColor: COLORS.gray[900],
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: COLORS.gray[200],
+  },
+  statusBadgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  statusMainIcon: {
+    marginRight: 10,
+  },
+  statusText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  card: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 10,
+    shadowColor: COLORS.gray[900],
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: COLORS.gray[200],
   },
   cardTitle: {
     fontSize: 18,
@@ -127,10 +186,13 @@ const styles = StyleSheet.create({
   },
   detailRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.gray[100],
+  },
+  detailIcon: {
+    marginRight: 10,
   },
   detailLabel: {
     fontSize: 15,
@@ -141,8 +203,8 @@ const styles = StyleSheet.create({
   detailValue: {
     fontSize: 15,
     color: COLORS.gray[600],
-    flex: 1.5,
     textAlign: 'right',
+    flex: 2,
   },
   errorText: {
     textAlign: 'center',

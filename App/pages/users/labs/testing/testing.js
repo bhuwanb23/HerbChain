@@ -3,19 +3,15 @@ import { View, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-nati
 import { useTesting } from './hooks';
 import { TestingResultsEntry, OfflineSync } from './components';
 import HerbChipList from './components/HerbChipList';
-import UploadedResults from './components/UploadedResults';
 import LabReportView from './components/LabReportView';
 
 const TestingPage = ({ navigation }) => {
   const {
-    currentTab,
-    archived,
     selectedBatch,
     isOffline,
     testResults,
     uploadedFiles,
     offlineData,
-    handleTabChange,
     handleBatchSelect,
     toggleOfflineMode,
     handleTestResultChange,
@@ -31,8 +27,7 @@ const TestingPage = ({ navigation }) => {
     herbs_with_reports,
     currentMode,
     selectedReport,
-    handleViewReport,
-    resetSelection, // New function to reset selected batch and mode
+    resetSelection,
   } = useTesting();
 
   const renderCurrentView = () => {
@@ -66,7 +61,6 @@ const TestingPage = ({ navigation }) => {
             items={herbs_with_reports}
             onPress={(h) => handleBatchSelect(h.batch_id, 'view')}
           />
-          {/* Optionally add the OfflineSync component here if needed for general lab overview */}
           {isOffline && <OfflineSync 
             offlineData={offlineData}
             onSync={handleSyncOfflineData}
@@ -81,7 +75,6 @@ const TestingPage = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Simplified header or title if needed */}
       <Text style={styles.pageTitle}>Lab Testing Dashboard</Text>
       {renderCurrentView()}
     </View>
@@ -108,47 +101,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 20,
-  },
-  // Remove old tab-related styles if no longer needed
-  tabContainer: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  tabButtons: {
-    flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-    padding: 4,
-  },
-  tabButton: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  activeTabButton: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  tabButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6B7280',
-  },
-  activeTabButtonText: {
-    color: '#8B5CF6',
-    fontWeight: '600',
   },
 });
 

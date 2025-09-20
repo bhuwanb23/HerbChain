@@ -9,6 +9,7 @@ import BatchesPage from './batches/batches';
 import TestingPage from './testing/testing';
 import ReportsPage from './reports/reports';
 import ProfilePage from './profile/profile';
+import { COLORS } from './testing/constants'; // Import COLORS
 
 const LabsPage = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -48,8 +49,8 @@ const LabsPage = ({ navigation }) => {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar style="dark" backgroundColor="#FFFFFF" />
-      
+      <StatusBar style="dark" backgroundColor={COLORS.white} />
+
       {/* Header */}
       <View style={styles.header}>
         <Header
@@ -58,12 +59,12 @@ const LabsPage = ({ navigation }) => {
           onNotificationPress={handleLabNavigation}
         />
       </View>
-      
+
       {/* Main Content Area */}
       <View style={styles.content}>
         {renderCurrentPage()}
       </View>
-      
+
       {/* Bottom Navbar */}
       <View style={styles.bottomNavbar}>
         <BottomNavbar
@@ -81,28 +82,28 @@ const LabsPage = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: COLORS.gray[100],
   },
   header: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
+    backgroundColor: COLORS.white,
+    shadowColor: COLORS.gray[900],
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
     zIndex: 1000,
   },
   content: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: COLORS.gray[100],
   },
   bottomNavbar: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
+    backgroundColor: COLORS.white,
+    shadowColor: COLORS.gray[900],
     shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
     zIndex: 1000,
   },
 });

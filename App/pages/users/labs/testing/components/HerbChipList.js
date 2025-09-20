@@ -9,6 +9,7 @@ const HerbChipList = ({ title, items, onPress }) => {
         {items.map((h) => (
           <TouchableOpacity key={h.batch_id} onPress={() => onPress(h)} style={styles.badge}>
             <Text style={styles.badgeText}>{h.batch_id}</Text>
+            <Text style={styles.speciesNameText}>{h.species_name}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -19,8 +20,20 @@ const HerbChipList = ({ title, items, onPress }) => {
 const styles = StyleSheet.create({
   title: { fontSize: 16, fontWeight: '800', color: '#111827', marginBottom: 8 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  badge: { backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#E5E7EB', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
-  badgeText: { color: '#374151', fontWeight: '700' },
+  badge: { 
+    backgroundColor: '#F3F4F6', 
+    borderWidth: 1, 
+    borderColor: '#E5E7EB', 
+    paddingHorizontal: 10, 
+    paddingVertical: 6, 
+    borderRadius: 999, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    minWidth: 100, 
+    height: 50, // Fixed height for better alignment
+  },
+  badgeText: { color: '#374151', fontWeight: '700', fontSize: 12 },
+  speciesNameText: { color: '#6B7280', fontSize: 10, marginTop: 4 },
 });
 
 export default HerbChipList;
