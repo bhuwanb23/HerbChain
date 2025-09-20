@@ -2,23 +2,12 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const BatchDetailsModal = ({ isVisible, onClose, batch }) => {
-  if (!batch) {
+const HerbDetailsModal = ({ isVisible, onClose, herb, getStatusStyle }) => {
+  if (!herb) {
     return null;
   }
 
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case 'Approved':
-        return { backgroundColor: '#dcfce7', color: '#16a34a' }; // green-100, green-700
-      case 'Pending':
-        return { backgroundColor: '#fef9c3', color: '#a16207' }; // yellow-100, yellow-700
-      default:
-        return { backgroundColor: '#e5e7eb', color: '#4b5563' }; // gray-200, gray-600
-    }
-  };
-
-  const statusStyle = getStatusStyle(batch.status);
+  const statusStyle = getStatusStyle(herb.status);
 
   return (
     <Modal
@@ -30,28 +19,28 @@ const BatchDetailsModal = ({ isVisible, onClose, batch }) => {
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Batch Details</Text>
+            <Text style={styles.modalTitle}>Herb Details</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Icon name="close" size={24} color="#6b7280" />
             </TouchableOpacity>
           </View>
 
           <ScrollView contentContainerStyle={styles.modalBody}>
-            <View style={styles.batchSummaryCard}>
-              <View style={styles.batchSummaryHeader}>
-                <Text style={styles.batchSummaryId}>{batch.id}</Text>
+            <View style={styles.herbSummaryCard}>
+              <View style={styles.herbSummaryHeader}>
+                <Text style={styles.herbSummaryId}>{herb.id}</Text>
                 <View style={[styles.statusBadge, { backgroundColor: statusStyle.backgroundColor }]}>
-                  <Text style={[styles.statusText, { color: statusStyle.color }]}>{batch.status}</Text>
+                  <Text style={[styles.statusText, { color: statusStyle.color }]}>{herb.status}</Text>
                 </View>
               </View>
-              <Text style={styles.batchSummaryName}>{batch.name}</Text>
-              <Text style={styles.batchSummaryFarmer}>{batch.farmer}</Text>
+              <Text style={styles.herbSummaryName}>{herb.name}</Text>
+              <Text style={styles.herbSummaryFarmer}>{herb.farmer}</Text>
             </View>
 
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>Certifications</Text>
               <View style={styles.certificationsList}>
-                {batch.certifications && batch.certifications.length > 0 ? ( batch.certifications.map((cert, index) => (
+                {herb.certifications && herb.certifications.length > 0 ? ( herb.certifications.map((cert, index) => (
                   <View key={index} style={styles.certificationItem}>
                     <Icon name="verified" size={16} color="#22c55e" />
                     <Text style={styles.certificationText}>{cert}</Text>
@@ -68,14 +57,14 @@ const BatchDetailsModal = ({ isVisible, onClose, batch }) => {
                     <Icon name="thermostat" size={20} color="#3b82f6" />
                     <Text style={styles.storageConditionLabel}>Temperature</Text>
                   </View>
-                  <Text style={styles.storageConditionValue}>{batch.temperature}</Text>
+                  <Text style={styles.storageConditionValue}>{herb.temperature}</Text>
                 </View>
                 <View style={styles.storageConditionCard}>
                   <View style={styles.storageConditionItem}>
                     <Icon name="water-drop" size={20} color="#14b8a6" />
                     <Text style={styles.storageConditionLabel}>Humidity</Text>
                   </View>
-                  <Text style={styles.storageConditionValue}>{batch.humidity}</Text>
+                  <Text style={styles.storageConditionValue}>{herb.humidity}</Text>
                 </View>
               </View>
             </View>
@@ -85,16 +74,22 @@ const BatchDetailsModal = ({ isVisible, onClose, batch }) => {
               <View style={styles.traceabilityList}>
                 <View style={styles.traceabilityItem}>
                   <Text style={styles.traceabilityLabel}>Origin:</Text>
-                  <Text style={styles.traceabilityValue}>{batch.origin}</Text>
+                  <Text style={styles.traceabilityValue}>{herb.origin}</Text>
                 </View>
                 <View style={styles.traceabilityItem}>
                   <Text style={styles.traceabilityLabel}>Harvest Date:</Text>
-                  <Text style={styles.traceabilityValue}>{batch.harvestDate}</Text>
+                  <Text style={styles.traceabilityValue}>{herb.harvestDate}</Text>
                 </View>
                 <View style={styles.traceabilityItem}>
                   <Text style={styles.traceabilityLabel}>Weight:</Text>
-                  <Text style={styles.traceabilityValue}>{batch.weight}</Text>
+                  <Text style={styles.traceabilityValue}>{herb.weight}</Text>
                 </View>
+                {herb.orderDate && (
+                  <View style={styles.traceabilityItem}>
+                    <Text style={styles.traceabilityLabel}>Order Date:</Text>
+                    <Text style={styles.traceabilityValue}>{new Date(herb.orderDate).toLocaleDateString()}</Text>
+                  </View>
+                )}
               </View>
             </View>
 
@@ -140,19 +135,19 @@ const styles = StyleSheet.create({
   modalBody: {
     paddingBottom: 20,
   },
-  batchSummaryCard: {
+  herbSummaryCard: {
     backgroundColor: '#f9fafb',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
   },
-  batchSummaryHeader: {
+  herbSummaryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  batchSummaryId: {
+  herbSummaryId: {
     fontSize: 14,
     fontWeight: '500',
     color: '#111827',
@@ -166,13 +161,13 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '600',
   },
-  batchSummaryName: {
+  herbSummaryName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#111827',
     marginBottom: 4,
   },
-  batchSummaryFarmer: {
+  herbSummaryFarmer: {
     fontSize: 14,
     color: '#4b5563',
   },
@@ -259,4 +254,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BatchDetailsModal;
+export default HerbDetailsModal;
