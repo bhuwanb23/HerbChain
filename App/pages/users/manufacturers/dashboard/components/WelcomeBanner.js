@@ -1,38 +1,51 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const WelcomeBanner = ({ manufacturerName }) => {
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={['#dcfce7', '#a7f3d0']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
+      <Icon name="waving-hand" size={30} color="#16a34a" style={styles.icon} />
       <Text style={styles.welcomeText}>Hello {manufacturerName},</Text>
       <Text style={styles.overviewText}>here’s today’s overview.</Text>
-    </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#DCFCE7',
-    padding: 16,
-    borderRadius: 12,
+    padding: 20,
+    borderRadius: 15,
     width: '100%',
     alignItems: 'center',
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: 25,
+    shadowColor: '#16a34a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  icon: {
+    marginRight: 10,
   },
   welcomeText: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '800',
     color: '#16a34a',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   overviewText: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#374151',
+    fontWeight: '500',
   },
 });
 
