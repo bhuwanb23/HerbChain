@@ -8,7 +8,7 @@ import FarmerMainPage from '../pages/users/farmers/FarmerMainPage';
 import TransportersPage from '../pages/users/transporters/transporters';
 import LabsPage from '../pages/users/labs/labs';
 import AdminDashboard from '../pages/users/admins/dashboard/dashboard';
-import ConsumerDashboard from '../pages/users/consumers/dashboard/dashboard';
+import { ConsumerMainPage } from '../pages/users/consumers';
 
 const Stack = createStackNavigator();
 
@@ -70,17 +70,10 @@ const AppNavigator = () => {
         />
         <Stack.Screen 
           name="ConsumerDashboard" 
-          component={ConsumerDashboard}
+          component={ConsumerMainPage}
           options={{
             title: 'Consumer Dashboard',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: '#22c55e',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
+            headerShown: false,
           }}
         />
       </Stack.Navigator>
