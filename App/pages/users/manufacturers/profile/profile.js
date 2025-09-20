@@ -1,34 +1,77 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ProfileHeader from './components/ProfileHeader';
+import ProfileTabNavigation from './components/ProfileTabNavigation';
+import BusinessInfoTab from './components/BusinessInfoTab';
+import AuthorizedStaffTab from './components/AuthorizedStaffTab';
+import PaymentsBillingTab from './components/PaymentsBillingTab';
+import LanguageSecurityTab from './components/LanguageSecurityTab';
+import HelpSupportTab from './components/HelpSupportTab';
+import useProfileData from './hooks/useProfileData';
 
 const ProfilePage = () => {
+  const {
+    activeTab,
+    setActiveTab,
+    profileData,
+    handleProfileUpdate,
+    staffData,
+    removeStaff,
+    transactionHistory,
+    languageOptions,
+    biometricLoginEnabled,
+    toggleBiometricLogin,
+    twoFactorAuthEnabled,
+    toggleTwoFactorAuth,
+    supportLinks,
+  } = useProfileData();
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'business':
+        return <BusinessInfoTab profileData={profileData} onUpdateProfile={handleProfileUpdate} />;
+      case 'staff':
+        return <AuthorizedStaffTab staffData={staffData} onRemoveStaff={removeStaff} />;
+      case 'billing':
+        return <PaymentsBillingTab transactionHistory={transactionHistory} />;
+      case 'security':
+        return (
+          <LanguageSecurityTab
+            languageOptions={languageOptions}
+            selectedLanguage={profileData.language || 'en'} // Assuming language is part of profileData
+            onSelectLanguage={(lang) => handleProfileUpdate({ language: lang })}
+            biometricLoginEnabled={biometricLoginEnabled}
+            toggleBiometricLogin={toggleBiometricLogin}
+            twoFactorAuthEnabled={twoFactorAuthEnabled}
+            toggleTwoFactorAuth={toggleTwoFactorAuth}
+          />
+        );
+      case 'support':
+        return <HelpSupportTab supportLinks={supportLinks} />;
+      default:
+        return <BusinessInfoTab profileData={profileData} onUpdateProfile={handleProfileUpdate} />;
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Manufacturer Profile & Settings</Text>
-      <Text style={styles.subtitle}>Manage your business profile, staff, payments, and app settings.</Text>
-      {/* Further components for Business Profile, Authorized Staff, etc., will be added here */}
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <ProfileHeader />
+      <ProfileTabNavigation activeTab={activeTab} onSelectTab={setActiveTab} />
+      <ScrollView style={styles.contentScroll} showsVerticalScrollIndicator={false}>
+        {renderTabContent()}
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#f9fafb', // bg-gray-50
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#22c55e',
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
+  contentScroll: {
+    flex: 1,
   },
 });
 
