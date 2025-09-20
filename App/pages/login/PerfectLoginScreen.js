@@ -83,6 +83,9 @@ const PerfectLoginScreen = ({ navigation }) => {
       case 'Consumer':
         navigation.navigate('ConsumerDashboard');
         break;
+      case 'Manufacturer':
+        navigation.navigate('ManufacturerMainPage');
+        break;
       default:
         Alert.alert('Success', `Login successful as ${selectedRole}`);
     }

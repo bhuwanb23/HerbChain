@@ -8,6 +8,7 @@ const RoleSelection = ({ onRoleSelect, selectedRole }) => {
     { id: 'Lab', name: 'Lab', icon: '🔬' },
     { id: 'AYUSH/Admin', name: 'AYUSH/Admin', icon: '🏛️' },
     { id: 'Consumer', name: 'Consumer', icon: '👥' },
+    { id: 'Manufacturer', name: 'Manufacturer', icon: '🏭' },
   ];
 
   return (

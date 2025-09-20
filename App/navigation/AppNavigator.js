@@ -9,6 +9,7 @@ import TransportersPage from '../pages/users/transporters/transporters';
 import LabsPage from '../pages/users/labs/labs';
 import AdminDashboard from '../pages/users/admins/dashboard/dashboard';
 import ConsumerDashboard from '../pages/users/consumers/dashboard/dashboard';
+import ManufacturerMainPage from '../pages/users/manufacturers/ManufacturerMainPage';
 
 const Stack = createStackNavigator();
 
@@ -81,6 +82,14 @@ const AppNavigator = () => {
             headerTitleStyle: {
               fontWeight: 'bold',
             },
+          }}
+        />
+        <Stack.Screen 
+          name="ManufacturerMainPage" 
+          component={ManufacturerMainPage}
+          options={{
+            title: 'Manufacturer Dashboard',
+            headerShown: false,
           }}
         />
       </Stack.Navigator>
