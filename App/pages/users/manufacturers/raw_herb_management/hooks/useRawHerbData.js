@@ -1,13 +1,40 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { AVAILABLE_HERBS, ORDERED_HERBS_MOCK, SCANNED_HERB_DETAILS_MOCK } from '../constants/rawHerbConstants';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const useRawHerbData = () => {
+  const navigation = useNavigation();
+  const route = useRoute();
+
   const [activeSection, setActiveSection] = useState('available_herbs'); // 'available_herbs', 'ordered_herbs', 'scanned_details'
   const [availableHerbs, setAvailableHerbs] = useState(AVAILABLE_HERBS);
   const [orderedHerbs, setOrderedHerbs] = useState(ORDERED_HERBS_MOCK);
   const [scannedHerbDetails, setScannedHerbDetails] = useState(null);
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
   const [selectedHerbForDetails, setSelectedHerbForDetails] = useState(null);
+
+  useEffect(() => {
+    if (route.params?.scannedData) {
+      const { scannedData } = route.params;
+      // In a real app, you'd fetch herb details based on scannedData
+      // For now, let's mock finding a herb or create a new scanned detail
+      const foundHerb = orderedHerbs.find(herb => herb.id === scannedData) || AVAILABLE_HERBS.find(herb => herb.id === scannedData);
+
+      if (foundHerb) {
+        setScannedHerbDetails(foundHerb);
+        setActiveSection('scanned_details');
+        openDetailsModal(foundHerb);
+      } else {
+        // If not found, use a mock for demonstration or handle as a new entry
+        const mockScannedHerb = { ...SCANNED_HERB_DETAILS_MOCK[0], id: scannedData, name: `Unknown Herb (${scannedData})` };
+        setScannedHerbDetails(mockScannedHerb);
+        setActiveSection('scanned_details');
+        openDetailsModal(mockScannedHerb);
+      }
+      // Clear the scannedData param after processing to prevent re-triggering
+      navigation.setParams({ scannedData: undefined });
+    }
+  }, [route.params?.scannedData, orderedHerbs, availableHerbs]);
 
   const openDetailsModal = (herb) => {
     setSelectedHerbForDetails(herb);
@@ -30,12 +57,7 @@ const useRawHerbData = () => {
   };
 
   const handleScanQRCode = () => {
-    // Simulate QR code scan - in a real app, this would open a camera scanner
-    // For now, use a mock scanned herb detail
-    const mockScannedHerb = SCANNED_HERB_DETAILS_MOCK[0];
-    setScannedHerbDetails(mockScannedHerb);
-    setActiveSection('scanned_details');
-    openDetailsModal(mockScannedHerb); // Open modal for scanned item
+    navigation.navigate('QRScannerScreen');
   };
 
   const clearScannedDetails = () => {

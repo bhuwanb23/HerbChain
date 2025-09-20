@@ -6,8 +6,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 const OrderedHerbList = ({
   orderedHerbs,
   getStatusStyle,
-  onScanQRCode,
   onItemPress,
+  onScanQRCode, // Accept onScanQRCode prop
 }) => {
   return (
     <View style={styles.container}>
@@ -19,7 +19,8 @@ const OrderedHerbList = ({
             <OrderedHerbItem
               herb={item}
               getStatusStyle={getStatusStyle}
-              onPress={() => onItemPress(item)} // Pass item to onPress
+              onPress={() => onItemPress(item)}
+              onScanQRCode={onScanQRCode} // Pass onScanQRCode to OrderedHerbItem
             />
           )}
           contentContainerStyle={styles.herbListContent}
@@ -34,10 +35,6 @@ const OrderedHerbList = ({
           </TouchableOpacity>
         </View>
       )}
-      <TouchableOpacity style={styles.scanQRButtonFixed} onPress={onScanQRCode}>
-        <Icon name="qr-code-scanner" size={24} color="#fff" />
-        <Text style={styles.scanQRButtonTextFixed}>Scan QR Code</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -49,7 +46,7 @@ const styles = StyleSheet.create({
   },
   herbListContent: {
     paddingHorizontal: 16,
-    paddingBottom: 80, // Adjust padding to prevent button overlap
+    paddingBottom: 16,
     rowGap: 12,
   },
   emptyListContainer: {
@@ -72,28 +69,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   orderNowButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  scanQRButtonFixed: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#059669', // primary
-    borderRadius: 50,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    columnGap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  scanQRButtonTextFixed: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '500',

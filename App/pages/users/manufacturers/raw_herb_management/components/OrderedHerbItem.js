@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const OrderedHerbItem = ({ herb, getStatusStyle, onPress }) => {
+const OrderedHerbItem = ({ herb, getStatusStyle, onPress, onScanQRCode }) => {
   const statusStyle = getStatusStyle(herb.status);
 
   return (
@@ -32,6 +32,10 @@ const OrderedHerbItem = ({ herb, getStatusStyle, onPress }) => {
           </View>
         )}
       </View>
+      <TouchableOpacity style={styles.scanButton} onPress={() => onScanQRCode(herb.id)}>
+        <Icon name="qr-code-scanner" size={20} color="#fff" />
+        <Text style={styles.scanButtonText}>Scan QR</Text>
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 };
@@ -48,6 +52,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
     padding: 16,
+    marginBottom: 10, // Added margin bottom for spacing between items
   },
   header: {
     flexDirection: 'row',
@@ -78,6 +83,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     columnGap: 16, // space-x-4 equivalent
+    marginBottom: 16,
   },
   detailItem: {
     flexDirection: 'row',
@@ -87,6 +93,21 @@ const styles = StyleSheet.create({
   detailText: {
     fontSize: 12,
     color: '#4b5563',
+  },
+  scanButton: {
+    backgroundColor: '#059669', // primary
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    columnGap: 8,
+    marginTop: 10,
+  },
+  scanButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 

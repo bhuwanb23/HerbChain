@@ -10,6 +10,7 @@ import LabsPage from '../pages/users/labs/labs';
 import AdminDashboard from '../pages/users/admins/dashboard/dashboard';
 import ConsumerDashboard from '../pages/users/consumers/dashboard/dashboard';
 import ManufacturerMainPage from '../pages/users/manufacturers/ManufacturerMainPage';
+import QRScannerScreen from '../pages/users/manufacturers/raw_herb_management/QRScannerScreen';
 
 const Stack = createStackNavigator();
 
@@ -89,6 +90,14 @@ const AppNavigator = () => {
           component={ManufacturerMainPage}
           options={{
             title: 'Manufacturer Dashboard',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="QRScannerScreen"
+          component={QRScannerScreen}
+          options={{
+            title: 'Scan QR Code',
             headerShown: false,
           }}
         />

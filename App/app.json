@@ -52,7 +52,8 @@
           "locationAlwaysAndWhenInUsePermission": "Allow HerbChain to access your location to tag herb batches.",
           "isIosBackgroundLocationEnabled": false
         }
-      ]
+      ],
+      "expo-barcode-scanner"
     ]
   }
 }

@@ -24,7 +24,7 @@ const RawHerbManagementPage = () => {
     orderedHerbs,
     scannedHerbDetails,
     handleOrderHerb,
-    handleScanQRCode,
+    handleScanQRCode, // Get handleScanQRCode from hook
     clearScannedDetails,
     getStatusStyle,
     isDetailsModalVisible,
@@ -49,7 +49,7 @@ const RawHerbManagementPage = () => {
           <OrderedHerbList
             orderedHerbs={orderedHerbs}
             getStatusStyle={getStatusStyle}
-            onScanQRCode={handleScanQRCode}
+            onScanQRCode={handleScanQRCode} // Pass handleScanQRCode
             onItemPress={openDetailsModal} // Pass openDetailsModal
           />
         );
