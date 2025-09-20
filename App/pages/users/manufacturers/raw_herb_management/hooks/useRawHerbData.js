@@ -26,12 +26,30 @@ const useRawHerbData = () => {
       console.log('API Response data:', data); // Log the raw API response
       const herbs = data.herbs || [];
       setApprovedHerbs(herbs);
-      const processedHerbs = herbs.map(herb => ({
-        id: herb.batch_id, // Ensure id is batch_id
-        name: herb.species_name,
-        ...herb, // Keep all herb data
-        status: herb.quality_status // Ensure status is quality_status
+      
+      const herbsWithReports = await Promise.all(herbs.map(async (herb) => {
+        try {
+          const reportsResponse = await fetch(`${API_BASE_URL}/api/v1/herbs/${herb.batch_id}/lab_report`);
+          if (!reportsResponse.ok) {
+            console.warn(`Failed to fetch lab reports for batch ${herb.batch_id}: ${reportsResponse.status}`);
+            return { ...herb, labReports: [] };
+          }
+          const reportsData = await reportsResponse.json();
+          return { ...herb, labReports: reportsData.reports || [] };
+        } catch (reportError) {
+          console.error(`Error fetching lab reports for batch ${herb.batch_id}:`, reportError);
+          return { ...herb, labReports: [] };
+        }
       }));
+
+      const processedHerbs = herbsWithReports
+        .filter(herb => herb.labReports && herb.labReports.length > 0) // Filter for herbs with lab reports
+        .map(herb => ({
+          id: herb.batch_id, // Ensure id is batch_id
+          name: herb.species_name,
+          ...herb, // Keep all herb data
+          status: herb.quality_status // Ensure status is quality_status
+        }));
       console.log('Processed availableHerbs:', processedHerbs); // Log the processed herbs
       setAvailableHerbs(processedHerbs);
     } catch (error) {

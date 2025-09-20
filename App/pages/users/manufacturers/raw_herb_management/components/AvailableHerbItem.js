@@ -4,7 +4,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const AvailableHerbItem = ({ herb, onOrderHerb, getStatusStyle, onPress }) => {
   const statusStyle = getStatusStyle(herb.status);
-  const hasCertification = herb.latest_lab_report?.certification === true;
+  const latestLabReport = herb.labReports && herb.labReports.length > 0 ? herb.labReports[0] : null;
+  const hasCertification = latestLabReport?.certification === true;
 
   return (
     <TouchableOpacity style={styles.cardContainer} onPress={() => onPress(herb)}>
@@ -28,7 +29,7 @@ const AvailableHerbItem = ({ herb, onOrderHerb, getStatusStyle, onPress }) => {
         </View>
       </View>
 
-      {herb.latest_lab_report && (
+      {latestLabReport && (
         <View style={styles.labReportSection}>
           <View style={styles.labReportHeader}>
             <Icon name="flask" size={18} color={'#006B38'} style={styles.mr2} />
@@ -38,7 +39,7 @@ const AvailableHerbItem = ({ herb, onOrderHerb, getStatusStyle, onPress }) => {
             {hasCertification ? (
               <View style={styles.detailItem}>
                 <Icon name="verified" size={16} color={'green'} />
-                <Text style={[styles.detailText, { color: 'darkgreen' }]}>Certified ({herb.latest_lab_report.certification_level || 'Standard'})</Text>
+                <Text style={[styles.detailText, { color: 'darkgreen' }]}>Certified ({latestLabReport.certification_level || 'Standard'})</Text>
               </View>
             ) : (
               <View style={styles.detailItem}>
@@ -46,13 +47,13 @@ const AvailableHerbItem = ({ herb, onOrderHerb, getStatusStyle, onPress }) => {
                 <Text style={[styles.detailText, { color: 'darkred' }]}>Not Certified</Text>
               </View>
             )}
-            {herb.latest_lab_report.purity_percentage && (
+            {latestLabReport.purity_percentage && (
               <View style={styles.detailItem}>
                 <Icon name="science" size={16} color={'gray'} />
-                <Text style={styles.detailText}>Purity: {herb.latest_lab_report.purity_percentage}%</Text>
+                <Text style={styles.detailText}>Purity: {latestLabReport.purity_percentage}%</Text>
               </View>
             )}
-            {herb.latest_lab_report.heavy_metals_present && (
+            {latestLabReport.heavy_metals_present && (
               <View style={styles.detailItem}>
                 <Icon name="warning" size={16} color={'red'} />
                 <Text style={[styles.detailText, { color: 'darkred' }]}>Heavy Metals: Yes</Text>

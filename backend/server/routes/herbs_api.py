@@ -776,7 +776,7 @@ def list_lab_reports(batch_id):
 def get_approved_herbs_for_manufacturer():
     """List herbs with quality_status 'approved' or 'rejected', along with their latest lab report, for manufacturers."""
     try:
-        herbs = Herb.query.filter(Herb.quality_status.in_(['approved', 'rejected'])).order_by(Herb.updated_at.desc()).all()
+        herbs = Herb.query.filter(Herb.quality_status.in_(['approved', 'rejected', 'pending_pickup', 'in_transit', 'testing', 'manufacturer_ordered_pending_pickup'])).order_by(Herb.updated_at.desc()).all()
         response = []
         for herb in herbs:
             herb_dict = herb.to_dict()
