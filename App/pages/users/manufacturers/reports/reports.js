@@ -1,34 +1,68 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ReportsHeader from './components/ReportsHeader';
+import DateFilters from './components/DateFilters';
+import ReportsSummaryCards from './components/ReportsSummaryCards';
+import ProductionTrendsChart from './components/ProductionTrendsChart';
+import ProductLineage from './components/ProductLineage';
+import ComplianceDocuments from './components/ComplianceDocuments';
+import GenerateReportButtons from './components/GenerateReportButtons';
+import useReportsData from './hooks/useReportsData';
 
 const ReportsPage = () => {
+  const {
+    selectedDateFilter,
+    setSelectedDateFilter,
+    currentDateRange,
+    filteredSummaryCards,
+    productionTrendsData,
+    productLineageData,
+    complianceDocuments,
+    handleUploadDocument,
+    handleDownloadDocument,
+    generateReportOptions,
+    handleGenerateReport,
+  } = useReportsData();
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Reports & Compliance</Text>
-      <Text style={styles.subtitle}>Access production reports, herb lineage, and manage regulatory compliance.</Text>
-      {/* Further components for Production Reports, Herb Lineage Reports, etc., will be added here */}
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <ReportsHeader />
+      <ScrollView style={styles.contentScroll} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+        <DateFilters
+          selectedDateFilter={selectedDateFilter}
+          onSelectDateFilter={setSelectedDateFilter}
+          currentDateRange={currentDateRange}
+        />
+        <ReportsSummaryCards summaryCardsData={filteredSummaryCards} />
+        <ProductionTrendsChart monthlyProductionData={productionTrendsData} />
+        <ProductLineage lineageData={productLineageData} />
+        <ComplianceDocuments
+          complianceDocumentsData={complianceDocuments}
+          onUploadDocument={handleUploadDocument}
+          onDownloadDocument={handleDownloadDocument}
+        />
+        <GenerateReportButtons
+          generateOptions={generateReportOptions}
+          onGenerateReport={handleGenerateReport}
+        />
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#f9fafb', // bg-gray-50
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#22c55e',
-    marginBottom: 10,
+  contentScroll: {
+    flex: 1,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
+  contentContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 24, // py-6
+    rowGap: 24, // space-y-6
   },
 });
 
