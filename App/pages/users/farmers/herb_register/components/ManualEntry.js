@@ -3,9 +3,11 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Animat
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Picker } from '@react-native-picker/picker';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 import { HERB_SPECIES, CULTIVATION_METHODS } from '../constants';
 
 const ManualEntry = ({ formData, updateFormData }) => {
+  const { t } = useGlobalTranslation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
 
@@ -104,8 +106,8 @@ const ManualEntry = ({ formData, updateFormData }) => {
           <Icon name="edit" size={24} color="white" />
         </LinearGradient>
         <View style={styles.titleContainer}>
-          <Text style={styles.sectionTitle}>Manual Entry</Text>
-          <Text style={styles.sectionSubtitle}>Fill in the details manually</Text>
+          <Text style={styles.sectionTitle}>{t.herbRegister.manualEntry}</Text>
+          <Text style={styles.sectionSubtitle}>{t.herbRegister.fillDetailsManually}</Text>
         </View>
       </View>
 
@@ -115,13 +117,13 @@ const ManualEntry = ({ formData, updateFormData }) => {
           <View style={styles.fieldContainer}>
             <View style={styles.labelContainer}>
               <Icon name="eco" size={18} color="#22c55e" />
-              <Text style={styles.label}>Species Name</Text>
+              <Text style={styles.label}>{t.herbRegister.speciesName}</Text>
             </View>
             {renderPicker(
               HERB_SPECIES,
               formData.species,
               (value) => updateFormData('species', value),
-              'Select herb species...',
+              t.herbRegister.selectHerbSpecies,
               'eco'
             )}
           </View>
@@ -130,7 +132,7 @@ const ManualEntry = ({ formData, updateFormData }) => {
           <View style={styles.rowContainer}>
             <View style={styles.halfField}>
               {renderInput(
-                'Weight',
+                t.herbRegister.weight,
                 formData.weight,
                 (value) => updateFormData('weight', value),
                 '0.0',
@@ -142,7 +144,7 @@ const ManualEntry = ({ formData, updateFormData }) => {
 
             <View style={styles.halfField}>
               {renderInput(
-                'Harvest Date',
+                t.herbRegister.harvestDateLabel,
                 formData.harvestDate,
                 (value) => updateFormData('harvestDate', value),
                 'YYYY-MM-DD',
@@ -156,13 +158,13 @@ const ManualEntry = ({ formData, updateFormData }) => {
           <View style={styles.fieldContainer}>
             <View style={styles.labelContainer}>
               <Icon name="agriculture" size={18} color="#22c55e" />
-              <Text style={styles.label}>Cultivation Method</Text>
+              <Text style={styles.label}>{t.herbRegister.cultivationMethod}</Text>
             </View>
             {renderPicker(
               CULTIVATION_METHODS,
               formData.cultivationMethod,
               (value) => updateFormData('cultivationMethod', value),
-              'Select cultivation method...',
+              t.herbRegister.selectCultivationMethod,
               'agriculture'
             )}
           </View>
@@ -179,7 +181,7 @@ const ManualEntry = ({ formData, updateFormData }) => {
           >
             <View style={styles.labelContainer}>
               <Icon name="note" size={18} color="#22c55e" />
-              <Text style={styles.label}>Additional Notes (Optional)</Text>
+              <Text style={styles.label}>{t.herbRegister.additionalNotesOptional}</Text>
             </View>
             <View style={styles.inputContainer}>
               <LinearGradient
@@ -192,7 +194,7 @@ const ManualEntry = ({ formData, updateFormData }) => {
                   style={[styles.input, styles.textArea]}
                   value={formData.notes}
                   onChangeText={(value) => updateFormData('notes', value)}
-                  placeholder="Any additional information about the harvest..."
+                  placeholder={t.herbRegister.additionalNotesPlaceholder}
                   placeholderTextColor="#9ca3af"
                   multiline
                   numberOfLines={4}

@@ -1,7 +1,10 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const GreetingSection = () => {
+  const { t } = useGlobalTranslation();
+  
   return (
     <View style={styles.container}>
       <View style={styles.profileSection}>
@@ -10,21 +13,21 @@ const GreetingSection = () => {
           style={styles.profileImage}
         />
         <View style={styles.profileInfo}>
-          <Text style={styles.greeting}>Hello Ramesh!</Text>
-          <Text style={styles.subtitle}>Here's your progress today</Text>
+          <Text style={styles.greeting}>{t.farmerDashboard.greeting}</Text>
+          <Text style={styles.subtitle}>{t.farmerDashboard.subtitle}</Text>
         </View>
       </View>
 
       <View style={styles.summaryCard}>
-        <Text style={styles.summaryTitle}>Today's Harvest Summary</Text>
+        <Text style={styles.summaryTitle}>{t.farmerDashboard.todayHarvestSummary}</Text>
         <View style={styles.summaryGrid}>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryValue}>12.5</Text>
-            <Text style={styles.summaryLabel}>kg Harvested</Text>
+            <Text style={styles.summaryLabel}>{t.farmerDashboard.kgHarvested}</Text>
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryValue}>₹2,850</Text>
-            <Text style={styles.summaryLabel}>Revenue</Text>
+            <Text style={styles.summaryLabel}>{t.farmerDashboard.revenue}</Text>
           </View>
         </View>
       </View>

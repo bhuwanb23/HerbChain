@@ -1,0 +1,175 @@
+export const hi = {
+  // Login Section
+  login: {
+    appName: 'हर्बचेन',
+    tagline: 'जड़ों से उपचार तक,\nविश्वास के साथ ट्रेस किया गया',
+    mobileEmailLabel: 'मोबाइल/ईमेल',
+    mobileEmailPlaceholder: 'मोबाइल या ईमेल दर्ज करें',
+    passwordLabel: 'पासवर्ड',
+    passwordPlaceholder: 'पासवर्ड दर्ज करें',
+    forgotPassword: 'पासवर्ड भूल गए?',
+    loginButton: 'लॉगिन',
+    selectRole: 'अपनी भूमिका चुनें',
+    roles: {
+      farmer: 'किसान',
+      transporter: 'परिवहनकर्ता',
+      lab: 'प्रयोगशाला',
+      ayushAdmin: 'आयुष/व्यवस्थापक',
+      consumer: 'उपभोक्ता',
+      manufacturer: 'निर्माता',
+    },
+    noAccount: 'खाता नहीं है? ',
+    signUp: 'साइन अप',
+    privacyPolicy: 'गोपनीयता नीति',
+    termsOfService: 'सेवा की शर्तें',
+    quickLoginTitle: 'त्वरित लॉगिन',
+    quickLoginText: 'बस एक भूमिका चुनें और संबंधित डैशबोर्ड पर जाने के लिए लॉगिन पर क्लिक करें।\nपरीक्षण के लिए ईमेल/पासवर्ड की आवश्यकता नहीं!',
+    selectLanguage: 'भाषा चुनें',
+    errorTitle: 'त्रुटि',
+    selectRoleFirst: 'कृपया पहले एक भूमिका चुनें',
+    successTitle: 'सफलता',
+    loginSuccessful: 'लॉगिन सफल रहा',
+    signUpAlert: 'साइन अप स्क्रीन पर जाएं',
+    forgotPasswordAlert: 'पासवर्ड भूल गए स्क्रीन पर जाएं',
+    privacyPolicyAlert: 'गोपनीयता नीति पर जाएं',
+    termsOfServiceAlert: 'सेवा की शर्तों पर जाएं',
+  },
+
+  // Farmer Dashboard Section
+  farmerDashboard: {
+    greeting: 'नमस्ते रमेश!',
+    subtitle: 'यहाँ आज की आपकी प्रगति है',
+    todayHarvestSummary: 'आज की फसल का सारांश',
+    kgHarvested: 'किलो कटाई',
+    revenue: 'आय',
+    
+    // Stats Cards
+    activeBatches: 'सक्रिय बैच',
+    pendingPayments: 'लंबित भुगतान',
+    notifications: 'सूचनाएं',
+    trainingTips: 'प्रशिक्षण सुझाव',
+    
+    // Action Buttons
+    myHerbBatches: 'मेरे जड़ी-बूटी बैच',
+    salesRevenue: 'बिक्री और आय',
+    harvestSchedule: 'फसल कार्यक्रम',
+    trainingAndTips: 'प्रशिक्षण और सुझाव',
+    
+    // Activity Feed
+    recentActivity: 'हाल की गतिविधि',
+    activities: {
+      basilReady: 'तुलसी बैच #B-2024-03 कटाई के लिए तैयार',
+      paymentReceived: 'भुगतान प्राप्त: ₹4,200',
+      mintWatering: 'पुदीना बैच को पानी की जरूरत',
+    },
+    timeAgo: {
+      hoursAgo: 'घंटे पहले',
+      dayAgo: 'दिन पहले',
+    },
+    
+    // Navigation Alerts
+    navigationAlerts: {
+      herbBatches: 'जड़ी-बूटी बैच पर जाएं',
+      salesRevenue: 'बिक्री और आय पर जाएं',
+      harvestSchedule: 'फसल कार्यक्रम पर जाएं',
+      trainingTips: 'प्रशिक्षण सुझाव पर जाएं',
+      navigation: 'नेवीगेशन',
+    },
+  },
+
+  // Herb Register Section
+  herbRegister: {
+    // Screen Titles
+    herbRegistration: 'जड़ी-बूटी पंजीकरण',
+    herbDetails: 'जड़ी-बूटी विवरण',
+    herbList: 'जड़ी-बूटी सूची',
+    
+    // Help and Alerts
+    help: 'सहायता',
+    helpMessage: 'यह स्क्रीन आपको AI पहचान और मैन्युअल एंट्री का उपयोग करके नए जड़ी-बूटी बैच पंजीकृत करने में मदद करती है। अपनी जड़ी-बूटी की फोटो लें और AI स्वचालित रूप से इसे पहचान लेगा, फिर शेष विवरण भरें।',
+    ok: 'ठीक है',
+    
+    // Herb Details Labels
+    herbPhoto: 'जड़ी-बूटी फोटो',
+    qrCode: 'QR कोड',
+    qrCodeText: 'बैच प्रामाणिकता सत्यापित करने के लिए इस QR कोड को स्कैन करें',
+    batchId: 'बैच ID',
+    species: 'प्रजाति',
+    weight: 'वजन',
+    harvestDate: 'फसल की तारीख',
+    cultivation: 'खेती',
+    status: 'स्थिति',
+    created: 'बनाया गया',
+    updated: 'अपडेट किया गया',
+    location: 'स्थान',
+    notes: 'नोट्स',
+    
+    // Herb List
+    pendingPickup: 'पिकअप लंबित',
+    pendingPickupSubtitle: 'परिवहनकर्ता पिकअप के लिए तैयार',
+    accepted: 'स्वीकृत',
+    acceptedSubtitle: 'आपकी सूची में अन्य बैच',
+    
+    // AI Recognition
+    aiRecognition: 'AI पहचान',
+    takePhoto: 'फोटो लें',
+    processing: 'प्रसंस्करण...',
+    analyzing: 'जड़ी-बूटी छवि का विश्लेषण...',
+    detected: 'पहचाना गया',
+    confidence: 'विश्वास',
+    
+    // Manual Entry
+    manualEntry: 'मैन्युअल एंट्री',
+    enterDetails: 'जड़ी-बूटी विवरण मैन्युअल रूप से दर्ज करें',
+    speciesName: 'प्रजाति का नाम',
+    weightKg: 'वजन (किलो)',
+    cultivationMethod: 'खेती की विधि',
+    harvestDateLabel: 'फसल की तारीख',
+    remarks: 'टिप्पणी',
+    
+    // Bottom Actions
+    generateBatch: 'बैच जेनरेट करें',
+    saveBatch: 'बैच सेव करें',
+    viewQR: 'QR कोड देखें',
+    complete: 'पूर्ण',
+    
+    // Progress Steps
+    step1: 'फोटो',
+    step2: 'विवरण',
+    step3: 'पूर्ण',
+    
+    // Status Values
+    pending: 'लंबित',
+    approved: 'अनुमोदित',
+    rejected: 'अस्वीकृत',
+    testing: 'परीक्षण',
+    
+    // Cultivation Methods
+    organic: 'जैविक',
+    conventional: 'पारंपरिक',
+    hydroponic: 'हाइड्रोपोनिक',
+    greenhouse: 'ग्रीनहाउस',
+    
+    // Additional UI Text
+    uploadFromGallery: 'गैलरी से अपलोड करें',
+    useExistingPhoto: 'मौजूदा फोटो का उपयोग करें',
+    aiSuccess: 'AI सफलता',
+    aiWillIdentify: 'AI स्वचालित रूप से जड़ी-बूटी की पहचान करेगा',
+    
+    // Manual Entry Form
+    fillDetailsManually: 'विवरण मैन्युअल रूप से भरें',
+    selectHerbSpecies: 'जड़ी-बूटी प्रजाति चुनें...',
+    selectCultivationMethod: 'खेती की विधि चुनें...',
+    additionalNotesOptional: 'अतिरिक्त नोट्स (वैकल्पिक)',
+    additionalNotesPlaceholder: 'फसल के बारे में कोई अतिरिक्त जानकारी...',
+    
+    // Bottom Actions
+    batchIdGenerated: 'बैच ID जेनरेट हो गया!',
+    generating: 'जेनरेट कर रहे हैं...',
+    generateBatchId: 'बैच ID जेनरेट करें',
+    batchReadyForTracking: 'आपका बैच ट्रैकिंग के लिए तैयार है',
+    createUniqueIdentifier: 'ट्रैकिंग के लिए एक अनूठा पहचानकर्ता बनाएं',
+    
+    // Progress Bar - using simple concatenation instead
+  },
+};

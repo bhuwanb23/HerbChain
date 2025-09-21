@@ -1,17 +1,17 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useTranslation } from '../language/TranslationContext';
+import { useGlobalTranslation } from '../../../language/GlobalTranslationContext';
 
 const FooterLinks = ({ onPrivacyPolicy, onTermsOfService }) => {
-  const { t } = useTranslation();
+  const { t } = useGlobalTranslation();
   
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={onPrivacyPolicy}>
-        <Text style={styles.link}>{t.privacyPolicy}</Text>
+        <Text style={styles.link}>{t.login.privacyPolicy}</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={onTermsOfService}>
-        <Text style={styles.link}>{t.termsOfService}</Text>
+        <Text style={styles.link}>{t.login.termsOfService}</Text>
       </TouchableOpacity>
     </View>
   );

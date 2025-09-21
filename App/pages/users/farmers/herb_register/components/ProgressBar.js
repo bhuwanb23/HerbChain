@@ -2,9 +2,11 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 import { REGISTRATION_STEPS, STEP_LABELS } from '../constants';
 
 const ProgressBar = ({ currentStep }) => {
+  const { t } = useGlobalTranslation();
   const progressPercentage = (currentStep / REGISTRATION_STEPS.COMPLETE) * 100;
   const animatedWidth = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -63,7 +65,9 @@ const ProgressBar = ({ currentStep }) => {
               Step {currentStep} of {REGISTRATION_STEPS.COMPLETE}
             </Text>
             <Text style={styles.stepLabel}>
-              {STEP_LABELS[currentStep]}
+              {currentStep === 1 ? t.herbRegister.step1 : 
+               currentStep === 2 ? t.herbRegister.step2 : 
+               t.herbRegister.step3}
             </Text>
           </View>
         </View>

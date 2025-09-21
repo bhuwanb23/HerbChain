@@ -4,10 +4,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const { width } = Dimensions.get('window');
 
 const AIRecognition = ({ isProcessing, aiDetection, onCameraPress }) => {
+  const { t } = useGlobalTranslation();
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -203,8 +205,8 @@ const AIRecognition = ({ isProcessing, aiDetection, onCameraPress }) => {
             <Animated.View style={{ transform: [{ rotate: spin }] }}>
               <Icon name="refresh" size={40} color="white" />
             </Animated.View>
-            <Text style={styles.buttonTitle}>Processing...</Text>
-            <Text style={styles.buttonSubtitle}>AI is analyzing the image</Text>
+            <Text style={styles.buttonTitle}>{t.herbRegister.processing}</Text>
+            <Text style={styles.buttonSubtitle}>{t.herbRegister.analyzing}</Text>
             <View style={styles.loadingDots}>
               <View style={[styles.dot, styles.dot1]} />
               <View style={[styles.dot, styles.dot2]} />
@@ -230,11 +232,11 @@ const AIRecognition = ({ isProcessing, aiDetection, onCameraPress }) => {
             style={styles.gradientButton}
           >
             <Icon name="check-circle" size={40} color="white" />
-            <Text style={styles.buttonTitle}>{aiDetection.species} Detected!</Text>
-            <Text style={styles.buttonSubtitle}>Confidence: {aiDetection.confidence}%</Text>
+            <Text style={styles.buttonTitle}>{aiDetection.species} {t.herbRegister.detected}!</Text>
+            <Text style={styles.buttonSubtitle}>{t.herbRegister.confidence}: {aiDetection.confidence}%</Text>
             <View style={styles.successBadge}>
               <Icon name="star" size={16} color="#fbbf24" />
-              <Text style={styles.badgeText}>AI Success</Text>
+              <Text style={styles.badgeText}>{t.herbRegister.aiSuccess}</Text>
             </View>
           </LinearGradient>
         </Animated.View>
@@ -258,8 +260,8 @@ const AIRecognition = ({ isProcessing, aiDetection, onCameraPress }) => {
               <Icon name="camera-alt" size={40} color="white" />
               <View style={styles.cameraRing} />
             </View>
-            <Text style={styles.buttonTitle}>Take Photo</Text>
-            <Text style={styles.buttonSubtitle}>AI will identify the herb automatically</Text>
+            <Text style={styles.buttonTitle}>{t.herbRegister.takePhoto}</Text>
+            <Text style={styles.buttonSubtitle}>{t.herbRegister.aiWillIdentify}</Text>
             <View style={styles.scanLines}>
               <View style={styles.scanLine} />
               <View style={styles.scanLine} />
@@ -282,8 +284,8 @@ const AIRecognition = ({ isProcessing, aiDetection, onCameraPress }) => {
             <View style={styles.cameraIconContainer}>
               <Icon name="photo-library" size={28} color="#111827" />
             </View>
-            <Text style={[styles.buttonTitle, { color: '#111827' }]}>Upload from Gallery</Text>
-            <Text style={[styles.buttonSubtitle, { color: '#374151' }]}>Use existing photo</Text>
+            <Text style={[styles.buttonTitle, { color: '#111827' }]}>{t.herbRegister.uploadFromGallery}</Text>
+            <Text style={[styles.buttonSubtitle, { color: '#374151' }]}>{t.herbRegister.useExistingPhoto}</Text>
           </LinearGradient>
         </TouchableOpacity>
 

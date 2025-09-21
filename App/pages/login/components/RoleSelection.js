@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useTranslation } from '../language/TranslationContext';
+import { useGlobalTranslation } from '../../../language/GlobalTranslationContext';
 
 const RoleSelection = ({ onRoleSelect, selectedRole }) => {
-  const { t } = useTranslation();
+  const { t } = useGlobalTranslation();
   
   const roles = [
-    { id: 'Farmer', name: t.roles.farmer, icon: '🌱' },
-    { id: 'Transporter', name: t.roles.transporter, icon: '🚚' },
-    { id: 'Lab', name: t.roles.lab, icon: '🔬' },
-    { id: 'AYUSH/Admin', name: t.roles.ayushAdmin, icon: '🏛️' },
-    { id: 'Consumer', name: t.roles.consumer, icon: '👥' },
-    { id: 'Manufacturer', name: t.roles.manufacturer, icon: '🏭' },
+    { id: 'Farmer', name: t.login.roles.farmer, icon: '🌱' },
+    { id: 'Transporter', name: t.login.roles.transporter, icon: '🚚' },
+    { id: 'Lab', name: t.login.roles.lab, icon: '🔬' },
+    { id: 'AYUSH/Admin', name: t.login.roles.ayushAdmin, icon: '🏛️' },
+    { id: 'Consumer', name: t.login.roles.consumer, icon: '👥' },
+    { id: 'Manufacturer', name: t.login.roles.manufacturer, icon: '🏭' },
   ];
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{t.selectRole}</Text>
+      <Text style={styles.title}>{t.login.selectRole}</Text>
       <View style={styles.rolesContainer}>
         {roles.map((role) => (
           <TouchableOpacity

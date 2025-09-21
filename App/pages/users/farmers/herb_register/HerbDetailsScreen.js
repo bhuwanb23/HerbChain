@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
 
 const Row = ({ label, value }) => (
   <View style={styles.rowBetween}>
@@ -10,6 +11,8 @@ const Row = ({ label, value }) => (
 );
 
 const HerbDetailsScreen = ({ batch, onBack }) => {
+  const { t } = useGlobalTranslation();
+  
   if (!batch) return null;
   return (
     <View style={{ flex: 1 }}>
@@ -17,13 +20,13 @@ const HerbDetailsScreen = ({ batch, onBack }) => {
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
           <Icon name="arrow-back" size={22} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Herb Details</Text>
+        <Text style={styles.headerTitle}>{t.herbRegister.herbDetails}</Text>
       </View>
       <ScrollView contentContainerStyle={styles.container}>
         {/* Herb Photo */}
         {batch.image_url && (
           <View style={styles.card}>
-            <Text style={[styles.label, { marginBottom: 8 }]}>Herb Photo</Text>
+            <Text style={[styles.label, { marginBottom: 8 }]}>{t.herbRegister.herbPhoto}</Text>
             <View style={styles.imageContainer}>
               <Image 
                 source={{ uri: batch.image_url }} 
@@ -37,7 +40,7 @@ const HerbDetailsScreen = ({ batch, onBack }) => {
         {/* QR Code */}
         {(batch.qr_code || batch.active_qr) && batch.status !== 'Accepted' && batch.quality_status !== 'testing' && (
           <View style={styles.card}>
-            <Text style={[styles.label, { marginBottom: 8 }]}>QR Code</Text>
+            <Text style={[styles.label, { marginBottom: 8 }]}>{t.herbRegister.qrCode}</Text>
             <View style={styles.qrContainer}>
               <Image 
                 source={{ uri: batch.qr_code || batch.active_qr }} 
@@ -45,24 +48,24 @@ const HerbDetailsScreen = ({ batch, onBack }) => {
                 resizeMode="contain"
               />
             </View>
-            <Text style={styles.qrText}>Scan this QR code to verify batch authenticity</Text>
+            <Text style={styles.qrText}>{t.herbRegister.qrCodeText}</Text>
           </View>
         )}
 
         <View style={styles.card}>
-          <Row label="Batch ID" value={batch.batch_id} />
-          <Row label="Species" value={batch.species_entered || batch.species_detected} />
-          <Row label="Weight" value={batch.weight_kg ? `${batch.weight_kg} kg` : ''} />
-          <Row label="Harvest Date" value={batch.harvest_date} />
-          <Row label="Cultivation" value={batch.cultivation_method} />
-          <Row label="Status" value={batch.status} />
-          <Row label="Created" value={batch.created_at} />
-          <Row label="Updated" value={batch.updated_at} />
-          <Row label="Location" value={batch.geo_location} />
+          <Row label={t.herbRegister.batchId} value={batch.batch_id} />
+          <Row label={t.herbRegister.species} value={batch.species_entered || batch.species_detected} />
+          <Row label={t.herbRegister.weight} value={batch.weight_kg ? `${batch.weight_kg} kg` : ''} />
+          <Row label={t.herbRegister.harvestDate} value={batch.harvest_date} />
+          <Row label={t.herbRegister.cultivation} value={batch.cultivation_method} />
+          <Row label={t.herbRegister.status} value={batch.status} />
+          <Row label={t.herbRegister.created} value={batch.created_at} />
+          <Row label={t.herbRegister.updated} value={batch.updated_at} />
+          <Row label={t.herbRegister.location} value={batch.geo_location} />
         </View>
         {batch.remarks ? (
           <View style={styles.card}>
-            <Text style={[styles.label, { marginBottom: 6 }]}>Notes</Text>
+            <Text style={[styles.label, { marginBottom: 6 }]}>{t.herbRegister.notes}</Text>
             <Text style={styles.value}>{batch.remarks}</Text>
           </View>
         ) : null}

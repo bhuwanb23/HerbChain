@@ -1,37 +1,40 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const ActivityFeed = () => {
+  const { t } = useGlobalTranslation();
+  
   const activities = [
     {
       id: 1,
       icon: '✅',
       iconBg: '#DCFCE7',
       iconColor: '#22c55e',
-      title: 'Basil batch #B-2024-03 ready for harvest',
-      time: '2 hours ago',
+      title: t.farmerDashboard.activities.basilReady,
+      time: `2 ${t.farmerDashboard.timeAgo.hoursAgo}`,
     },
     {
       id: 2,
       icon: '₹',
       iconBg: '#DBEAFE',
       iconColor: '#3B82F6',
-      title: 'Payment received: ₹4,200',
-      time: '5 hours ago',
+      title: t.farmerDashboard.activities.paymentReceived,
+      time: `5 ${t.farmerDashboard.timeAgo.hoursAgo}`,
     },
     {
       id: 3,
       icon: '⚠️',
       iconBg: '#FED7AA',
       iconColor: '#F97316',
-      title: 'Mint batch needs watering',
-      time: '1 day ago',
+      title: t.farmerDashboard.activities.mintWatering,
+      time: `1 ${t.farmerDashboard.timeAgo.dayAgo}`,
     },
   ];
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Recent Activity</Text>
+      <Text style={styles.title}>{t.farmerDashboard.recentActivity}</Text>
       <View style={styles.activitiesList}>
         {activities.map((activity) => (
           <View key={activity.id} style={styles.activityItem}>

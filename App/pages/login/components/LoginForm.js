@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { useTranslation } from '../language/TranslationContext';
+import { useGlobalTranslation } from '../../../language/GlobalTranslationContext';
 
 const LoginForm = ({ onLogin, onForgotPassword }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { t } = useTranslation();
+  const { t } = useGlobalTranslation();
 
   const handleLogin = () => {
     onLogin && onLogin({ email, password });
@@ -19,11 +19,11 @@ const LoginForm = ({ onLogin, onForgotPassword }) => {
   return (
     <View style={styles.container}>
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>{t.mobileEmailLabel}</Text>
+        <Text style={styles.label}>{t.login.mobileEmailLabel}</Text>
         <View style={styles.inputWrapper}>
           <TextInput
             style={styles.input}
-            placeholder={t.mobileEmailPlaceholder}
+            placeholder={t.login.mobileEmailPlaceholder}
             placeholderTextColor="#9CA3AF"
             value={email}
             onChangeText={setEmail}
@@ -35,11 +35,11 @@ const LoginForm = ({ onLogin, onForgotPassword }) => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>{t.passwordLabel}</Text>
+        <Text style={styles.label}>{t.login.passwordLabel}</Text>
         <View style={styles.inputWrapper}>
           <TextInput
             style={styles.input}
-            placeholder={t.passwordPlaceholder}
+            placeholder={t.login.passwordPlaceholder}
             placeholderTextColor="#9CA3AF"
             value={password}
             onChangeText={setPassword}
@@ -60,11 +60,11 @@ const LoginForm = ({ onLogin, onForgotPassword }) => {
         style={styles.forgotPassword}
         onPress={onForgotPassword}
       >
-        <Text style={styles.forgotPasswordText}>{t.forgotPassword}</Text>
+        <Text style={styles.forgotPasswordText}>{t.login.forgotPassword}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.loginButtonText}>{t.loginButton}</Text>
+        <Text style={styles.loginButtonText}>{t.login.loginButton}</Text>
       </TouchableOpacity>
     </View>
   );

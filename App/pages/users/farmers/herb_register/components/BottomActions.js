@@ -2,9 +2,11 @@ import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 import { REGISTRATION_STEPS } from '../constants';
 
 const BottomActions = ({ currentStep, onGenerateBatch, isProcessing, batchId }) => {
+  const { t } = useGlobalTranslation();
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
@@ -47,7 +49,7 @@ const BottomActions = ({ currentStep, onGenerateBatch, isProcessing, batchId }) 
             <View style={styles.successRing} />
           </View>
           <View style={styles.textContainer}>
-            <Text style={styles.buttonText}>Batch ID Generated!</Text>
+            <Text style={styles.buttonText}>{t.herbRegister.batchIdGenerated}</Text>
             {batchId ? (
               <Text style={styles.batchIdText} numberOfLines={1}>{batchId}</Text>
             ) : null}
@@ -64,7 +66,7 @@ const BottomActions = ({ currentStep, onGenerateBatch, isProcessing, batchId }) 
         </View>
         <View style={styles.textContainer}>
           <Text style={styles.buttonText}>
-            {isProcessing ? 'Generating...' : 'Generate Batch ID'}
+            {isProcessing ? t.herbRegister.generating : t.herbRegister.generateBatchId}
           </Text>
           {/* <Text style={styles.buttonSubtext}>
             {isProcessing ? 'Creating unique identifier' : 'Tap to create tracking ID'}
@@ -115,8 +117,8 @@ const BottomActions = ({ currentStep, onGenerateBatch, isProcessing, batchId }) 
         <Icon name="info" size={16} color="#6b7280" />
         <Text style={styles.helpText}>
           {currentStep === REGISTRATION_STEPS.COMPLETE 
-            ? 'Your batch is ready for tracking' 
-            : 'create a unique identifier for tracking'
+            ? t.herbRegister.batchReadyForTracking
+            : t.herbRegister.createUniqueIdentifier
           }
         </Text>
       </View>

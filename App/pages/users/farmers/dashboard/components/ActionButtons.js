@@ -1,33 +1,36 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const ActionButtons = ({ onActionPress }) => {
+  const { t } = useGlobalTranslation();
+  
   const actions = [
     {
       id: 'herb-batches',
       icon: '🌱',
-      title: 'My Herb Batches',
+      title: t.farmerDashboard.myHerbBatches,
       iconBg: '#DCFCE7',
       iconColor: '#22c55e',
     },
     {
       id: 'sales-revenue',
       icon: '📈',
-      title: 'Sales & Revenue',
+      title: t.farmerDashboard.salesRevenue,
       iconBg: '#DBEAFE',
       iconColor: '#3B82F6',
     },
     {
       id: 'harvest-schedule',
       icon: '📅',
-      title: 'Harvest Schedule',
+      title: t.farmerDashboard.harvestSchedule,
       iconBg: '#FEF3C7',
       iconColor: '#F59E0B',
     },
     {
       id: 'training-tips',
       icon: '🎓',
-      title: 'Training & Tips',
+      title: t.farmerDashboard.trainingAndTips,
       iconBg: '#F3E8FF',
       iconColor: '#A855F7',
     },

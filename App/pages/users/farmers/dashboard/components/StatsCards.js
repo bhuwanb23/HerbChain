@@ -1,12 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const StatsCards = () => {
+  const { t } = useGlobalTranslation();
+  
   const stats = [
-    { icon: '🌿', value: '8', label: 'Active Batches', color: '#22c55e' },
-    { icon: '💰', value: '3', label: 'Pending Payments', color: '#F97316' },
-    { icon: '🔔', value: '5', label: 'Notifications', color: '#3B82F6' },
-    { icon: '📚', value: '2', label: 'Training Tips', color: '#A855F7' },
+    { icon: '🌿', value: '8', label: t.farmerDashboard.activeBatches, color: '#22c55e' },
+    { icon: '💰', value: '3', label: t.farmerDashboard.pendingPayments, color: '#F97316' },
+    { icon: '🔔', value: '5', label: t.farmerDashboard.notifications, color: '#3B82F6' },
+    { icon: '📚', value: '2', label: t.farmerDashboard.trainingTips, color: '#A855F7' },
   ];
 
   return (

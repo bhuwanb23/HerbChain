@@ -2,6 +2,7 @@ import React from 'react';
 import { View, ScrollView, StyleSheet, Alert, Image, TouchableOpacity, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
 import { useHerbRegistration } from './hooks';
 import {
   ProgressBar,
@@ -11,6 +12,7 @@ import {
 } from './components';
 
 const HerbRegisterScreen = ({ navigation, onBack }) => {
+  const { t } = useGlobalTranslation();
   const {
     currentStep,
     isProcessing,
@@ -24,9 +26,9 @@ const HerbRegisterScreen = ({ navigation, onBack }) => {
 
   const handleHelpPress = () => {
     Alert.alert(
-      'Help',
-      'This screen helps you register new herb batches using AI recognition and manual entry. Take a photo of your herb and the AI will automatically identify it, then fill in the remaining details.',
-      [{ text: 'OK' }]
+      t.herbRegister.help,
+      t.herbRegister.helpMessage,
+      [{ text: t.herbRegister.ok }]
     );
   };
 
@@ -41,7 +43,7 @@ const HerbRegisterScreen = ({ navigation, onBack }) => {
         <TouchableOpacity onPress={() => (onBack ? onBack() : (navigation?.goBack && navigation.goBack()))} style={styles.backBtn}>
           <Icon name="arrow-back" size={22} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Herb Registration</Text>
+        <Text style={styles.headerTitle}>{t.herbRegister.herbRegistration}</Text>
       </View>
       <ProgressBar currentStep={currentStep} />
       

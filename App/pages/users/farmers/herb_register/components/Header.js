@@ -2,8 +2,10 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const Header = ({ navigation, onHelpPress }) => {
+  const { t } = useGlobalTranslation();
   const handleBackPress = () => {
     navigation.goBack();
   };
@@ -19,7 +21,7 @@ const Header = ({ navigation, onHelpPress }) => {
           <Icon name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         
-        <Text style={styles.title}>Herb Registration</Text>
+        <Text style={styles.title}>{t.herbRegister.herbRegistration}</Text>
         
         <TouchableOpacity
           style={styles.iconButton}

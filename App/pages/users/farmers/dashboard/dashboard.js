@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
+import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
 import {
   GreetingSection,
   StatsCards,
@@ -8,22 +9,24 @@ import {
 } from './components';
 
 const Dashboard = ({ navigation }) => {
+  const { t } = useGlobalTranslation();
+  
   const handleActionPress = (actionId) => {
     switch (actionId) {
       case 'herb-batches':
-        Alert.alert('Navigation', 'Navigate to Herb Batches');
+        Alert.alert(t.farmerDashboard.navigationAlerts.navigation, t.farmerDashboard.navigationAlerts.herbBatches);
         break;
       case 'sales-revenue':
-        Alert.alert('Navigation', 'Navigate to Sales & Revenue');
+        Alert.alert(t.farmerDashboard.navigationAlerts.navigation, t.farmerDashboard.navigationAlerts.salesRevenue);
         break;
       case 'harvest-schedule':
-        Alert.alert('Navigation', 'Navigate to Harvest Schedule');
+        Alert.alert(t.farmerDashboard.navigationAlerts.navigation, t.farmerDashboard.navigationAlerts.harvestSchedule);
         break;
       case 'training-tips':
-        Alert.alert('Navigation', 'Navigate to Training & Tips');
+        Alert.alert(t.farmerDashboard.navigationAlerts.navigation, t.farmerDashboard.navigationAlerts.trainingTips);
         break;
       default:
-        Alert.alert('Navigation', `Navigate to ${actionId}`);
+        Alert.alert(t.farmerDashboard.navigationAlerts.navigation, `Navigate to ${actionId}`);
     }
   };
 

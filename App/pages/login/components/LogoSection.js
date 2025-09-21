@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useTranslation } from '../language/TranslationContext';
+import { useGlobalTranslation } from '../../../language/GlobalTranslationContext';
 
 const LogoSection = () => {
-  const { t } = useTranslation();
+  const { t } = useGlobalTranslation();
   
   return (
     <View style={styles.container}>
@@ -12,9 +12,9 @@ const LogoSection = () => {
           <Text style={styles.leafIcon}>🌿</Text>
         </View>
       </View>
-      <Text style={styles.title}>{t.appName}</Text>
+      <Text style={styles.title}>{t.login.appName}</Text>
       <Text style={styles.tagline}>
-        {t.tagline}
+        {t.login.tagline}
       </Text>
     </View>
   );

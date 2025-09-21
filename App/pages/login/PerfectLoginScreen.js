@@ -22,7 +22,7 @@ import {
   SignUpSection,
   FooterLinks,
 } from './components';
-import { TranslationProvider, useTranslation } from './language/TranslationContext';
+import { GlobalTranslationProvider, useGlobalTranslation } from '../../language/GlobalTranslationContext';
 
 const { width } = Dimensions.get('window');
 
@@ -34,7 +34,7 @@ const LoginScreenContent = ({ navigation }) => {
   const slideAnim = useRef(new Animated.Value(50)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
-  const { t, changeLanguage } = useTranslation();
+  const { t, changeLanguage } = useGlobalTranslation();
 
   useEffect(() => {
     // Start login screen animations
@@ -61,17 +61,17 @@ const LoginScreenContent = ({ navigation }) => {
   const translateRole = (roleId) => {
     switch (roleId) {
       case 'Farmer':
-        return t.roles.farmer;
+        return t.login.roles.farmer;
       case 'Transporter':
-        return t.roles.transporter;
+        return t.login.roles.transporter;
       case 'Lab':
-        return t.roles.lab;
+        return t.login.roles.lab;
       case 'AYUSH/Admin':
-        return t.roles.ayushAdmin;
+        return t.login.roles.ayushAdmin;
       case 'Consumer':
-        return t.roles.consumer;
+        return t.login.roles.consumer;
       case 'Manufacturer':
-        return t.roles.manufacturer;
+        return t.login.roles.manufacturer;
       default:
         return roleId;
     }
@@ -80,7 +80,7 @@ const LoginScreenContent = ({ navigation }) => {
   const handleLogin = (credentials) => {
     // Quick login - just check if role is selected
     if (!selectedRole) {
-      Alert.alert(t.errorTitle, t.selectRoleFirst);
+      Alert.alert(t.login.errorTitle, t.login.selectRoleFirst);
       return;
     }
     
@@ -105,12 +105,12 @@ const LoginScreenContent = ({ navigation }) => {
         navigation.navigate('ManufacturerMainPage');
         break;
       default:
-        Alert.alert(t.successTitle, `${t.loginSuccessful} ${translateRole(selectedRole)}`);
+        Alert.alert(t.login.successTitle, `${t.login.loginSuccessful} ${translateRole(selectedRole)}`);
     }
   };
 
   const handleSignUp = () => {
-    Alert.alert(t.signUp, t.signUpAlert);
+    Alert.alert(t.login.signUp, t.login.signUpAlert);
   };
 
   const handleLanguageChange = (selectedLang) => {
@@ -118,15 +118,15 @@ const LoginScreenContent = ({ navigation }) => {
   };
 
   const handleForgotPassword = () => {
-    Alert.alert(t.forgotPassword, t.forgotPasswordAlert);
+    Alert.alert(t.login.forgotPassword, t.login.forgotPasswordAlert);
   };
 
   const handlePrivacyPolicy = () => {
-    Alert.alert(t.privacyPolicy, t.privacyPolicyAlert);
+    Alert.alert(t.login.privacyPolicy, t.login.privacyPolicyAlert);
   };
 
   const handleTermsOfService = () => {
-    Alert.alert(t.termsOfService, t.termsOfServiceAlert);
+    Alert.alert(t.login.termsOfService, t.login.termsOfServiceAlert);
   };
 
   return (
@@ -174,9 +174,9 @@ const LoginScreenContent = ({ navigation }) => {
 
           {/* Quick Login Info */}
           <View style={styles.demoCredentialsContainer}>
-            <Text style={styles.demoCredentialsTitle}>{t.quickLoginTitle}</Text>
+            <Text style={styles.demoCredentialsTitle}>{t.login.quickLoginTitle}</Text>
             <Text style={styles.demoCredentialsText}>
-              {t.quickLoginText}
+              {t.login.quickLoginText}
             </Text>
           </View>
 
@@ -205,11 +205,7 @@ const PerfectLoginScreen = ({ navigation }) => {
     return <PerfectIntro onAnimationComplete={handleIntroComplete} />;
   }
 
-  return (
-    <TranslationProvider>
-      <LoginScreenContent navigation={navigation} />
-    </TranslationProvider>
-  );
+  return <LoginScreenContent navigation={navigation} />;
 };
 
 const styles = StyleSheet.create({

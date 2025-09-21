@@ -2,9 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, FlatList, RefreshControl, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 import HerbDetailsItem from './HerbDetailsItem';
 
 const HerbList = ({ data, loading, onRefresh, onAdd, onItemPress }) => {
+  const { t } = useGlobalTranslation();
   useEffect(() => {}, [data]);
 
   const { pendingPickup, others } = useMemo(() => {
@@ -19,13 +21,13 @@ const HerbList = ({ data, loading, onRefresh, onAdd, onItemPress }) => {
   const listData = tab === 'pending' ? pendingPickup : others;
   const header = tab === 'pending' ? (
     <LinearGradient colors={["#059669", "#10B981"]} start={{x:0,y:0}} end={{x:1,y:1}} style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>Pending Pickup</Text>
-      <Text style={styles.sectionSubtitle}>Ready for transporter pickup</Text>
+      <Text style={styles.sectionTitle}>{t.herbRegister.pendingPickup}</Text>
+      <Text style={styles.sectionSubtitle}>{t.herbRegister.pendingPickupSubtitle}</Text>
     </LinearGradient>
   ) : (
     <LinearGradient colors={["#0EA5E9", "#38BDF8"]} start={{x:0,y:0}} end={{x:1,y:1}} style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>Accepted</Text>
-      <Text style={styles.sectionSubtitle}>Other batches in your list</Text>
+      <Text style={styles.sectionTitle}>{t.herbRegister.accepted}</Text>
+      <Text style={styles.sectionSubtitle}>{t.herbRegister.acceptedSubtitle}</Text>
     </LinearGradient>
   );
 
@@ -34,13 +36,13 @@ const HerbList = ({ data, loading, onRefresh, onAdd, onItemPress }) => {
       <View style={styles.tabsWrap}>
         <View style={styles.tabs}> 
           <TouchableOpacity style={[styles.tab, tab === 'pending' && styles.activeTab]} onPress={() => setTab('pending')} activeOpacity={0.9}>
-            <Text style={[styles.tabText, tab === 'pending' && styles.activeTabText]}>Pending Pickup</Text>
+            <Text style={[styles.tabText, tab === 'pending' && styles.activeTabText]}>{t.herbRegister.pendingPickup}</Text>
             <View style={[styles.countPill, tab === 'pending' && styles.countPillActive]}>
               <Text style={[styles.countText, tab === 'pending' && styles.countTextActive]}>{counts.pending}</Text>
             </View>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.tab, tab === 'accepted' && styles.activeTab]} onPress={() => setTab('accepted')} activeOpacity={0.9}>
-            <Text style={[styles.tabText, tab === 'accepted' && styles.activeTabText]}>Accepted</Text>
+            <Text style={[styles.tabText, tab === 'accepted' && styles.activeTabText]}>{t.herbRegister.accepted}</Text>
             <View style={[styles.countPill, tab === 'accepted' && styles.countPillActive]}>
               <Text style={[styles.countText, tab === 'accepted' && styles.countTextActive]}>{counts.accepted}</Text>
             </View>

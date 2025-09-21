@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { GlobalTranslationProvider } from '../language/GlobalTranslationContext';
 
 // Import screens
 import PerfectLoginScreen from '../pages/login/PerfectLoginScreen';
@@ -17,14 +18,15 @@ const Stack = createStackNavigator();
 
 const AppNavigator = () => {
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="Login"
-        screenOptions={{
-          headerShown: false,
-          gestureEnabled: true,
-        }}
-      >
+    <GlobalTranslationProvider>
+      <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName="Login"
+          screenOptions={{
+            headerShown: false,
+            gestureEnabled: true,
+          }}
+        >
         <Stack.Screen 
           name="Login" 
           component={PerfectLoginScreen}
@@ -121,6 +123,7 @@ const AppNavigator = () => {
         />
       </Stack.Navigator>
     </NavigationContainer>
+    </GlobalTranslationProvider>
   );
 };
 
