@@ -1097,3 +1097,116 @@ def get_manufacturer_ordered_herbs(manufacturer_id):
     except Exception as e:
         logger.error(f"Error getting ordered herbs for manufacturer {manufacturer_id}: {str(e)}")
         return jsonify({'error': 'Failed to get ordered herbs'}), 500
+
+@herbs_api_bp.route('/<batch_id>/traceability', methods=['GET'])
+def get_herb_traceability(batch_id):
+    """Get complete traceability history for consumer viewing with detailed journey timeline"""
+    try:
+        # Get herb details
+        herb = Herb.query.filter_by(batch_id=batch_id).first()
+        if not herb:
+            return jsonify({'error': 'Herb batch not found'}), 404
+        
+        # Get all ownership transfers with user details
+        ownership_transfers = db.session.query(OwnershipTransfer).filter_by(
+            batch_id=batch_id
+        ).order_by(OwnershipTransfer.transfer_date.asc()).all()
+        
+        if not ownership_transfers:
+            return jsonify({'error': 'No traceability data found for this batch'}), 404
+        
+        # Build journey timeline
+        journey_timeline = []
+        step_number = 1
+        
+        for transfer in ownership_transfers:
+            # Get user details for from_owner and to_owner
+            from_user = None
+            if transfer.from_owner:
+                from_user = User.query.filter_by(user_id=transfer.from_owner).first()
+            
+            to_user = User.query.filter_by(user_id=transfer.to_owner).first()
+            
+            # Build timeline step
+            timeline_step = {
+                'step': step_number,
+                'transfer_id': transfer.transfer_id,
+                'transfer_date': transfer.transfer_date.isoformat() if transfer.transfer_date else None,
+                'transfer_reason': transfer.transfer_reason,
+                'from_user': from_user.to_dict() if from_user else None,
+                'to_user': to_user.to_dict() if to_user else None,
+                'location': transfer.location,
+                'notes': transfer.notes,
+                'qr_code': transfer.qr_code,
+                'status': transfer.status
+            }
+            
+            # Add transport details if this is a transport-related transfer
+            if transfer.transfer_reason in ['Pickup', 'Delivery to Lab', 'Delivery to Manufacturer']:
+                transport_record = TransportRecord.query.filter_by(
+                    batch_id=batch_id,
+                    transporter_id=transfer.from_owner if transfer.transfer_reason == 'Pickup' else transfer.to_owner
+                ).order_by(TransportRecord.start_time.desc()).first()
+                
+                if transport_record:
+                    timeline_step['transport_details'] = {
+                        'transport_id': transport_record.transport_id,
+                        'pickup_location': transport_record.pickup_location,
+                        'dropoff_location': transport_record.dropoff_location,
+                        'start_time': transport_record.start_time.isoformat() if transport_record.start_time else None,
+                        'end_time': transport_record.end_time.isoformat() if transport_record.end_time else None,
+                        'status': transport_record.status,
+                        'distance_km': float(transport_record.distance_km) if transport_record.distance_km else None,
+                        'actual_duration': transport_record.actual_duration
+                    }
+            
+            # Add lab report if this transfer involves lab testing
+            if transfer.transfer_reason in ['Lab Testing Request', 'Lab Testing Approved', 'Lab Testing Rejected']:
+                lab_reports = LabReport.query.filter_by(batch_id=batch_id).order_by(LabReport.created_at.desc()).all()
+                if lab_reports:
+                    timeline_step['lab_reports'] = [report.to_dict() for report in lab_reports]
+            
+            journey_timeline.append(timeline_step)
+            step_number += 1
+        
+        # Get current owner details
+        current_owner = User.query.filter_by(user_id=herb.current_owner).first()
+        
+        # Get farmer details
+        farmer = User.query.filter_by(user_id=herb.farmer_id).first()
+        
+        # Build response
+        response_data = {
+            'batch_id': batch_id,
+            'herb_details': {
+                'batch_id': herb.batch_id,
+                'species_name': herb.species_name,
+                'harvest_date': herb.harvest_date.isoformat() if herb.harvest_date else None,
+                'location': herb.location,
+                'weight_kg': float(herb.weight_kg) if herb.weight_kg else None,
+                'current_status': herb.quality_status,
+                'image_url': herb.image_url,
+                'created_at': herb.created_at.isoformat() if herb.created_at else None,
+                'updated_at': herb.updated_at.isoformat() if herb.updated_at else None
+            },
+            'farmer_details': farmer.to_dict() if farmer else None,
+            'journey_timeline': journey_timeline,
+            'current_owner': current_owner.to_dict() if current_owner else None,
+            'total_transfers': len(journey_timeline),
+            'journey_summary': {
+                'total_days': (datetime.utcnow() - herb.created_at).days if herb.created_at else 0,
+                'current_location': journey_timeline[-1]['location'] if journey_timeline else herb.location,
+                'quality_certified': herb.quality_status == 'approved',
+                'total_distance_km': sum([
+                    step.get('transport_details', {}).get('distance_km', 0) or 0 
+                    for step in journey_timeline if step.get('transport_details')
+                ])
+            }
+        }
+        
+        logger.info(f"Retrieved traceability data for batch {batch_id} with {len(journey_timeline)} steps")
+        return jsonify(response_data), 200
+        
+    except Exception as e:
+        logger.error(f"Error getting traceability for batch {batch_id}: {str(e)}")
+        return jsonify({'error': 'Failed to get traceability data'}), 500
