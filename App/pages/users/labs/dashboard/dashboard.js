@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
+import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
 import { useDashboard } from './hooks';
 import {
   StatsGrid,

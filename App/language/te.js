@@ -250,4 +250,90 @@ export const te = {
     // Scanner
     close: 'మూసివేయండి',
   },
+
+  // Lab Dashboard Section
+  labDashboard: {
+    // Stats Grid
+    pendingBatches: 'పెండింగ్ బ్యాచ్‌లు',
+    needTesting: 'పరీక్ష అవసరం',
+    urgentRequests: 'అత్యవసర అభ్యర్థనలు',
+    fastTrackTesting: 'ఫాస్ట్-ట్రాక్ పరీక్ష',
+    completed: 'పూర్తయింది',
+    thisWeek: 'ఈ వారం',
+    failedCompliance: 'అనుపాలన విఫలం',
+    needsRetest: 'మళ్లీ పరీక్ష అవసరం',
+    
+    // Quick Actions
+    quickActions: 'త్వరిత చర్యలు',
+    batchVerification: 'బ్యాచ్ ధృవీకరణ',
+    testingResults: 'పరీక్ష మరియు ఫలితాలు',
+    
+    // Notifications Panel
+    recentNotifications: 'ఇటీవలి నోటిఫికేషన్‌లు',
+    viewAll: 'అన్నీ చూడండి',
+    batchFailedCompliance: 'బ్యాచ్ #B2024-0156 అనుపాలన విఫలం',
+    contaminantLevelsExceeded: 'కలుషిత స్థాయిలు పరిమితిని మించాయి',
+    urgentRequestBatch: 'అత్యవసర అభ్యర్థన: బ్యాచ్ #B2024-0158',
+    priorityTestingRequired: 'EOD వరకు ప్రాధాన్యత పరీక్ష అవసరం',
+    batchCompleted: 'బ్యాచ్ #B2024-0154 పూర్తయింది',
+    allTestsPassed: 'అన్ని పరీక్షలు ఉత్తీర్ణత, నివేదిక రూపొందించబడింది',
+    viewDetails: 'వివరాలు చూడండి',
+    startTesting: 'పరీక్ష ప్రారంభించండి',
+    viewReport: 'నివేదిక చూడండి',
+    hoursAgo: 'గంటల క్రితం',
+    
+    // Recent Activity
+    recentActivity: 'ఇటీవలి కార్యకలాపం',
+    batchAnalysisCompleted: 'బ్యాచ్ #B2024-0153 విశ్లేషణ పూర్తయింది',
+    startedTestingBatch: 'బ్యాచ్ #B2024-0157 పరీక్ష ప్రారంభించారు',
+    retestScheduled: 'బ్యాచ్ #B2024-0155 కోసం మళ్లీ పరీక్ష షెడ్యూల్ చేయబడింది',
+    minutesAgo: 'నిమిషాల క్రితం',
+    hourAgo: 'గంట క్రితం',
+  },
+
+  // Lab Batches Section
+  labBatches: {
+    // Page Header
+    labBatches: 'ల్యాబ్ బ్యాచ్‌లు',
+    browseAcceptArchive: 'వచ్చే మూలికలను బ్రౌజ్ చేయండి, అంగీకరించండి మరియు ఆర్కైవ్ చేయండి',
+    
+    // Tabs
+    batchList: 'బ్యాచ్ జాబితా',
+    accepted: 'అంగీకరించబడింది',
+    archived: 'ఆర్కైవ్ చేయబడింది',
+    
+    // Modal
+    herbDetails: 'మూలిక వివరాలు',
+    close: 'మూసివేయండి',
+    labQR: 'ల్యాబ్ QR',
+    
+    // Batch Item Fields
+    batchId: 'బ్యాచ్ ID',
+    farmer: 'రైతు',
+    species: 'జాతి',
+    weight: 'బరువు',
+    harvest: 'పంట',
+    status: 'స్థితి',
+    location: 'స్థానం',
+    
+    // Status Values
+    acceptedStatus: 'అంగీకరించబడింది',
+    pending: 'పెండింగ్',
+    
+    // Action Buttons
+    acceptForTesting: 'పరీక్ష కోసం అంగీకరించండి',
+    accepting: 'అంగీకరిస్తున్నాము...',
+    scanTransporterQR: 'రవాణాదారు QR స్కాన్ చేయండి',
+    
+    // Alerts
+    success: 'విజయం',
+    herbAcceptedSuccess: 'మూలిక పరీక్ష కోసం విజయవంతంగా అంగీకరించబడింది!',
+    error: 'లోపం',
+    failedToAcceptHerb: 'మూలికను అంగీకరించడంలో విఫలమైంది',
+    deliveryFailed: 'డెలివరీ విఫలమైంది',
+    unableToValidateQR: 'QR ధృవీకరించడంలో అసమర్థం',
+    deliverySuccess: 'డెలివరీ విజయం',
+    ownershipTransferred: 'యాజమాన్యం ల్యాబ్‌కు బదిలీ చేయబడింది.',
+    failedToCompleteDelivery: 'డెలివరీ పూర్తి చేయడంలో విఫలమైంది',
+  },
 };

@@ -250,4 +250,90 @@ export const ta = {
     // Scanner
     close: 'மூடு',
   },
+
+  // Lab Dashboard Section
+  labDashboard: {
+    // Stats Grid
+    pendingBatches: 'நிலுவையில் உள்ள தொகுதிகள்',
+    needTesting: 'சோதனை தேவை',
+    urgentRequests: 'அவசர கோரிக்கைகள்',
+    fastTrackTesting: 'விரைவு சோதனை',
+    completed: 'முடிந்தது',
+    thisWeek: 'இந்த வாரம்',
+    failedCompliance: 'இணக்கம் தோல்வி',
+    needsRetest: 'மீண்டும் சோதனை தேவை',
+    
+    // Quick Actions
+    quickActions: 'விரைவு செயல்கள்',
+    batchVerification: 'தொகுதி சரிபார்ப்பு',
+    testingResults: 'சோதனை மற்றும் முடிவுகள்',
+    
+    // Notifications Panel
+    recentNotifications: 'சமீபத்திய அறிவிப்புகள்',
+    viewAll: 'அனைத்தையும் பார்க்கவும்',
+    batchFailedCompliance: 'தொகுதி #B2024-0156 இணக்கம் தோல்வி',
+    contaminantLevelsExceeded: 'மாசுபாட்டு அளவுகள் வரம்பை மீறியது',
+    urgentRequestBatch: 'அவசர கோரிக்கை: தொகுதி #B2024-0158',
+    priorityTestingRequired: 'EOD வரை முன்னுரிமை சோதனை தேவை',
+    batchCompleted: 'தொகுதி #B2024-0154 முடிந்தது',
+    allTestsPassed: 'அனைத்து சோதனைகளும் தேர்ச்சி, அறிக்கை உருவாக்கப்பட்டது',
+    viewDetails: 'விவரங்களைப் பார்க்கவும்',
+    startTesting: 'சோதனை தொடங்கவும்',
+    viewReport: 'அறிக்கையைப் பார்க்கவும்',
+    hoursAgo: 'மணி நேரங்களுக்கு முன்பு',
+    
+    // Recent Activity
+    recentActivity: 'சமீபத்திய செயல்பாடு',
+    batchAnalysisCompleted: 'தொகுதி #B2024-0153 பகுப்பாய்வு முடிந்தது',
+    startedTestingBatch: 'தொகுதி #B2024-0157 சோதனை தொடங்கியது',
+    retestScheduled: 'தொகுதி #B2024-0155 க்கு மீண்டும் சோதனை திட்டமிடப்பட்டது',
+    minutesAgo: 'நிமிடங்களுக்கு முன்பு',
+    hourAgo: 'மணி நேரத்திற்கு முன்பு',
+  },
+
+  // Lab Batches Section
+  labBatches: {
+    // Page Header
+    labBatches: 'ஆய்வக தொகுதிகள்',
+    browseAcceptArchive: 'வரும் மூலிகைகளை உலாவி, ஏற்று மற்றும் காப்பகப்படுத்தவும்',
+    
+    // Tabs
+    batchList: 'தொகுதி பட்டியல்',
+    accepted: 'ஏற்றுக்கொள்ளப்பட்டது',
+    archived: 'காப்பகப்படுத்தப்பட்டது',
+    
+    // Modal
+    herbDetails: 'மூலிகை விவரங்கள்',
+    close: 'மூடு',
+    labQR: 'ஆய்வக QR',
+    
+    // Batch Item Fields
+    batchId: 'தொகுதி ID',
+    farmer: 'விவசாயி',
+    species: 'இனம்',
+    weight: 'எடை',
+    harvest: 'அறுவடை',
+    status: 'நிலை',
+    location: 'இடம்',
+    
+    // Status Values
+    acceptedStatus: 'ஏற்றுக்கொள்ளப்பட்டது',
+    pending: 'நிலுவையில்',
+    
+    // Action Buttons
+    acceptForTesting: 'சோதனைக்கு ஏற்றுக்கொள்ளவும்',
+    accepting: 'ஏற்றுக்கொள்கிறது...',
+    scanTransporterQR: 'போக்குவரத்துக்காரர் QR ஸ்கேன்',
+    
+    // Alerts
+    success: 'வெற்றி',
+    herbAcceptedSuccess: 'மூலிகை சோதனைக்கு வெற்றிகரமாக ஏற்றுக்கொள்ளப்பட்டது!',
+    error: 'பிழை',
+    failedToAcceptHerb: 'மூலிகையை ஏற்க முடியவில்லை',
+    deliveryFailed: 'டெலிவரி தோல்வி',
+    unableToValidateQR: 'QR சரிபார்க்க முடியவில்லை',
+    deliverySuccess: 'டெலிவரி வெற்றி',
+    ownershipTransferred: 'உரிமை ஆய்வகத்திற்கு மாற்றப்பட்டது.',
+    failedToCompleteDelivery: 'டெலிவரி முடிக்க முடியவில்லை',
+  },
 };

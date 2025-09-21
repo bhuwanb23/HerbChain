@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 import { STATS_DATA } from '../constants';
 
 const StatCard = ({ data }) => {
@@ -30,9 +31,30 @@ const StatCard = ({ data }) => {
 };
 
 const StatsGrid = () => {
+  const { t } = useGlobalTranslation();
+  
+  // Create translated stats array
+  const translatedStats = STATS_DATA.map(stat => ({
+    ...stat,
+    title: stat.id === 'pending'
+      ? (t.labDashboard?.pendingBatches || 'Pending Batches')
+      : stat.id === 'urgent'
+      ? (t.labDashboard?.urgentRequests || 'Urgent Requests')
+      : stat.id === 'completed'
+      ? (t.labDashboard?.completed || 'Completed')
+      : (t.labDashboard?.failedCompliance || 'Failed Compliance'),
+    subtitle: stat.id === 'pending'
+      ? (t.labDashboard?.needTesting || 'Need testing')
+      : stat.id === 'urgent'
+      ? (t.labDashboard?.fastTrackTesting || 'Fast-track testing')
+      : stat.id === 'completed'
+      ? (t.labDashboard?.thisWeek || 'This week')
+      : (t.labDashboard?.needsRetest || 'Needs retest')
+  }));
+  
   return (
     <View style={styles.statsGrid}>
-      {STATS_DATA.map((stat) => (
+      {translatedStats.map((stat) => (
         <StatCard key={stat.id} data={stat} />
       ))}
     </View>

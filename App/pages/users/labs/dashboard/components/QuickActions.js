@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 import { QUICK_ACTIONS } from '../constants';
 
 const ActionButton = ({ action, onPress }) => {
@@ -25,11 +26,21 @@ const ActionButton = ({ action, onPress }) => {
 };
 
 const QuickActions = ({ onActionPress }) => {
+  const { t } = useGlobalTranslation();
+  
+  // Create translated actions array
+  const translatedActions = QUICK_ACTIONS.map(action => ({
+    ...action,
+    title: action.id === 'batch-verification' 
+      ? (t.labDashboard?.batchVerification || 'Batch Verification')
+      : (t.labDashboard?.testingResults || 'Testing & Results')
+  }));
+  
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionHeader}>Quick Actions</Text>
+      <Text style={styles.sectionHeader}>{t.labDashboard?.quickActions || 'Quick Actions'}</Text>
       <View style={styles.quickActionsGrid}>
-        {QUICK_ACTIONS.map((action) => (
+        {translatedActions.map((action) => (
           <ActionButton 
             key={action.id} 
             action={action} 

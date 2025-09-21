@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 import { API_BASE_URL } from '../../../../../constants/api';
 
 const LabBatchItem = ({ item, onAccepted, acceptHerb, variant = 'all', onOpenDetails }) => {
+  const { t } = useGlobalTranslation();
   const [isAccepting, setIsAccepting] = useState(false);
   const navigation = useNavigation();
 
@@ -14,7 +16,7 @@ const LabBatchItem = ({ item, onAccepted, acceptHerb, variant = 'all', onOpenDet
       
       if (acceptHerb) {
         await acceptHerb(item.batch_id);
-        Alert.alert('Success', 'Herb accepted for testing successfully!');
+        Alert.alert(t.labBatches?.success || 'Success', t.labBatches?.herbAcceptedSuccess || 'Herb accepted for testing successfully!');
         onAccepted && onAccepted();
       } else {
         // Fallback to dummy call
@@ -26,7 +28,7 @@ const LabBatchItem = ({ item, onAccepted, acceptHerb, variant = 'all', onOpenDet
       
     } catch (e) {
       console.log('[LabBatchItem] accept failed', e);
-      Alert.alert('Error', e.message || 'Failed to accept herb');
+      Alert.alert(t.labBatches?.error || 'Error', e.message || (t.labBatches?.failedToAcceptHerb || 'Failed to accept herb'));
     } finally {
       setIsAccepting(false);
     }
@@ -41,28 +43,28 @@ const LabBatchItem = ({ item, onAccepted, acceptHerb, variant = 'all', onOpenDet
   return (
     <CardWrapper style={styles.card} {...wrapperProps}>
       <View style={styles.rowBetween}>
-        <Text style={styles.label}>Batch ID</Text>
+        <Text style={styles.label}>{t.labBatches?.batchId || 'Batch ID'}</Text>
         <Text style={styles.value}>{item.batch_id}</Text>
       </View>
       <View style={styles.rowBetween}>
-        <Text style={styles.label}>Farmer</Text>
+        <Text style={styles.label}>{t.labBatches?.farmer || 'Farmer'}</Text>
         <Text style={styles.value}>{item.farmer_id}</Text>
       </View>
       <View style={styles.rowBetween}>
-        <Text style={styles.label}>Species</Text>
+        <Text style={styles.label}>{t.labBatches?.species || 'Species'}</Text>
         <Text style={styles.value}>{item.species_entered || item.species_detected || '-'}</Text>
       </View>
       <View style={styles.rowBetween}>
-        <Text style={styles.label}>Weight</Text>
+        <Text style={styles.label}>{t.labBatches?.weight || 'Weight'}</Text>
         <Text style={styles.value}>{item.weight_kg ? `${item.weight_kg} kg` : '-'}</Text>
       </View>
       <View style={styles.rowBetween}>
-        <Text style={styles.label}>Harvest</Text>
+        <Text style={styles.label}>{t.labBatches?.harvest || 'Harvest'}</Text>
         <Text style={styles.value}>{item.harvest_date || '-'}</Text>
       </View>
       <View style={styles.rowBetween}>
-        <Text style={styles.label}>Status</Text>
-        <Text style={styles.value}>{item.accepted ? 'Accepted' : (item.status || 'Pending')}</Text>
+        <Text style={styles.label}>{t.labBatches?.status || 'Status'}</Text>
+        <Text style={styles.value}>{item.accepted ? (t.labBatches?.acceptedStatus || 'Accepted') : (item.status || (t.labBatches?.pending || 'Pending'))}</Text>
       </View>
       {variant !== 'archived' && !item.accepted && (
         <TouchableOpacity 
@@ -74,10 +76,10 @@ const LabBatchItem = ({ item, onAccepted, acceptHerb, variant = 'all', onOpenDet
           {isAccepting ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="small" color="#fff" />
-              <Text style={styles.acceptText}>Accepting...</Text>
+              <Text style={styles.acceptText}>{t.labBatches?.accepting || 'Accepting...'}</Text>
             </View>
           ) : (
-            <Text style={styles.acceptText}>Accept for Testing</Text>
+            <Text style={styles.acceptText}>{t.labBatches?.acceptForTesting || 'Accept for Testing'}</Text>
           )}
         </TouchableOpacity>
       )}
@@ -87,7 +89,7 @@ const LabBatchItem = ({ item, onAccepted, acceptHerb, variant = 'all', onOpenDet
           onPress={handleStartScan}
           activeOpacity={0.85}
         >
-          <Text style={styles.acceptText}>Scan Transporter QR</Text>
+          <Text style={styles.acceptText}>{t.labBatches?.scanTransporterQR || 'Scan Transporter QR'}</Text>
         </TouchableOpacity>
       )}
     </CardWrapper>

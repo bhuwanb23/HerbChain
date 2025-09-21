@@ -250,4 +250,90 @@ export const en = {
     // Scanner
     close: 'Close',
   },
+
+  // Lab Dashboard Section
+  labDashboard: {
+    // Stats Grid
+    pendingBatches: 'Pending Batches',
+    needTesting: 'Need testing',
+    urgentRequests: 'Urgent Requests',
+    fastTrackTesting: 'Fast-track testing',
+    completed: 'Completed',
+    thisWeek: 'This week',
+    failedCompliance: 'Failed Compliance',
+    needsRetest: 'Needs retest',
+    
+    // Quick Actions
+    quickActions: 'Quick Actions',
+    batchVerification: 'Batch Verification',
+    testingResults: 'Testing & Results',
+    
+    // Notifications Panel
+    recentNotifications: 'Recent Notifications',
+    viewAll: 'View All',
+    batchFailedCompliance: 'Batch #B2024-0156 failed compliance',
+    contaminantLevelsExceeded: 'Contaminant levels exceeded threshold',
+    urgentRequestBatch: 'Urgent request: Batch #B2024-0158',
+    priorityTestingRequired: 'Priority testing required by EOD',
+    batchCompleted: 'Batch #B2024-0154 completed',
+    allTestsPassed: 'All tests passed, report generated',
+    viewDetails: 'View Details',
+    startTesting: 'Start Testing',
+    viewReport: 'View Report',
+    hoursAgo: 'hours ago',
+    
+    // Recent Activity
+    recentActivity: 'Recent Activity',
+    batchAnalysisCompleted: 'Batch #B2024-0153 analysis completed',
+    startedTestingBatch: 'Started testing Batch #B2024-0157',
+    retestScheduled: 'Retest scheduled for Batch #B2024-0155',
+    minutesAgo: 'minutes ago',
+    hourAgo: 'hour ago',
+  },
+
+  // Lab Batches Section
+  labBatches: {
+    // Page Header
+    labBatches: 'Lab Batches',
+    browseAcceptArchive: 'Browse, accept, and archive incoming herbs',
+    
+    // Tabs
+    batchList: 'Batch List',
+    accepted: 'Accepted',
+    archived: 'Archived',
+    
+    // Modal
+    herbDetails: 'Herb Details',
+    close: 'Close',
+    labQR: 'Lab QR',
+    
+    // Batch Item Fields
+    batchId: 'Batch ID',
+    farmer: 'Farmer',
+    species: 'Species',
+    weight: 'Weight',
+    harvest: 'Harvest',
+    status: 'Status',
+    location: 'Location',
+    
+    // Status Values
+    acceptedStatus: 'Accepted',
+    pending: 'Pending',
+    
+    // Action Buttons
+    acceptForTesting: 'Accept for Testing',
+    accepting: 'Accepting...',
+    scanTransporterQR: 'Scan Transporter QR',
+    
+    // Alerts
+    success: 'Success',
+    herbAcceptedSuccess: 'Herb accepted for testing successfully!',
+    error: 'Error',
+    failedToAcceptHerb: 'Failed to accept herb',
+    deliveryFailed: 'Delivery Failed',
+    unableToValidateQR: 'Unable to validate QR',
+    deliverySuccess: 'Delivery Success',
+    ownershipTransferred: 'Ownership transferred to lab.',
+    failedToCompleteDelivery: 'Failed to complete delivery',
+  },
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 import { NOTIFICATIONS_DATA, COLORS } from '../constants';
 
 const NotificationCard = ({ notification, onNotificationPress }) => {
@@ -29,16 +30,39 @@ const NotificationCard = ({ notification, onNotificationPress }) => {
 };
 
 const NotificationsPanel = ({ onViewAllPress, onNotificationPress }) => {
+  const { t } = useGlobalTranslation();
+  
+  // Create translated notifications array
+  const translatedNotifications = NOTIFICATIONS_DATA.map(notification => ({
+    ...notification,
+    title: notification.id === '1' 
+      ? (t.labDashboard?.batchFailedCompliance || 'Batch #B2024-0156 failed compliance')
+      : notification.id === '2'
+      ? (t.labDashboard?.urgentRequestBatch || 'Urgent request: Batch #B2024-0158')
+      : (t.labDashboard?.batchCompleted || 'Batch #B2024-0154 completed'),
+    subtitle: notification.id === '1'
+      ? (t.labDashboard?.contaminantLevelsExceeded || 'Contaminant levels exceeded threshold')
+      : notification.id === '2'
+      ? (t.labDashboard?.priorityTestingRequired || 'Priority testing required by EOD')
+      : (t.labDashboard?.allTestsPassed || 'All tests passed, report generated'),
+    actionText: notification.id === '1'
+      ? (t.labDashboard?.viewDetails || 'View Details')
+      : notification.id === '2'
+      ? (t.labDashboard?.startTesting || 'Start Testing')
+      : (t.labDashboard?.viewReport || 'View Report'),
+    time: `${notification.time.split(' ')[0]} ${t.labDashboard?.hoursAgo || 'hours ago'}`
+  }));
+  
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeaderContainer}>
-        <Text style={styles.sectionHeader}>Recent Notifications</Text>
+        <Text style={styles.sectionHeader}>{t.labDashboard?.recentNotifications || 'Recent Notifications'}</Text>
         <TouchableOpacity onPress={onViewAllPress} style={styles.viewAllButton}>
-          <Text style={styles.viewAllText}>View All</Text>
+          <Text style={styles.viewAllText}>{t.labDashboard?.viewAll || 'View All'}</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.notificationList}>
-        {NOTIFICATIONS_DATA.map((notification) => (
+        {translatedNotifications.map((notification) => (
           <NotificationCard 
             key={notification.id} 
             notification={notification} 

@@ -250,4 +250,90 @@ export const hi = {
     // Scanner
     close: 'बंद करें',
   },
+
+  // Lab Dashboard Section
+  labDashboard: {
+    // Stats Grid
+    pendingBatches: 'लंबित बैच',
+    needTesting: 'परीक्षण की आवश्यकता',
+    urgentRequests: 'तत्काल अनुरोध',
+    fastTrackTesting: 'फास्ट-ट्रैक परीक्षण',
+    completed: 'पूर्ण',
+    thisWeek: 'इस सप्ताह',
+    failedCompliance: 'अनुपालन विफल',
+    needsRetest: 'पुनः परीक्षण की आवश्यकता',
+    
+    // Quick Actions
+    quickActions: 'त्वरित कार्य',
+    batchVerification: 'बैच सत्यापन',
+    testingResults: 'परीक्षण और परिणाम',
+    
+    // Notifications Panel
+    recentNotifications: 'हाल की सूचनाएं',
+    viewAll: 'सभी देखें',
+    batchFailedCompliance: 'बैच #B2024-0156 अनुपालन विफल',
+    contaminantLevelsExceeded: 'दूषित स्तर सीमा से अधिक',
+    urgentRequestBatch: 'तत्काल अनुरोध: बैच #B2024-0158',
+    priorityTestingRequired: 'EOD तक प्राथमिकता परीक्षण आवश्यक',
+    batchCompleted: 'बैच #B2024-0154 पूर्ण',
+    allTestsPassed: 'सभी परीक्षण पास, रिपोर्ट जेनरेट',
+    viewDetails: 'विवरण देखें',
+    startTesting: 'परीक्षण शुरू करें',
+    viewReport: 'रिपोर्ट देखें',
+    hoursAgo: 'घंटे पहले',
+    
+    // Recent Activity
+    recentActivity: 'हाल की गतिविधि',
+    batchAnalysisCompleted: 'बैच #B2024-0153 विश्लेषण पूर्ण',
+    startedTestingBatch: 'बैच #B2024-0157 परीक्षण शुरू',
+    retestScheduled: 'बैच #B2024-0155 के लिए पुनः परीक्षण निर्धारित',
+    minutesAgo: 'मिनट पहले',
+    hourAgo: 'घंटा पहले',
+  },
+
+  // Lab Batches Section
+  labBatches: {
+    // Page Header
+    labBatches: 'लैब बैच',
+    browseAcceptArchive: 'आने वाली जड़ी-बूटियों को ब्राउज़, स्वीकार और संग्रहीत करें',
+    
+    // Tabs
+    batchList: 'बैच सूची',
+    accepted: 'स्वीकृत',
+    archived: 'संग्रहीत',
+    
+    // Modal
+    herbDetails: 'जड़ी-बूटी विवरण',
+    close: 'बंद करें',
+    labQR: 'लैब QR',
+    
+    // Batch Item Fields
+    batchId: 'बैच ID',
+    farmer: 'किसान',
+    species: 'प्रजाति',
+    weight: 'वजन',
+    harvest: 'फसल',
+    status: 'स्थिति',
+    location: 'स्थान',
+    
+    // Status Values
+    acceptedStatus: 'स्वीकृत',
+    pending: 'लंबित',
+    
+    // Action Buttons
+    acceptForTesting: 'परीक्षण के लिए स्वीकार करें',
+    accepting: 'स्वीकार कर रहे हैं...',
+    scanTransporterQR: 'परिवहनकर्ता QR स्कैन करें',
+    
+    // Alerts
+    success: 'सफलता',
+    herbAcceptedSuccess: 'जड़ी-बूटी परीक्षण के लिए सफलतापूर्वक स्वीकार की गई!',
+    error: 'त्रुटि',
+    failedToAcceptHerb: 'जड़ी-बूटी स्वीकार करने में विफल',
+    deliveryFailed: 'डिलीवरी विफल',
+    unableToValidateQR: 'QR सत्यापित करने में असमर्थ',
+    deliverySuccess: 'डिलीवरी सफल',
+    ownershipTransferred: 'स्वामित्व लैब को स्थानांतरित।',
+    failedToCompleteDelivery: 'डिलीवरी पूरी करने में विफल',
+  },
 };
