@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
 
 const TraceabilityScreenSimple = ({ navigation, route }) => {
+  const { t } = useGlobalTranslation();
   const batchId = route?.params?.batchId || 'HERB-ASH-001';
 
   return (
@@ -19,10 +21,10 @@ const TraceabilityScreenSimple = ({ navigation, route }) => {
       
       <View style={styles.titleSection}>
         <Text style={styles.title}>Ashwagandha</Text>
-        <Text style={styles.batchId}>Batch ID: {batchId}</Text>
+        <Text style={styles.batchId}>{t.consumer?.batch || 'Batch'} ID: {batchId}</Text>
         <View style={styles.statusBadge}>
           <Ionicons name="checkmark-circle" size={16} color="#87A96B" />
-          <Text style={styles.statusText}>Verified Authentic</Text>
+          <Text style={styles.statusText}>{t.consumer?.verifiedAuthentic || 'Verified Authentic'}</Text>
         </View>
       </View>
       
@@ -37,21 +39,21 @@ const TraceabilityScreenSimple = ({ navigation, route }) => {
             </View>
           </View>
           <View style={styles.journeyText}>
-            <Text style={styles.journeyTitle}>Farm to You</Text>
+            <Text style={styles.journeyTitle}>{t.consumer?.farmToYou || 'Farm to You'}</Text>
             <Text style={styles.journeyRoute}>Rajasthan, India → Your Location</Text>
           </View>
         </View>
 
         {/* Farmer Spotlight */}
         <View style={styles.farmerCard}>
-          <Text style={styles.cardTitle}>Farmer Spotlight</Text>
+          <Text style={styles.cardTitle}>{t.consumer?.farmerSpotlight || 'Farmer Spotlight'}</Text>
           <View style={styles.farmerInfo}>
             <View style={styles.avatar} />
             <View style={styles.farmerDetails}>
               <Text style={styles.farmerName}>Rajesh Kumar</Text>
-              <Text style={styles.farmerTitle}>3rd Generation Farmer</Text>
+              <Text style={styles.farmerTitle}>{t.consumer?.generationFarmer || '3rd Generation Farmer'}</Text>
               <Text style={styles.farmerDescription}>
-                Organic farming specialist with 20+ years experience growing premium Ashwagandha in Rajasthan's fertile soil.
+                {t.consumer?.organicFarmingSpecialist || 'Organic farming specialist with 20+ years experience growing premium Ashwagandha in Rajasthan\'s fertile soil.'}
               </Text>
             </View>
           </View>
@@ -59,17 +61,17 @@ const TraceabilityScreenSimple = ({ navigation, route }) => {
 
         {/* Timeline */}
         <View style={styles.timelineSection}>
-          <Text style={styles.sectionTitle}>The Story of Your Herb</Text>
+          <Text style={styles.sectionTitle}>{t.consumer?.journeyTimeline || 'The Story of Your Herb'}</Text>
           
           <View style={styles.timelineItem}>
             <View style={styles.timelineIcon}>
               <Ionicons name="leaf-outline" size={20} color="#FFFFFF" />
             </View>
             <View style={styles.timelineContent}>
-              <Text style={styles.timelineTitle}>Harvested</Text>
+              <Text style={styles.timelineTitle}>{t.consumer?.harvested || 'Harvested'}</Text>
               <Text style={styles.timelineDate}>October 15, 2024</Text>
               <Text style={styles.timelineDescription}>
-                Hand-picked at optimal maturity during early morning hours to preserve potency.
+                {t.consumer?.handPickedOptimalMaturity || 'Hand-picked at optimal maturity during early morning hours to preserve potency.'}
               </Text>
             </View>
           </View>
@@ -79,10 +81,10 @@ const TraceabilityScreenSimple = ({ navigation, route }) => {
               <Ionicons name="search-outline" size={20} color="#FFFFFF" />
             </View>
             <View style={styles.timelineContent}>
-              <Text style={styles.timelineTitle}>Tested for Purity</Text>
+              <Text style={styles.timelineTitle}>{t.consumer?.testedForPurity || 'Tested for Purity'}</Text>
               <Text style={styles.timelineDate}>October 16, 2024</Text>
               <Text style={styles.timelineDescription}>
-                Laboratory tested for heavy metals, pesticides, and withanolide content. 99.8% purity confirmed.
+                {t.consumer?.labTestedHeavyMetals || 'Laboratory tested for heavy metals, pesticides, and withanolide content. 99.8% purity confirmed.'}
               </Text>
             </View>
           </View>
@@ -92,10 +94,10 @@ const TraceabilityScreenSimple = ({ navigation, route }) => {
               <Ionicons name="cube-outline" size={20} color="#FFFFFF" />
             </View>
             <View style={styles.timelineContent}>
-              <Text style={styles.timelineTitle}>Packaged</Text>
+              <Text style={styles.timelineTitle}>{t.consumer?.packaged || 'Packaged'}</Text>
               <Text style={styles.timelineDate}>October 18, 2024</Text>
               <Text style={styles.timelineDescription}>
-                Sealed in airtight, UV-protected packaging to maintain freshness and potency.
+                {t.consumer?.sealedAirtightUV || 'Sealed in airtight, UV-protected packaging to maintain freshness and potency.'}
               </Text>
             </View>
           </View>
@@ -103,15 +105,15 @@ const TraceabilityScreenSimple = ({ navigation, route }) => {
 
         {/* Certifications */}
         <View style={styles.certificationsSection}>
-          <Text style={styles.sectionTitle}>Certifications</Text>
+          <Text style={styles.sectionTitle}>{t.consumer?.certified || 'Certifications'}</Text>
           <View style={styles.certGrid}>
             <View style={styles.certItem}>
               <Ionicons name="leaf-outline" size={32} color="#87A96B" />
-              <Text style={styles.certText}>Organic Certified</Text>
+              <Text style={styles.certText}>{t.consumer?.organicCertified || 'Organic Certified'}</Text>
             </View>
             <View style={styles.certItem}>
               <Ionicons name="shield-checkmark-outline" size={32} color="#87A96B" />
-              <Text style={styles.certText}>GMP Compliant</Text>
+              <Text style={styles.certText}>{t.consumer?.gmpCompliant || 'GMP Compliant'}</Text>
             </View>
           </View>
         </View>
@@ -119,7 +121,7 @@ const TraceabilityScreenSimple = ({ navigation, route }) => {
 
       <View style={styles.bottomAction}>
         <TouchableOpacity style={styles.reportButton}>
-          <Text style={styles.reportButtonText}>View Full Report</Text>
+          <Text style={styles.reportButtonText}>{t.consumer?.view || 'View Full Report'}</Text>
         </TouchableOpacity>
       </View>
     </View>

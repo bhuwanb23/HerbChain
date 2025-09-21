@@ -4,8 +4,10 @@ import { SafeAreaWrapper } from '../../../../components';
 import { Ionicons } from '@expo/vector-icons';
 import QRScanner from '../components/QRScanner';
 import { useConsumerAPI } from '../hooks/useConsumerAPI';
+import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
 
 const QRScanScreen = ({ navigation }) => {
+  const { t } = useGlobalTranslation();
   const [showScanner, setShowScanner] = useState(false);
   const [manualBatchId, setManualBatchId] = useState('');
   const [showManualInput, setShowManualInput] = useState(false);
@@ -27,27 +29,27 @@ const QRScanScreen = ({ navigation }) => {
       const batchId = parseQRData(scannedData);
       
       if (!validateBatchId(batchId)) {
-        showError('Invalid QR code format. Please scan a valid herb batch QR code.');
+        showError(t.consumer?.invalidQRFormat || 'Invalid QR code format. Please scan a valid herb batch QR code.');
         return;
       }
 
       await fetchAndDisplayHerbDetails(batchId);
     } catch (error) {
       console.error('Error processing QR scan:', error);
-      showError('Error processing QR code. Please try again.');
+      showError(t.consumer?.errorProcessingQR || 'Error processing QR code. Please try again.');
     }
   };
 
   const handleManualSubmit = async () => {
     if (!manualBatchId.trim()) {
-      showError('Please enter a batch ID');
+      showError(t.consumer?.pleaseEnterBatchID || 'Please enter a batch ID');
       return;
     }
 
     const batchId = manualBatchId.trim();
     
     if (!validateBatchId(batchId)) {
-      showError('Invalid batch ID format. Please enter a valid batch ID.');
+      showError(t.consumer?.invalidBatchIDFormat || 'Invalid batch ID format. Please enter a valid batch ID.');
       return;
     }
 
@@ -68,11 +70,11 @@ const QRScanScreen = ({ navigation }) => {
           batchId: batchId,
         });
       } else {
-        showError(error || 'Failed to fetch herb details. Please try again.');
+        showError(error || t.consumer?.failedToFetchHerbDetails || 'Failed to fetch herb details. Please try again.');
       }
     } catch (error) {
       console.error('Error fetching herb details:', error);
-      showError('Failed to fetch herb details. Please try again.');
+      showError(t.consumer?.failedToFetchHerbDetails || 'Failed to fetch herb details. Please try again.');
     }
   };
 
@@ -110,7 +112,7 @@ const QRScanScreen = ({ navigation }) => {
           >
             <Ionicons name="arrow-back" size={24} color="#4B5563" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Scan Herb QR Code</Text>
+          <Text style={styles.headerTitle}>{t.consumer?.scanHerbQRCode || 'Scan Herb QR Code'}</Text>
           <View style={styles.placeholder} />
         </View>
 
@@ -121,9 +123,9 @@ const QRScanScreen = ({ navigation }) => {
             <View style={styles.iconContainer}>
               <Ionicons name="qr-code" size={48} color="#87A96B" />
             </View>
-            <Text style={styles.instructionTitle}>Scan Herb QR Code</Text>
+            <Text style={styles.instructionTitle}>{t.consumer?.scanHerbQRCode || 'Scan Herb QR Code'}</Text>
             <Text style={styles.instructionText}>
-              Point your camera at the QR code on your herb product to view detailed information about its origin, quality, and journey.
+              {t.consumer?.pointCameraAtQR || 'Point your camera at the QR code on your herb product to view detailed information about its origin, quality, and journey.'}
             </Text>
           </View>
 
@@ -135,14 +137,14 @@ const QRScanScreen = ({ navigation }) => {
           >
             <Ionicons name="camera" size={24} color="#FFFFFF" />
             <Text style={styles.scanButtonText}>
-              {loading ? 'Loading...' : 'Scan QR Code'}
+              {loading ? (t.consumer?.loading || 'Loading...') : (t.consumer?.scanQRCode || 'Scan QR Code')}
             </Text>
           </TouchableOpacity>
 
           {/* Divider */}
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>OR</Text>
+            <Text style={styles.dividerText}>{t.consumer?.or || 'OR'}</Text>
             <View style={styles.dividerLine} />
           </View>
 
@@ -152,7 +154,7 @@ const QRScanScreen = ({ navigation }) => {
             onPress={toggleManualInput}
           >
             <Ionicons name="keypad" size={20} color="#87A96B" />
-            <Text style={styles.manualButtonText}>Enter Batch ID Manually</Text>
+            <Text style={styles.manualButtonText}>{t.consumer?.enterBatchIDManually || 'Enter Batch ID Manually'}</Text>
           </TouchableOpacity>
 
           {/* Manual Input Field */}
@@ -160,7 +162,7 @@ const QRScanScreen = ({ navigation }) => {
             <View style={styles.manualInputContainer}>
               <TextInput
                 style={styles.manualInput}
-                placeholder="Enter batch ID (e.g., HERB-ASH-001)"
+                placeholder={t.consumer?.enterBatchIDPlaceholder || "Enter batch ID (e.g., HERB-ASH-001)"}
                 value={manualBatchId}
                 onChangeText={setManualBatchId}
                 autoCapitalize="characters"
@@ -173,7 +175,7 @@ const QRScanScreen = ({ navigation }) => {
                 onPress={handleManualSubmit}
                 disabled={loading || !manualBatchId.trim()}
               >
-                <Text style={styles.submitButtonText}>Search</Text>
+                <Text style={styles.submitButtonText}>{t.consumer?.search || 'Search'}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -182,7 +184,7 @@ const QRScanScreen = ({ navigation }) => {
           <View style={styles.helpContainer}>
             <Ionicons name="information-circle" size={20} color="#6B7280" />
             <Text style={styles.helpText}>
-              QR codes are found on herb product packaging and contain unique batch identification information.
+              {t.consumer?.qrCodesFoundOnPackaging || 'QR codes are found on herb product packaging and contain unique batch identification information.'}
             </Text>
           </View>
         </View>

@@ -3,8 +3,10 @@ import { View, ScrollView, TouchableOpacity, Text, StyleSheet, ActivityIndicator
 import { Header, JourneyMap, FarmerSpotlight, Timeline, Certifications } from '../components';
 import { useHerbTraceability, useConsumerActions } from '../hooks';
 import { COLORS, STYLES } from '../constants';
+import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
 
 const TraceabilityScreen = ({ navigation, route }) => {
+  const { t } = useGlobalTranslation();
   const batchId = route?.params?.batchId || 'HERB-ASH-001';
   const { herbData, loading, error } = useHerbTraceability(batchId);
   const { isSharing, handleShare, handleViewReport, handleBack } = useConsumerActions();
@@ -14,7 +16,7 @@ const TraceabilityScreen = ({ navigation, route }) => {
       <View style={STYLES.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.sage} />
-          <Text style={styles.loadingText}>Loading herb traceability data...</Text>
+          <Text style={styles.loadingText}>{t.consumer?.loadingTraceabilityData || 'Loading herb traceability data...'}</Text>
         </View>
       </View>
     );
@@ -24,7 +26,7 @@ const TraceabilityScreen = ({ navigation, route }) => {
     return (
       <View style={STYLES.container}>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Error loading data: {error}</Text>
+          <Text style={styles.errorText}>{t.consumer?.errorLoadingData || 'Error loading data'}: {error}</Text>
         </View>
       </View>
     );
@@ -34,7 +36,7 @@ const TraceabilityScreen = ({ navigation, route }) => {
     return (
       <View style={STYLES.container}>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>No data found for batch {batchId}</Text>
+          <Text style={styles.errorText}>{t.consumer?.noDataFoundForBatch || 'No data found for batch'} {batchId}</Text>
         </View>
       </View>
     );

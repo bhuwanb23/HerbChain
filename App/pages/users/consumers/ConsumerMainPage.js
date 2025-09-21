@@ -6,6 +6,9 @@ import { Ionicons } from '@expo/vector-icons';
 // Import consumer screens
 import TraceabilityScreenSimple from './traceability/TraceabilityScreenSimple';
 import QRScanScreen from './scan/QRScanScreen';
+import ConsumerHome from './home/ConsumerHome';
+import ConsumerHistory from './history/ConsumerHistory';
+import ConsumerProfile from './profile/ConsumerProfile';
 
 const ConsumerMainPage = ({ navigation }) => {
   const [currentPage, setCurrentPage] = useState('home');
@@ -19,13 +22,17 @@ const ConsumerMainPage = ({ navigation }) => {
   const getPageTitle = () => {
     switch (currentPage) {
       case 'home':
-        return 'Consumer Dashboard';
+        return 'Home';
       case 'traceability':
         return 'Product Traceability';
       case 'scan':
         return 'Scan QR Code';
+      case 'history':
+        return 'Scan History';
+      case 'profile':
+        return 'Profile';
       default:
-        return 'Consumer Dashboard';
+        return 'Home';
     }
   };
 
@@ -34,9 +41,9 @@ const ConsumerMainPage = ({ navigation }) => {
     switch (currentPage) {
       case 'home':
         return (
-          <TraceabilityScreenSimple 
+          <ConsumerHome 
             navigation={navigation} 
-            route={{ params: { batchId: 'HERB-ASH-001' } }}
+            onNavigate={handleConsumerNavigation}
           />
         );
       case 'traceability':
@@ -54,23 +61,23 @@ const ConsumerMainPage = ({ navigation }) => {
         );
       case 'history':
         return (
-          <TraceabilityScreenSimple 
+          <ConsumerHistory 
             navigation={navigation} 
-            route={{ params: { batchId: 'HERB-ASH-002' } }}
+            onNavigate={handleConsumerNavigation}
           />
         );
       case 'profile':
         return (
-          <TraceabilityScreenSimple 
+          <ConsumerProfile 
             navigation={navigation} 
-            route={{ params: { batchId: 'HERB-ASH-003' } }}
+            onNavigate={handleConsumerNavigation}
           />
         );
       default:
         return (
-          <TraceabilityScreenSimple 
+          <ConsumerHome 
             navigation={navigation} 
-            route={{ params: { batchId: 'HERB-ASH-001' } }}
+            onNavigate={handleConsumerNavigation}
           />
         );
     }
