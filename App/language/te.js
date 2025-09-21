@@ -669,4 +669,62 @@ export const te = {
     appVersion: 'HerbChain v1.0.0',
     copyright: '© 2024 HerbChain. అన్ని హక్కులు రక్షించబడ్డాయి.',
   },
+
+  // రైతు చెల్లింపుల విభాగం
+  farmerPayments: {
+    // హెడర్
+    transactions: 'లావాదేవీలు',
+    
+    // వాలెట్ సారాంశం
+    totalBalance: 'మొత్తం బ్యాలెన్స్',
+    incentivesEarned: 'ప్రోత్సాహకాలు సంపాదించారు',
+    thisMonth: 'ఈ నెల',
+    withdrawToBank: 'బ్యాంకుకు విత్‌డ్రా చేయండి',
+    
+    // ట్యాబ్‌లు
+    pendingPayments: 'పెండింగ్ చెల్లింపులు',
+    completed: 'పూర్తయింది',
+    
+    // లావాదేవీ కార్డ్
+    pending: 'పెండింగ్',
+    completed: 'పూర్తయింది',
+    amount: 'మొత్తం',
+    expected: 'ఆశించిన',
+    paidOn: 'చెల్లించిన తేదీ',
+    batchNumber: 'బ్యాచ్ #',
+    
+    // లావాదేవీ రకాలు
+    buyer: 'కొనుగోలుదారు',
+    manufacturer: 'తయారీదారు',
+    processor: 'ప్రాసెసర్',
+    distributor: 'పంపిణీదారు',
+    
+    // స్థితి సందేశాలు
+    paymentProcessing: 'చెల్లింపు ప్రాసెస్ అవుతోంది',
+    paymentCompleted: 'చెల్లింపు పూర్తయింది',
+    expectedPaymentDate: 'ఆశించిన చెల్లింపు తేదీ',
+    actualPaymentDate: 'వాస్తవ చెల్లింపు తేదీ',
+    
+    // చర్యలు
+    viewDetails: 'వివరాలను చూడండి',
+    downloadReceipt: 'రసీదును డౌన్‌లోడ్ చేయండి',
+    contactSupport: 'మద్దతును సంప్రదించండి',
+    
+    // లోపం సందేశాలు
+    noTransactionsFound: 'లావాదేవీలు కనుగొనబడలేదు',
+    loadingTransactions: 'లావాదేవీలు లోడ్ అవుతున్నాయి...',
+    errorLoadingTransactions: 'లావాదేవీలను లోడ్ చేయడంలో లోపం',
+    
+    // విజయ సందేశాలు
+    withdrawalRequested: 'విత్‌డ్రా అభ్యర్థన విజయవంతంగా సమర్పించబడింది',
+    paymentReceived: 'చెల్లింపు విజయవంతంగా అందుకోబడింది',
+    
+    // అదనపు UI టెక్స్ట్
+    successTitle: 'విజయం',
+    transactionDetails: 'లావాదేవీ వివరాలు',
+    continue: 'కొనసాగించు',
+    ok: 'సరే',
+    withdrawFunds: 'నిధులను విత్‌డ్రా చేయండి',
+    withdrawDescription: 'ఈ ఫీచర్ విత్‌డ్రా కోసం మిమ్మల్ని మీ బ్యాంక్ ఖాతాకు రీడైరెక్ట్ చేస్తుంది.',
+  },
 };

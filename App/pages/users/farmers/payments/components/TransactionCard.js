@@ -2,8 +2,10 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { TAB_TYPES } from '../constants';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const TransactionCard = ({ transaction, activeTab, onPress }) => {
+  const { t } = useGlobalTranslation();
   const getIconName = (iconType) => {
     switch (iconType) {
       case 'user':
@@ -20,7 +22,9 @@ const TransactionCard = ({ transaction, activeTab, onPress }) => {
   };
 
   const getStatusText = () => {
-    return activeTab === TAB_TYPES.PENDING ? 'Pending' : 'Completed';
+    return activeTab === TAB_TYPES.PENDING 
+      ? (t.farmerPayments?.pending || 'Pending')
+      : (t.farmerPayments?.completed || 'Completed');
   };
 
   const getStatusColor = () => {
@@ -34,7 +38,9 @@ const TransactionCard = ({ transaction, activeTab, onPress }) => {
   };
 
   const getDateLabel = () => {
-    return activeTab === TAB_TYPES.PENDING ? 'Expected' : 'Paid on';
+    return activeTab === TAB_TYPES.PENDING 
+      ? (t.farmerPayments?.expected || 'Expected')
+      : (t.farmerPayments?.paidOn || 'Paid on');
   };
 
   const getDateValue = () => {
@@ -63,7 +69,7 @@ const TransactionCard = ({ transaction, activeTab, onPress }) => {
           </View>
           <View style={styles.buyerDetails}>
             <Text style={styles.buyerName}>{transaction.buyer}</Text>
-            <Text style={styles.batchId}>Batch #{transaction.id}</Text>
+            <Text style={styles.batchId}>{t.farmerPayments?.batchNumber || 'Batch #'}{transaction.id}</Text>
           </View>
         </View>
         <View style={[
@@ -81,7 +87,7 @@ const TransactionCard = ({ transaction, activeTab, onPress }) => {
 
       <View style={styles.footer}>
         <View style={styles.amountSection}>
-          <Text style={styles.amountLabel}>Amount</Text>
+          <Text style={styles.amountLabel}>{t.farmerPayments?.amount || 'Amount'}</Text>
           <Text style={styles.amountValue}>{transaction.amount}</Text>
         </View>
         <View style={styles.dateSection}>

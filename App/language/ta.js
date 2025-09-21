@@ -669,4 +669,62 @@ export const ta = {
     appVersion: 'HerbChain v1.0.0',
     copyright: '© 2024 HerbChain. அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.',
   },
+
+  // விவசாயி பணம் செலுத்துதல் பிரிவு
+  farmerPayments: {
+    // தலைப்பு
+    transactions: 'பரிவர்த்தனைகள்',
+    
+    // வாலட் சுருக்கம்
+    totalBalance: 'மொத்த இருப்பு',
+    incentivesEarned: 'ஊக்கத்தொகை பெற்றது',
+    thisMonth: 'இந்த மாதம்',
+    withdrawToBank: 'வங்கியில் எடுக்கவும்',
+    
+    // தாவல்கள்
+    pendingPayments: 'நிலுவையில் உள்ள பணம்',
+    completed: 'முடிந்தது',
+    
+    // பரிவர்த்தனை அட்டை
+    pending: 'நிலுவையில்',
+    completed: 'முடிந்தது',
+    amount: 'தொகை',
+    expected: 'எதிர்பார்க்கப்படுகிறது',
+    paidOn: 'செலுத்திய தேதி',
+    batchNumber: 'தொகுதி #',
+    
+    // பரிவர்த்தனை வகைகள்
+    buyer: 'வாங்குபவர்',
+    manufacturer: 'உற்பத்தியாளர்',
+    processor: 'செயலாளர்',
+    distributor: 'விநியோகஸ்தர்',
+    
+    // நிலை செய்திகள்
+    paymentProcessing: 'பணம் செலுத்துதல் செயல்படுத்தப்படுகிறது',
+    paymentCompleted: 'பணம் செலுத்துதல் முடிந்தது',
+    expectedPaymentDate: 'எதிர்பார்க்கப்படும் பணம் செலுத்தும் தேதி',
+    actualPaymentDate: 'உண்மையான பணம் செலுத்தும் தேதி',
+    
+    // செயல்கள்
+    viewDetails: 'விவரங்களைப் பார்க்கவும்',
+    downloadReceipt: 'ரசீதை பதிவிறக்கவும்',
+    contactSupport: 'ஆதரவைத் தொடர்பு கொள்ளவும்',
+    
+    // பிழை செய்திகள்
+    noTransactionsFound: 'பரிவர்த்தனைகள் எதுவும் கிடைக்கவில்லை',
+    loadingTransactions: 'பரிவர்த்தனைகள் ஏற்றப்படுகின்றன...',
+    errorLoadingTransactions: 'பரிவர்த்தனைகளை ஏற்றுவதில் பிழை',
+    
+    // வெற்றி செய்திகள்
+    withdrawalRequested: 'பணம் எடுக்கும் கோரிக்கை வெற்றிகரமாக சமர்பிக்கப்பட்டது',
+    paymentReceived: 'பணம் வெற்றிகரமாக பெறப்பட்டது',
+    
+    // கூடுதல் UI உரை
+    successTitle: 'வெற்றி',
+    transactionDetails: 'பரிவர்த்தனை விவரங்கள்',
+    continue: 'தொடரவும்',
+    ok: 'சரி',
+    withdrawFunds: 'பணம் எடுக்கவும்',
+    withdrawDescription: 'இந்த அம்சம் பணம் எடுப்பதற்காக உங்கள் வங்கிக் கணக்கிற்கு உங்களை திருப்பி விடும்.',
+  },
 };

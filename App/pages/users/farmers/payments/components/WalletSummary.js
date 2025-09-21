@@ -2,8 +2,11 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const WalletSummary = ({ walletData, onWithdrawPress }) => {
+  const { t } = useGlobalTranslation();
+  
   return (
     <LinearGradient
       colors={['#10B981', '#059669']}
@@ -13,7 +16,7 @@ const WalletSummary = ({ walletData, onWithdrawPress }) => {
     >
       <View style={styles.header}>
         <View style={styles.balanceSection}>
-          <Text style={styles.balanceLabel}>Total Balance</Text>
+          <Text style={styles.balanceLabel}>{t.farmerPayments?.totalBalance || 'Total Balance'}</Text>
           <Text style={styles.balanceAmount}>{walletData.totalBalance}</Text>
         </View>
         <View style={styles.walletIcon}>
@@ -23,11 +26,11 @@ const WalletSummary = ({ walletData, onWithdrawPress }) => {
 
       <View style={styles.statsSection}>
         <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Incentives Earned</Text>
+          <Text style={styles.statLabel}>{t.farmerPayments?.incentivesEarned || 'Incentives Earned'}</Text>
           <Text style={styles.statValue}>{walletData.incentivesEarned}</Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={styles.statLabel}>This Month</Text>
+          <Text style={styles.statLabel}>{t.farmerPayments?.thisMonth || 'This Month'}</Text>
           <Text style={styles.statValue}>{walletData.monthlyEarnings}</Text>
         </View>
       </View>
@@ -38,7 +41,7 @@ const WalletSummary = ({ walletData, onWithdrawPress }) => {
         activeOpacity={0.8}
       >
         <Icon name="account-balance" size={20} color="#10B981" />
-        <Text style={styles.withdrawText}>Withdraw to Bank</Text>
+        <Text style={styles.withdrawText}>{t.farmerPayments?.withdrawToBank || 'Withdraw to Bank'}</Text>
       </TouchableOpacity>
     </LinearGradient>
   );

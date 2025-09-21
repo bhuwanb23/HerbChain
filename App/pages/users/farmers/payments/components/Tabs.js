@@ -1,11 +1,14 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { TAB_TYPES } from '../constants';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const Tabs = ({ activeTab, onTabChange }) => {
+  const { t } = useGlobalTranslation();
+  
   const tabs = [
-    { id: TAB_TYPES.PENDING, label: 'Pending Payments' },
-    { id: TAB_TYPES.COMPLETED, label: 'Completed' },
+    { id: TAB_TYPES.PENDING, label: t.farmerPayments?.pendingPayments || 'Pending Payments' },
+    { id: TAB_TYPES.COMPLETED, label: t.farmerPayments?.completed || 'Completed' },
   ];
 
   return (

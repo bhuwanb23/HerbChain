@@ -704,4 +704,62 @@ export const en = {
     errorLoadingData: 'Error loading data',
     noDataFoundForBatch: 'No data found for batch',
   },
+
+  // Farmers Payments Section
+  farmerPayments: {
+    // Header
+    transactions: 'Transactions',
+    
+    // Wallet Summary
+    totalBalance: 'Total Balance',
+    incentivesEarned: 'Incentives Earned',
+    thisMonth: 'This Month',
+    withdrawToBank: 'Withdraw to Bank',
+    
+    // Tabs
+    pendingPayments: 'Pending Payments',
+    completed: 'Completed',
+    
+    // Transaction Card
+    pending: 'Pending',
+    completed: 'Completed',
+    amount: 'Amount',
+    expected: 'Expected',
+    paidOn: 'Paid on',
+    batchNumber: 'Batch #',
+    
+    // Transaction Types
+    buyer: 'Buyer',
+    manufacturer: 'Manufacturer',
+    processor: 'Processor',
+    distributor: 'Distributor',
+    
+    // Status Messages
+    paymentProcessing: 'Payment is being processed',
+    paymentCompleted: 'Payment has been completed',
+    expectedPaymentDate: 'Expected payment date',
+    actualPaymentDate: 'Actual payment date',
+    
+    // Actions
+    viewDetails: 'View Details',
+    downloadReceipt: 'Download Receipt',
+    contactSupport: 'Contact Support',
+    
+    // Error Messages
+    noTransactionsFound: 'No transactions found',
+    loadingTransactions: 'Loading transactions...',
+    errorLoadingTransactions: 'Error loading transactions',
+    
+    // Success Messages
+    withdrawalRequested: 'Withdrawal request submitted successfully',
+    paymentReceived: 'Payment received successfully',
+    
+    // Additional UI Text
+    successTitle: 'Success',
+    transactionDetails: 'Transaction Details',
+    continue: 'Continue',
+    ok: 'OK',
+    withdrawFunds: 'Withdraw Funds',
+    withdrawDescription: 'This feature will redirect you to your bank account for withdrawal.',
+  },
 };

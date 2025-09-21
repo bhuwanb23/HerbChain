@@ -704,4 +704,62 @@ export const hi = {
     errorLoadingData: 'डेटा लोड करने में त्रुटि',
     noDataFoundForBatch: 'बैच के लिए कोई डेटा नहीं मिला',
   },
+
+  // किसान भुगतान अनुभाग
+  farmerPayments: {
+    // हेडर
+    transactions: 'लेन-देन',
+    
+    // वॉलेट सारांश
+    totalBalance: 'कुल शेष राशि',
+    incentivesEarned: 'अर्जित प्रोत्साहन',
+    thisMonth: 'इस महीने',
+    withdrawToBank: 'बैंक में निकालें',
+    
+    // टैब्स
+    pendingPayments: 'लंबित भुगतान',
+    completed: 'पूर्ण',
+    
+    // लेन-देन कार्ड
+    pending: 'लंबित',
+    completed: 'पूर्ण',
+    amount: 'राशि',
+    expected: 'अपेक्षित',
+    paidOn: 'भुगतान तिथि',
+    batchNumber: 'बैच #',
+    
+    // लेन-देन प्रकार
+    buyer: 'खरीदार',
+    manufacturer: 'निर्माता',
+    processor: 'प्रोसेसर',
+    distributor: 'वितरक',
+    
+    // स्थिति संदेश
+    paymentProcessing: 'भुगतान प्रक्रिया में है',
+    paymentCompleted: 'भुगतान पूरा हो गया है',
+    expectedPaymentDate: 'अपेक्षित भुगतान तिथि',
+    actualPaymentDate: 'वास्तविक भुगतान तिथि',
+    
+    // क्रियाएं
+    viewDetails: 'विवरण देखें',
+    downloadReceipt: 'रसीद डाउनलोड करें',
+    contactSupport: 'सहायता से संपर्क करें',
+    
+    // त्रुटि संदेश
+    noTransactionsFound: 'कोई लेन-देन नहीं मिला',
+    loadingTransactions: 'लेन-देन लोड हो रहे हैं...',
+    errorLoadingTransactions: 'लेन-देन लोड करने में त्रुटि',
+    
+    // सफलता संदेश
+    withdrawalRequested: 'निकासी अनुरोध सफलतापूर्वक सबमिट किया गया',
+    paymentReceived: 'भुगतान सफलतापूर्वक प्राप्त हुआ',
+    
+    // अतिरिक्त UI टेक्स्ट
+    successTitle: 'सफलता',
+    transactionDetails: 'लेन-देन विवरण',
+    continue: 'जारी रखें',
+    ok: 'ठीक है',
+    withdrawFunds: 'धन निकालें',
+    withdrawDescription: 'यह सुविधा आपको निकासी के लिए आपके बैंक खाते पर रीडायरेक्ट करेगी।',
+  },
 };

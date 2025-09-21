@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaWrapper } from '../../../../components';
 import { usePayments } from './hooks';
 import { WALLET_DATA } from './constants';
+import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
 import {
   WalletSummary,
   Tabs,
@@ -10,6 +11,7 @@ import {
 } from './components';
 
 const PaymentsScreen = ({ navigation }) => {
+  const { t } = useGlobalTranslation();
   const {
     activeTab,
     handleTabChange,
