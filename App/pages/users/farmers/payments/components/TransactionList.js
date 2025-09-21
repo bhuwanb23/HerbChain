@@ -1,14 +1,11 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, Text } from 'react-native';
+import { View, ScrollView, StyleSheet, Text, ActivityIndicator } from 'react-native';
 import TransactionCard from './TransactionCard';
 import { PENDING_TRANSACTIONS, COMPLETED_TRANSACTIONS, TAB_TYPES } from '../constants';
 import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
-const TransactionList = ({ activeTab, onTransactionPress }) => {
+const TransactionList = ({ activeTab, onTransactionPress, transactions, isTranslating }) => {
   const { t } = useGlobalTranslation();
-  const transactions = activeTab === TAB_TYPES.PENDING 
-    ? PENDING_TRANSACTIONS 
-    : COMPLETED_TRANSACTIONS;
 
   return (
     <View style={styles.container}>
@@ -17,6 +14,15 @@ const TransactionList = ({ activeTab, onTransactionPress }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        {isTranslating && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="#10B981" />
+            <Text style={styles.loadingText}>
+              {t.farmerPayments?.loadingTransactions || 'Translating transactions...'}
+            </Text>
+          </View>
+        )}
+        
         {transactions.length > 0 ? (
           transactions.map((transaction) => (
             <TransactionCard
@@ -26,13 +32,13 @@ const TransactionList = ({ activeTab, onTransactionPress }) => {
               onPress={onTransactionPress}
             />
           ))
-        ) : (
+        ) : !isTranslating ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
               {t.farmerPayments?.noTransactionsFound || 'No transactions found'}
             </Text>
           </View>
-        )}
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -61,6 +67,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B7280',
     textAlign: 'center',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    marginBottom: 8,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginLeft: 8,
   },
 });
 

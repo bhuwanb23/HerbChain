@@ -17,6 +17,8 @@ const PaymentsScreen = ({ navigation }) => {
     handleTabChange,
     handleWithdraw,
     handleTransactionPress,
+    getCurrentTransactions,
+    isTranslating,
   } = usePayments();
 
   return (
@@ -39,6 +41,8 @@ const PaymentsScreen = ({ navigation }) => {
         <TransactionList 
           activeTab={activeTab}
           onTransactionPress={handleTransactionPress}
+          transactions={getCurrentTransactions()}
+          isTranslating={isTranslating}
         />
       </ScrollView>
     </SafeAreaWrapper>
