@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Text, Alert } from 'react-native'; // Import Alert
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
 // Removed: import { SafeAreaView } from 'react-native-safe-area-context';
 // Removed: import ProductionHeader from './components/ProductionHeader';
 import ProgressBar from './components/ProgressBar';
@@ -13,6 +14,7 @@ import ProductDetails from './components/ProductDetails';
 import useProductCreationData from './hooks/useProductCreationData';
 
 const ProductionPage = () => {
+  const { t } = useGlobalTranslation();
   const {
     currentStep,
     handleNextStep,
@@ -88,7 +90,7 @@ const ProductionPage = () => {
                       traceabilitySummaryData={traceabilitySummaryData}
                       onCreateNewProduct={() => {
                         handleCreateNewProduct();
-                        Alert.alert('Product Created', 'Your new product has been successfully created!');
+                        Alert.alert(t.production?.productCreated || 'Product Created', t.production?.productCreatedSuccess || 'Your new product has been successfully created!');
                       }}
                     />
                   );
@@ -117,7 +119,7 @@ const ProductionPage = () => {
           <View style={styles.headerBar}>
             <TouchableOpacity onPress={backToProductList} style={styles.backButton}>
               <Icon name="arrow-back" size={24} color="#4b5563" />
-              <Text style={styles.backButtonText}>Back to Products</Text>
+              <Text style={styles.backButtonText}>{t.production?.backToProducts || 'Back to Products'}</Text>
             </TouchableOpacity>
           </View>
           {renderProductionForm()}

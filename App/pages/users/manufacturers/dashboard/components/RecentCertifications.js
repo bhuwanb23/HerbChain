@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const certificationData = [
   {
@@ -44,11 +45,26 @@ const CertificationItem = ({ item }) => (
 );
 
 const RecentCertifications = () => {
+  const { t } = useGlobalTranslation();
+  
+  // Create translated certifications array
+  const translatedCertifications = certificationData.map(cert => ({
+    ...cert,
+    status: cert.status === 'Certified'
+      ? (t.manufacturerDashboard?.certified || 'Certified')
+      : cert.status === 'Pending'
+      ? (t.manufacturerDashboard?.pending || 'Pending')
+      : (t.manufacturerDashboard?.rejected || 'Rejected'),
+    timeAgo: cert.timeAgo.includes('hours')
+      ? `${cert.timeAgo.split(' ')[0]} ${t.manufacturerDashboard?.hoursAgo || 'hours ago'}`
+      : cert.timeAgo
+  }));
+  
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Recent Lab Certifications</Text>
+      <Text style={styles.title}>{t.manufacturerDashboard?.recentCertificationsTitle || 'Recent Lab Certifications'}</Text>
       <FlatList
-        data={certificationData}
+        data={translatedCertifications}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <CertificationItem item={item} />}
         showsVerticalScrollIndicator={false}

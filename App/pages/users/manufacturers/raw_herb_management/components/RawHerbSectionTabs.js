@@ -1,11 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const RawHerbSectionTabs = ({ activeSection, onSelectSection }) => {
+  const { t } = useGlobalTranslation();
+  
   const sections = [
-    { id: 'available_herbs', label: 'Available Herbs' },
-    { id: 'ordered_herbs', label: 'Ordered Herbs' },
-    { id: 'scanned_details', label: 'Scanned Details' },
+    { id: 'available_herbs', label: t.rawHerbManagement?.availableHerbs || 'Available Herbs' },
+    { id: 'ordered_herbs', label: t.rawHerbManagement?.orderedHerbs || 'Ordered Herbs' },
+    { id: 'scanned_details', label: t.rawHerbManagement?.scannedDetails || 'Scanned Details' },
   ];
 
   return (

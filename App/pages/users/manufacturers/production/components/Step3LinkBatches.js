@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LinkedBatchItem from './LinkedBatchItem';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const Step3LinkBatches = ({
   linkedBatches,
@@ -9,22 +10,23 @@ const Step3LinkBatches = ({
   onPreviousStep,
   onNextStep,
 }) => {
+  const { t } = useGlobalTranslation();
   return (
     <View style={styles.container}>
       <View style={styles.cardContainer}>
-        <Text style={styles.title}>Linked Batch IDs</Text>
-        <Text style={styles.subtitle}>Automatically generated batch linkages</Text>
+        <Text style={styles.title}>{t.production?.linkBatches || 'Link Batches'}</Text>
+        <Text style={styles.subtitle}>{t.production?.linkHerbBatches || 'Link herb batches to your product for traceability'}</Text>
 
         <View style={styles.masterBatchCard}>
           <View>
-            <Text style={styles.masterBatchTitle}>Master Batch ID</Text>
+            <Text style={styles.masterBatchTitle}>{t.production?.productId || 'Product ID'}</Text>
             <Text style={styles.masterBatchId}>{productId}</Text>
           </View>
           <Icon name="link" size={20} color="#059669" />
         </View>
 
         <View style={styles.sourceBatchesCard}>
-          <Text style={styles.sourceBatchesTitle}>Source Batches</Text>
+          <Text style={styles.sourceBatchesTitle}>{t.production?.linkedBatches || 'Linked Batches'}</Text>
           <FlatList
             data={linkedBatches}
             keyExtractor={item => item.batchId}
@@ -36,15 +38,15 @@ const Step3LinkBatches = ({
 
         <View style={styles.infoCard}>
           <Icon name="info" size={20} color="#3b82f6" />
-          <Text style={styles.infoText}>All batch linkages have been verified and recorded in the blockchain</Text>
+          <Text style={styles.infoText}>{t.production?.linkHerbBatches || 'All batch linkages have been verified and recorded'}</Text>
         </View>
 
         <View style={styles.navigationButtons}>
           <TouchableOpacity style={styles.backButton} onPress={onPreviousStep}>
-            <Text style={styles.backButtonText}>Back</Text>
+            <Text style={styles.backButtonText}>{t.production?.previous || 'Previous'}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.nextButton} onPress={onNextStep}>
-            <Text style={styles.nextButtonText}>Generate QR Code</Text>
+            <Text style={styles.nextButtonText}>{t.production?.continueToQRGeneration || 'Continue to QR Generation'}</Text>
           </TouchableOpacity>
         </View>
       </View>

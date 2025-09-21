@@ -3,11 +3,13 @@ import { Text, View, StyleSheet, Button, Dimensions, Alert, TouchableOpacity } f
 import { Camera, CameraView } from 'expo-camera'; // Import CameraView
 // Removed: import { BarCodeScanner } from 'expo-barcode-scanner';
 import { useNavigation } from '@react-navigation/native';
+import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
 
 const { width } = Dimensions.get('window');
 const qrCodeAreaSize = width * 0.7; // 70% of screen width
 
 const QRScannerScreen = () => {
+  const { t } = useGlobalTranslation();
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const navigation = useNavigation();
@@ -23,11 +25,11 @@ const QRScannerScreen = () => {
     if (scanned) return; // Prevent multiple scans
     setScanned(true);
     Alert.alert(
-      'QR Code Scanned',
-      `Data: ${data}`,
+      t.rawHerbManagement?.qrCodeScanned || 'QR Code Scanned',
+      `${t.rawHerbManagement?.data || 'Data'}: ${data}`,
       [
         {
-          text: 'OK',
+          text: t.rawHerbManagement?.ok || 'OK',
           onPress: () => {
             navigation.navigate('ManufacturerMainPage', { screen: 'raw_herb_management', params: { scannedData: data } });
           }
@@ -39,14 +41,14 @@ const QRScannerScreen = () => {
   if (hasPermission === null) {
     return (
       <View style={styles.permissionContainer}>
-        <Text style={styles.permissionText}>Requesting for camera permission</Text>
+        <Text style={styles.permissionText}>{t.rawHerbManagement?.requestingCameraPermission || 'Requesting for camera permission'}</Text>
       </View>
     );
   }
   if (hasPermission === false) {
     return (
       <View style={styles.permissionContainer}>
-        <Text style={styles.permissionText}>No access to camera</Text>
+        <Text style={styles.permissionText}>{t.rawHerbManagement?.noAccessToCamera || 'No access to camera'}</Text>
       </View>
     );
   }
@@ -60,14 +62,14 @@ const QRScannerScreen = () => {
       />
       <View style={styles.overlay}>
         <View style={styles.qrCodeArea} />
-        <Text style={styles.scanText}>Scan the QR Code</Text>
+        <Text style={styles.scanText}>{t.rawHerbManagement?.scanTheQRCode || 'Scan the QR Code'}</Text>
         {scanned && (
           <TouchableOpacity style={styles.scanAgainButton} onPress={() => setScanned(false)}>
-            <Text style={styles.scanAgainButtonText}>Tap to Scan Again</Text>
+            <Text style={styles.scanAgainButtonText}>{t.rawHerbManagement?.tapToScanAgain || 'Tap to Scan Again'}</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.closeButtonText}>Close</Text>
+            <Text style={styles.closeButtonText}>{t.rawHerbManagement?.close || 'Close'}</Text>
         </TouchableOpacity>
       </View>
     </View>

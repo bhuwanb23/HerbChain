@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const OrderedHerbItem = ({ herb, getStatusStyle, onPress, onScanInitiate, onReceiveHerb }) => {
+  const { t } = useGlobalTranslation();
   const statusStyle = getStatusStyle(herb.status);
 
   // When manufacturer scans the transporter's QR code to receive the herb
@@ -20,7 +22,7 @@ const OrderedHerbItem = ({ herb, getStatusStyle, onPress, onScanInitiate, onRece
           <Text style={[styles.statusText, { color: statusStyle.color }]}>{herb.status}</Text>
         </View>
       </View>
-      <Text style={styles.farmerName}>Farmer: {herb?.farmer_user?.name || herb.farmer_id || 'N/A'}</Text>
+      <Text style={styles.farmerName}>{t.rawHerbManagement?.farmer || 'Farmer'}: {herb?.farmer_user?.name || herb.farmer_id || 'N/A'}</Text>
       <View style={styles.detailsRow}>
         <View style={styles.detailItem}>
           <Icon name="inventory" size={16} color="#4b5563" />
@@ -29,20 +31,20 @@ const OrderedHerbItem = ({ herb, getStatusStyle, onPress, onScanInitiate, onRece
         {herb.orderDate && (
           <View style={styles.detailItem}>
             <Icon name="access-time" size={16} color="#4b5563" />
-            <Text style={styles.detailText}>Ordered: {new Date(herb.orderDate).toLocaleDateString()}</Text>
+            <Text style={styles.detailText}>{t.rawHerbManagement?.ordered || 'Ordered'}: {new Date(herb.orderDate).toLocaleDateString()}</Text>
           </View>
         )}
         {herb.labReports && herb.labReports.length > 0 && herb.labReports[0]?.certification && (
           <View style={styles.detailItem}>
             <Icon name="verified" size={16} color="#22c55e" />
-            <Text style={styles.detailText}>Certified</Text>
+            <Text style={styles.detailText}>{t.rawHerbManagement?.certified || 'Certified'}</Text>
           </View>
         )}
       </View>
       {/* Temporarily show scan button always for debugging */}
       <TouchableOpacity style={styles.scanButton} onPress={handleManufacturerScan}>
         <Icon name="qr-code-scanner" size={20} color="#fff" />
-        <Text style={styles.scanButtonText}>Receive Herb (Scan Transporter QR)</Text>
+        <Text style={styles.scanButtonText}>{t.rawHerbManagement?.receiveHerbScanQR || 'Receive Herb (Scan Transporter QR)'}</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );

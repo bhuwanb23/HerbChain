@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const LinkedBatchItem = ({ herbName, batchId }) => {
+  const { t } = useGlobalTranslation();
   return (
     <View style={styles.container}>
-      <Text style={styles.herbName}>{herbName}:</Text>
-      <Text style={styles.batchId}>{batchId}</Text>
+      <Text style={styles.herbName}>{herbName || ''}:</Text>
+      <Text style={styles.batchId}>{batchId || ''}</Text>
     </View>
   );
 };

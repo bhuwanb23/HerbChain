@@ -1,13 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const ScannedHerbDetails = ({ scannedHerb, getStatusStyle, onClearScannedDetails }) => {
+  const { t } = useGlobalTranslation();
   if (!scannedHerb) {
     return (
       <View style={styles.emptyContainer}>
         <Icon name="qr-code-scanner" size={60} color="#9ca3af" />
-        <Text style={styles.emptyText}>Scan a QR code to see herb details</Text>
+        <Text style={styles.emptyText}>{t.rawHerbManagement?.scanTheQRCode || 'Scan a QR code to see herb details'}</Text>
       </View>
     );
   }
@@ -28,14 +30,14 @@ const ScannedHerbDetails = ({ scannedHerb, getStatusStyle, onClearScannedDetails
         <Text style={styles.batchSummaryFarmer}>{scannedHerb.farmer}</Text>
 
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Certifications</Text>
+          <Text style={styles.sectionTitle}>{t.rawHerbManagement?.certification || 'Certifications'}</Text>
           <View style={styles.certificationsList}>
             {scannedHerb.certifications && scannedHerb.certifications.length > 0 ? ( scannedHerb.certifications.map((cert, index) => (
               <View key={index} style={styles.certificationItem}>
                 <Icon name="verified" size={16} color="#22c55e" />
                 <Text style={styles.certificationText}>{cert}</Text>
               </View>
-            )) ) : (<Text style={styles.noCertificationsText}>No certifications available</Text>)}
+            )) ) : (<Text style={styles.noCertificationsText}>{t.rawHerbManagement?.certification || 'No certifications available'}</Text>)}
           </View>
         </View>
 
@@ -79,7 +81,7 @@ const ScannedHerbDetails = ({ scannedHerb, getStatusStyle, onClearScannedDetails
       </View>
       <TouchableOpacity style={styles.clearButtonFixed} onPress={onClearScannedDetails}>
         <Icon name="clear" size={20} color="#ef4444" />
-        <Text style={styles.clearButtonTextFixed}>Clear Scanned Details</Text>
+        <Text style={styles.clearButtonTextFixed}>{t.rawHerbManagement?.clearScannedDetails || 'Clear Scanned Details'}</Text>
       </TouchableOpacity>
     </View>
   );

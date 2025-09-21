@@ -1,8 +1,27 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const ProgressBar = ({ currentStep, steps }) => {
+  const { t } = useGlobalTranslation();
+  
+  // Translate step labels
+  const getTranslatedLabel = (stepId) => {
+    switch (stepId) {
+      case 1:
+        return t.production?.selectHerbs || 'Select Herbs';
+      case 2:
+        return t.production?.formulation || 'Formulation';
+      case 3:
+        return t.production?.linkBatchesStep || 'Link Batches';
+      case 4:
+        return t.production?.generateQR || 'Generate QR';
+      default:
+        return `${t.production?.step || 'Step'} ${stepId}`;
+    }
+  };
+  
   return (
     <View style={styles.container}>
       {steps.map((step, index) => (
@@ -36,7 +55,7 @@ const ProgressBar = ({ currentStep, steps }) => {
                 currentStep === step.id && styles.currentStepLabel,
               ]}
             >
-              {step.label}
+              {getTranslatedLabel(step.id)}
             </Text>
           </View>
           {index < steps.length - 1 && (

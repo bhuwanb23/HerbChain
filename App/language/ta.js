@@ -391,4 +391,200 @@ export const ta = {
     certificates: 'சான்றிதழ்கள்',
     uploadComplianceCertificates: 'இணக்க சான்றிதழ்களை பதிவேற்றவும்',
   },
+
+  // Manufacturer Dashboard Section
+  manufacturerDashboard: {
+    // Loading & Error States
+    loadingDashboardData: 'டாஷ்போர்டு தரவு ஏற்றப்படுகிறது...',
+    errorLoadingDashboard: 'டாஷ்போர்டு ஏற்றுவதில் பிழை',
+    
+    // Welcome Banner
+    hello: 'வணக்கம்',
+    heresTodaysOverview: 'இதோ இன்றைய கண்ணோட்டம்.',
+    
+    // Dashboard Cards
+    activeBatches: 'செயலில் உள்ள தொகுதிகள்',
+    pendingDeliveries: 'நிலுவையில் உள்ள டெலிவரிகள்',
+    recentCertifications: 'சமீபத்திய சான்றிதழ்கள்',
+    productsCreated: 'உருவாக்கப்பட்ட தயாரிப்புகள்',
+    
+    // Notifications Section
+    notifications: 'அறிவிப்புகள்',
+    newLabCertifiedHerbs: 'புதிய ஆய்வக-சான்றளிக்கப்பட்ட மூலிகைகள் எடுத்துச் செல்ல தயார்.',
+    urgentBatchQualityAlert: 'அவசரம்: தொகுதி HERB-XYZ இல் தரம் எச்சரிக்கை உள்ளது.',
+    newProductionGuidelines: 'புதிய உற்பத்தி வழிகாட்டுதல்கள் வெளியிடப்பட்டுள்ளன.',
+    
+    // Quick Actions
+    quickActions: 'விரைவு செயல்கள்',
+    herbInventory: 'மூலிகை சரக்கு',
+    createProduct: 'தயாரிப்பை உருவாக்கவும்',
+    
+    // Recent Certifications
+    recentCertificationsTitle: 'சமீபத்திய சான்றிதழ்கள்',
+    viewAll: 'அனைத்தையும் பார்க்கவும்',
+    certified: 'சான்றளிக்கப்பட்டது',
+    pending: 'நிலுவையில்',
+    rejected: 'நிராகரிக்கப்பட்டது',
+    hoursAgo: 'மணி நேரங்களுக்கு முன்பு',
+    
+    // Monthly Production Chart
+    monthlyProduction: 'மாதாந்திர உற்பத்தி',
+    productionTrends: 'கடந்த 6 மாதங்களில் உற்பத்தி போக்குகள்',
+  },
+
+  // Raw Herb Management Section
+  rawHerbManagement: {
+    // Tab Labels
+    availableHerbs: 'கிடைக்கும் மூலிகைகள்',
+    orderedHerbs: 'ஆர்டர் செய்யப்பட்ட மூலிகைகள்',
+    scannedDetails: 'ஸ்கேன் செய்யப்பட்ட விவரங்கள்',
+    
+    // QR Scanner
+    requestingCameraPermission: 'கேமரா அனுமதிக்காக கோரிக்கை விடுக்கிறது',
+    noAccessToCamera: 'கேமராவிற்கு அணுகல் இல்லை',
+    scanTheQRCode: 'QR குறியீட்டை ஸ்கேன் செய்யவும்',
+    qrCodeScanned: 'QR குறியீடு ஸ்கேன் செய்யப்பட்டது',
+    data: 'தரவு',
+    ok: 'சரி',
+    tapToScanAgain: 'மீண்டும் ஸ்கேன் செய்ய தட்டவும்',
+    close: 'மூடு',
+    
+    // Available Herbs List
+    noAvailableHerbs: 'காண்பிக்க கிடைக்கும் மூலிகைகள் இல்லை.',
+    batchId: 'தொகுதி ID',
+    farmer: 'விவசாயி',
+    harvest: 'அறுவடை',
+    latestLabReport: 'சமீபத்திய ஆய்வக அறிக்கை:',
+    certified: 'சான்றளிக்கப்பட்டது',
+    notCertified: 'சான்றளிக்கப்படவில்லை',
+    standard: 'தரநிலை',
+    purity: 'தூய்மை',
+    orderHerb: 'மூலிகையை ஆர்டர் செய்யவும்',
+    
+    // Ordered Herbs List
+    noHerbsOrdered: 'இன்னும் மூலிகைகள் ஆர்டர் செய்யப்படவில்லை.',
+    orderNow: 'இப்போது ஆர்டர் செய்யவும்',
+    ordered: 'ஆர்டர் செய்யப்பட்டது',
+    receiveHerbScanQR: 'மூலிகையை பெறவும் (போக்குவரத்துக்காரர் QR ஸ்கேன்)',
+    
+    // Herb Details Modal
+    herbDetails: 'மூலிகை விவரங்கள்',
+    speciesName: 'இன பெயர்',
+    weight: 'எடை',
+    harvestDate: 'அறுவடை தேதி',
+    location: 'இடம்',
+    qualityStatus: 'தர நிலை',
+    labReports: 'ஆய்வக அறிக்கைகள்',
+    certification: 'சான்றிதழ்',
+    certificationLevel: 'சான்றிதழ் நிலை',
+    purityPercentage: 'தூய்மை சதவீதம்',
+    pesticideResidues: 'பூச்சிக்கொல்லி எச்சங்கள்',
+    moistureContent: 'ஈரப்பத உள்ளடக்கம்',
+    phytochemicalLevels: 'பைட்டோகெமிக்கல் அளவுகள்',
+    heavyMetals: 'கனமான உலோகங்கள்',
+    microbialContamination: 'நுண்ணுயிர் மாசுபாடு',
+    reportDate: 'அறிக்கை தேதி',
+    
+    // Scanned Herb Details
+    scannedHerbInformation: 'ஸ்கேன் செய்யப்பட்ட மூலிகை தகவல்',
+    clearScannedDetails: 'ஸ்கேன் செய்யப்பட்ட விவரங்களை அழிக்கவும்',
+    
+    // Status Values
+    approved: 'அங்கீகரிக்கப்பட்டது',
+    pending: 'நிலுவையில்',
+    rejected: 'நிராகரிக்கப்பட்டது',
+    inTransit: 'போக்குவரத்தில்',
+    delivered: 'வழங்கப்பட்டது',
+    
+    // Alert Messages
+    error: 'பிழை',
+    noHerbSelectedForReceiving: 'பெறுவதற்கு மூலிகை தேர்ந்தெடுக்கப்படவில்லை.',
+    herbReceivedSuccessfully: 'மூலிகை வெற்றிகரமாக பெறப்பட்டது!',
+    failedToReceiveHerb: 'மூலிகையை பெற முடியவில்லை',
+  },
+
+  // Production Section
+  production: {
+    // Main Navigation
+    backToProducts: 'தயாரிப்புகளுக்கு திரும்பு',
+    productCreated: 'தயாரிப்பு உருவாக்கப்பட்டது',
+    productCreatedSuccess: 'உங்கள் புதிய தயாரிப்பு வெற்றிகரமாக உருவாக்கப்பட்டது!',
+    
+    // Product List
+    noProductsCreated: 'இன்னும் தயாரிப்புகள் உருவாக்கப்படவில்லை.',
+    tapToCreateProduct: "புதிய தயாரிப்பை உருவாக்க '+' பொத்தானை அழுத்தவும்.",
+    
+    // Step 1 - Select Herbs
+    selectCertifiedHerbs: 'சான்றளிக்கப்பட்ட மூலிகைகளை தேர்ந்தெடுக்கவும்',
+    chooseHerbsForFormulation: 'உங்கள் தயாரிப்பு உருவாக்கத்திற்கு மூலிகைகளை தேர்ந்தெடுக்கவும்',
+    selectionRequired: 'தேர்வு தேவை',
+    selectAtLeastOneHerb: 'தொடர குறைந்தது ஒரு மூலிகையை தேர்ந்தெடுக்கவும்.',
+    continueToFormulation: 'உருவாக்கத்திற்கு தொடரவும்',
+    
+    // Step 2 - Formulation
+    productFormulation: 'தயாரிப்பு உருவாக்கம்',
+    defineProportionsAndProcessing: 'விகிதங்கள் மற்றும் செயலாக்க விவரங்களை வரையறுக்கவும்',
+    herbProportions: 'மூலிகை விகிதங்கள்',
+    processingMethod: 'செயலாக்க முறை',
+    processingNotes: 'செயலாக்க குறிப்புகள்',
+    addProcessingNotes: 'ஏதேனும் குறிப்பிட்ட செயலாக்க குறிப்புகள் அல்லது வழிமுறைகளை சேர்க்கவும்...',
+    previous: 'முந்தைய',
+    continueToLinkBatches: 'தொகுதிகளை இணைக்க தொடரவும்',
+    
+    // Step 3 - Link Batches
+    linkBatches: 'தொகுதிகளை இணைக்கவும்',
+    linkHerbBatches: 'கண்டறியும் திறனுக்காக உங்கள் தயாரிப்புடன் மூலிகை தொகுதிகளை இணைக்கவும்',
+    linkedBatches: 'இணைக்கப்பட்ட தொகுதிகள்',
+    noLinkedBatches: 'இன்னும் தொகுதிகள் இணைக்கப்படவில்லை.',
+    continueToQRGeneration: 'QR உருவாக்கத்திற்கு தொடரவும்',
+    
+    // Step 4 - Generate QR
+    generateProductQR: 'தயாரிப்பு QR உருவாக்கவும்',
+    qrCodeGenerated: 'தயாரிப்பு கண்டறியும் திறனுக்காக QR குறியீடு உருவாக்கப்பட்டது',
+    productQRCode: 'தயாரிப்பு QR குறியீடு',
+    traceabilitySummary: 'கண்டறியும் திறன் சுருக்கம்',
+    productId: 'தயாரிப்பு ID',
+    totalHerbs: 'மொத்த மூலிகைகள்',
+    processingMethodUsed: 'செயலாக்க முறை',
+    batchesLinked: 'இணைக்கப்பட்ட தொகுதிகள்',
+    createNewProduct: 'புதிய தயாரிப்பை உருவாக்கவும்',
+    
+    // Herb Selection Card
+    certified: 'சான்றளிக்கப்பட்டது',
+    origin: 'தோற்றம்',
+    purity: 'தூய்மை',
+    
+    // Product Details
+    productDetails: 'தயாரிப்பு விவரங்கள்',
+    ingredients: 'பொருட்கள்',
+    processing: 'செயலாக்கம்',
+    traceability: 'கண்டறியும் திறன்',
+    qrCode: 'QR குறியீடு',
+    
+    // Progress Steps
+    step: 'படி',
+    selectHerbs: 'மூலிகைகளை தேர்ந்தெடுக்கவும்',
+    formulation: 'உருவாக்கம்',
+    linkBatchesStep: 'தொகுதிகளை இணைக்கவும்',
+    generateQR: 'QR உருவாக்கவும்',
+    
+    // Processing Methods
+    extraction: 'பிரித்தெடுத்தல்',
+    drying: 'உலர்த்துதல்',
+    grinding: 'அரைத்தல்',
+    fermentation: 'நொதித்தல்',
+    distillation: 'வடிகட்டுதல்',
+    
+    // General
+    proportion: 'விகிதம்',
+    percentage: 'சதவீதம்',
+    weight: 'எடை',
+    batch: 'தொகுதி',
+    date: 'தேதி',
+    status: 'நிலை',
+    view: 'பார்க்கவும்',
+    edit: 'திருத்தவும்',
+    delete: 'நீக்கவும்',
+    notCertified: 'சான்றளிக்கப்படவில்லை',
+  },
 };

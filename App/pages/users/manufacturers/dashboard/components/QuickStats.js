@@ -1,10 +1,25 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, Dimensions } from 'react-native';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 import DashboardCard from './DashboardCard';
 
 const screenWidth = Dimensions.get('window').width;
 
 const QuickStats = ({ dashboardCards }) => {
+  const { t } = useGlobalTranslation();
+  
+  // Create translated dashboard cards
+  const translatedCards = dashboardCards?.map(card => ({
+    ...card,
+    title: card.id === 'active_batches'
+      ? (t.manufacturerDashboard?.activeBatches || 'Active Batches')
+      : card.id === 'pending_deliveries'
+      ? (t.manufacturerDashboard?.pendingDeliveries || 'Pending Deliveries')
+      : card.id === 'recent_certifications'
+      ? (t.manufacturerDashboard?.recentCertifications || 'Recent Certifications')
+      : (t.manufacturerDashboard?.productsCreated || 'Products Created')
+  })) || [];
+  
   const renderCard = ({ item }) => (
     <DashboardCard
       title={item.title}
@@ -18,7 +33,7 @@ const QuickStats = ({ dashboardCards }) => {
   return (
     <View style={styles.container}>
       <FlatList
-        data={dashboardCards}
+        data={translatedCards}
         renderItem={renderCard}
         keyExtractor={(item) => item.id}
         numColumns={2} // Display 2 cards per row

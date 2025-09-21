@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import TraceabilitySummary from './TraceabilitySummary';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const Step4GenerateQR = ({
   qrCodeImageUrl,
@@ -9,6 +10,7 @@ const Step4GenerateQR = ({
   traceabilitySummaryData,
   onCreateNewProduct,
 }) => {
+  const { t } = useGlobalTranslation();
   const handleDownloadQR = () => {
     Alert.alert('Download QR', 'Functionality to download QR code will be implemented here.');
   };
@@ -20,8 +22,8 @@ const Step4GenerateQR = ({
   return (
     <View style={styles.container}>
       <View style={styles.cardContainer}>
-        <Text style={styles.title}>Product Created Successfully</Text>
-        <Text style={styles.subtitle}>Your QR code and traceability summary</Text>
+        <Text style={styles.title}>{t.production?.generateProductQR || 'Generate Product QR'}</Text>
+        <Text style={styles.subtitle}>{t.production?.qrCodeGenerated || 'QR code generated for product traceability'}</Text>
 
         <View style={styles.qrCodeSection}>
           <View style={styles.qrCodeWrapper}>
@@ -31,7 +33,7 @@ const Step4GenerateQR = ({
               resizeMode="contain"
             />
           </View>
-          <Text style={styles.productIdText}>Product ID: {productId}</Text>
+          <Text style={styles.productIdText}>{t.production?.productId || 'Product ID'}: {productId}</Text>
         </View>
 
         <TraceabilitySummary summaryData={traceabilitySummaryData} />
@@ -39,15 +41,15 @@ const Step4GenerateQR = ({
         <View style={styles.actionButtons}>
           <TouchableOpacity style={styles.downloadButton} onPress={handleDownloadQR}>
             <Icon name="download" size={20} color="#fff" />
-            <Text style={styles.buttonText}>Download QR Code</Text>
+            <Text style={styles.buttonText}>{t.production?.productQRCode || 'Download QR Code'}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.shareButton} onPress={handleShareProductDetails}>
             <Icon name="share" size={20} color="#4b5563" />
-            <Text style={styles.shareButtonText}>Share Product Details</Text>
+            <Text style={styles.shareButtonText}>{t.production?.productDetails || 'Share Product Details'}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.createNewButton} onPress={onCreateNewProduct}>
             <Icon name="add" size={20} color="#fff" />
-            <Text style={styles.buttonText}>Create New Product</Text>
+            <Text style={styles.buttonText}>{t.production?.createNewProduct || 'Create New Product'}</Text>
           </TouchableOpacity>
         </View>
       </View>

@@ -2,8 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import ProductListItem from './ProductListItem';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const ProductList = ({ products, onViewDetails }) => {
+  const { t } = useGlobalTranslation();
   return (
     <View style={styles.container}>
       {products.length > 0 ? (
@@ -22,8 +24,8 @@ const ProductList = ({ products, onViewDetails }) => {
       ) : (
         <View style={styles.emptyListContainer}>
           <Icon name="info-outline" size={40} color="#9ca3af" />
-          <Text style={styles.emptyListText}>No products created yet.</Text>
-          <Text style={styles.emptyListSubText}>Tap the '+' button to create a new product.</Text>
+          <Text style={styles.emptyListText}>{t.production?.noProductsCreated || 'No products created yet.'}</Text>
+          <Text style={styles.emptyListSubText}>{t.production?.tapToCreateProduct || "Tap the '+' button to create a new product."}</Text>
         </View>
       )}
     </View>

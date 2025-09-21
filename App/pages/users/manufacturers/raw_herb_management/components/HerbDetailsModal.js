@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const HerbDetailsModal = ({ isVisible, onClose, herb, getStatusStyle }) => {
+  const { t } = useGlobalTranslation();
   if (!herb) {
     return null;
   }
@@ -19,7 +21,7 @@ const HerbDetailsModal = ({ isVisible, onClose, herb, getStatusStyle }) => {
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Herb Details</Text>
+            <Text style={styles.modalTitle}>{t.rawHerbManagement?.herbDetails || 'Herb Details'}</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Icon name="close" size={24} color="#6b7280" />
             </TouchableOpacity>
@@ -38,14 +40,14 @@ const HerbDetailsModal = ({ isVisible, onClose, herb, getStatusStyle }) => {
             </View>
 
             <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Certifications</Text>
+              <Text style={styles.sectionTitle}>{t.rawHerbManagement?.certification || 'Certifications'}</Text>
               <View style={styles.certificationsList}>
                 {herb.certifications && herb.certifications.length > 0 ? ( herb.certifications.map((cert, index) => (
                   <View key={index} style={styles.certificationItem}>
                     <Icon name="verified" size={16} color="#22c55e" />
                     <Text style={styles.certificationText}>{cert}</Text>
                   </View>
-                )) ) : (<Text style={styles.noCertificationsText}>No certifications available</Text>)}
+                )) ) : (<Text style={styles.noCertificationsText}>{t.rawHerbManagement?.certification || 'No certifications available'}</Text>)}
               </View>
             </View>
 

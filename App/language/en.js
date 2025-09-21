@@ -391,4 +391,200 @@ export const en = {
     certificates: 'Certificates',
     uploadComplianceCertificates: 'Upload compliance certificates',
   },
+
+  // Manufacturer Dashboard Section
+  manufacturerDashboard: {
+    // Loading & Error States
+    loadingDashboardData: 'Loading dashboard data...',
+    errorLoadingDashboard: 'Error loading dashboard',
+    
+    // Welcome Banner
+    hello: 'Hello',
+    heresTodaysOverview: "here's today's overview.",
+    
+    // Dashboard Cards
+    activeBatches: 'Active Batches',
+    pendingDeliveries: 'Pending Deliveries',
+    recentCertifications: 'Recent Certifications',
+    productsCreated: 'Products Created',
+    
+    // Notifications Section
+    notifications: 'Notifications',
+    newLabCertifiedHerbs: 'New lab-certified herbs ready for pickup.',
+    urgentBatchQualityAlert: 'Urgent: Batch HERB-XYZ has a quality alert.',
+    newProductionGuidelines: 'New production guidelines released.',
+    
+    // Quick Actions
+    quickActions: 'Quick Actions',
+    herbInventory: 'Herb Inventory',
+    createProduct: 'Create Product',
+    
+    // Recent Certifications
+    recentCertificationsTitle: 'Recent Certifications',
+    viewAll: 'View All',
+    certified: 'Certified',
+    pending: 'Pending',
+    rejected: 'Rejected',
+    hoursAgo: 'hours ago',
+    
+    // Monthly Production Chart
+    monthlyProduction: 'Monthly Production',
+    productionTrends: 'Production trends over the last 6 months',
+  },
+
+  // Raw Herb Management Section
+  rawHerbManagement: {
+    // Tab Labels
+    availableHerbs: 'Available Herbs',
+    orderedHerbs: 'Ordered Herbs',
+    scannedDetails: 'Scanned Details',
+    
+    // QR Scanner
+    requestingCameraPermission: 'Requesting for camera permission',
+    noAccessToCamera: 'No access to camera',
+    scanTheQRCode: 'Scan the QR Code',
+    qrCodeScanned: 'QR Code Scanned',
+    data: 'Data',
+    ok: 'OK',
+    tapToScanAgain: 'Tap to Scan Again',
+    close: 'Close',
+    
+    // Available Herbs List
+    noAvailableHerbs: 'No available herbs to display.',
+    batchId: 'Batch ID',
+    farmer: 'Farmer',
+    harvest: 'Harvest',
+    latestLabReport: 'Latest Lab Report:',
+    certified: 'Certified',
+    notCertified: 'Not Certified',
+    standard: 'Standard',
+    purity: 'Purity',
+    orderHerb: 'Order Herb',
+    
+    // Ordered Herbs List
+    noHerbsOrdered: 'No herbs have been ordered yet.',
+    orderNow: 'Order Now',
+    ordered: 'Ordered',
+    receiveHerbScanQR: 'Receive Herb (Scan Transporter QR)',
+    
+    // Herb Details Modal
+    herbDetails: 'Herb Details',
+    speciesName: 'Species Name',
+    weight: 'Weight',
+    harvestDate: 'Harvest Date',
+    location: 'Location',
+    qualityStatus: 'Quality Status',
+    labReports: 'Lab Reports',
+    certification: 'Certification',
+    certificationLevel: 'Certification Level',
+    purityPercentage: 'Purity Percentage',
+    pesticideResidues: 'Pesticide Residues',
+    moistureContent: 'Moisture Content',
+    phytochemicalLevels: 'Phytochemical Levels',
+    heavyMetals: 'Heavy Metals',
+    microbialContamination: 'Microbial Contamination',
+    reportDate: 'Report Date',
+    
+    // Scanned Herb Details
+    scannedHerbInformation: 'Scanned Herb Information',
+    clearScannedDetails: 'Clear Scanned Details',
+    
+    // Status Values
+    approved: 'Approved',
+    pending: 'Pending',
+    rejected: 'Rejected',
+    inTransit: 'In Transit',
+    delivered: 'Delivered',
+    
+    // Alert Messages
+    error: 'Error',
+    noHerbSelectedForReceiving: 'No herb selected for receiving.',
+    herbReceivedSuccessfully: 'Herb received successfully!',
+    failedToReceiveHerb: 'Failed to receive herb',
+  },
+
+  // Production Section
+  production: {
+    // Main Navigation
+    backToProducts: 'Back to Products',
+    productCreated: 'Product Created',
+    productCreatedSuccess: 'Your new product has been successfully created!',
+    
+    // Product List
+    noProductsCreated: 'No products created yet.',
+    tapToCreateProduct: "Tap the '+' button to create a new product.",
+    
+    // Step 1 - Select Herbs
+    selectCertifiedHerbs: 'Select Certified Herbs',
+    chooseHerbsForFormulation: 'Choose the herbs for your product formulation',
+    selectionRequired: 'Selection Required',
+    selectAtLeastOneHerb: 'Please select at least one herb to continue.',
+    continueToFormulation: 'Continue to Formulation',
+    
+    // Step 2 - Formulation
+    productFormulation: 'Product Formulation',
+    defineProportionsAndProcessing: 'Define proportions and processing details',
+    herbProportions: 'Herb Proportions',
+    processingMethod: 'Processing Method',
+    processingNotes: 'Processing Notes',
+    addProcessingNotes: 'Add any specific processing notes or instructions...',
+    previous: 'Previous',
+    continueToLinkBatches: 'Continue to Link Batches',
+    
+    // Step 3 - Link Batches
+    linkBatches: 'Link Batches',
+    linkHerbBatches: 'Link herb batches to your product for traceability',
+    linkedBatches: 'Linked Batches',
+    noLinkedBatches: 'No batches linked yet.',
+    continueToQRGeneration: 'Continue to QR Generation',
+    
+    // Step 4 - Generate QR
+    generateProductQR: 'Generate Product QR',
+    qrCodeGenerated: 'QR code generated for product traceability',
+    productQRCode: 'Product QR Code',
+    traceabilitySummary: 'Traceability Summary',
+    productId: 'Product ID',
+    totalHerbs: 'Total Herbs',
+    processingMethodUsed: 'Processing Method',
+    batchesLinked: 'Batches Linked',
+    createNewProduct: 'Create New Product',
+    
+    // Herb Selection Card
+    certified: 'Certified',
+    origin: 'Origin',
+    purity: 'Purity',
+    
+    // Product Details
+    productDetails: 'Product Details',
+    ingredients: 'Ingredients',
+    processing: 'Processing',
+    traceability: 'Traceability',
+    qrCode: 'QR Code',
+    
+    // Progress Steps
+    step: 'Step',
+    selectHerbs: 'Select Herbs',
+    formulation: 'Formulation',
+    linkBatchesStep: 'Link Batches',
+    generateQR: 'Generate QR',
+    
+    // Processing Methods
+    extraction: 'Extraction',
+    drying: 'Drying',
+    grinding: 'Grinding',
+    fermentation: 'Fermentation',
+    distillation: 'Distillation',
+    
+    // General
+    proportion: 'Proportion',
+    percentage: 'Percentage',
+    weight: 'Weight',
+    batch: 'Batch',
+    date: 'Date',
+    status: 'Status',
+    view: 'View',
+    edit: 'Edit',
+    delete: 'Delete',
+    notCertified: 'Not Certified',
+  },
 };

@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const QuickActions = ({ navigation }) => {
+  const { t } = useGlobalTranslation();
   const handleHerbInventoryPress = () => {
     console.log('Navigate to Herb Inventory');
     // navigation.navigate('RawHerbManagement'); // Assuming this is the correct page
@@ -15,15 +17,15 @@ const QuickActions = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Quick Actions</Text>
+      <Text style={styles.title}>{t.manufacturerDashboard?.quickActions || 'Quick Actions'}</Text>
       <View style={styles.buttonsContainer}>
         <TouchableOpacity style={[styles.button, { backgroundColor: '#7C9885' }]} onPress={handleHerbInventoryPress}>
           <Icon name="boxes-stacked" size={20} color="white" />
-          <Text style={styles.buttonText}>Herb Inventory</Text>
+          <Text style={styles.buttonText}>{t.manufacturerDashboard?.herbInventory || 'Herb Inventory'}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.button, { backgroundColor: '#9CAF88' }]} onPress={handleCreateProductPress}>
           <Icon name="plus" size={20} color="white" />
-          <Text style={styles.buttonText}>Create Product</Text>
+          <Text style={styles.buttonText}>{t.manufacturerDashboard?.createProduct || 'Create Product'}</Text>
         </TouchableOpacity>
       </View>
     </View>

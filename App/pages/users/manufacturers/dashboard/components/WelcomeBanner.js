@@ -2,8 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const WelcomeBanner = ({ manufacturerName }) => {
+  const { t } = useGlobalTranslation();
   return (
     <LinearGradient
       colors={['#dcfce7', '#a7f3d0']}
@@ -12,8 +14,8 @@ const WelcomeBanner = ({ manufacturerName }) => {
       style={styles.container}
     >
       <Icon name="waving-hand" size={30} color="#16a34a" style={styles.icon} />
-      <Text style={styles.welcomeText}>Hello {manufacturerName},</Text>
-      <Text style={styles.overviewText}>here’s today’s overview.</Text>
+      <Text style={styles.welcomeText}>{t.manufacturerDashboard?.hello || 'Hello'} {manufacturerName},</Text>
+      <Text style={styles.overviewText}>{t.manufacturerDashboard?.heresTodaysOverview || "here's today's overview."}</Text>
     </LinearGradient>
   );
 };

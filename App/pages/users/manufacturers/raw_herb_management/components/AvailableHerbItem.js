@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const AvailableHerbItem = ({ herb, onOrderHerb, getStatusStyle, onPress }) => {
+  const { t } = useGlobalTranslation();
   const statusStyle = getStatusStyle(herb.status);
   const latestLabReport = herb.labReports && herb.labReports.length > 0 ? herb.labReports[0] : null;
   const hasCertification = latestLabReport?.certification === true;
@@ -14,8 +16,8 @@ const AvailableHerbItem = ({ herb, onOrderHerb, getStatusStyle, onPress }) => {
       <View style={styles.header}>
         <Text style={styles.herbName}>{herb.species_name || 'N/A'}</Text>
       </View>
-      <Text style={styles.batchId}>Batch ID: {herb.batch_id}</Text>
-      <Text style={styles.farmerInfo}>Farmer: {herb.farmer_id}</Text>
+      <Text style={styles.batchId}>{t.rawHerbManagement?.batchId || 'Batch ID'}: {herb.batch_id}</Text>
+      <Text style={styles.farmerInfo}>{t.rawHerbManagement?.farmer || 'Farmer'}: {herb.farmer_id}</Text>
       
       <View style={styles.detailsRow}>
         <View style={styles.detailItem}>
@@ -24,7 +26,7 @@ const AvailableHerbItem = ({ herb, onOrderHerb, getStatusStyle, onPress }) => {
         </View>
         <View style={styles.detailItem}>
           <Icon name="event" size={16} color={'gray'} />
-          <Text style={styles.detailText}>Harvest: {new Date(herb.harvest_date).toLocaleDateString()}</Text>
+          <Text style={styles.detailText}>{t.rawHerbManagement?.harvest || 'Harvest'}: {new Date(herb.harvest_date).toLocaleDateString()}</Text>
         </View>
       </View>
 
@@ -32,24 +34,24 @@ const AvailableHerbItem = ({ herb, onOrderHerb, getStatusStyle, onPress }) => {
         <View style={styles.labReportSection}>
           <View style={styles.labReportHeader}>
             <Icon name="flask" size={18} color={'#006B38'} style={styles.mr2} />
-            <Text style={styles.labReportTitle}>Latest Lab Report:</Text>
+            <Text style={styles.labReportTitle}>{t.rawHerbManagement?.latestLabReport || 'Latest Lab Report:'}</Text>
           </View>
           <View style={styles.labReportDetails}>
             {hasCertification ? (
               <View style={styles.detailItem}>
                 <Icon name="verified" size={16} color={'green'} />
-                <Text style={[styles.detailText, { color: 'darkgreen' }]}>Certified ({latestLabReport.certification_level || 'Standard'})</Text>
+                <Text style={[styles.detailText, { color: 'darkgreen' }]}>{t.rawHerbManagement?.certified || 'Certified'} ({latestLabReport.certification_level || (t.rawHerbManagement?.standard || 'Standard')})</Text>
               </View>
             ) : (
               <View style={styles.detailItem}>
                 <Icon name="cancel" size={16} color={'red'} />
-                <Text style={[styles.detailText, { color: 'darkred' }]}>Not Certified</Text>
+                <Text style={[styles.detailText, { color: 'darkred' }]}>{t.rawHerbManagement?.notCertified || 'Not Certified'}</Text>
               </View>
             )}
             {latestLabReport.purity_percentage && (
               <View style={styles.detailItem}>
                 <Icon name="science" size={16} color={'gray'} />
-                <Text style={styles.detailText}>Purity: {latestLabReport.purity_percentage}%</Text>
+                <Text style={styles.detailText}>{t.rawHerbManagement?.purity || 'Purity'}: {latestLabReport.purity_percentage}%</Text>
               </View>
             )}
             {latestLabReport.heavy_metals_present && (
@@ -66,7 +68,7 @@ const AvailableHerbItem = ({ herb, onOrderHerb, getStatusStyle, onPress }) => {
         style={styles.orderButton}
         onPress={() => onOrderHerb(herb.id)}
       >
-        <Text style={styles.orderButtonText}>Order Herb</Text>
+        <Text style={styles.orderButtonText}>{t.rawHerbManagement?.orderHerb || 'Order Herb'}</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );

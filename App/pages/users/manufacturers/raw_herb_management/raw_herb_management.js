@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
+import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
 // Removed: import { SafeAreaView } from 'react-native-safe-area-context';
 import AvailableHerbList from './components/AvailableHerbList';
 import OrderedHerbList from './components/OrderedHerbList';
@@ -10,6 +11,7 @@ import { ScannerOverlay } from '../../transporters/trips/components/ScannerOverl
 import useRawHerbData from './hooks/useRawHerbData';
 
 const RawHerbManagementPage = () => {
+  const { t } = useGlobalTranslation();
   const {
     activeSection,
     setActiveSection,
@@ -40,7 +42,7 @@ const RawHerbManagementPage = () => {
       if (herbToReceive) {
         handleReceiveHerb(herbToReceive, data);
       } else {
-        Alert.alert('Error', 'No herb selected for receiving.');
+        Alert.alert(t.rawHerbManagement?.error || 'Error', t.rawHerbManagement?.noHerbSelectedForReceiving || 'No herb selected for receiving.');
       }
     } else {
       // Default scan for general herb details

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const notificationsData = [
   { id: '1', message: 'New lab-certified herbs ready for pickup.', type: 'success' },
@@ -21,11 +22,23 @@ const NotificationItem = ({ notification }) => {
 };
 
 const NotificationsSection = () => {
+  const { t } = useGlobalTranslation();
+  
+  // Create translated notifications array
+  const translatedNotifications = notificationsData.map(notification => ({
+    ...notification,
+    message: notification.id === '1'
+      ? (t.manufacturerDashboard?.newLabCertifiedHerbs || 'New lab-certified herbs ready for pickup.')
+      : notification.id === '2'
+      ? (t.manufacturerDashboard?.urgentBatchQualityAlert || 'Urgent: Batch HERB-XYZ has a quality alert.')
+      : (t.manufacturerDashboard?.newProductionGuidelines || 'New production guidelines released.')
+  }));
+  
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Notifications</Text>
+      <Text style={styles.title}>{t.manufacturerDashboard?.notifications || 'Notifications'}</Text>
       <FlatList
-        data={notificationsData}
+        data={translatedNotifications}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <NotificationItem notification={item} />}
         showsVerticalScrollIndicator={false}

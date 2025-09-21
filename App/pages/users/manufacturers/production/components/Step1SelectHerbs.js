@@ -2,15 +2,17 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import HerbSelectionCard from './HerbSelectionCard';
 import { HERB_OPTIONS } from '../constants/productionConstants';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const Step1SelectHerbs = ({
   selectedHerbs,
   onSelectHerb,
   onNextStep,
 }) => {
+  const { t } = useGlobalTranslation();
   const handleContinue = () => {
     if (selectedHerbs.length === 0) {
-      Alert.alert('Selection Required', 'Please select at least one herb to continue.');
+      Alert.alert(t.production?.selectionRequired || 'Selection Required', t.production?.selectAtLeastOneHerb || 'Please select at least one herb to continue.');
     } else {
       onNextStep();
     }
@@ -19,8 +21,8 @@ const Step1SelectHerbs = ({
   return (
     <View style={styles.container}>
       <View style={styles.cardContainer}>
-        <Text style={styles.title}>Select Certified Herbs</Text>
-        <Text style={styles.subtitle}>Choose the herbs for your product formulation</Text>
+        <Text style={styles.title}>{t.production?.selectCertifiedHerbs || 'Select Certified Herbs'}</Text>
+        <Text style={styles.subtitle}>{t.production?.chooseHerbsForFormulation || 'Choose the herbs for your product formulation'}</Text>
         <FlatList
           data={HERB_OPTIONS}
           keyExtractor={(item) => item.id}
@@ -35,7 +37,7 @@ const Step1SelectHerbs = ({
           scrollEnabled={false}
         />
         <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
-          <Text style={styles.continueButtonText}>Continue to Formulation</Text>
+          <Text style={styles.continueButtonText}>{t.production?.continueToFormulation || 'Continue to Formulation'}</Text>
         </TouchableOpacity>
       </View>
     </View>

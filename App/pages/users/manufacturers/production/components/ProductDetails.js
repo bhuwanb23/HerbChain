@@ -2,14 +2,16 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LinkedBatchItem from './LinkedBatchItem';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const ProductDetails = ({ product, onBackPress }) => {
+  const { t } = useGlobalTranslation();
   if (!product) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No product selected for details.</Text>
+        <Text style={styles.emptyText}>{t.production?.noProductsCreated || 'No product selected for details.'}</Text>
         <TouchableOpacity style={styles.backButtonEmpty} onPress={onBackPress}>
-            <Text style={styles.backButtonText}>Back to List</Text>
+            <Text style={styles.backButtonText}>{t.production?.backToProducts || 'Back to List'}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -34,7 +36,7 @@ const ProductDetails = ({ product, onBackPress }) => {
     <View style={styles.container}>
       <TouchableOpacity style={styles.backButton} onPress={onBackPress}>
         <Icon name="arrow-back" size={24} color="#4b5563" />
-        <Text style={styles.backButtonText}>Back to Products</Text>
+        <Text style={styles.backButtonText}>{t.production?.backToProducts || 'Back to Products'}</Text>
       </TouchableOpacity>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.productHeader}>
@@ -47,30 +49,30 @@ const ProductDetails = ({ product, onBackPress }) => {
         <Text style={styles.productDescription}>{product.description}</Text>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Product QR Code</Text>
+          <Text style={styles.sectionTitle}>{t.production?.productQRCode || 'Product QR Code'}</Text>
           <View style={styles.qrCodeContainer}>
             {product.qrCodeImageUrl ? (
               <Image source={{ uri: product.qrCodeImageUrl }} style={styles.qrCodeImage} />
             ) : (
-              <Text style={styles.noQrText}>QR Code not available</Text>
+              <Text style={styles.noQrText}>{t.production?.qrCode || 'QR Code not available'}</Text>
             )}
-            <Text style={styles.batchIdText}>Master Batch ID: {product.batchId}</Text>
+            <Text style={styles.batchIdText}>{t.production?.productId || 'Product ID'}: {product.batchId}</Text>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Production Details</Text>
+          <Text style={styles.sectionTitle}>{t.production?.productDetails || 'Production Details'}</Text>
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Date Created:</Text>
+            <Text style={styles.detailLabel}>{t.production?.date || 'Date Created'}:</Text>
             <Text style={styles.detailValue}>{product.dateCreated}</Text>
           </View>
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Processing Method:</Text>
+            <Text style={styles.detailLabel}>{t.production?.processingMethod || 'Processing Method'}:</Text>
             <Text style={styles.detailValue}>{product.processingMethod}</Text>
           </View>
           {product.productionNotes && (
             <View style={styles.detailRowWide}>
-              <Text style={styles.detailLabel}>Notes:</Text>
+              <Text style={styles.detailLabel}>{t.production?.processingNotes || 'Notes'}:</Text>
               <Text style={styles.detailValue}>{product.productionNotes}</Text>
             </View>
           )}
@@ -78,7 +80,7 @@ const ProductDetails = ({ product, onBackPress }) => {
 
         {product.certifications && product.certifications.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Certifications</Text>
+            <Text style={styles.sectionTitle}>{t.production?.certified || 'Certifications'}</Text>
             <View style={styles.certificationsList}>
               {product.certifications.map((cert, index) => (
                 <View key={index} style={styles.certificationItem}>
@@ -92,7 +94,7 @@ const ProductDetails = ({ product, onBackPress }) => {
 
         {product.linkedBatches && product.linkedBatches.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Linked Raw Herb Batches</Text>
+            <Text style={styles.sectionTitle}>{t.production?.linkedBatches || 'Linked Raw Herb Batches'}</Text>
             <View style={styles.linkedBatchesList}>
               {product.linkedBatches.map((batch, index) => (
                 <LinkedBatchItem key={index} herbName={batch.herbName} batchId={batch.batchId} />
@@ -103,7 +105,7 @@ const ProductDetails = ({ product, onBackPress }) => {
 
         <TouchableOpacity style={styles.printButton}>
           <Icon name="print" size={20} color="#fff" />
-          <Text style={styles.printButtonText}>Print Report</Text>
+          <Text style={styles.printButtonText}>{t.production?.view || 'Print Report'}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
 import DashboardHeader from './components/DashboardHeader';
 import WelcomeBanner from './components/WelcomeBanner';
 import QuickStats from './components/QuickStats';
@@ -19,6 +20,7 @@ import {
 } from './constants/dashboardConstants';
 
 const DashboardPage = ({ navigation }) => {
+  const { t } = useGlobalTranslation();
   const {
     loading,
     error,
@@ -66,7 +68,7 @@ const DashboardPage = ({ navigation }) => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#22c55e" />
-        <Text style={styles.loadingText}>Loading dashboard data...</Text>
+        <Text style={styles.loadingText}>{t.manufacturerDashboard?.loadingDashboardData || 'Loading dashboard data...'}</Text>
       </View>
     );
   }
@@ -74,7 +76,7 @@ const DashboardPage = ({ navigation }) => {
   if (error) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Error loading dashboard: {error.message}</Text>
+        <Text style={styles.errorText}>{t.manufacturerDashboard?.errorLoadingDashboard || 'Error loading dashboard'}: {error.message}</Text>
       </View>
     );
   }

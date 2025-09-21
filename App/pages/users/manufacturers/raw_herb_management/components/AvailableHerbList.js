@@ -2,8 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import AvailableHerbItem from './AvailableHerbItem';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const AvailableHerbList = ({ availableHerbs, onOrderHerb, getStatusStyle, onItemPress }) => {
+  const { t } = useGlobalTranslation();
   return (
     <View style={styles.container}>
       {availableHerbs.length > 0 ? (
@@ -24,7 +26,7 @@ const AvailableHerbList = ({ availableHerbs, onOrderHerb, getStatusStyle, onItem
       ) : (
         <View style={styles.emptyListContainer}>
           <Icon name="info-outline" size={40} color="#9ca3af" />
-          <Text style={styles.emptyListText}>No available herbs to display.</Text>
+          <Text style={styles.emptyListText}>{t.rawHerbManagement?.noAvailableHerbs || 'No available herbs to display.'}</Text>
         </View>
       )}
     </View>

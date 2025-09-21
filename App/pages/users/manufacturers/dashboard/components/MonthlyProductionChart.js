@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 // import { LineChart } from 'react-native-chart-kit'; // Example charting library
 
 const MonthlyProductionChart = () => {
+  const { t } = useGlobalTranslation();
   // Placeholder for chart data and configuration
   const chartData = {
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
@@ -17,7 +19,7 @@ const MonthlyProductionChart = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Monthly Production</Text>
+      <Text style={styles.title}>{t.manufacturerDashboard?.monthlyProduction || 'Monthly Production'}</Text>
       <View style={styles.chartWrapper}>
         {/* 
           Integrate a React Native charting library here, e.g., react-native-chart-kit or VictoryNative.

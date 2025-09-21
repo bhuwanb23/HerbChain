@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const ProductListItem = ({ product, onPress }) => {
+  const { t } = useGlobalTranslation();
   const getStatusStyle = (status) => {
     switch (status) {
       case 'Certified':
@@ -23,7 +25,7 @@ const ProductListItem = ({ product, onPress }) => {
       <Image source={{ uri: product.imageUrl }} style={styles.productImage} />
       <View style={styles.detailsContainer}>
         <Text style={styles.productName}>{product.name}</Text>
-        <Text style={styles.batchId}>Batch ID: {product.batchId}</Text>
+        <Text style={styles.batchId}>{t.production?.batch || 'Batch'} ID: {product.batchId}</Text>
         <View style={styles.footerRow}>
           <View style={[styles.statusBadge, { backgroundColor: statusStyle.backgroundColor }]}>
             <Text style={[styles.statusText, { color: statusStyle.color }]}>{product.status}</Text>

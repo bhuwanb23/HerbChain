@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import OrderedHerbItem from './OrderedHerbItem';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const OrderedHerbList = ({
   orderedHerbs,
@@ -10,6 +11,7 @@ const OrderedHerbList = ({
   onScanInitiate, // Renamed from onScanQRCode
   onReceiveHerb, // New prop for receiving herb
 }) => {
+  const { t } = useGlobalTranslation();
   return (
     <View style={styles.container}>
       {orderedHerbs.length > 0 ? (
@@ -31,9 +33,9 @@ const OrderedHerbList = ({
       ) : (
         <View style={styles.emptyListContainer}>
           <Icon name="info-outline" size={40} color="#9ca3af" />
-          <Text style={styles.emptyListText}>No herbs have been ordered yet.</Text>
+          <Text style={styles.emptyListText}>{t.rawHerbManagement?.noHerbsOrdered || 'No herbs have been ordered yet.'}</Text>
           <TouchableOpacity style={styles.orderNowButton} onPress={() => {/* Handle navigation to available herbs here if needed */}}>
-            <Text style={styles.orderNowButtonText}>Order Now</Text>
+            <Text style={styles.orderNowButtonText}>{t.rawHerbManagement?.orderNow || 'Order Now'}</Text>
           </TouchableOpacity>
         </View>
       )}

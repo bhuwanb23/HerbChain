@@ -2,8 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Checkbox from 'expo-checkbox';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const HerbSelectionCard = ({ herb, isSelected, onSelect }) => {
+  const { t } = useGlobalTranslation();
   return (
     <TouchableOpacity
       style={[
@@ -20,9 +22,9 @@ const HerbSelectionCard = ({ herb, isSelected, onSelect }) => {
           color={isSelected ? '#059669' : '#d1d5db'} // primary or gray-300
         />
         <View style={styles.textContainer}>
-          <Text style={styles.herbName}>{herb.name}</Text>
+          <Text style={styles.herbName}>{herb.name || ''}</Text>
           <Text style={styles.batchInfo}>
-            Batch: {herb.batch} • {herb.certified ? 'Certified Organic' : 'Not Certified'}
+            {`${t.production?.batch || 'Batch'}: ${herb.batch || ''} • ${herb.certified ? (t.production?.certified || 'Certified') : (t.production?.notCertified || 'Not Certified')}`}
           </Text>
         </View>
       </View>

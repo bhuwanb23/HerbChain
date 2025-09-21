@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, TextInput } from 'react-native';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const SelectedHerbProportion = ({ herb, proportion, onProportionChange }) => {
+  const { t } = useGlobalTranslation();
   return (
     <View style={styles.container}>
-      <Text style={styles.herbName}>{herb.name}</Text>
+      <Text style={styles.herbName}>{herb.name || ''}</Text>
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.proportionInput}
@@ -13,7 +15,7 @@ const SelectedHerbProportion = ({ herb, proportion, onProportionChange }) => {
           keyboardType="numeric"
           maxLength={3} // Max 3 digits for percentage (1-100)
         />
-        <Text style={styles.percentageText}>%</Text>
+        <Text style={styles.percentageText}>{t.production?.percentage || '%'}</Text>
       </View>
     </View>
   );

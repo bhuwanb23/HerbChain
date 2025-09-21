@@ -391,4 +391,200 @@ export const hi = {
     certificates: 'प्रमाणपत्र',
     uploadComplianceCertificates: 'अनुपालन प्रमाणपत्र अपलोड करें',
   },
+
+  // Manufacturer Dashboard Section
+  manufacturerDashboard: {
+    // Loading & Error States
+    loadingDashboardData: 'डैशबोर्ड डेटा लोड हो रहा है...',
+    errorLoadingDashboard: 'डैशबोर्ड लोड करने में त्रुटि',
+    
+    // Welcome Banner
+    hello: 'नमस्ते',
+    heresTodaysOverview: 'यहाँ आज का अवलोकन है।',
+    
+    // Dashboard Cards
+    activeBatches: 'सक्रिय बैच',
+    pendingDeliveries: 'लंबित डिलीवरी',
+    recentCertifications: 'हाल के प्रमाणन',
+    productsCreated: 'उत्पाद बनाए गए',
+    
+    // Notifications Section
+    notifications: 'सूचनाएं',
+    newLabCertifiedHerbs: 'नई लैब-प्रमाणित जड़ी-बूटियां पिकअप के लिए तैयार।',
+    urgentBatchQualityAlert: 'तत्काल: बैच HERB-XYZ में गुणवत्ता अलर्ट है।',
+    newProductionGuidelines: 'नई उत्पादन दिशानिर्देश जारी किए गए।',
+    
+    // Quick Actions
+    quickActions: 'त्वरित कार्य',
+    herbInventory: 'जड़ी-बूटी इन्वेंटरी',
+    createProduct: 'उत्पाद बनाएं',
+    
+    // Recent Certifications
+    recentCertificationsTitle: 'हाल के प्रमाणन',
+    viewAll: 'सभी देखें',
+    certified: 'प्रमाणित',
+    pending: 'लंबित',
+    rejected: 'अस्वीकृत',
+    hoursAgo: 'घंटे पहले',
+    
+    // Monthly Production Chart
+    monthlyProduction: 'मासिक उत्पादन',
+    productionTrends: 'पिछले 6 महीनों में उत्पादन रुझान',
+  },
+
+  // Raw Herb Management Section
+  rawHerbManagement: {
+    // Tab Labels
+    availableHerbs: 'उपलब्ध जड़ी-बूटियां',
+    orderedHerbs: 'ऑर्डर की गई जड़ी-बूटियां',
+    scannedDetails: 'स्कैन किए गए विवरण',
+    
+    // QR Scanner
+    requestingCameraPermission: 'कैमरा अनुमति का अनुरोध कर रहे हैं',
+    noAccessToCamera: 'कैमरा तक पहुंच नहीं',
+    scanTheQRCode: 'QR कोड स्कैन करें',
+    qrCodeScanned: 'QR कोड स्कैन किया गया',
+    data: 'डेटा',
+    ok: 'ठीक है',
+    tapToScanAgain: 'फिर से स्कैन करने के लिए टैप करें',
+    close: 'बंद करें',
+    
+    // Available Herbs List
+    noAvailableHerbs: 'प्रदर्शित करने के लिए कोई उपलब्ध जड़ी-बूटियां नहीं।',
+    batchId: 'बैच ID',
+    farmer: 'किसान',
+    harvest: 'फसल',
+    latestLabReport: 'नवीनतम लैब रिपोर्ट:',
+    certified: 'प्रमाणित',
+    notCertified: 'प्रमाणित नहीं',
+    standard: 'मानक',
+    purity: 'शुद्धता',
+    orderHerb: 'जड़ी-बूटी ऑर्डर करें',
+    
+    // Ordered Herbs List
+    noHerbsOrdered: 'अभी तक कोई जड़ी-बूटियां ऑर्डर नहीं की गई हैं।',
+    orderNow: 'अभी ऑर्डर करें',
+    ordered: 'ऑर्डर किया गया',
+    receiveHerbScanQR: 'जड़ी-बूटी प्राप्त करें (परिवहनकर्ता QR स्कैन करें)',
+    
+    // Herb Details Modal
+    herbDetails: 'जड़ी-बूटी विवरण',
+    speciesName: 'प्रजाति का नाम',
+    weight: 'वजन',
+    harvestDate: 'फसल की तारीख',
+    location: 'स्थान',
+    qualityStatus: 'गुणवत्ता स्थिति',
+    labReports: 'लैब रिपोर्ट',
+    certification: 'प्रमाणन',
+    certificationLevel: 'प्रमाणन स्तर',
+    purityPercentage: 'शुद्धता प्रतिशत',
+    pesticideResidues: 'कीटनाशक अवशेष',
+    moistureContent: 'नमी सामग्री',
+    phytochemicalLevels: 'फाइटोकेमिकल स्तर',
+    heavyMetals: 'भारी धातुएं',
+    microbialContamination: 'माइक्रोबियल संदूषण',
+    reportDate: 'रिपोर्ट की तारीख',
+    
+    // Scanned Herb Details
+    scannedHerbInformation: 'स्कैन की गई जड़ी-बूटी की जानकारी',
+    clearScannedDetails: 'स्कैन किए गए विवरण साफ़ करें',
+    
+    // Status Values
+    approved: 'अनुमोदित',
+    pending: 'लंबित',
+    rejected: 'अस्वीकृत',
+    inTransit: 'परिवहन में',
+    delivered: 'वितरित',
+    
+    // Alert Messages
+    error: 'त्रुटि',
+    noHerbSelectedForReceiving: 'प्राप्त करने के लिए कोई जड़ी-बूटी चयनित नहीं।',
+    herbReceivedSuccessfully: 'जड़ी-बूटी सफलतापूर्वक प्राप्त हुई!',
+    failedToReceiveHerb: 'जड़ी-बूटी प्राप्त करने में विफल',
+  },
+
+  // Production Section
+  production: {
+    // Main Navigation
+    backToProducts: 'उत्पादों पर वापस जाएं',
+    productCreated: 'उत्पाद बनाया गया',
+    productCreatedSuccess: 'आपका नया उत्पाद सफलतापूर्वक बनाया गया है!',
+    
+    // Product List
+    noProductsCreated: 'अभी तक कोई उत्पाद नहीं बनाया गया।',
+    tapToCreateProduct: "नया उत्पाद बनाने के लिए '+' बटन पर टैप करें।",
+    
+    // Step 1 - Select Herbs
+    selectCertifiedHerbs: 'प्रमाणित जड़ी-बूटियों का चयन करें',
+    chooseHerbsForFormulation: 'अपने उत्पाद निर्माण के लिए जड़ी-बूटियों का चयन करें',
+    selectionRequired: 'चयन आवश्यक',
+    selectAtLeastOneHerb: 'जारी रखने के लिए कम से कम एक जड़ी-बूटी का चयन करें।',
+    continueToFormulation: 'निर्माण पर जारी रखें',
+    
+    // Step 2 - Formulation
+    productFormulation: 'उत्पाद निर्माण',
+    defineProportionsAndProcessing: 'अनुपात और प्रसंस्करण विवरण परिभाषित करें',
+    herbProportions: 'जड़ी-बूटी अनुपात',
+    processingMethod: 'प्रसंस्करण विधि',
+    processingNotes: 'प्रसंस्करण नोट्स',
+    addProcessingNotes: 'कोई विशिष्ट प्रसंस्करण नोट्स या निर्देश जोड़ें...',
+    previous: 'पिछला',
+    continueToLinkBatches: 'बैच लिंक करने पर जारी रखें',
+    
+    // Step 3 - Link Batches
+    linkBatches: 'बैच लिंक करें',
+    linkHerbBatches: 'ट्रेसेबिलिटी के लिए अपने उत्पाद से जड़ी-बूटी बैच लिंक करें',
+    linkedBatches: 'लिंक किए गए बैच',
+    noLinkedBatches: 'अभी तक कोई बैच लिंक नहीं किया गया।',
+    continueToQRGeneration: 'QR जेनरेशन पर जारी रखें',
+    
+    // Step 4 - Generate QR
+    generateProductQR: 'उत्पाद QR जेनरेट करें',
+    qrCodeGenerated: 'उत्पाद ट्रेसेबिलिटी के लिए QR कोड जेनरेट किया गया',
+    productQRCode: 'उत्पाद QR कोड',
+    traceabilitySummary: 'ट्रेसेबिलिटी सारांश',
+    productId: 'उत्पाद ID',
+    totalHerbs: 'कुल जड़ी-बूटियां',
+    processingMethodUsed: 'प्रसंस्करण विधि',
+    batchesLinked: 'लिंक किए गए बैच',
+    createNewProduct: 'नया उत्पाद बनाएं',
+    
+    // Herb Selection Card
+    certified: 'प्रमाणित',
+    origin: 'मूल',
+    purity: 'शुद्धता',
+    
+    // Product Details
+    productDetails: 'उत्पाद विवरण',
+    ingredients: 'सामग्री',
+    processing: 'प्रसंस्करण',
+    traceability: 'ट्रेसेबिलिटी',
+    qrCode: 'QR कोड',
+    
+    // Progress Steps
+    step: 'चरण',
+    selectHerbs: 'जड़ी-बूटी चुनें',
+    formulation: 'निर्माण',
+    linkBatchesStep: 'बैच लिंक करें',
+    generateQR: 'QR जेनरेट करें',
+    
+    // Processing Methods
+    extraction: 'निष्कर्षण',
+    drying: 'सुखाना',
+    grinding: 'पीसना',
+    fermentation: 'किण्वन',
+    distillation: 'आसवन',
+    
+    // General
+    proportion: 'अनुपात',
+    percentage: 'प्रतिशत',
+    weight: 'वजन',
+    batch: 'बैच',
+    date: 'तारीख',
+    status: 'स्थिति',
+    view: 'देखें',
+    edit: 'संपादित करें',
+    delete: 'हटाएं',
+    notCertified: 'प्रमाणित नहीं',
+  },
 };

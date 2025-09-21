@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import SelectedHerbProportion from './SelectedHerbProportion';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const Step2Formulation = ({
   selectedHerbs,
@@ -15,14 +16,15 @@ const Step2Formulation = ({
   onPreviousStep,
   onNextStep,
 }) => {
+  const { t } = useGlobalTranslation();
   return (
     <View style={styles.container}>
       <View style={styles.cardContainer}>
-        <Text style={styles.title}>Product Formulation</Text>
-        <Text style={styles.subtitle}>Define proportions and processing details</Text>
+        <Text style={styles.title}>{t.production?.productFormulation || 'Product Formulation'}</Text>
+        <Text style={styles.subtitle}>{t.production?.defineProportionsAndProcessing || 'Define proportions and processing details'}</Text>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Herb Proportions</Text>
+          <Text style={styles.label}>{t.production?.herbProportions || 'Herb Proportions'}</Text>
           <FlatList
             data={selectedHerbs}
             keyExtractor={(item) => item.id}
@@ -39,7 +41,7 @@ const Step2Formulation = ({
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Processing Method</Text>
+          <Text style={styles.label}>{t.production?.processingMethod || 'Processing Method'}</Text>
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={processingMethod}
@@ -55,23 +57,23 @@ const Step2Formulation = ({
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Processing Notes</Text>
+          <Text style={styles.label}>{t.production?.processingNotes || 'Processing Notes'}</Text>
           <TextInput
             style={styles.textAreaInput}
             value={processingNotes}
             onChangeText={onProcessingNotesChange}
             multiline
             numberOfLines={3}
-            placeholder="Add any special processing instructions or notes..."
+            placeholder={t.production?.addProcessingNotes || 'Add any specific processing notes or instructions...'}
           />
         </View>
 
         <View style={styles.navigationButtons}>
           <TouchableOpacity style={styles.backButton} onPress={onPreviousStep}>
-            <Text style={styles.backButtonText}>Back</Text>
+            <Text style={styles.backButtonText}>{t.production?.previous || 'Previous'}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.nextButton} onPress={onNextStep}>
-            <Text style={styles.nextButtonText}>Link Batches</Text>
+            <Text style={styles.nextButtonText}>{t.production?.continueToLinkBatches || 'Continue to Link Batches'}</Text>
           </TouchableOpacity>
         </View>
       </View>

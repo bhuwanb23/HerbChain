@@ -391,4 +391,200 @@ export const te = {
     certificates: 'ప్రమాణపత్రాలు',
     uploadComplianceCertificates: 'అనుపాలన ప్రమాణపత్రాలను అప్‌లోడ్ చేయండి',
   },
+
+  // Manufacturer Dashboard Section
+  manufacturerDashboard: {
+    // Loading & Error States
+    loadingDashboardData: 'డాష్‌బోర్డ్ డేటా లోడ్ అవుతోంది...',
+    errorLoadingDashboard: 'డాష్‌బోర్డ్ లోడ్ చేయడంలో లోపం',
+    
+    // Welcome Banner
+    hello: 'హలో',
+    heresTodaysOverview: 'ఇదిగో నేటి అవలోకనం.',
+    
+    // Dashboard Cards
+    activeBatches: 'క్రియాశీల బ్యాచ్‌లు',
+    pendingDeliveries: 'పెండింగ్ డెలివరీలు',
+    recentCertifications: 'ఇటీవలి ప్రమాణీకరణలు',
+    productsCreated: 'ఉత్పత్తులు సృష్టించబడ్డాయి',
+    
+    // Notifications Section
+    notifications: 'నోటిఫికేషన్‌లు',
+    newLabCertifiedHerbs: 'కొత్త ల్యాబ్-ప్రమాణీకృత మూలికలు పికప్‌కు సిద్ధం.',
+    urgentBatchQualityAlert: 'అత్యవసరం: బ్యాచ్ HERB-XYZ లో నాణ్యత హెచ్చరిక ఉంది.',
+    newProductionGuidelines: 'కొత్త ఉత్పాదన మార్గదర్శకాలు విడుదల చేయబడ్డాయి.',
+    
+    // Quick Actions
+    quickActions: 'త్వరిత చర్యలు',
+    herbInventory: 'మూలిక ఇన్వెంటరీ',
+    createProduct: 'ఉత్పత్తిని సృష్టించండి',
+    
+    // Recent Certifications
+    recentCertificationsTitle: 'ఇటీవలి ప్రమాణీకరణలు',
+    viewAll: 'అన్నీ చూడండి',
+    certified: 'ప్రమాణీకృతం',
+    pending: 'పెండింగ్',
+    rejected: 'తిరస్కరించబడింది',
+    hoursAgo: 'గంటల క్రితం',
+    
+    // Monthly Production Chart
+    monthlyProduction: 'నెలవారీ ఉత్పత్తి',
+    productionTrends: 'గత 6 నెలలలో ఉత్పత్తి ధోరణులు',
+  },
+
+  // Raw Herb Management Section
+  rawHerbManagement: {
+    // Tab Labels
+    availableHerbs: 'అందుబాటులో ఉన్న మూలికలు',
+    orderedHerbs: 'ఆర్డర్ చేసిన మూలికలు',
+    scannedDetails: 'స్కాన్ చేసిన వివరాలు',
+    
+    // QR Scanner
+    requestingCameraPermission: 'కెమెరా అనుమతి కోసం అభ్యర్థిస్తున్నాము',
+    noAccessToCamera: 'కెమెరాకు యాక్సెస్ లేదు',
+    scanTheQRCode: 'QR కోడ్‌ను స్కాన్ చేయండి',
+    qrCodeScanned: 'QR కోడ్ స్కాన్ చేయబడింది',
+    data: 'డేటా',
+    ok: 'సరే',
+    tapToScanAgain: 'మళ్లీ స్కాన్ చేయడానికి ట్యాప్ చేయండి',
+    close: 'మూసివేయండి',
+    
+    // Available Herbs List
+    noAvailableHerbs: 'ప్రదర్శించడానికి అందుబాటులో మూలికలు లేవు.',
+    batchId: 'బ్యాచ్ ID',
+    farmer: 'రైతు',
+    harvest: 'పంట',
+    latestLabReport: 'తాజా ల్యాబ్ రిపోర్ట్:',
+    certified: 'ప్రమాణీకృతం',
+    notCertified: 'ప్రమాణీకృతం కాదు',
+    standard: 'ప్రామాణిక',
+    purity: 'స్వచ్ఛత',
+    orderHerb: 'మూలికను ఆర్డర్ చేయండి',
+    
+    // Ordered Herbs List
+    noHerbsOrdered: 'ఇంకా మూలికలు ఆర్డర్ చేయలేదు.',
+    orderNow: 'ఇప్పుడే ఆర్డర్ చేయండి',
+    ordered: 'ఆర్డర్ చేయబడింది',
+    receiveHerbScanQR: 'మూలికను స్వీకరించండి (రవాణాదారు QR స్కాన్ చేయండి)',
+    
+    // Herb Details Modal
+    herbDetails: 'మూలిక వివరాలు',
+    speciesName: 'జాతి పేరు',
+    weight: 'బరువు',
+    harvestDate: 'పంట తేదీ',
+    location: 'స్థానం',
+    qualityStatus: 'నాణ్యత స్థితి',
+    labReports: 'ల్యాబ్ రిపోర్ట్‌లు',
+    certification: 'ప్రమాణీకరణ',
+    certificationLevel: 'ప్రమాణీకరణ స్థాయి',
+    purityPercentage: 'స్వచ్ఛత శాతం',
+    pesticideResidues: 'పురుగుమందు అవశేషాలు',
+    moistureContent: 'తేమ కంటెంట్',
+    phytochemicalLevels: 'ఫైటోకెమికల్ స్థాయిలు',
+    heavyMetals: 'భారీ లోహాలు',
+    microbialContamination: 'మైక్రోబియల్ కలుషితం',
+    reportDate: 'రిపోర్ట్ తేదీ',
+    
+    // Scanned Herb Details
+    scannedHerbInformation: 'స్కాన్ చేసిన మూలిక సమాచారం',
+    clearScannedDetails: 'స్కాన్ చేసిన వివరాలను క్లియర్ చేయండి',
+    
+    // Status Values
+    approved: 'ఆమోదించబడింది',
+    pending: 'పెండింగ్',
+    rejected: 'తిరస్కరించబడింది',
+    inTransit: 'రవాణాలో',
+    delivered: 'డెలివర్ చేయబడింది',
+    
+    // Alert Messages
+    error: 'లోపం',
+    noHerbSelectedForReceiving: 'స్వీకరించడానికి మూలిక ఎంపిక చేయలేదు.',
+    herbReceivedSuccessfully: 'మూలిక విజయవంతంగా స్వీకరించబడింది!',
+    failedToReceiveHerb: 'మూలికను స్వీకరించడంలో విఫలమైంది',
+  },
+
+  // Production Section
+  production: {
+    // Main Navigation
+    backToProducts: 'ఉత్పత్తులకు తిరిగి వెళ్లండి',
+    productCreated: 'ఉత్పత్తి సృష్టించబడింది',
+    productCreatedSuccess: 'మీ కొత్త ఉత్పత్తి విజయవంతంగా సృష్టించబడింది!',
+    
+    // Product List
+    noProductsCreated: 'ఇంకా ఉత్పత్తులు సృష్టించబడలేదు.',
+    tapToCreateProduct: "కొత్త ఉత్పత్తిని సృష్టించడానికి '+' బటన్‌ను నొక్కండి.",
+    
+    // Step 1 - Select Herbs
+    selectCertifiedHerbs: 'ప్రమాణీకృత మూలికలను ఎంచుకోండి',
+    chooseHerbsForFormulation: 'మీ ఉత్పత్తి సూత్రీకరణ కోసం మూలికలను ఎంచుకోండి',
+    selectionRequired: 'ఎంపిక అవసరం',
+    selectAtLeastOneHerb: 'కొనసాగించడానికి కనీసం ఒక మూలికను ఎంచుకోండి.',
+    continueToFormulation: 'సూత్రీకరణకు కొనసాగండి',
+    
+    // Step 2 - Formulation
+    productFormulation: 'ఉత్పత్తి సూత్రీకరణ',
+    defineProportionsAndProcessing: 'నిష్పత్తులు మరియు ప్రాసెసింగ్ వివరాలను నిర్వచించండి',
+    herbProportions: 'మూలిక నిష్పత్తులు',
+    processingMethod: 'ప్రాసెసింగ్ పద్ధతి',
+    processingNotes: 'ప్రాసెసింగ్ గమనికలు',
+    addProcessingNotes: 'ఏవైనా నిర్దిష్ట ప్రాసెసింగ్ గమనికలు లేదా సూచనలను జోడించండి...',
+    previous: 'మునుపటి',
+    continueToLinkBatches: 'బ్యాచ్‌లను లింక్ చేయడానికి కొనసాగండి',
+    
+    // Step 3 - Link Batches
+    linkBatches: 'బ్యాచ్‌లను లింక్ చేయండి',
+    linkHerbBatches: 'ట్రేసబిలిటీ కోసం మీ ఉత్పత్తికి మూలిక బ్యాచ్‌లను లింక్ చేయండి',
+    linkedBatches: 'లింక్ చేయబడిన బ్యాచ్‌లు',
+    noLinkedBatches: 'ఇంకా బ్యాచ్‌లు లింక్ చేయబడలేదు.',
+    continueToQRGeneration: 'QR జనరేషన్‌కు కొనసాగండి',
+    
+    // Step 4 - Generate QR
+    generateProductQR: 'ఉత్పత్తి QR జనరేట్ చేయండి',
+    qrCodeGenerated: 'ఉత్పత్తి ట్రేసబిలిటీ కోసం QR కోడ్ జనరేట్ చేయబడింది',
+    productQRCode: 'ఉత్పత్తి QR కోడ్',
+    traceabilitySummary: 'ట్రేసబిలిటీ సారాంశం',
+    productId: 'ఉత్పత్తి ID',
+    totalHerbs: 'మొత్తం మూలికలు',
+    processingMethodUsed: 'ప్రాసెసింగ్ పద్ధతి',
+    batchesLinked: 'లింక్ చేయబడిన బ్యాచ్‌లు',
+    createNewProduct: 'కొత్త ఉత్పత్తిని సృష్టించండి',
+    
+    // Herb Selection Card
+    certified: 'ప్రమాణీకృతం',
+    origin: 'మూలం',
+    purity: 'స్వచ్ఛత',
+    
+    // Product Details
+    productDetails: 'ఉత్పత్తి వివరాలు',
+    ingredients: 'పదార్థాలు',
+    processing: 'ప్రాసెసింగ్',
+    traceability: 'ట్రేసబిలిటీ',
+    qrCode: 'QR కోడ్',
+    
+    // Progress Steps
+    step: 'దశ',
+    selectHerbs: 'మూలికలను ఎంచుకోండి',
+    formulation: 'సూత్రీకరణ',
+    linkBatchesStep: 'బ్యాచ్‌లను లింక్ చేయండి',
+    generateQR: 'QR జనరేట్ చేయండి',
+    
+    // Processing Methods
+    extraction: 'వెలికితీత',
+    drying: 'ఎండబెట్టడం',
+    grinding: 'రుబ్బడం',
+    fermentation: 'కిణ్వ ప్రక్రియ',
+    distillation: 'స్వేదనం',
+    
+    // General
+    proportion: 'నిష్పత్తి',
+    percentage: 'శాతం',
+    weight: 'బరువు',
+    batch: 'బ్యాచ్',
+    date: 'తేదీ',
+    status: 'స్థితి',
+    view: 'చూడండి',
+    edit: 'సవరించండి',
+    delete: 'తొలగించండి',
+    notCertified: 'ప్రమాణీకృతం కాదు',
+  },
 };
