@@ -1,7 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from '../language/TranslationContext';
 
 const LogoSection = () => {
+  const { t } = useTranslation();
+  
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
@@ -9,9 +12,9 @@ const LogoSection = () => {
           <Text style={styles.leafIcon}>🌿</Text>
         </View>
       </View>
-      <Text style={styles.title}>HerbChain</Text>
+      <Text style={styles.title}>{t.appName}</Text>
       <Text style={styles.tagline}>
-        From Roots to Remedies,{'\n'}Traced with Trust
+        {t.tagline}
       </Text>
     </View>
   );

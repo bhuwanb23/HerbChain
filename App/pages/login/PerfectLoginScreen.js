@@ -22,47 +22,65 @@ import {
   SignUpSection,
   FooterLinks,
 } from './components';
+import { TranslationProvider, useTranslation } from './language/TranslationContext';
 
 const { width } = Dimensions.get('window');
 
-const PerfectLoginScreen = ({ navigation }) => {
-  const [showIntro, setShowIntro] = useState(true);
+const LoginScreenContent = ({ navigation }) => {
   const [selectedRole, setSelectedRole] = useState('');
-  const [language, setLanguage] = useState('EN');
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
+  const { t, changeLanguage } = useTranslation();
+
   useEffect(() => {
-    if (!showIntro) {
-      // Start login screen animations
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          tension: 40,
-          friction: 8,
-          useNativeDriver: true,
-        }),
-      ]).start();
+    // Start login screen animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 40,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  const translateRole = (roleId) => {
+    switch (roleId) {
+      case 'Farmer':
+        return t.roles.farmer;
+      case 'Transporter':
+        return t.roles.transporter;
+      case 'Lab':
+        return t.roles.lab;
+      case 'AYUSH/Admin':
+        return t.roles.ayushAdmin;
+      case 'Consumer':
+        return t.roles.consumer;
+      case 'Manufacturer':
+        return t.roles.manufacturer;
+      default:
+        return roleId;
     }
-  }, [showIntro]);
+  };
 
   const handleLogin = (credentials) => {
     // Quick login - just check if role is selected
     if (!selectedRole) {
-      Alert.alert('Error', 'Please select a role first');
+      Alert.alert(t.errorTitle, t.selectRoleFirst);
       return;
     }
     
@@ -87,37 +105,29 @@ const PerfectLoginScreen = ({ navigation }) => {
         navigation.navigate('ManufacturerMainPage');
         break;
       default:
-        Alert.alert('Success', `Login successful as ${selectedRole}`);
+        Alert.alert(t.successTitle, `${t.loginSuccessful} ${translateRole(selectedRole)}`);
     }
   };
 
   const handleSignUp = () => {
-    Alert.alert('Sign Up', 'Navigate to sign up screen');
+    Alert.alert(t.signUp, t.signUpAlert);
   };
 
   const handleLanguageChange = (selectedLang) => {
-    setLanguage(selectedLang.code);
+    changeLanguage(selectedLang.code);
   };
 
   const handleForgotPassword = () => {
-    Alert.alert('Forgot Password', 'Navigate to forgot password screen');
+    Alert.alert(t.forgotPassword, t.forgotPasswordAlert);
   };
 
   const handlePrivacyPolicy = () => {
-    Alert.alert('Privacy Policy', 'Navigate to privacy policy');
+    Alert.alert(t.privacyPolicy, t.privacyPolicyAlert);
   };
 
   const handleTermsOfService = () => {
-    Alert.alert('Terms of Service', 'Navigate to terms of service');
+    Alert.alert(t.termsOfService, t.termsOfServiceAlert);
   };
-
-  const handleIntroComplete = () => {
-    setShowIntro(false);
-  };
-
-  if (showIntro) {
-    return <PerfectIntro onAnimationComplete={handleIntroComplete} />;
-  }
 
   return (
     <SafeAreaWrapper style={styles.container} includeBottom={true}>
@@ -164,10 +174,9 @@ const PerfectLoginScreen = ({ navigation }) => {
 
           {/* Quick Login Info */}
           <View style={styles.demoCredentialsContainer}>
-            <Text style={styles.demoCredentialsTitle}>Quick Login</Text>
+            <Text style={styles.demoCredentialsTitle}>{t.quickLoginTitle}</Text>
             <Text style={styles.demoCredentialsText}>
-              Simply select a role and click Login to navigate to the respective dashboard.{'\n'}
-              No email/password required for testing!
+              {t.quickLoginText}
             </Text>
           </View>
 
@@ -182,6 +191,24 @@ const PerfectLoginScreen = ({ navigation }) => {
         </Animated.View>
       </ScrollView>
     </SafeAreaWrapper>
+  );
+};
+
+const PerfectLoginScreen = ({ navigation }) => {
+  const [showIntro, setShowIntro] = useState(true);
+
+  const handleIntroComplete = () => {
+    setShowIntro(false);
+  };
+
+  if (showIntro) {
+    return <PerfectIntro onAnimationComplete={handleIntroComplete} />;
+  }
+
+  return (
+    <TranslationProvider>
+      <LoginScreenContent navigation={navigation} />
+    </TranslationProvider>
   );
 };
 

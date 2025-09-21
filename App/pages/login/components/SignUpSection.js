@@ -1,13 +1,16 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from '../language/TranslationContext';
 
 const SignUpSection = ({ onSignUp }) => {
+  const { t } = useTranslation();
+  
   return (
     <View style={styles.container}>
       <View style={styles.textContainer}>
-        <Text style={styles.text}>Don't have an account? </Text>
+        <Text style={styles.text}>{t.noAccount}</Text>
         <TouchableOpacity onPress={onSignUp}>
-          <Text style={styles.signUpLink}>Sign Up</Text>
+          <Text style={styles.signUpLink}>{t.signUp}</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -6,6 +6,7 @@ import { SectionHeader } from './components/SectionHeader';
 import { TripCard } from './components/TripCard';
 import { ScannerOverlay } from './components/ScannerOverlay';
 import { useTrips } from './hooks/useTrips';
+import Icon from 'react-native-vector-icons/MaterialIcons'; // Added import for Icon
 
 const TripsPage = ({ navigation }) => {
   const [currentTab, setCurrentTab] = useState('pending');
@@ -18,9 +19,12 @@ const TripsPage = ({ navigation }) => {
     onStartScan,
     onCloseScanner,
     onBarcodeScanned,
+    scanMode, // Destructure scanMode from useTrips
   } = useTrips();
 
-  const handleStartScan = (herb) => onStartScan(herb);
+  const handleStartScanForPickup = (herb) => onStartScan(herb, 'pickup');
+  const handleStartScanForDelivery = (herb) => onStartScan(herb, 'deliver_to_manufacturer');
+
   const handleBarCodeScanned = ({ data }) => onBarcodeScanned(data);
 
   const renderPendingPickup = () => (
@@ -38,27 +42,7 @@ const TripsPage = ({ navigation }) => {
 
       <View style={styles.tripCards}>
         {pendingHerbs.map((herb) => (
-          <View key={herb.batch_id} style={[styles.tripCard, { borderLeftColor: '#F59E0B' }]}> 
-            <View style={styles.cardTopRow}>
-              <View style={[styles.iconChip, { backgroundColor: `#F59E0B1A`, borderColor: `#F59E0B33` }]}> 
-                <Icon name="pending" size={18} color="#F59E0B" />
-              </View>
-              <View style={styles.titleWrap}>
-                <Text style={styles.tripCardTitle}>Batch {herb.batch_id}</Text>
-                <Text style={styles.tripCardSubtitle}>{herb.species_name} • {herb.weight_kg} kg</Text>
-                <Text style={styles.tripCardTime}>Farmer: {herb?.farmer?.name || herb.farmer_id}</Text>
-              </View>
-              <View style={[styles.badge, { backgroundColor: `#F59E0B1A`, borderColor: `#F59E0B33` }]}> 
-                <Text style={[styles.badgeText, { color: '#F59E0B' }]}>Pending</Text>
-              </View>
-            </View>
-            <View style={styles.footerHintRow}>
-              <TouchableOpacity style={styles.scanButton} onPress={() => handleStartScan(herb)}>
-                <Icon name="qr-code-scanner" size={16} color="#FFFFFF" />
-                <Text style={styles.scanButtonText}>Scan QR</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          <TripCard key={herb.batch_id} mode="pending" item={herb} onScan={handleStartScanForPickup} />
         ))}
       </View>
     </View>
@@ -75,31 +59,7 @@ const TripsPage = ({ navigation }) => {
 
       <View style={styles.tripCards}>
         {activeTrips.map((trip) => (
-          <View key={trip.batch_id} style={[styles.tripCard, { borderLeftColor: '#10B981' }]}> 
-            <View style={styles.cardTopRow}>
-              <View style={[styles.iconChip, { backgroundColor: `#10B9811A`, borderColor: `#10B98133` }]}> 
-                <Icon name="local-shipping" size={18} color="#10B981" />
-              </View>
-              <View style={styles.titleWrap}>
-                <Text style={styles.tripCardTitle}>Batch {trip.batch_id}</Text>
-                <Text style={styles.tripCardSubtitle}>{trip.species_name} • {trip.weight_kg} kg</Text>
-                <Text style={styles.tripCardTime}>Owner: {trip.current_owner}</Text>
-              </View>
-              <View style={[styles.badge, { backgroundColor: `#10B9811A`, borderColor: `#10B98133` }]}> 
-                <Text style={[styles.badgeText, { color: '#10B981' }]}>In Transit</Text>
-              </View>
-            </View>
-            {(() => {
-              const qr = trip.new_qr_code || trip.active_qr;
-              if (!qr) return null;
-              return (
-                <View style={{ marginTop: 8, alignItems: 'center' }}>
-                  <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 6 }}>Transporter QR</Text>
-                  <Image source={{ uri: qr }} style={{ width: 160, height: 160, backgroundColor: '#FFF', borderRadius: 8 }} />
-                </View>
-              );
-            })()}
-          </View>
+          <TripCard key={trip.batch_id} mode="active" item={trip} onScan={handleStartScanForDelivery} />
         ))}
       </View>
     </View>
@@ -113,13 +73,14 @@ const TripsPage = ({ navigation }) => {
       >
         <TabBar current={currentTab} onChange={setCurrentTab} tabs={[{ key: 'pending', label: 'Pending' }, { key: 'active', label: 'Active' }, { key: 'completed', label: 'Completed' }]} />
 
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Replaced ScrollView with a View to fix FlatList nesting warning */}
+        <View style={styles.contentContainerWrapper}>
           {currentTab === 'pending' && (
             <View style={styles.tripsOverview}>
               <SectionHeader colors={["#059669", "#10B981"]} title="Pending Pickup" subtitle="Scan farmer QR to start trip" />
               <View style={styles.tripCards}>
                 {pendingHerbs.map((herb) => (
-                  <TripCard key={herb.batch_id} mode="pending" item={herb} onScan={handleStartScan} />
+                  <TripCard key={herb.batch_id} mode="pending" item={herb} onScan={handleStartScanForPickup} />
                 ))}
               </View>
             </View>
@@ -129,7 +90,7 @@ const TripsPage = ({ navigation }) => {
               <SectionHeader colors={["#0EA5E9", "#38BDF8"]} title="Active Trips" subtitle="In Transit" />
               <View style={styles.tripCards}>
                 {activeTrips.map((trip) => (
-                  <TripCard key={trip.batch_id} mode="active" item={trip} />
+                  <TripCard key={trip.batch_id} mode="active" item={trip} onScan={handleStartScanForDelivery} />
                 ))}
               </View>
             </View>
@@ -156,7 +117,7 @@ const TripsPage = ({ navigation }) => {
               </View>
             </View>
           )}
-        </ScrollView>
+        </View>
 
         <ScannerOverlay visible={scannerVisible} onClose={() => onCloseScanner()} onScanned={handleBarCodeScanned} />
       </LinearGradient>
@@ -329,6 +290,9 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#6B7280',
     fontWeight: '600',
+  },
+  contentContainerWrapper: {
+    flex: 1,
   },
 });
 

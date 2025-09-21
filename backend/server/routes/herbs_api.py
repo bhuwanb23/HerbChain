@@ -845,3 +845,255 @@ def order_herb_by_manufacturer(batch_id):
         db.session.rollback()
         logger.error(f"Error ordering herb {batch_id} by manufacturer {manufacturer_id}: {str(e)}")
         return jsonify({'error': 'Failed to order herb'}), 500
+
+@herbs_api_bp.route('/<batch_id>/receive_by_manufacturer', methods=['POST'])
+def receive_by_manufacturer(batch_id):
+    """Manufacturer scans transporter QR to receive the herb.
+    Validates active QR vs payload, deactivates old QR, transfers ownership to manufacturer,
+    generates new QR #3 (for manufacturer storage), sets quality_status to in_stock, and updates TransportRecord.
+    Body: { manufacturer_id, transporter_id, scanned_qr_text, receiving_location }
+    """
+    try:
+        data = request.get_json() or {}
+        manufacturer_id = data.get('manufacturer_id')
+        transporter_id = data.get('transporter_id')
+        scanned_qr_text = data.get('scanned_qr_text')
+        receiving_location = data.get('receiving_location')
+        logger.info(f"Receive by manufacturer: Received data: {data}")
+
+        if not all([manufacturer_id, transporter_id, scanned_qr_text, receiving_location]):
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        manufacturer = User.query.filter_by(user_id=manufacturer_id, role='manufacturer').first()
+        if not manufacturer:
+            return jsonify({'error': 'Manufacturer not found'}), 404
+
+        transporter = User.query.filter_by(user_id=transporter_id, role='transporter').first()
+        if not transporter:
+            return jsonify({'error': 'Transporter not found'}), 404
+
+        herb = Herb.query.filter_by(batch_id=batch_id).first()
+        if not herb:
+            return jsonify({'error': 'Herb batch not found'}), 404
+
+        # Validate current owner and status - must be with the transporter
+        if herb.current_owner != transporter_id:
+            return jsonify({'error': 'Herb is not currently owned by this transporter'}), 400
+        if herb.quality_status != 'in_transit':
+            return jsonify({'error': f'Herb is not in transit. Current status: {herb.quality_status}'}), 400
+
+        # Validate QR payload basics
+        qr_payload = parse_qr_payload(scanned_qr_text)
+        if not qr_payload or qr_payload.get('batch_id') != batch_id or qr_payload.get('new_owner') != transporter_id:
+            return jsonify({'error': 'Invalid QR code or QR does not match expected transporter ownership'}), 400
+
+        # Deactivate current transporter QR
+        active_transfer = OwnershipTransfer.get_active_transfer(batch_id)
+        if active_transfer:
+            active_transfer.deactivate_qr()
+
+        # Generate new QR for manufacturer custody
+        new_manufacturer_qr_payload = {
+            'batch_id': herb.batch_id,
+            'previous_owner': herb.current_owner,
+            'new_owner': manufacturer_id,
+            'timestamp': datetime.utcnow().isoformat(),
+            'type': 'manufacturer_receipt'
+        }
+        new_manufacturer_qr = generate_qr_code(str(new_manufacturer_qr_payload))
+        if not new_manufacturer_qr:
+            db.session.rollback()
+            return jsonify({'error': 'Failed to generate new Manufacturer QR'}), 500
+
+        # Transfer ownership to manufacturer and set status to in_stock
+        herb.transfer_ownership(manufacturer_id, new_manufacturer_qr)
+        herb.quality_status = 'in_stock' # New status for manufacturer's inventory
+        herb.updated_at = datetime.utcnow()
+
+        # Log ownership transfer
+        transfer_id = f"TRANSFER-{uuid.uuid4().hex[:8].upper()}"
+        ownership_transfer = OwnershipTransfer.create_transfer(
+            transfer_id=transfer_id,
+            batch_id=batch_id,
+            from_owner=transporter_id,
+            to_owner=manufacturer_id,
+            qr_code=new_manufacturer_qr,
+            transfer_reason="Received by Manufacturer",
+            location=receiving_location,
+            notes=f"Manufacturer {manufacturer_id} received batch {batch_id} from transporter {transporter_id}"
+        )
+        db.session.add(ownership_transfer)
+
+        # Update TransportRecord - mark as delivered
+        transport_record = TransportRecord.query.filter_by(batch_id=batch_id, transporter_id=transporter_id, status='in_transit').order_by(TransportRecord.start_time.desc()).first()
+        if transport_record:
+            transport_record.status = 'delivered'
+            transport_record.end_time = datetime.utcnow()
+        
+        db.session.commit()
+
+        logger.info(f"Manufacturer {manufacturer_id} received herb batch {batch_id} from transporter {transporter_id}.")
+
+        return jsonify({
+            'success': True,
+            'message': 'Herb received by manufacturer successfully.',
+            'herb': herb.to_dict(),
+            'new_qr_code': new_manufacturer_qr,
+            'ownership_transfer': ownership_transfer.to_dict()
+        }), 200
+
+    except ValueError as e:
+        db.session.rollback()
+        logger.warning(f"Validation error during manufacturer receipt of {batch_id}: {str(e)}")
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error during manufacturer receipt of {batch_id}: {str(e)}")
+        return jsonify({'error': 'Failed to receive herb by manufacturer'}), 500
+
+@herbs_api_bp.route('/<batch_id>/deliver_to_manufacturer', methods=['POST'])
+def deliver_to_manufacturer(batch_id):
+    """Transporter delivers herb to manufacturer by scanning Transporter QR (#2).
+    Validates current owner is transporter, deactivates QR, transfers to manufacturer,
+    generates new QR for manufacturer (QR #3), sets quality_status to in_stock, and ends transport.
+    Body: { manufacturer_id, transporter_id, scanned_qr_text, delivery_location }
+    """
+    try:
+        data = request.get_json() or {}
+        manufacturer_id = data.get('manufacturer_id')
+        transporter_id = data.get('transporter_id')
+        scanned_qr_text = data.get('scanned_qr_text')
+        delivery_location = data.get('delivery_location')
+
+        if not all([manufacturer_id, transporter_id, scanned_qr_text, delivery_location]):
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        manufacturer = User.query.filter_by(user_id=manufacturer_id, role='manufacturer').first()
+        if not manufacturer:
+            return jsonify({'error': 'Manufacturer not found'}), 404
+
+        transporter = User.query.filter_by(user_id=transporter_id, role='transporter').first()
+        if not transporter:
+            return jsonify({'error': 'Transporter not found'}), 404
+
+        herb = Herb.query.filter_by(batch_id=batch_id).first()
+        if not herb:
+            return jsonify({'error': 'Herb batch not found'}), 404
+
+        # Validate current owner and status
+        if herb.current_owner != transporter_id:
+            return jsonify({'error': 'Herb is not currently owned by this transporter'}), 400
+        if herb.quality_status != 'in_transit':
+            return jsonify({'error': f'Herb is not in transit (status={herb.quality_status})'}), 400
+
+        # Validate QR payload basics
+        qr_payload = parse_qr_payload(scanned_qr_text)
+        if not qr_payload or qr_payload.get('batch_id') != batch_id or qr_payload.get('new_owner') != transporter_id:
+            return jsonify({'error': 'Invalid QR code or QR does not match expected transporter ownership'}), 400
+
+        # Deactivate current transporter QR
+        active_transfer = OwnershipTransfer.get_active_transfer(batch_id)
+        if active_transfer:
+            active_transfer.deactivate_qr()
+
+        # Generate new QR for manufacturer custody
+        new_manufacturer_qr_payload = {
+            'batch_id': herb.batch_id,
+            'previous_owner': herb.current_owner,
+            'new_owner': manufacturer_id,
+            'timestamp': datetime.utcnow().isoformat(),
+            'type': 'manufacturer_receipt'
+        }
+        new_manufacturer_qr = generate_qr_code(str(new_manufacturer_qr_payload))
+        if not new_manufacturer_qr:
+            db.session.rollback()
+            return jsonify({'error': 'Failed to generate new Manufacturer QR'}), 500
+
+        # Transfer ownership to manufacturer and set status to in_stock
+        herb.transfer_ownership(manufacturer_id, new_manufacturer_qr)
+        herb.quality_status = 'in_stock'  # New status for manufacturer's inventory
+        herb.updated_at = datetime.utcnow()
+
+        # Log ownership transfer
+        transfer_id = f"TRANSFER-{uuid.uuid4().hex[:8].upper()}"
+        ownership_transfer = OwnershipTransfer.create_transfer(
+            transfer_id=transfer_id,
+            batch_id=batch_id,
+            from_owner=transporter_id,
+            to_owner=manufacturer_id,
+            qr_code=new_manufacturer_qr,
+            transfer_reason="Delivery to Manufacturer",
+            location=delivery_location,
+            notes=f"Transporter {transporter_id} delivered batch {batch_id} to manufacturer {manufacturer_id}"
+        )
+        db.session.add(ownership_transfer)
+
+        # Update TransportRecord - mark as delivered
+        transport_record = TransportRecord.query.filter_by(batch_id=batch_id, transporter_id=transporter_id, status='in_transit').order_by(TransportRecord.start_time.desc()).first()
+        if transport_record:
+            transport_record.status = 'delivered'
+            transport_record.end_time = datetime.utcnow()
+
+        db.session.commit()
+
+        logger.info(f"Transporter {transporter_id} delivered herb batch {batch_id} to manufacturer {manufacturer_id}.")
+
+        return jsonify({
+            'success': True,
+            'message': 'Herb delivered to manufacturer successfully.',
+            'herb': herb.to_dict(),
+            'new_qr_code': new_manufacturer_qr,
+            'ownership_transfer': ownership_transfer.to_dict()
+        }), 200
+
+    except ValueError as e:
+        db.session.rollback()
+        logger.warning(f"Validation error during delivery to manufacturer of {batch_id}: {str(e)}")
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error during delivery to manufacturer of {batch_id}: {str(e)}")
+        return jsonify({'error': 'Failed to deliver herb to manufacturer'}), 500
+
+@herbs_api_bp.route('/manufacturer/<manufacturer_id>/ordered', methods=['GET'])
+def get_manufacturer_ordered_herbs(manufacturer_id):
+    """List herbs ordered by a specific manufacturer that are awaiting pickup or in transit."""
+    try:
+        manufacturer = User.query.filter_by(user_id=manufacturer_id, role='manufacturer').first()
+        if not manufacturer:
+            return jsonify({'error': 'Manufacturer not found'}), 404
+
+        # Find ownership transfers where this manufacturer is the intended recipient
+        # and the herb status is manufacturer_ordered_pending_pickup or in_transit
+        ordered_transfers = OwnershipTransfer.query.filter_by(
+            to_owner=manufacturer_id,
+            transfer_reason="Manufacturer Order"
+        ).order_by(OwnershipTransfer.created_at.desc()).all()
+
+        ordered_herbs_data = []
+        for transfer in ordered_transfers:
+            herb = Herb.query.filter_by(batch_id=transfer.batch_id).first()
+            if herb:
+                logger.info(f"Processing herb {herb.batch_id} for manufacturer {manufacturer_id}. Current status: {herb.quality_status}")
+                # Only include if status is relevant for 'ordered' section (not yet received)
+                if herb.quality_status in ['manufacturer_ordered_pending_pickup', 'in_transit'] and herb.current_owner != manufacturer_id: # Also ensure manufacturer is not already the current owner
+                    herb_dict = herb.to_dict()
+                    # Add order details from the transfer record
+                    herb_dict['orderDate'] = transfer.transfer_date.isoformat()
+                    herb_dict['farmer_user'] = User.query.filter_by(user_id=herb.farmer_id).first().to_dict()
+                    ordered_herbs_data.append(herb_dict)
+        
+        # Filter out duplicates if a herb has multiple transfer records with the same status criteria
+        # (though ideally, the frontend should only display one entry per unique herb batch_id)
+        seen_batch_ids = set()
+        unique_ordered_herbs = []
+        for herb_data in ordered_herbs_data:
+            if herb_data['batch_id'] not in seen_batch_ids:
+                unique_ordered_herbs.append(herb_data)
+                seen_batch_ids.add(herb_data['batch_id'])
+
+        return jsonify({'herbs': unique_ordered_herbs, 'total': len(unique_ordered_herbs)}), 200
+
+    except Exception as e:
+        logger.error(f"Error getting ordered herbs for manufacturer {manufacturer_id}: {str(e)}")
+        return jsonify({'error': 'Failed to get ordered herbs'}), 500

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from '../language/TranslationContext';
 
 const LoginForm = ({ onLogin, onForgotPassword }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const { t } = useTranslation();
 
   const handleLogin = () => {
     onLogin && onLogin({ email, password });
@@ -17,11 +19,11 @@ const LoginForm = ({ onLogin, onForgotPassword }) => {
   return (
     <View style={styles.container}>
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Mobile/Email</Text>
+        <Text style={styles.label}>{t.mobileEmailLabel}</Text>
         <View style={styles.inputWrapper}>
           <TextInput
             style={styles.input}
-            placeholder="Enter mobile or email"
+            placeholder={t.mobileEmailPlaceholder}
             placeholderTextColor="#9CA3AF"
             value={email}
             onChangeText={setEmail}
@@ -33,11 +35,11 @@ const LoginForm = ({ onLogin, onForgotPassword }) => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Password</Text>
+        <Text style={styles.label}>{t.passwordLabel}</Text>
         <View style={styles.inputWrapper}>
           <TextInput
             style={styles.input}
-            placeholder="Enter password"
+            placeholder={t.passwordPlaceholder}
             placeholderTextColor="#9CA3AF"
             value={password}
             onChangeText={setPassword}
@@ -58,11 +60,11 @@ const LoginForm = ({ onLogin, onForgotPassword }) => {
         style={styles.forgotPassword}
         onPress={onForgotPassword}
       >
-        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+        <Text style={styles.forgotPasswordText}>{t.forgotPassword}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.loginButtonText}>Login</Text>
+        <Text style={styles.loginButtonText}>{t.loginButton}</Text>
       </TouchableOpacity>
     </View>
   );

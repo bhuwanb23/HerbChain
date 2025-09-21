@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList, Animated } from 'react-native';
+import { useTranslation } from '../language/TranslationContext';
 
 const LanguageSwitcher = ({ onLanguageChange }) => {
   const [selectedLanguage, setSelectedLanguage] = useState('EN');
   const [modalVisible, setModalVisible] = useState(false);
   const [scaleAnim] = useState(new Animated.Value(1));
+  const { t } = useTranslation();
 
   const languages = [
     { code: 'EN', name: 'English', flag: '🇺🇸' },
@@ -68,7 +70,7 @@ const LanguageSwitcher = ({ onLanguageChange }) => {
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Language</Text>
+              <Text style={styles.modalTitle}>{t.selectLanguage}</Text>
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={() => setModalVisible(false)}

@@ -35,12 +35,20 @@ export const TripCard = ({ mode, item, onScan, showQR = true }) => {
         );
       })()}
 
-      {isPending && (
+      {(isPending || mode === 'active') && (
         <View style={{ marginTop: 10, flexDirection: 'row' }}>
-          <TouchableOpacity style={styles.scanBtn} onPress={() => onScan && onScan(item)}>
-            <Icon name="qr-code-scanner" size={16} color="#FFFFFF" />
-            <Text style={styles.scanText}>Scan QR</Text>
-          </TouchableOpacity>
+          {isPending && (
+            <TouchableOpacity style={styles.scanBtn} onPress={() => onScan && onScan(item)}>
+              <Icon name="qr-code-scanner" size={16} color="#FFFFFF" />
+              <Text style={styles.scanText}>Scan QR</Text>
+            </TouchableOpacity>
+          )}
+          {mode === 'active' && (
+            <TouchableOpacity style={styles.deliverBtn} onPress={() => onScan && onScan(item, 'deliver_to_manufacturer')}>
+              <Icon name="local-shipping" size={16} color="#FFFFFF" />
+              <Text style={styles.scanText}>Deliver to Manufacturer</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </View>
@@ -118,6 +126,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     marginLeft: 6,
+  },
+  deliverBtn: { // New style for deliver button
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#10B981', // A different color for delivery
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginLeft: 10, // Add some margin if there are other buttons
   },
 });
 

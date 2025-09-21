@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
 // Removed: import { SafeAreaView } from 'react-native-safe-area-context';
 import AvailableHerbList from './components/AvailableHerbList';
 import OrderedHerbList from './components/OrderedHerbList';
 import ScannedHerbDetails from './components/ScannedHerbDetails';
 import RawHerbSectionTabs from './components/RawHerbSectionTabs'; // New import
 import HerbDetailsModal from './components/HerbDetailsModal'; // New Import
+import { ScannerOverlay } from '../../transporters/trips/components/ScannerOverlay'; // Import ScannerOverlay
 import useRawHerbData from './hooks/useRawHerbData';
 
 const RawHerbManagementPage = () => {
@@ -17,13 +18,36 @@ const RawHerbManagementPage = () => {
     scannedHerbDetails,
     handleOrderHerb,
     handleScanQRCode, // Get handleScanQRCode from hook
+    handleReceiveHerb, // Get handleReceiveHerb from hook
     clearScannedDetails,
     getStatusStyle,
     isDetailsModalVisible,
     selectedHerbForDetails,
     openDetailsModal,
     closeDetailsModal,
+    scannerVisible,
+    scanMode,
+    herbToReceive,
+    setScannerVisible,
   } = useRawHerbData();
+
+  const onManufacturerBarcodeScanned = ({ data }) => {
+    console.log('ScannerOverlay - Scanned Data:', data);
+    console.log('ScannerOverlay - Scan Mode:', scanMode);
+    console.log('ScannerOverlay - Herb to Receive:', herbToReceive);
+    setScannerVisible(false); // Close scanner after scan
+    if (scanMode === 'receive_by_manufacturer') {
+      if (herbToReceive) {
+        handleReceiveHerb(herbToReceive, data);
+      } else {
+        Alert.alert('Error', 'No herb selected for receiving.');
+      }
+    } else {
+      // Default scan for general herb details
+      handleScanQRCode(null, 'general_scan'); // Re-initiate general scan if needed
+      // navigation.navigate('QRScannerScreen', { scannedData: data }); // Navigate to a dedicated scanned details page or handle directly
+    }
+  };
 
   const renderContent = () => {
     switch (activeSection) {
@@ -41,8 +65,9 @@ const RawHerbManagementPage = () => {
           <OrderedHerbList
             orderedHerbs={orderedHerbs}
             getStatusStyle={getStatusStyle}
-            onScanQRCode={handleScanQRCode} // Pass handleScanQRCode
+            onScanInitiate={handleScanQRCode} // Pass handleScanQRCode
             onItemPress={openDetailsModal} // Pass openDetailsModal
+            onReceiveHerb={handleReceiveHerb} // Pass handleReceiveHerb
           />
         );
       case 'scanned_details':
@@ -71,6 +96,13 @@ const RawHerbManagementPage = () => {
         onClose={closeDetailsModal}
         herb={selectedHerbForDetails}
         getStatusStyle={getStatusStyle}
+      />
+
+      <ScannerOverlay
+        isVisible={scannerVisible}
+        onClose={() => setScannerVisible(false)}
+        onBarcodeScanned={onManufacturerBarcodeScanned}
+        scanMode={scanMode}
       />
     </View>
   );

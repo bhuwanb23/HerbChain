@@ -14,6 +14,9 @@ const useRawHerbData = () => {
   const [scannedHerbDetails, setScannedHerbDetails] = useState(null);
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
   const [selectedHerbForDetails, setSelectedHerbForDetails] = useState(null);
+  const [scannerVisible, setScannerVisible] = useState(false); // State for scanner visibility
+  const [scanMode, setScanMode] = useState(null); // 'receive_by_manufacturer' or 'general_scan'
+  const [herbToReceive, setHerbToReceive] = useState(null); // Stores the herb that is about to be received
 
   // Function to fetch approved herbs from the backend
   const fetchApprovedHerbs = useCallback(async () => {
@@ -58,9 +61,27 @@ const useRawHerbData = () => {
     }
   }, []);
 
+  // Function to fetch ordered herbs for a specific manufacturer
+  const fetchOrderedHerbs = useCallback(async () => {
+    try {
+      // Assuming manufacturer_001 for now
+      const manufacturerId = 'manufacturer_001';
+      const response = await fetch(`${API_BASE_URL}/api/v1/herbs/manufacturer/${manufacturerId}/ordered`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setOrderedHerbs(data.herbs || []);
+    } catch (error) {
+      console.error("Failed to fetch ordered herbs:", error);
+      Alert.alert("Error", "Failed to load ordered herbs. Please try again later.");
+    }
+  }, []);
+
   useEffect(() => {
     fetchApprovedHerbs();
-  }, [fetchApprovedHerbs]);
+    fetchOrderedHerbs(); // Fetch ordered herbs on mount/reload
+  }, [fetchApprovedHerbs, fetchOrderedHerbs]);
 
   useEffect(() => {
     if (route.params?.scannedData) {
@@ -96,6 +117,65 @@ const useRawHerbData = () => {
     setSelectedHerbForDetails(null);
   }, []);
 
+  const handleReceiveHerb = useCallback(async (herb, scannedQrText) => {
+    if (!herb || !scannedQrText) {
+      Alert.alert("Error", "Herb details or scanned QR text missing.");
+      return;
+    }
+
+    try {
+      // Assuming manufacturer_001 for now, similar to ordering
+      const manufacturerId = 'manufacturer_001';
+      // For transporterId, we assume the current owner of the herb is the transporter
+      const transporterId = herb.current_owner; 
+      const response = await fetch(`${API_BASE_URL}/api/v1/herbs/${herb.id}/receive_by_manufacturer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          manufacturer_id: manufacturerId,
+          transporter_id: transporterId,
+          scanned_qr_text: scannedQrText,
+          receiving_location: 'Manufacturer Facility', // Hardcoded for now
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('Receive Herb API response:', result);
+
+      // Update local state:
+      // Remove from orderedHerbs
+      setOrderedHerbs(prev => prev.filter(h => h.id !== herb.id));
+
+      // Add to scannedHerbDetails for display on scanned_details page
+      const receivedHerb = { 
+        ...herb, 
+        status: 'in_stock', // Update status
+        active_qr: result.new_qr_code, // New QR code from backend
+        current_owner: manufacturerId, // Update current owner
+        labReports: herb.labReports, // Persist lab reports
+      };
+      setScannedHerbDetails(receivedHerb);
+      setActiveSection('scanned_details');
+      openDetailsModal(receivedHerb); // Show details modal
+
+      Alert.alert('Receipt Successful', `${receivedHerb.name} has been received and is now in stock.`);
+
+      // Optionally refresh available herbs to ensure consistency
+      fetchApprovedHerbs();
+
+    } catch (error) {
+      console.error("Failed to receive herb:", error);
+      Alert.alert("Error", `Failed to receive herb: ${error.message || 'Please try again later.'}`);
+    }
+  }, [orderedHerbs, openDetailsModal, fetchApprovedHerbs]);
+
   const handleOrderHerb = useCallback(async (herbId) => {
     const herbToOrder = availableHerbs.find(herb => herb.id === herbId);
     if (herbToOrder) {
@@ -126,16 +206,23 @@ const useRawHerbData = () => {
         openDetailsModal({ ...herbToOrder, orderDate: new Date().toISOString(), status: 'manufacturer_ordered_pending_pickup' });
         Alert.alert('Order Placed', `${herbToOrder.name} has been added to your ordered list. Reference: ${result.ownership_transfer.transfer_id || 'N/A'}`);
 
+        // Refresh both lists after successful order
+        fetchApprovedHerbs();
+        fetchOrderedHerbs();
+
       } catch (error) {
         console.error("Failed to order herb:", error);
         Alert.alert("Error", `Failed to place order for ${herbToOrder.name}. ${error.message || 'Please try again later.'}`);
       }
     }
-  }, [availableHerbs, openDetailsModal]);
+  }, [availableHerbs, openDetailsModal, fetchApprovedHerbs, fetchOrderedHerbs]);
 
-  const handleScanQRCode = useCallback(() => {
-    navigation.navigate('QRScannerScreen');
-  }, [navigation]);
+  const handleScanQRCode = useCallback((herb = null, mode = 'general_scan') => {
+    setHerbToReceive(herb); // Store the herb if it's a receive operation
+    setScanMode(mode);
+    setScannerVisible(true);
+    // navigation.navigate('QRScannerScreen'); // We will use a modal for the scanner
+  }, []);
 
   const clearScannedDetails = useCallback(() => {
     setScannedHerbDetails(null);
@@ -176,6 +263,11 @@ const useRawHerbData = () => {
     openDetailsModal,
     closeDetailsModal,
     approvedHerbs, // Expose approvedHerbs
+    handleReceiveHerb, // Expose handleReceiveHerb
+    scannerVisible, // Expose scannerVisible
+    scanMode, // Expose scanMode
+    herbToReceive, // Expose herbToReceive
+    setScannerVisible, // Expose setScannerVisible for closing the scanner
   };
 };
 

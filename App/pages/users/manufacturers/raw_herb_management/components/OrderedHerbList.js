@@ -7,7 +7,8 @@ const OrderedHerbList = ({
   orderedHerbs,
   getStatusStyle,
   onItemPress,
-  onScanQRCode, // Accept onScanQRCode prop
+  onScanInitiate, // Renamed from onScanQRCode
+  onReceiveHerb, // New prop for receiving herb
 }) => {
   return (
     <View style={styles.container}>
@@ -20,7 +21,8 @@ const OrderedHerbList = ({
               herb={item}
               getStatusStyle={getStatusStyle}
               onPress={() => onItemPress(item)}
-              onScanQRCode={onScanQRCode} // Pass onScanQRCode to OrderedHerbItem
+              onScanInitiate={() => onScanInitiate(item, 'receive_by_manufacturer')} // Pass herb and mode
+              onReceiveHerb={onReceiveHerb} // Pass onReceiveHerb
             />
           )}
           contentContainerStyle={styles.herbListContent}

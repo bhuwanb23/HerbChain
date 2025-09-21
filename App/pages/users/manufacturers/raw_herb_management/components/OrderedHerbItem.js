@@ -2,8 +2,15 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const OrderedHerbItem = ({ herb, getStatusStyle, onPress, onScanQRCode }) => {
+const OrderedHerbItem = ({ herb, getStatusStyle, onPress, onScanInitiate, onReceiveHerb }) => {
   const statusStyle = getStatusStyle(herb.status);
+
+  // When manufacturer scans the transporter's QR code to receive the herb
+  const handleManufacturerScan = () => {
+    // This will trigger the QR scanner, and the scanned data will be passed back
+    // The scanner screen will need to know to call onReceiveHerb with the scanned data
+    onScanInitiate(herb, 'receive_by_manufacturer');
+  };
 
   return (
     <TouchableOpacity style={styles.cardContainer} onPress={() => onPress(herb)}>
@@ -32,9 +39,10 @@ const OrderedHerbItem = ({ herb, getStatusStyle, onPress, onScanQRCode }) => {
           </View>
         )}
       </View>
-      <TouchableOpacity style={styles.scanButton} onPress={() => onScanQRCode(herb.id)}>
+      {/* Temporarily show scan button always for debugging */}
+      <TouchableOpacity style={styles.scanButton} onPress={handleManufacturerScan}>
         <Icon name="qr-code-scanner" size={20} color="#fff" />
-        <Text style={styles.scanButtonText}>Scan QR</Text>
+        <Text style={styles.scanButtonText}>Receive Herb (Scan Transporter QR)</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
