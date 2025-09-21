@@ -172,4 +172,82 @@ export const hi = {
     
     // Progress Bar - using simple concatenation instead
   },
+
+  // Transporter Dashboard Section
+  transporterDashboard: {
+    // Welcome Banner
+    welcomeBack: 'वापसी पर स्वागत है, माइक!',
+    vehicleId: 'वाहन ID: TR-2847 • आज की स्थिति',
+    completed: 'पूर्ण',
+    active: 'सक्रिय',
+    pending: 'लंबित',
+    
+    // Quick Actions
+    startTrip: 'यात्रा शुरू करें',
+    scanBatch: 'बैच स्कैन करें',
+    confirm: 'पुष्टि करें',
+    
+    // Notifications Panel
+    alerts: 'अलर्ट',
+    routeDelayAlert: 'मार्ग देरी अलर्ट',
+    routeDelayMessage: 'मार्ग A-102 पर ट्रैफिक, +15 मिनट देरी अपेक्षित',
+    handoverReady: 'हैंडओवर तैयार',
+    handoverMessage: 'पैकेज #TR-8847 ग्राहक पिकअप के लिए तैयार',
+    fuelLowWarning: 'ईंधन कम चेतावनी',
+    fuelLowMessage: 'अगले स्टॉप पर ईंधन भरने पर विचार करें',
+    minAgo: 'मिनट पहले',
+    
+    // Trip Cards
+    activeTrips: 'सक्रिय यात्राएं',
+    eta: 'ETA',
+    kmRemaining: 'किमी शेष',
+    scheduled: 'निर्धारित',
+    delivered: 'वितरित',
+    customer: 'ग्राहक',
+    progress: 'प्रगति',
+    preparation: 'तैयारी',
+    status: 'स्थिति',
+    ready: 'तैयार',
+    
+    // Trip Status
+    tripActive: 'सक्रिय',
+    tripPending: 'लंबित',
+    tripCompleted: 'पूर्ण',
+  },
+
+  // Transporter Trips Section
+  transporterTrips: {
+    // Tab Labels
+    pending: 'लंबित',
+    active: 'सक्रिय',
+    completed: 'पूर्ण',
+    
+    // Section Headers
+    pendingPickup: 'पिकअप लंबित',
+    pendingPickupSubtitle: 'यात्रा शुरू करने के लिए किसान QR स्कैन करें',
+    activeTrips: 'सक्रिय यात्राएं',
+    inTransit: 'परिवहन में',
+    completedTrips: 'पूर्ण यात्राएं',
+    deliveredBatchesHistory: 'वितरित बैच इतिहास',
+    
+    // Loading and Placeholders
+    loading: 'लोड हो रहा है...',
+    noCompletedTrips: 'अभी तक कोई पूर्ण यात्रा नहीं।',
+    deliverBatchesToSee: 'उन्हें यहां देखने के लिए बैच वितरित करें।',
+    
+    // Trip Card Content
+    batch: 'बैच',
+    farmer: 'किसान',
+    owner: 'मालिक',
+    pendingStatus: 'लंबित',
+    inTransitStatus: 'परिवहन में',
+    transporterQR: 'परिवहनकर्ता QR',
+    
+    // Action Buttons
+    scanQR: 'QR स्कैन करें',
+    deliverToManufacturer: 'निर्माता को वितरित करें',
+    
+    // Scanner
+    close: 'बंद करें',
+  },
 };

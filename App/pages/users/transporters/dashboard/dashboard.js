@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
 import {
   WelcomeBanner,
   QuickActions,

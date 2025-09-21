@@ -1,8 +1,10 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const WelcomeBanner = () => {
+  const { t } = useGlobalTranslation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -40,9 +42,9 @@ const WelcomeBanner = () => {
   }, []);
 
   const stats = [
-    { label: 'Completed', value: '8', color: '#10B981' },
-    { label: 'Active', value: '3', color: '#F59E0B' },
-    { label: 'Pending', value: '2', color: '#3B82F6' },
+    { label: t.transporterDashboard?.completed || 'Completed', value: '8', color: '#10B981' },
+    { label: t.transporterDashboard?.active || 'Active', value: '3', color: '#F59E0B' },
+    { label: t.transporterDashboard?.pending || 'Pending', value: '2', color: '#3B82F6' },
   ];
 
   return (
@@ -62,8 +64,8 @@ const WelcomeBanner = () => {
         ]}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Welcome back, Mike!</Text>
-          <Text style={styles.subtitle}>Vehicle ID: TR-2847 • Today's Status</Text>
+          <Text style={styles.title}>{t.transporterDashboard?.welcomeBack || 'Welcome back, Mike!'}</Text>
+          <Text style={styles.subtitle}>{t.transporterDashboard?.vehicleId || 'Vehicle ID: TR-2847 • Today\'s Status'}</Text>
         </View>
 
         <View style={styles.statsContainer}>

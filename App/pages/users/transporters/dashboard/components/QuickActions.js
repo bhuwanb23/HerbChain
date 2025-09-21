@@ -2,8 +2,11 @@ import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+// import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const QuickActions = ({ onActionPress }) => {
+  const { t } = useGlobalTranslation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -27,21 +30,21 @@ const QuickActions = ({ onActionPress }) => {
   const actions = [
     {
       id: 'start-trip',
-      title: 'Start Trip',
+      title: t.transporterDashboard.startTrip,
       icon: 'play-arrow',
       colors: ['#10B981', '#059669'],
       gradient: ['#10B981', '#059669'],
     },
     {
       id: 'scan-batch',
-      title: 'Scan Batch',
+      title: t.transporterDashboard.scanBatch,
       icon: 'qr-code-scanner',
       colors: ['#F59E0B', '#D97706'],
       gradient: ['#F59E0B', '#D97706'],
     },
     {
       id: 'confirm',
-      title: 'Confirm',
+      title: t.transporterDashboard.confirm,
       icon: 'check-circle',
       colors: ['#3B82F6', '#2563EB'],
       gradient: ['#3B82F6', '#2563EB'],

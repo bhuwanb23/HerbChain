@@ -172,4 +172,82 @@ export const ta = {
     
     // Progress Bar - using simple concatenation instead
   },
+
+  // Transporter Dashboard Section
+  transporterDashboard: {
+    // Welcome Banner
+    welcomeBack: 'மீண்டும் வரவேற்கிறோம், மைக்!',
+    vehicleId: 'வாகன ID: TR-2847 • இன்றைய நிலை',
+    completed: 'முடிந்தது',
+    active: 'செயலில்',
+    pending: 'நிலுவையில்',
+    
+    // Quick Actions
+    startTrip: 'பயணம் தொடங்கு',
+    scanBatch: 'தொகுதி ஸ்கேன்',
+    confirm: 'உறுதிப்படுத்து',
+    
+    // Notifications Panel
+    alerts: 'எச்சரிக்கைகள்',
+    routeDelayAlert: 'வழி தாமத எச்சரிக்கை',
+    routeDelayMessage: 'வழி A-102 இல் போக்குவரத்து, +15 நிமிட தாமதம் எதிர்பார்க்கப்படுகிறது',
+    handoverReady: 'ஒப்படைப்பு தயார்',
+    handoverMessage: 'பேக்கேஜ் #TR-8847 வாடிக்கையாளர் எடுப்பதற்கு தயார்',
+    fuelLowWarning: 'எரிபொருள் குறைவு எச்சரிக்கை',
+    fuelLowMessage: 'அடுத்த நிறுத்தத்தில் எரிபொருள் நிரப்புவதைக் கருத்தில் கொள்ளுங்கள்',
+    minAgo: 'நிமிடங்களுக்கு முன்பு',
+    
+    // Trip Cards
+    activeTrips: 'செயலில் உள்ள பயணங்கள்',
+    eta: 'ETA',
+    kmRemaining: 'கிமீ மீதமுள்ளது',
+    scheduled: 'திட்டமிடப்பட்டது',
+    delivered: 'வழங்கப்பட்டது',
+    customer: 'வாடிக்கையாளர்',
+    progress: 'முன்னேற்றம்',
+    preparation: 'தயாரிப்பு',
+    status: 'நிலை',
+    ready: 'தயார்',
+    
+    // Trip Status
+    tripActive: 'செயலில்',
+    tripPending: 'நிலுவையில்',
+    tripCompleted: 'முடிந்தது',
+  },
+
+  // Transporter Trips Section
+  transporterTrips: {
+    // Tab Labels
+    pending: 'நிலுவையில்',
+    active: 'செயலில்',
+    completed: 'முடிந்தது',
+    
+    // Section Headers
+    pendingPickup: 'பிக்கப் நிலுவையில்',
+    pendingPickupSubtitle: 'பயணம் தொடங்க விவசாயி QR ஸ்கேன் செய்யவும்',
+    activeTrips: 'செயலில் உள்ள பயணங்கள்',
+    inTransit: 'போக்குவரத்தில்',
+    completedTrips: 'முடிந்த பயணங்கள்',
+    deliveredBatchesHistory: 'வழங்கப்பட்ட தொகுதிகளின் வரலாறு',
+    
+    // Loading and Placeholders
+    loading: 'ஏற்றுகிறது...',
+    noCompletedTrips: 'இன்னும் முடிந்த பயணங்கள் இல்லை.',
+    deliverBatchesToSee: 'அவற்றை இங்கே பார்க்க தொகுதிகளை வழங்கவும்.',
+    
+    // Trip Card Content
+    batch: 'தொகுதி',
+    farmer: 'விவசாயி',
+    owner: 'உரிமையாளர்',
+    pendingStatus: 'நிலுவையில்',
+    inTransitStatus: 'போக்குவரத்தில்',
+    transporterQR: 'போக்குவரத்துக்காரர் QR',
+    
+    // Action Buttons
+    scanQR: 'QR ஸ்கேன்',
+    deliverToManufacturer: 'உற்பத்தியாளருக்கு வழங்கவும்',
+    
+    // Scanner
+    close: 'மூடு',
+  },
 };

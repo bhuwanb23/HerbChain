@@ -172,4 +172,82 @@ export const en = {
     
     // Progress Bar - using simple concatenation instead
   },
+
+  // Transporter Dashboard Section
+  transporterDashboard: {
+    // Welcome Banner
+    welcomeBack: 'Welcome back, Mike!',
+    vehicleId: 'Vehicle ID: TR-2847 • Today\'s Status',
+    completed: 'Completed',
+    active: 'Active',
+    pending: 'Pending',
+    
+    // Quick Actions
+    startTrip: 'Start Trip',
+    scanBatch: 'Scan Batch',
+    confirm: 'Confirm',
+    
+    // Notifications Panel
+    alerts: 'Alerts',
+    routeDelayAlert: 'Route Delay Alert',
+    routeDelayMessage: 'Traffic on Route A-102, +15 min delay expected',
+    handoverReady: 'Handover Ready',
+    handoverMessage: 'Package #TR-8847 ready for customer pickup',
+    fuelLowWarning: 'Fuel Low Warning',
+    fuelLowMessage: 'Consider refueling at next stop',
+    minAgo: 'min ago',
+    
+    // Trip Cards
+    activeTrips: 'Active Trips',
+    eta: 'ETA',
+    kmRemaining: 'km remaining',
+    scheduled: 'Scheduled',
+    delivered: 'Delivered',
+    customer: 'Customer',
+    progress: 'Progress',
+    preparation: 'Preparation',
+    status: 'Status',
+    ready: 'Ready',
+    
+    // Trip Status
+    tripActive: 'ACTIVE',
+    tripPending: 'PENDING',
+    tripCompleted: 'COMPLETED',
+  },
+
+  // Transporter Trips Section
+  transporterTrips: {
+    // Tab Labels
+    pending: 'Pending',
+    active: 'Active',
+    completed: 'Completed',
+    
+    // Section Headers
+    pendingPickup: 'Pending Pickup',
+    pendingPickupSubtitle: 'Scan farmer QR to start trip',
+    activeTrips: 'Active Trips',
+    inTransit: 'In Transit',
+    completedTrips: 'Completed Trips',
+    deliveredBatchesHistory: 'Delivered batches history',
+    
+    // Loading and Placeholders
+    loading: 'Loading...',
+    noCompletedTrips: 'No completed trips yet.',
+    deliverBatchesToSee: 'Deliver batches to see them here.',
+    
+    // Trip Card Content
+    batch: 'Batch',
+    farmer: 'Farmer',
+    owner: 'Owner',
+    pendingStatus: 'Pending',
+    inTransitStatus: 'In Transit',
+    transporterQR: 'Transporter QR',
+    
+    // Action Buttons
+    scanQR: 'Scan QR',
+    deliverToManufacturer: 'Deliver to Manufacturer',
+    
+    // Scanner
+    close: 'Close',
+  },
 };

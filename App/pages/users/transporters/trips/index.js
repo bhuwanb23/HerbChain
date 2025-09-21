@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
 import { TabBar } from './components/TabBar';
 import { SectionHeader } from './components/SectionHeader';
 import { TripCard } from './components/TripCard';
@@ -9,6 +10,7 @@ import { useTrips } from './hooks/useTrips';
 import Icon from 'react-native-vector-icons/MaterialIcons'; // Added import for Icon
 
 const TripsPage = ({ navigation }) => {
+  const { t } = useGlobalTranslation();
   const [currentTab, setCurrentTab] = useState('pending');
   const {
     loading,
@@ -37,7 +39,7 @@ const TripsPage = ({ navigation }) => {
       </LinearGradient>
 
       {loading && (
-        <Text style={{ textAlign: 'center', color: '#6B7280', marginVertical: 8 }}>Loading...</Text>
+        <Text style={{ textAlign: 'center', color: '#6B7280', marginVertical: 8 }}>{t.transporterTrips?.loading || 'Loading...'}</Text>
       )}
 
       <View style={styles.tripCards}>
@@ -71,13 +73,16 @@ const TripsPage = ({ navigation }) => {
         colors={['#F9FAFB', '#F3F4F6']}
         style={styles.gradient}
       >
-        <TabBar current={currentTab} onChange={setCurrentTab} tabs={[{ key: 'pending', label: 'Pending' }, { key: 'active', label: 'Active' }, { key: 'completed', label: 'Completed' }]} />
+        <TabBar current={currentTab} onChange={setCurrentTab} tabs={[{ key: 'pending', label: t.transporterTrips?.pending || 'Pending' }, { key: 'active', label: t.transporterTrips?.active || 'Active' }, { key: 'completed', label: t.transporterTrips?.completed || 'Completed' }]} />
 
-        {/* Replaced ScrollView with a View to fix FlatList nesting warning */}
-        <View style={styles.contentContainerWrapper}>
+        <ScrollView 
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           {currentTab === 'pending' && (
             <View style={styles.tripsOverview}>
-              <SectionHeader colors={["#059669", "#10B981"]} title="Pending Pickup" subtitle="Scan farmer QR to start trip" />
+              <SectionHeader colors={["#059669", "#10B981"]} title={t.transporterTrips?.pendingPickup || 'Pending Pickup'} subtitle={t.transporterTrips?.pendingPickupSubtitle || 'Scan farmer QR to start trip'} />
               <View style={styles.tripCards}>
                 {pendingHerbs.map((herb) => (
                   <TripCard key={herb.batch_id} mode="pending" item={herb} onScan={handleStartScanForPickup} />
@@ -87,7 +92,7 @@ const TripsPage = ({ navigation }) => {
           )}
           {currentTab === 'active' && (
             <View style={styles.tripsOverview}>
-              <SectionHeader colors={["#0EA5E9", "#38BDF8"]} title="Active Trips" subtitle="In Transit" />
+              <SectionHeader colors={["#0EA5E9", "#38BDF8"]} title={t.transporterTrips?.activeTrips || 'Active Trips'} subtitle={t.transporterTrips?.inTransit || 'In Transit'} />
               <View style={styles.tripCards}>
                 {activeTrips.map((trip) => (
                   <TripCard key={trip.batch_id} mode="active" item={trip} onScan={handleStartScanForDelivery} />
@@ -99,15 +104,15 @@ const TripsPage = ({ navigation }) => {
             <View style={styles.tripsOverview}>
               <LinearGradient colors={["#6B7280", "#9CA3AF"]} start={{x:0,y:0}} end={{x:1,y:1}} style={styles.sectionHeader}>
                 <View style={styles.headerTextWrap}>
-                  <Text style={styles.headerTitle}>Completed Trips</Text>
-                  <Text style={styles.headerSubtitle}>Delivered batches history</Text>
+                  <Text style={styles.headerTitle}>{t.transporterTrips?.completedTrips || 'Completed Trips'}</Text>
+                  <Text style={styles.headerSubtitle}>{t.transporterTrips?.deliveredBatchesHistory || 'Delivered batches history'}</Text>
                 </View>
               </LinearGradient>
               <View style={styles.tripCards}>
                 {completedTrips.length === 0 ? (
                   <View style={styles.placeholderContainer}>
-                    <Text style={styles.placeholderText}>No completed trips yet.</Text>
-                    <Text style={styles.placeholderSubtext}>Deliver batches to see them here.</Text>
+                    <Text style={styles.placeholderText}>{t.transporterTrips?.noCompletedTrips || 'No completed trips yet.'}</Text>
+                    <Text style={styles.placeholderSubtext}>{t.transporterTrips?.deliverBatchesToSee || 'Deliver batches to see them here.'}</Text>
                   </View>
                 ) : (
                   completedTrips.map((trip) => (
@@ -117,7 +122,7 @@ const TripsPage = ({ navigation }) => {
               </View>
             </View>
           )}
-        </View>
+        </ScrollView>
 
         <ScannerOverlay visible={scannerVisible} onClose={() => onCloseScanner()} onScanned={handleBarCodeScanned} />
       </LinearGradient>

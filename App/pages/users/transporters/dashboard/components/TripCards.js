@@ -2,8 +2,11 @@ import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+// import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const TripCards = ({ onTripPress }) => {
+  const { t } = useGlobalTranslation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
@@ -26,58 +29,57 @@ const TripCards = ({ onTripPress }) => {
   const trips = [
     {
       id: 'TR-8847',
-      status: 'ACTIVE',
+      status: t.transporterDashboard.tripActive,
       statusColor: '#10B981',
       borderColor: '#10B981',
       icon: 'local-shipping',
       iconColor: '#10B981',
       route: 'Downtown Warehouse → Mall Center',
-      details: 'ETA: 14:30 • 8.2 km remaining',
+      details: `${t.transporterDashboard.eta}: 14:30 • 8.2 ${t.transporterDashboard.kmRemaining}`,
       progress: 75,
       progressColor: '#10B981',
-      progressLabel: 'Progress',
+      progressLabel: t.transporterDashboard.progress,
       progressValue: '75%',
     },
     {
       id: 'TR-8848',
-      status: 'PENDING',
+      status: t.transporterDashboard.tripPending,
       statusColor: '#F59E0B',
       borderColor: '#F59E0B',
       icon: 'schedule',
       iconColor: '#F59E0B',
       route: 'Central Hub → Riverside District',
-      details: 'Scheduled: 15:00 • 12.5 km',
+      details: `${t.transporterDashboard.scheduled}: 15:00 • 12.5 km`,
       progress: 100,
       progressColor: '#F59E0B',
-      progressLabel: 'Preparation',
-      progressValue: 'Ready',
+      progressLabel: t.transporterDashboard.preparation,
+      progressValue: t.transporterDashboard.ready,
     },
     {
       id: 'TR-8845',
-      status: 'COMPLETED',
+      status: t.transporterDashboard.tripCompleted,
       statusColor: '#6B7280',
       borderColor: '#D1D5DB',
       icon: 'check-circle',
       iconColor: '#9CA3AF',
       route: 'North Station → Business Park',
-      details: 'Delivered: 12:45 • Customer: J. Smith',
+      details: `${t.transporterDashboard.delivered}: 12:45 • ${t.transporterDashboard.customer}: J. Smith`,
       progress: 100,
       progressColor: '#10B981',
-      progressLabel: 'Status',
-      progressValue: 'Completed',
+      progressLabel: t.transporterDashboard.status,
+      progressValue: t.transporterDashboard.tripCompleted,
     },
   ];
 
   const getStatusIcon = (status) => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'local-shipping';
-      case 'PENDING':
-        return 'schedule';
-      case 'COMPLETED':
-        return 'check-circle';
-      default:
-        return 'help';
+    if (status === t.transporterDashboard.tripActive) {
+      return 'local-shipping';
+    } else if (status === t.transporterDashboard.tripPending) {
+      return 'schedule';
+    } else if (status === t.transporterDashboard.tripCompleted) {
+      return 'check-circle';
+    } else {
+      return 'help';
     }
   };
 
@@ -91,7 +93,7 @@ const TripCards = ({ onTripPress }) => {
         },
       ]}
     >
-      <Text style={styles.sectionTitle}>Active Trips</Text>
+      <Text style={styles.sectionTitle}>{t.transporterDashboard.activeTrips}</Text>
       
       {trips.map((trip, index) => (
         <Animated.View

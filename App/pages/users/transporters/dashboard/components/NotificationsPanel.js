@@ -2,8 +2,11 @@ import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+// import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 const NotificationsPanel = () => {
+  const { t } = useGlobalTranslation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
@@ -26,27 +29,27 @@ const NotificationsPanel = () => {
   const notifications = [
     {
       id: 1,
-      title: 'Route Delay Alert',
-      message: 'Traffic on Route A-102, +15 min delay expected',
-      time: '2 min ago',
+      title: t.transporterDashboard.routeDelayAlert,
+      message: t.transporterDashboard.routeDelayMessage,
+      time: `2 ${t.transporterDashboard.minAgo}`,
       type: 'warning',
       icon: 'warning',
       color: '#F59E0B',
     },
     {
       id: 2,
-      title: 'Handover Ready',
-      message: 'Package #TR-8847 ready for customer pickup',
-      time: '5 min ago',
+      title: t.transporterDashboard.handoverReady,
+      message: t.transporterDashboard.handoverMessage,
+      time: `5 ${t.transporterDashboard.minAgo}`,
       type: 'info',
       icon: 'info',
       color: '#3B82F6',
     },
     {
       id: 3,
-      title: 'Fuel Low Warning',
-      message: 'Consider refueling at next stop',
-      time: '10 min ago',
+      title: t.transporterDashboard.fuelLowWarning,
+      message: t.transporterDashboard.fuelLowMessage,
+      time: `10 ${t.transporterDashboard.minAgo}`,
       type: 'warning',
       icon: 'local-gas-station',
       color: '#EF4444',
@@ -80,7 +83,7 @@ const NotificationsPanel = () => {
         <View style={styles.header}>
           <View style={styles.titleContainer}>
             <Icon name="notifications" size={20} color="#F59E0B" />
-            <Text style={styles.title}>Alerts</Text>
+            <Text style={styles.title}>{t.transporterDashboard.alerts}</Text>
           </View>
           <View style={styles.badgeContainer}>
             <LinearGradient

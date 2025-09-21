@@ -172,4 +172,82 @@ export const te = {
     
     // Progress Bar - using simple concatenation instead
   },
+
+  // Transporter Dashboard Section
+  transporterDashboard: {
+    // Welcome Banner
+    welcomeBack: 'తిరిగి స్వాగతం, మైక్!',
+    vehicleId: 'వాహనం ID: TR-2847 • నేటి స్థితి',
+    completed: 'పూర్తయింది',
+    active: 'చురుకైన',
+    pending: 'పెండింగ్',
+    
+    // Quick Actions
+    startTrip: 'యాత్ర ప్రారంభించండి',
+    scanBatch: 'బ్యాచ్ స్కాన్ చేయండి',
+    confirm: 'నిర్ధారించండి',
+    
+    // Notifications Panel
+    alerts: 'హెచ్చరికలు',
+    routeDelayAlert: 'మార��గం ఆలస్యం హెచ్చరిక',
+    routeDelayMessage: 'మార్గం A-102లో ట్రాఫిక్, +15 నిమిషాల ఆలస్యం అంచనా',
+    handoverReady: 'హ్యాండ్‌ఓవర్ సిద్ధం',
+    handoverMessage: 'ప్యాకేజ్ #TR-8847 కస్టమర్ పికప్ కోసం సిద్ధం',
+    fuelLowWarning: 'ఇంధనం తక్కువ హెచ్చరిక',
+    fuelLowMessage: 'తదుపరి స్టాప్‌లో ఇంధనం నింపడాన్ని పరిగణించండి',
+    minAgo: 'నిమిషాల క్రితం',
+    
+    // Trip Cards
+    activeTrips: 'చురుకైన యాత్రలు',
+    eta: 'ETA',
+    kmRemaining: 'కిమీ మిగిలింది',
+    scheduled: 'షెడ్యూల్ చేయబడింది',
+    delivered: 'డెలివరీ చేయబడింది',
+    customer: 'కస్టమర్',
+    progress: 'పురోగతి',
+    preparation: 'తయారీ',
+    status: 'స్థితి',
+    ready: 'సిద్ధం',
+    
+    // Trip Status
+    tripActive: 'చురుకైన',
+    tripPending: 'పెండింగ్',
+    tripCompleted: 'పూర్తయింది',
+  },
+
+  // Transporter Trips Section
+  transporterTrips: {
+    // Tab Labels
+    pending: 'పెండింగ్',
+    active: 'చురుకైన',
+    completed: 'పూర్తయింది',
+    
+    // Section Headers
+    pendingPickup: 'పికప్ పెండింగ్',
+    pendingPickupSubtitle: 'యాత్ర ప్రారంభించడానికి రైతు QR స్కాన్ చేయండి',
+    activeTrips: 'చురుకైన యాత్రలు',
+    inTransit: 'రవాణాలో',
+    completedTrips: 'పూర్తయిన యాత్రలు',
+    deliveredBatchesHistory: 'డెలివరీ చేసిన బ్యాచ్‌ల చరిత్ర',
+    
+    // Loading and Placeholders
+    loading: 'లోడ్ అవుతోంది...',
+    noCompletedTrips: 'ఇంకా పూర్తయిన యాత్రలు లేవు.',
+    deliverBatchesToSee: 'వాటిని ఇక్కడ చూడటానికి బ్యాచ్‌లను డెలివరీ చేయండి.',
+    
+    // Trip Card Content
+    batch: 'బ్యాచ్',
+    farmer: 'రైతు',
+    owner: 'యజమాని',
+    pendingStatus: 'పెండింగ్',
+    inTransitStatus: 'రవాణాలో',
+    transporterQR: 'రవాణాదారు QR',
+    
+    // Action Buttons
+    scanQR: 'QR స్కాన్ చేయండి',
+    deliverToManufacturer: 'తయారీదారుకు డెలివరీ చేయండి',
+    
+    // Scanner
+    close: 'మూసివేయండి',
+  },
 };

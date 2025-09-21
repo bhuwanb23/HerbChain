@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 export const TripCard = ({ mode, item, onScan, showQR = true }) => {
+  const { t } = useGlobalTranslation();
   const isPending = mode === 'pending';
   const leftColor = isPending ? '#F59E0B' : '#10B981';
   const iconName = isPending ? 'pending' : 'local-shipping';
@@ -15,12 +17,12 @@ export const TripCard = ({ mode, item, onScan, showQR = true }) => {
           <Icon name={iconName} size={18} color={leftColor} />
         </View>
         <View style={styles.titleWrap}>
-          <Text style={styles.title}>Batch {item.batch_id}</Text>
+          <Text style={styles.title}>{t.transporterTrips?.batch || 'Batch'} {item.batch_id}</Text>
           <Text style={styles.subtitle}>{item.species_name} • {item.weight_kg} kg</Text>
-          <Text style={styles.meta}>{isPending ? `Farmer: ${item?.farmer?.name || item.farmer_id}` : `Owner: ${item.current_owner}`}</Text>
+          <Text style={styles.meta}>{isPending ? `${t.transporterTrips?.farmer || 'Farmer'}: ${item?.farmer?.name || item.farmer_id}` : `${t.transporterTrips?.owner || 'Owner'}: ${item.current_owner}`}</Text>
         </View>
         <View style={[styles.badge, { backgroundColor: bubbleBg, borderColor: bubbleBd }]}> 
-          <Text style={[styles.badgeText, { color: leftColor }]}>{isPending ? 'Pending' : 'In Transit'}</Text>
+          <Text style={[styles.badgeText, { color: leftColor }]}>{isPending ? (t.transporterTrips?.pendingStatus || 'Pending') : (t.transporterTrips?.inTransitStatus || 'In Transit')}</Text>
         </View>
       </View>
 
@@ -29,7 +31,7 @@ export const TripCard = ({ mode, item, onScan, showQR = true }) => {
         if (!qr) return null;
         return (
           <View style={{ marginTop: 8, alignItems: 'center' }}>
-            <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 6 }}>Transporter QR</Text>
+            <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 6 }}>{t.transporterTrips?.transporterQR || 'Transporter QR'}</Text>
             <Image source={{ uri: qr }} style={{ width: 160, height: 160, backgroundColor: '#FFF', borderRadius: 8 }} />
           </View>
         );
@@ -40,13 +42,13 @@ export const TripCard = ({ mode, item, onScan, showQR = true }) => {
           {isPending && (
             <TouchableOpacity style={styles.scanBtn} onPress={() => onScan && onScan(item)}>
               <Icon name="qr-code-scanner" size={16} color="#FFFFFF" />
-              <Text style={styles.scanText}>Scan QR</Text>
+              <Text style={styles.scanText}>{t.transporterTrips?.scanQR || 'Scan QR'}</Text>
             </TouchableOpacity>
           )}
           {mode === 'active' && (
             <TouchableOpacity style={styles.deliverBtn} onPress={() => onScan && onScan(item, 'deliver_to_manufacturer')}>
               <Icon name="local-shipping" size={16} color="#FFFFFF" />
-              <Text style={styles.scanText}>Deliver to Manufacturer</Text>
+              <Text style={styles.scanText}>{t.transporterTrips?.deliverToManufacturer || 'Deliver to Manufacturer'}</Text>
             </TouchableOpacity>
           )}
         </View>

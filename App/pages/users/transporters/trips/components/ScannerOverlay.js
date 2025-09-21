@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { CameraView } from 'expo-camera';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
 export const ScannerOverlay = ({ visible, onClose, onScanned }) => {
+  const { t } = useGlobalTranslation();
   if (!visible) return null;
   return (
     <View style={styles.overlay}>
@@ -13,7 +15,7 @@ export const ScannerOverlay = ({ visible, onClose, onScanned }) => {
         onBarcodeScanned={({ data }) => onScanned && onScanned(data)}
       />
       <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-        <Text style={styles.closeText}>Close</Text>
+        <Text style={styles.closeText}>{t.transporterTrips?.close || 'Close'}</Text>
       </TouchableOpacity>
     </View>
   );
