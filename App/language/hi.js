@@ -336,4 +336,59 @@ export const hi = {
     ownershipTransferred: 'स्वामित्व लैब को स्थानांतरित।',
     failedToCompleteDelivery: 'डिलीवरी पूरी करने में विफल',
   },
+
+  // Lab Testing Section
+  labTesting: {
+    // Page Header
+    labTestingDashboard: 'लैब परीक्षण डैशबोर्ड',
+    
+    // Herb Lists
+    herbsWithNoTestUploaded: 'बिना परीक्षण अपलोड की जड़ी-बूटियां',
+    testedUploadedHerbs: 'परीक्षित/अपलोड की गई जड़ी-बूटियां',
+    
+    // Offline Banner
+    workingOffline: 'ऑफ़लाइन काम कर रहे हैं - कनेक्ट होने पर परिवर्तन सिंक होंगे',
+    
+    // Batch Header
+    batch: 'बैच',
+    received: 'प्राप्त',
+    
+    // Test Results Section
+    enterTestResults: 'परीक्षण परिणाम दर्ज करें',
+    moistureContent: 'नमी सामग्री',
+    percentage: 'प्रतिशत (%)',
+    enterPercentage: 'प्रतिशत दर्ज करें',
+    pesticideResidues: 'कीटनाशक अवशेष',
+    enterValue: 'मान दर्ज करें',
+    phytochemicalLevels: 'फाइटोकेमिकल स्तर',
+    quantitativeMarkers: 'मात्रात्मक मार्करों',
+    purityPercentage: 'शुद्धता प्रतिशत',
+    heavyMetalsPresent: 'भारी धातुएं मौजूद',
+    yesNo: 'हां/नहीं',
+    microbialContamination: 'माइक्रोबियल संदूषण',
+    
+    // Detailed Observations
+    detailedObservations: 'विस्तृत अवलोकन',
+    addTestResultsSummary: 'परीक्षण परिणामों का सारांश जोड़ें...',
+    addAdditionalNotes: 'कोई अतिरिक्त नोट्स जोड़ें...',
+    enterRecommendations: 'जड़ी-बूटी बैच के लिए सिफारिशें दर्ज करें...',
+    
+    // Upload Evidence
+    uploadEvidence: 'साक्ष्य अपलोड करें',
+    fileUploadedSuccessfully: 'फ़ाइल सफलतापूर्वक अपलोड की गई',
+    dragDropOrTapToUpload: 'अपलोड करने के लिए खींचें और छोड़ें या टैप करें',
+    chooseFile: 'फ़ाइल चुनें',
+    
+    // Action Buttons
+    saveOffline: 'ऑफ़लाइन सेव करें',
+    submitResults: 'परिणाम सबमिट करें',
+    
+    // Upload Types
+    testReports: 'परीक्षण रिपोर्ट',
+    uploadPDFReports: 'उपकरण से PDF रिपोर्ट अपलोड करें',
+    labPhotos: 'लैब फोटो',
+    uploadPhotosOfSamples: 'नमूने और उपकरण की फोटो अपलोड करें',
+    certificates: 'प्रमाणपत्र',
+    uploadComplianceCertificates: 'अनुपालन प्रमाणपत्र अपलोड करें',
+  },
 };

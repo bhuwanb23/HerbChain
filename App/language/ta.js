@@ -336,4 +336,59 @@ export const ta = {
     ownershipTransferred: 'உரிமை ஆய்வகத்திற்கு மாற்றப்பட்டது.',
     failedToCompleteDelivery: 'டெலிவரி முடிக்க முடியவில்லை',
   },
+
+  // Lab Testing Section
+  labTesting: {
+    // Page Header
+    labTestingDashboard: 'ஆய்வக சோதனை டாஷ்போர்டு',
+    
+    // Herb Lists
+    herbsWithNoTestUploaded: 'சோதனை பதிவேற்றப்படாத மூலிகைகள்',
+    testedUploadedHerbs: 'சோதனை செய்யப்பட்ட/பதிவேற்றப்பட்ட மூலிகைகள்',
+    
+    // Offline Banner
+    workingOffline: 'ஆஃப்லைனில் வேலை செய்கிறது - இணைக்கப்படும்போது மாற்றங்கள் ஒத்திசைக்கப்படும்',
+    
+    // Batch Header
+    batch: 'தொகுதி',
+    received: 'பெறப்பட்டது',
+    
+    // Test Results Section
+    enterTestResults: 'சோதனை முடிவுகளை உள்ளிடவும்',
+    moistureContent: 'ஈரப்பத உள்ளடக்கம்',
+    percentage: 'சதவீதம் (%)',
+    enterPercentage: 'சதவீதத்தை உள்ளிடவும்',
+    pesticideResidues: 'பூச்சிக்கொல்லி எச்சங்கள்',
+    enterValue: 'மதிப்பை உள்ளிடவும்',
+    phytochemicalLevels: 'பைட்டோகெமிக்கல் அளவுகள்',
+    quantitativeMarkers: 'அளவு குறிப்பான்கள்',
+    purityPercentage: 'தூய்மை சதவீதம்',
+    heavyMetalsPresent: 'கனமான உலோகங்கள் உள்ளன',
+    yesNo: 'ஆம்/இல்லை',
+    microbialContamination: 'நுண்ணுயிர் மாசுபாடு',
+    
+    // Detailed Observations
+    detailedObservations: 'விரிவான கண்காணிப்புகள்',
+    addTestResultsSummary: 'சோதனை முடிவுகளின் சுருக்கத்தை சேர்க்கவும்...',
+    addAdditionalNotes: 'ஏதேனும் கூடுதல் குறிப்புகளை சேர்க்கவும்...',
+    enterRecommendations: 'மூலிகை தொகுதிக்கான பரிந்துரைகளை உள்ளிடவும்...',
+    
+    // Upload Evidence
+    uploadEvidence: 'சான்றுகளை பதிவேற்றவும்',
+    fileUploadedSuccessfully: 'கோப்பு வெற்றிகரமாக பதிவேற்றப்பட்டது',
+    dragDropOrTapToUpload: 'பதிவேற்ற இழுத்து விடவும் அல்லது தட்டவும்',
+    chooseFile: 'கோப்பை தேர்ந்தெடுக்கவும்',
+    
+    // Action Buttons
+    saveOffline: 'ஆஃப்லைன் சேமிக்கவும்',
+    submitResults: 'முடிவுகளை சமர்ப்பிக்கவும்',
+    
+    // Upload Types
+    testReports: 'சோதனை அறிக்கைகள்',
+    uploadPDFReports: 'உபகரணங்களிலிருந்து PDF அறிக்கைகளை பதிவேற்றவும்',
+    labPhotos: 'ஆய்வக புகைப்படங்கள்',
+    uploadPhotosOfSamples: 'மாதிரிகள் மற்றும் உபகரணங்களின் புகைப்படங்களை பதிவேற்றவும்',
+    certificates: 'சான்றிதழ்கள்',
+    uploadComplianceCertificates: 'இணக்க சான்றிதழ்களை பதிவேற்றவும்',
+  },
 };

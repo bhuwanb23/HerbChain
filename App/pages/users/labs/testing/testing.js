@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
 import { useTesting } from './hooks';
 import { TestingResultsEntry, OfflineSync } from './components';
 import HerbChipList from './components/HerbChipList';
 import LabReportView from './components/LabReportView';
 
 const TestingPage = ({ navigation }) => {
+  const { t } = useGlobalTranslation();
   const {
     selectedBatch,
     isOffline,
@@ -52,12 +54,12 @@ const TestingPage = ({ navigation }) => {
       return (
         <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
           <HerbChipList 
-            title="Herbs with No Test Uploaded" 
+            title={t.labTesting?.herbsWithNoTestUploaded || 'Herbs with No Test Uploaded'} 
             items={herbs_not_uploaded}
             onPress={(h) => handleBatchSelect(h.batch_id, 'upload')}
           />
           <HerbChipList 
-            title="Tested/Uploaded Herbs" 
+            title={t.labTesting?.testedUploadedHerbs || 'Tested/Uploaded Herbs'} 
             items={herbs_with_reports}
             onPress={(h) => handleBatchSelect(h.batch_id, 'view')}
           />
@@ -75,7 +77,7 @@ const TestingPage = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.pageTitle}>Lab Testing Dashboard</Text>
+      <Text style={styles.pageTitle}>{t.labTesting?.labTestingDashboard || 'Lab Testing Dashboard'}</Text>
       {renderCurrentView()}
     </View>
   );

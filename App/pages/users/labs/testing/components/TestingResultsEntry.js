@@ -10,16 +10,18 @@ import {
   Switch
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 import { TEST_TYPES, UPLOAD_TYPES, MOCK_BATCHES, COLORS } from '../constants';
 
 const OfflineBanner = ({ isOffline }) => {
+  const { t } = useGlobalTranslation();
   if (!isOffline) return null;
 
   return (
     <View style={styles.offlineBanner}>
       <View style={styles.offlineBannerContent}>
         <Ionicons name="wifi-off" size={16} color={COLORS.warning[700]} style={styles.mr2} />
-        <Text style={styles.offlineBannerText}>Working offline - Changes will sync when connected</Text>
+        <Text style={styles.offlineBannerText}>{t.labTesting?.workingOffline || 'Working offline - Changes will sync when connected'}</Text>
         <View style={styles.mlAuto}>
           <View style={styles.offlinePulse} />
         </View>
@@ -29,13 +31,14 @@ const OfflineBanner = ({ isOffline }) => {
 };
 
 const BatchHeaderCard = ({ batchId, isOffline }) => {
+  const { t } = useGlobalTranslation();
   const batch = MOCK_BATCHES.find(b => b.id === batchId) || MOCK_BATCHES[0]; // Assuming MOCK_BATCHES is available from constants
 
   return (
     <View style={styles.batchHeaderCard}>
       <View style={styles.batchHeaderContent}>
         <View>
-          <Text style={styles.batchHeaderTitle}>Batch #{batch.id}</Text>
+          <Text style={styles.batchHeaderTitle}>{t.labTesting?.batch || 'Batch'} #{batch.id}</Text>
           <Text style={styles.batchHeaderSubtitle}>{batch.name}</Text>
         </View>
         <View style={[styles.batchStatusTag, { backgroundColor: COLORS.info[100] }]}>
@@ -44,7 +47,7 @@ const BatchHeaderCard = ({ batchId, isOffline }) => {
       </View>
       <View style={styles.batchReceivedInfo}>
         <Ionicons name="calendar-outline" size={16} color={COLORS.gray[500]} style={styles.mr2} />
-        <Text style={styles.batchReceivedText}>Received: {batch.receivedDate}</Text>
+        <Text style={styles.batchReceivedText}>{t.labTesting?.received || 'Received'}: {batch.receivedDate}</Text>
       </View>
     </View>
   );
@@ -89,6 +92,7 @@ const TestResultCard = ({ testType, value, onChange }) => {
 };
 
 const UploadCard = ({ uploadType, isUploaded, onUpload, onRemove }) => {
+  const { t } = useGlobalTranslation();
   return (
     <View style={styles.uploadCard}>
       <View style={styles.uploadCardHeader}>
@@ -103,7 +107,7 @@ const UploadCard = ({ uploadType, isUploaded, onUpload, onRemove }) => {
           <View style={styles.uploadedFileContainer}>
             <View style={styles.flexRowCenter}>
               <Ionicons name="checkmark-circle" size={16} color={COLORS.success} style={styles.mr2} />
-              <Text style={styles.uploadedFileText}>File uploaded successfully</Text>
+              <Text style={styles.uploadedFileText}>{t.labTesting?.fileUploadedSuccessfully || 'File uploaded successfully'}</Text>
             </View>
             <Pressable onPress={() => onRemove(uploadType.id)} style={({ pressed }) => [
               pressed && styles.buttonPressed
@@ -117,8 +121,8 @@ const UploadCard = ({ uploadType, isUploaded, onUpload, onRemove }) => {
             pressed && styles.buttonPressed
           ]}>
             <Ionicons name="cloud-upload" size={30} color={COLORS.gray[500]} style={styles.mb2} />
-            <Text style={styles.uploadPromptText}>Drag & drop or tap to upload</Text>
-            <Text style={styles.chooseFileButton}>Choose File</Text>
+            <Text style={styles.uploadPromptText}>{t.labTesting?.dragDropOrTapToUpload || 'Drag & drop or tap to upload'}</Text>
+            <Text style={styles.chooseFileButton}>{t.labTesting?.chooseFile || 'Choose File'}</Text>
           </Pressable>
         )}
       </View>
@@ -127,6 +131,7 @@ const UploadCard = ({ uploadType, isUploaded, onUpload, onRemove }) => {
 };
 
 const ActionButtons = ({ onSaveOffline, onSubmitResults, isOffline }) => {
+  const { t } = useGlobalTranslation();
   return (
     <View style={styles.actionButtonsContainer}>
       <Pressable
@@ -138,7 +143,7 @@ const ActionButtons = ({ onSaveOffline, onSubmitResults, isOffline }) => {
         ]}
       >
         <Ionicons name="save" size={20} color={COLORS.info} style={styles.mr2} />
-        <Text style={styles.actionButtonTextSecondary}>Save Offline</Text>
+        <Text style={styles.actionButtonTextSecondary}>{t.labTesting?.saveOffline || 'Save Offline'}</Text>
       </Pressable>
       <Pressable
         onPress={onSubmitResults}
@@ -149,7 +154,7 @@ const ActionButtons = ({ onSaveOffline, onSubmitResults, isOffline }) => {
         ]}
       >
         <Ionicons name="paper-plane" size={20} color={COLORS.white} style={styles.mr2} />
-        <Text style={styles.actionButtonTextPrimary}>Submit Results</Text>
+        <Text style={styles.actionButtonTextPrimary}>{t.labTesting?.submitResults || 'Submit Results'}</Text>
       </Pressable>
     </View>
   );
@@ -167,6 +172,48 @@ const TestingResultsEntry = ({
   onSaveOffline,
   onSubmitResults,
 }) => {
+  const { t } = useGlobalTranslation();
+  
+  // Create translated test types and upload types
+  const translatedTestTypes = TEST_TYPES.map(testType => ({
+    ...testType,
+    title: testType.id === 'moisture' 
+      ? (t.labTesting?.moistureContent || 'Moisture Content')
+      : testType.id === 'pesticide'
+      ? (t.labTesting?.pesticideResidues || 'Pesticide Residues')
+      : testType.id === 'phytochemical'
+      ? (t.labTesting?.phytochemicalLevels || 'Phytochemical Levels')
+      : testType.id === 'purity_percentage'
+      ? (t.labTesting?.purityPercentage || 'Purity Percentage')
+      : testType.id === 'heavy_metals_present'
+      ? (t.labTesting?.heavyMetalsPresent || 'Heavy Metals Present')
+      : (t.labTesting?.microbialContamination || 'Microbial Contamination'),
+    subtitle: testType.id === 'moisture' || testType.id === 'purity_percentage'
+      ? (t.labTesting?.percentage || 'Percentage (%)')
+      : testType.id === 'phytochemical'
+      ? (t.labTesting?.quantitativeMarkers || 'Quantitative markers')
+      : testType.id === 'heavy_metals_present'
+      ? (t.labTesting?.yesNo || 'Yes/No')
+      : testType.subtitle,
+    placeholder: testType.id === 'moisture' || testType.id === 'purity_percentage'
+      ? (t.labTesting?.enterPercentage || 'Enter percentage')
+      : (t.labTesting?.enterValue || 'Enter value')
+  }));
+  
+  const translatedUploadTypes = UPLOAD_TYPES.map(uploadType => ({
+    ...uploadType,
+    title: uploadType.id === 'test_reports'
+      ? (t.labTesting?.testReports || 'Test Reports')
+      : uploadType.id === 'lab_photos'
+      ? (t.labTesting?.labPhotos || 'Lab Photos')
+      : (t.labTesting?.certificates || 'Certificates'),
+    subtitle: uploadType.id === 'test_reports'
+      ? (t.labTesting?.uploadPDFReports || 'Upload PDF reports from equipment')
+      : uploadType.id === 'lab_photos'
+      ? (t.labTesting?.uploadPhotosOfSamples || 'Upload photos of samples and equipment')
+      : (t.labTesting?.uploadComplianceCertificates || 'Upload compliance certificates')
+  }));
+  
   return (
     <View style={styles.container}>
       <OfflineBanner isOffline={isOffline} />
@@ -178,9 +225,9 @@ const TestingResultsEntry = ({
 
       <ScrollView style={styles.mainContent}>
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Enter Test Results</Text>
+          <Text style={styles.sectionTitle}>{t.labTesting?.enterTestResults || 'Enter Test Results'}</Text>
 
-          {TEST_TYPES.filter(type => type.type !== 'boolean').map((testType) => (
+          {translatedTestTypes.filter(type => type.type !== 'boolean').map((testType) => (
             <TestResultCard
               key={testType.id}
               testType={testType}
@@ -189,7 +236,7 @@ const TestingResultsEntry = ({
             />
           ))}
 
-          {TEST_TYPES.filter(type => type.type === 'boolean').map((testType) => (
+          {translatedTestTypes.filter(type => type.type === 'boolean').map((testType) => (
             <TestResultCard
               key={testType.id}
               testType={testType}
@@ -200,11 +247,11 @@ const TestingResultsEntry = ({
         </View>
 
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Detailed Observations</Text>
+          <Text style={styles.sectionTitle}>{t.labTesting?.detailedObservations || 'Detailed Observations'}</Text>
           <View style={styles.textAreaCard}>
             <TextInput
               style={styles.textArea}
-              placeholder="Add a summary of the test results..."
+              placeholder={t.labTesting?.addTestResultsSummary || 'Add a summary of the test results...'}
               multiline
               numberOfLines={4}
               value={testResults.results_summary || ''}
@@ -215,7 +262,7 @@ const TestingResultsEntry = ({
           <View style={styles.textAreaCard}>
             <TextInput
               style={styles.textArea}
-              placeholder="Add any additional notes..."
+              placeholder={t.labTesting?.addAdditionalNotes || 'Add any additional notes...'}
               multiline
               numberOfLines={4}
               value={testResults.notes || ''}
@@ -226,7 +273,7 @@ const TestingResultsEntry = ({
           <View style={styles.textAreaCard}>
             <TextInput
               style={styles.textArea}
-              placeholder="Enter recommendations for the herb batch..."
+              placeholder={t.labTesting?.enterRecommendations || 'Enter recommendations for the herb batch...'}
               multiline
               numberOfLines={4}
               value={testResults.recommendations || ''}
@@ -237,9 +284,9 @@ const TestingResultsEntry = ({
         </View>
 
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Upload Evidence</Text>
+          <Text style={styles.sectionTitle}>{t.labTesting?.uploadEvidence || 'Upload Evidence'}</Text>
 
-          {UPLOAD_TYPES.map((uploadType) => (
+          {translatedUploadTypes.map((uploadType) => (
             <UploadCard
               key={uploadType.id}
               uploadType={uploadType}

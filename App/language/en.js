@@ -336,4 +336,59 @@ export const en = {
     ownershipTransferred: 'Ownership transferred to lab.',
     failedToCompleteDelivery: 'Failed to complete delivery',
   },
+
+  // Lab Testing Section
+  labTesting: {
+    // Page Header
+    labTestingDashboard: 'Lab Testing Dashboard',
+    
+    // Herb Lists
+    herbsWithNoTestUploaded: 'Herbs with No Test Uploaded',
+    testedUploadedHerbs: 'Tested/Uploaded Herbs',
+    
+    // Offline Banner
+    workingOffline: 'Working offline - Changes will sync when connected',
+    
+    // Batch Header
+    batch: 'Batch',
+    received: 'Received',
+    
+    // Test Results Section
+    enterTestResults: 'Enter Test Results',
+    moistureContent: 'Moisture Content',
+    percentage: 'Percentage (%)',
+    enterPercentage: 'Enter percentage',
+    pesticideResidues: 'Pesticide Residues',
+    enterValue: 'Enter value',
+    phytochemicalLevels: 'Phytochemical Levels',
+    quantitativeMarkers: 'Quantitative markers',
+    purityPercentage: 'Purity Percentage',
+    heavyMetalsPresent: 'Heavy Metals Present',
+    yesNo: 'Yes/No',
+    microbialContamination: 'Microbial Contamination',
+    
+    // Detailed Observations
+    detailedObservations: 'Detailed Observations',
+    addTestResultsSummary: 'Add a summary of the test results...',
+    addAdditionalNotes: 'Add any additional notes...',
+    enterRecommendations: 'Enter recommendations for the herb batch...',
+    
+    // Upload Evidence
+    uploadEvidence: 'Upload Evidence',
+    fileUploadedSuccessfully: 'File uploaded successfully',
+    dragDropOrTapToUpload: 'Drag & drop or tap to upload',
+    chooseFile: 'Choose File',
+    
+    // Action Buttons
+    saveOffline: 'Save Offline',
+    submitResults: 'Submit Results',
+    
+    // Upload Types
+    testReports: 'Test Reports',
+    uploadPDFReports: 'Upload PDF reports from equipment',
+    labPhotos: 'Lab Photos',
+    uploadPhotosOfSamples: 'Upload photos of samples and equipment',
+    certificates: 'Certificates',
+    uploadComplianceCertificates: 'Upload compliance certificates',
+  },
 };

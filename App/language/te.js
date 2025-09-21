@@ -336,4 +336,59 @@ export const te = {
     ownershipTransferred: 'యాజమాన్యం ల్యాబ్‌కు బదిలీ చేయబడింది.',
     failedToCompleteDelivery: 'డెలివరీ పూర్తి చేయడంలో విఫలమైంది',
   },
+
+  // Lab Testing Section
+  labTesting: {
+    // Page Header
+    labTestingDashboard: 'ల్యాబ్ టెస్టింగ్ డాష్‌బోర్డ్',
+    
+    // Herb Lists
+    herbsWithNoTestUploaded: 'టెస్ట్ అప్‌లోడ్ చేయని మూలికలు',
+    testedUploadedHerbs: 'పరీక్షించిన/అప్‌లోడ్ చేసిన మూలికలు',
+    
+    // Offline Banner
+    workingOffline: 'ఆఫ్‌లైన్‌లో పని చేస్తున్నాము - కనెక్ట్ అయినప్పుడు మార్పులు సింక్ అవుతాయి',
+    
+    // Batch Header
+    batch: 'బ్యాచ్',
+    received: 'అందుకున్నది',
+    
+    // Test Results Section
+    enterTestResults: 'పరీక్ష ఫలితాలను నమోదు చేయండి',
+    moistureContent: 'తేమ కంటెంట్',
+    percentage: 'శాతం (%)',
+    enterPercentage: 'శాతం నమోదు చేయండి',
+    pesticideResidues: 'పురుగుమందు అవశేషాలు',
+    enterValue: 'విలువ నమోదు చేయండి',
+    phytochemicalLevels: 'ఫైటోకెమికల్ స్థాయిలు',
+    quantitativeMarkers: 'పరిమాణాత్మక మార్కర్లు',
+    purityPercentage: 'స్వచ్ఛత శాతం',
+    heavyMetalsPresent: 'భారీ లోహాలు ఉన్నాయి',
+    yesNo: 'అవును/లేదు',
+    microbialContamination: 'మైక్రోబియల్ కలుషితం',
+    
+    // Detailed Observations
+    detailedObservations: 'వివరణాత్మక పరిశీలనలు',
+    addTestResultsSummary: 'పరీక్ష ఫలితాల సారాంశం జోడించండి...',
+    addAdditionalNotes: 'ఏవైనా అదనపు గమనికలు జోడించండి...',
+    enterRecommendations: 'మూలిక బ్యాచ్ కోసం సిఫార్సులను నమోదు చేయండి...',
+    
+    // Upload Evidence
+    uploadEvidence: 'సాక్ష్యం అప్‌లోడ్ చేయండి',
+    fileUploadedSuccessfully: 'ఫైల్ విజయవంతంగా అప్‌లోడ్ చేయబడింది',
+    dragDropOrTapToUpload: 'అప్‌లోడ్ చేయడానికి లాగి వదలండి లేదా ట్యాప్ చేయండి',
+    chooseFile: 'ఫైల్ ఎంచుకోండి',
+    
+    // Action Buttons
+    saveOffline: 'ఆఫ్‌లైన్ సేవ్ చేయండి',
+    submitResults: 'ఫలితాలను సమర్పించండి',
+    
+    // Upload Types
+    testReports: 'పరీక్ష నివేదికలు',
+    uploadPDFReports: 'పరికరాల నుండి PDF నివేదికలను అప్‌లోడ్ చేయండి',
+    labPhotos: 'ల్యాబ్ ఫోటోలు',
+    uploadPhotosOfSamples: 'నమూనాలు మరియు పరికరాల ఫోటోలను అప్‌లోడ్ చేయండి',
+    certificates: 'ప్రమాణపత్రాలు',
+    uploadComplianceCertificates: 'అనుపాలన ప్రమాణపత్రాలను అప్‌లోడ్ చేయండి',
+  },
 };
