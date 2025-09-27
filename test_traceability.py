@@ -5,8 +5,8 @@ Test script to verify traceability API works with existing herb data
 import requests
 import json
 
-# Your API base URL
-API_BASE_URL = "http://localhost:5000"
+# Your API base URL (Django dev server)
+API_BASE_URL = "http://localhost:8000"
 
 # Test batch IDs from your database
 test_batch_ids = [

@@ -19,9 +19,10 @@ function resolveDevApiBaseUrl() {
       }
     }
 
-    // iOS simulator can use localhost, but prefer LAN IP if available
-    const ipOrLocal = host && host !== 'undefined' ? host : 'localhost';
-    return `http://${ipOrLocal}:8000`;
+  // iOS simulator can use localhost, but prefer LAN IP if available
+  // Prefer Django dev server on port 8000 for local development
+  const ipOrLocal = host && host !== 'undefined' ? host : 'localhost';
+  return `http://${ipOrLocal}:8000`;
   } catch {
     return 'http://localhost:8000';
   }
