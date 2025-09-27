@@ -16,12 +16,15 @@ function resolveDevApiBaseUrl() {
       host = 'localhost';
     }
 
-    // Android emulator cannot reach host machine's localhost or LAN IP directly.
-    // For development builds running in the Android emulator, always map to 10.0.2.2
-    // which forwards to the host machine. If you run on a physical device, ensure
-    // API_BASE_URL resolves to the host IP (e.g., http://192.168.x.x:8000).
+    // For Android, prefer the host IP reported by Expo (a LAN IP) so the emulator
+    // or a physical device can reach the dev server. Only fall back to the special
+    // emulator address 10.0.2.2 when the detected host is 'localhost' or '127.0.0.1'.
     if (Platform.OS === 'android') {
-      return 'http://10.0.2.2:8000';
+      const hostLower = String(host || '').toLowerCase();
+      if (hostLower === 'localhost' || hostLower === '127.0.0.1' || hostLower === '') {
+        return 'http://10.0.2.2:8000';
+      }
+      return `http://${hostLower}:8000`;
     }
 
     // iOS simulator can use localhost, but prefer LAN IP if available

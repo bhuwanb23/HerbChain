@@ -7,7 +7,11 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dev-django-secret-key-change-i
 
 DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
 
-ALLOWED_HOSTS = ['*']
+# Host IP for local development (set via env var if needed)
+# Default should match the machine LAN IP used by Expo/Metro
+HOST_IP = os.environ.get('HOST_IP', '192.168.31.175')
+
+ALLOWED_HOSTS = [HOST_IP, 'localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -75,7 +79,16 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:8081',
     'http://localhost:19006',
     'http://10.0.2.2:8000',
+    # Allow requests from the host LAN IP used by Expo/Metro (ports may vary)
+    f'http://{HOST_IP}:8081',
+    f'http://{HOST_IP}:8082',
+    f'http://{HOST_IP}:19006',
+    f'http://{HOST_IP}:8000',
 ]
 
 # For quick local development, also allow all origins (disable in production)
 CORS_ALLOW_ALL_ORIGINS = True
+
+# Do not automatically append slashes to URLs. This prevents Django from attempting
+# to redirect POST requests to a trailing-slash URL (which would drop POST data).
+APPEND_SLASH = False

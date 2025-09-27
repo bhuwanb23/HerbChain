@@ -19,6 +19,8 @@ urlpatterns = [
 
     # Users
     path('api/v1/users/', views.list_users, name='list_users'),
+    # Accept requests without trailing slash (some clients omit it)
+    path('api/v1/users', views.list_users, name='list_users_no_slash'),
     path('api/v1/users/sample/create', views.create_sample_accounts, name='create_sample_accounts'),
     path('api/v1/users/auth/login', views.login, name='login'),
     path('api/v1/users/role/<str:role>', views.users_by_role_endpoint, name='users_by_role'),
@@ -27,6 +29,8 @@ urlpatterns = [
 
     # Herbs
     path('api/v1/herbs/', views.list_herbs, name='list_herbs'),
+    # Accept requests without trailing slash (some clients omit it)
+    path('api/v1/herbs', views.list_herbs, name='list_herbs_no_slash'),
     path('api/v1/herbs/<str:batch_id>', views.get_herb, name='get_herb'),
     path('api/v1/herbs/<str:batch_id>/ownership', views.get_ownership_history, name='get_ownership_history'),
     path('api/v1/herbs/<str:batch_id>/qr', views.get_current_qr, name='get_current_qr'),
