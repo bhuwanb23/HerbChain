@@ -47,6 +47,36 @@ class User(models.Model):
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
         }
 
+    @classmethod
+    def create_herb(cls, batch_id, farmer_id, species_name, harvest_date, location, weight_kg, **kwargs):
+        if not all([batch_id, farmer_id, species_name, harvest_date, location, weight_kg]):
+            raise ValueError('Missing required fields')
+        if float(weight_kg) <= 0:
+            raise ValueError('Weight must be positive')
+        farmer = User.objects.filter(user_id=farmer_id).first()
+        herb = cls(
+            batch_id=batch_id,
+            farmer=farmer,
+            species_name=species_name,
+            harvest_date=harvest_date,
+            location=location,
+            weight_kg=weight_kg,
+            current_owner=farmer,
+            **kwargs
+        )
+        return herb
+
+    def transfer_ownership(self, new_owner_id, new_qr_code):
+        new_owner = User.objects.filter(user_id=new_owner_id).first()
+        if new_owner:
+            self.current_owner = new_owner
+        else:
+            # keep as string fallback by creating a temporary User-like object is not ideal;
+            # we will set current_owner to None and rely on to_dict to return IDs
+            self.current_owner = None
+        self.active_qr = new_qr_code
+        self.updated_at = timezone.now()
+
 
 class Herb(models.Model):
     batch_id = models.CharField(max_length=128, primary_key=True)
@@ -58,6 +88,12 @@ class Herb(models.Model):
     weight_kg = models.FloatField(null=True, blank=True)
     quality_status = models.CharField(max_length=64, default='pending')
     active_qr = models.CharField(max_length=255, null=True, blank=True)
+    # Current owner (can be different from farmer). Use FK to User for convenience.
+    current_owner = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='owned_herbs')
+
+    # Timestamps to match Flask model
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def to_dict(self):
         return {
@@ -70,6 +106,9 @@ class Herb(models.Model):
             'weight_kg': self.weight_kg,
             'quality_status': self.quality_status,
             'active_qr': self.active_qr,
+            'current_owner': self.current_owner.user_id if self.current_owner else (self.farmer.user_id if self.farmer else None),
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
         }
 
 
@@ -81,6 +120,10 @@ class OwnershipTransfer(models.Model):
     qr_code = models.CharField(max_length=255, null=True, blank=True)
     transfer_reason = models.CharField(max_length=255, null=True, blank=True)
     location = models.CharField(max_length=255, null=True, blank=True)
+    # Additional fields to mirror Flask schema
+    transfer_date = models.DateTimeField(default=timezone.now)
+    status = models.CharField(max_length=32, default='active')
+    notes = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     def to_dict(self):
@@ -92,8 +135,37 @@ class OwnershipTransfer(models.Model):
             'qr_code': self.qr_code,
             'transfer_reason': self.transfer_reason,
             'location': self.location,
-            'created_at': self.created_at.isoformat(),
+            'transfer_date': self.transfer_date.isoformat() if self.transfer_date else None,
+            'status': self.status,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
         }
+
+    @classmethod
+    def create_transfer(cls, transfer_id, batch, from_owner, to_owner, qr_code, **kwargs):
+        if not all([transfer_id, batch, to_owner, qr_code]):
+            raise ValueError('Missing required fields')
+        transfer = cls(
+            transfer_id=transfer_id,
+            batch=batch,
+            from_owner=from_owner,
+            to_owner=to_owner,
+            qr_code=qr_code,
+            **kwargs
+        )
+        return transfer
+
+    def deactivate_qr(self):
+        self.status = 'inactive'
+        # note: caller should save()
+
+    @classmethod
+    def get_transfer_history(cls, batch):
+        return cls.objects.filter(batch=batch).order_by('transfer_date')
+
+    @classmethod
+    def get_active_transfer(cls, batch):
+        return cls.objects.filter(batch=batch, status='active').order_by('-transfer_date').first()
 
 
 class TransportRecord(models.Model):

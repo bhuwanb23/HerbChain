@@ -22,8 +22,8 @@ urlpatterns = [
     path('api/v1/users/sample/create', views.create_sample_accounts, name='create_sample_accounts'),
     path('api/v1/users/auth/login', views.login, name='login'),
     path('api/v1/users/role/<str:role>', views.users_by_role_endpoint, name='users_by_role'),
-    path('api/v1/users/<str:user_id>', views.get_user, name='get_user'),
-    path('api/v1/users/<str:user_id>/update', views.update_user, name='update_user'),
+    path('api/v1/users/<str:user_id>', views.user_detail, name='user_detail'),
+    path('api/v1/users/<str:user_id>/update', views.user_detail, name='update_user'),
 
     # Herbs
     path('api/v1/herbs/', views.list_herbs, name='list_herbs'),
@@ -43,7 +43,9 @@ urlpatterns = [
     path('api/v1/herbs/lab/<str:lab_id>/archived', views.get_lab_archived, name='get_lab_archived'),
     path('api/v1/herbs/lab/<str:lab_id>/testing', views.get_lab_testing_queue, name='get_lab_testing_queue'),
     path('api/v1/herbs/<str:batch_id>/lab_report', views.create_lab_report, name='create_lab_report'),
-    path('api/v1/herbs/<str:batch_id>/lab_report/list', views.list_lab_reports, name='list_lab_reports'),
+    # `create_lab_report` now handles GET list and POST create similar to Flask
+    # compatibility route retained for older callers
+    path('api/v1/herbs/<str:batch_id>/lab_report/list', views.create_lab_report, name='list_lab_reports'),
     path('api/v1/herbs/approved_for_manufacturer', views.get_approved_for_manufacturer, name='get_approved_for_manufacturer'),
     path('api/v1/herbs/<str:batch_id>/order_by_manufacturer', views.order_by_manufacturer, name='order_by_manufacturer'),
     path('api/v1/herbs/<str:batch_id>/receive_by_manufacturer', views.receive_by_manufacturer, name='receive_by_manufacturer'),
@@ -53,6 +55,10 @@ urlpatterns = [
 
     # Translate endpoints
     path('api/v1/translate', views.translate, name='translate'),
+    path('api/v1/translate/text', views.translate, name='translate_text'),
+    path('api/v1/translate/batch', views.translate, name='translate_batch'),
+    path('api/v1/translate/payments', views.translate, name='translate_payments'),
+    path('api/v1/translate/herb-data', views.translate, name='translate_herb_data'),
     path('api/v1/translate/cache/stats', views.translate_cache_stats, name='translate_cache_stats'),
     path('api/v1/translate/cache/clear', views.translate_cache_clear, name='translate_cache_clear'),
     path('api/v1/translate/languages', views.translate_languages, name='translate_languages'),

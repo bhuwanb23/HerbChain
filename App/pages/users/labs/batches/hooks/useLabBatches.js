@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { API_BASE_URL } from '../../../../../constants/api';
+import safeFetch from '../../../../../services/apiClient';
+
+console.log('[useLabBatches] API_BASE_URL resolved to:', API_BASE_URL);
 
 export const useLabBatches = () => {
   const [all, setAll] = useState([]);
@@ -9,9 +12,10 @@ export const useLabBatches = () => {
 
   const fetchAll = useCallback(async () => {
     try {
-      console.log('[useLabBatches] Fetching available herbs...');
+  const url = `/api/v1/herbs/available`;
+  console.log('[useLabBatches] Fetching available herbs...', `${API_BASE_URL}${url}`);
       
-      const response = await fetch(`${API_BASE_URL}/api/v1/herbs/available`);
+  const response = await safeFetch(url, {});
       
       if (!response.ok) {
         throw new Error('Failed to fetch available herbs');
@@ -63,9 +67,10 @@ export const useLabBatches = () => {
 
   const fetchAccepted = useCallback(async () => {
     try {
-      console.log('[useLabBatches] Fetching accepted herbs...');
-      
-      const response = await fetch(`${API_BASE_URL}/api/v1/herbs/lab/lab_001/accepted`);
+  const url = `/api/v1/herbs/lab/lab_001/accepted`;
+  console.log('[useLabBatches] Fetching accepted herbs...', `${API_BASE_URL}${url}`);
+
+  const response = await safeFetch(url, {});
       
       if (!response.ok) {
         throw new Error('Failed to fetch accepted herbs');
@@ -118,8 +123,9 @@ export const useLabBatches = () => {
 
   const fetchArchived = useCallback(async () => {
     try {
-      console.log('[useLabBatches] Fetching archived (received) herbs...');
-      const response = await fetch(`${API_BASE_URL}/api/v1/herbs/lab/lab_001/archived`);
+  const url = `/api/v1/herbs/lab/lab_001/archived`;
+  console.log('[useLabBatches] Fetching archived (received) herbs...', `${API_BASE_URL}${url}`);
+  const response = await safeFetch(url, {});
       if (!response.ok) {
         throw new Error('Failed to fetch archived herbs');
       }
@@ -152,7 +158,7 @@ export const useLabBatches = () => {
     try {
       console.log('[useLabBatches] Accepting herb:', batchId);
       
-      const response = await fetch(`${API_BASE_URL}/api/v1/herbs/${batchId}/accept`, {
+      const response = await safeFetch(`/api/v1/herbs/${batchId}/accept`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { REGISTRATION_STEPS } from '../constants';
 import { API_BASE_URL } from '../../../../../constants/api';
+import safeFetch from '../../../../../services/apiClient';
 
 export const useHerbRegistration = () => {
   const [currentStep, setCurrentStep] = useState(REGISTRATION_STEPS.AI_RECOGNITION);
@@ -79,14 +80,18 @@ export const useHerbRegistration = () => {
       };
 
       console.log('[HerbRegister] Sending request:', requestData);
+      const path = `/api/v1/herbs`;
+      console.log('[HerbRegister] Fetch URL:', `${API_BASE_URL}${path}`);
 
-      const response = await fetch(`${API_BASE_URL}/api/v1/herbs`, {
+      const response = await safeFetch(path, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestData),
       });
+
+      console.log('[HerbRegister] HTTP status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json();

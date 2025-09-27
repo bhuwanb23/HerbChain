@@ -172,9 +172,26 @@ def get_users_by_role(request, role):
 
 
 @csrf_exempt
-def get_user(request, user_id):
-    user = get_object_or_404(User, user_id=user_id)
-    return JsonResponse(user.to_dict())
+def user_detail(request, user_id):
+    # Handle GET (retrieve) and PUT (update) on the same path to match Flask
+    if request.method == 'GET':
+        user = get_object_or_404(User, user_id=user_id)
+        return JsonResponse(user.to_dict())
+
+    if request.method in ('PUT', 'POST') or request.method == 'PATCH':
+        user = get_object_or_404(User, user_id=user_id)
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+        except Exception:
+            return HttpResponseBadRequest('Invalid JSON')
+        allowed = ['name', 'phone', 'location', 'language_pref', 'kyc_verified']
+        for field in allowed:
+            if field in data:
+                setattr(user, field, data[field])
+        user.save()
+        return JsonResponse({'message': 'User updated successfully', 'user': user.to_dict()})
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
 @csrf_exempt
@@ -347,7 +364,10 @@ def get_herb(request, batch_id):
     # include ownership history and current owner details
     transfers = [t.to_dict() for t in herb.transfers.all().order_by('-created_at')]
     current_owner = None
-    if herb.farmer:
+    # Prefer explicit current_owner (set after transfers); fall back to farmer
+    if getattr(herb, 'current_owner', None):
+        current_owner = herb.current_owner.to_dict()
+    elif herb.farmer:
         current_owner = herb.farmer.to_dict()
     return JsonResponse({'herb': herb.to_dict(), 'ownership_history': transfers, 'current_owner': current_owner})
 
@@ -355,14 +375,24 @@ def get_herb(request, batch_id):
 def get_ownership_history(request, batch_id):
     herb = get_object_or_404(Herb, batch_id=batch_id)
     transfers = [t.to_dict() for t in herb.transfers.all().order_by('created_at')]
-    return JsonResponse({'batch_id': batch_id, 'current_owner': herb.farmer.user_id if herb.farmer else None, 'ownership_history': transfers})
+    current_owner_id = None
+    if getattr(herb, 'current_owner', None):
+        current_owner_id = herb.current_owner.user_id
+    elif herb.farmer:
+        current_owner_id = herb.farmer.user_id
+    return JsonResponse({'batch_id': batch_id, 'current_owner': current_owner_id, 'ownership_history': transfers})
 
 
 def get_current_qr(request, batch_id):
     herb = get_object_or_404(Herb, batch_id=batch_id)
     if not herb.active_qr:
         return JsonResponse({'error': 'No active QR code found'}, status=404)
-    return JsonResponse({'batch_id': batch_id, 'qr_code': herb.active_qr, 'current_owner': herb.farmer.user_id if herb.farmer else None})
+    current_owner_id = None
+    if getattr(herb, 'current_owner', None):
+        current_owner_id = herb.current_owner.user_id
+    elif herb.farmer:
+        current_owner_id = herb.farmer.user_id
+    return JsonResponse({'batch_id': batch_id, 'qr_code': herb.active_qr, 'current_owner': current_owner_id})
 
 
 def get_qr_image(request, batch_id):
@@ -681,38 +711,47 @@ def get_lab_testing_queue(request, lab_id):
 
 @csrf_exempt
 def create_lab_report(request, batch_id):
-    try:
-        data = json.loads(request.body.decode('utf-8')) if request.body else {}
-    except Exception:
-        data = {}
-    lab_id = data.get('lab_id')
-    if not lab_id:
-        return JsonResponse({'error': 'lab_id is required'}, status=400)
-    lab = User.objects.filter(user_id=lab_id, role='lab').first()
-    if not lab:
-        return JsonResponse({'error': 'Lab not found'}, status=404)
-    herb = Herb.objects.filter(batch_id=batch_id).first()
-    if not herb:
-        return JsonResponse({'error': 'Herb not found'}, status=404)
-    if (herb.farmer.user_id if herb.farmer else None) != lab_id and herb.quality_status not in ('testing', 'pending_pickup'):
-        # allow creating reports only by lab owners
-        pass
+    # Support both POST (create) and GET (list) on same endpoint like Flask
+    if request.method == 'GET':
+        herb = Herb.objects.filter(batch_id=batch_id).first()
+        if not herb:
+            return JsonResponse({'error': 'Herb not found'}, status=404)
+        from .models import LabReport
+        reports = LabReport.objects.filter(batch=herb).order_by('-created_at')
+        return JsonResponse({'reports': [r.to_dict() for r in reports], 'total': reports.count()})
 
-    report_id = f"REPORT-{uuid.uuid4().hex[:8].upper()}"
-    from .models import LabReport
-    report = LabReport(report_id=report_id, batch=herb, lab_id=lab_id, test_type=data.get('test_type', 'general'), results_summary=data.get('results_summary',''), certification=bool(data.get('certification', False)), certification_level=data.get('certification_level'), report_url=data.get('report_url'), test_date=datetime.utcnow().date(), purity_percentage=data.get('purity_percentage'), moisture_content=data.get('moisture_content'), ash_content=data.get('ash_content'), heavy_metals_present=bool(data.get('heavy_metals_present', False)), pesticides_detected=bool(data.get('pesticides_detected', False)), active_compounds=data.get('active_compounds'), potency_rating=data.get('potency_rating'), notes=data.get('notes'), recommendations=data.get('recommendations'))
-    report.save()
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body.decode('utf-8')) if request.body else {}
+        except Exception:
+            data = {}
+        lab_id = data.get('lab_id')
+        if not lab_id:
+            return JsonResponse({'error': 'lab_id is required'}, status=400)
+        lab = User.objects.filter(user_id=lab_id, role='lab').first()
+        if not lab:
+            return JsonResponse({'error': 'Lab not found'}, status=404)
+        herb = Herb.objects.filter(batch_id=batch_id).first()
+        if not herb:
+            return JsonResponse({'error': 'Herb not found'}, status=404)
 
-    new_status = data.get('quality_status')
-    if new_status in ('approved', 'rejected', 'testing'):
-        herb.quality_status = new_status
-        herb.save()
+        report_id = f"REPORT-{uuid.uuid4().hex[:8].upper()}"
+        from .models import LabReport
+        report = LabReport(report_id=report_id, batch=herb, lab_id=lab_id, test_type=data.get('test_type', 'general'), results_summary=data.get('results_summary',''), certification=bool(data.get('certification', False)), certification_level=data.get('certification_level'), report_url=data.get('report_url'), test_date=datetime.utcnow().date(), purity_percentage=data.get('purity_percentage'), moisture_content=data.get('moisture_content'), ash_content=data.get('ash_content'), heavy_metals_present=bool(data.get('heavy_metals_present', False)), pesticides_detected=bool(data.get('pesticides_detected', False)), active_compounds=data.get('active_compounds'), potency_rating=data.get('potency_rating'), notes=data.get('notes'), recommendations=data.get('recommendations'))
+        report.save()
 
-    # create ownership transfer record as log
-    transfer_id = f"TRANSFER-{uuid.uuid4().hex[:8].upper()}"
-    transfer = OwnershipTransfer(transfer_id=transfer_id, batch=herb, from_owner=lab_id, to_owner=lab_id, qr_code=herb.active_qr, transfer_reason=f"Lab Testing {new_status}", location=lab.location if hasattr(lab, 'location') else None)
-    transfer.save()
-    return JsonResponse({'success': True, 'report': report.to_dict(), 'herb': herb.to_dict()})
+        new_status = data.get('quality_status')
+        if new_status in ('approved', 'rejected', 'testing'):
+            herb.quality_status = new_status
+            herb.save()
+
+        # create ownership transfer record as log
+        transfer_id = f"TRANSFER-{uuid.uuid4().hex[:8].upper()}"
+        transfer = OwnershipTransfer(transfer_id=transfer_id, batch=herb, from_owner=lab_id, to_owner=lab_id, qr_code=herb.active_qr, transfer_reason=f"Lab Testing {new_status}", location=lab.location if hasattr(lab, 'location') else None)
+        transfer.save()
+        return JsonResponse({'success': True, 'report': report.to_dict(), 'herb': herb.to_dict()})
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
 def list_lab_reports(request, batch_id):
