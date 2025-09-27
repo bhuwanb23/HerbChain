@@ -3,7 +3,7 @@
  * Handles on-demand translation of dynamic content using backend translation API
  */
 
-const API_BASE_URL = 'http://10.50.74.1:5000/api/v1/translate'; // Use your actual IP instead of localhost
+const API_BASE_URL = 'http://127.0.0.1:8000/api/v1/translate'; // Local Django translate endpoint
 
 class DynamicTranslationAPI {
   constructor() {

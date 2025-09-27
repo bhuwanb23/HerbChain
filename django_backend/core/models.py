@@ -94,3 +94,87 @@ class OwnershipTransfer(models.Model):
             'location': self.location,
             'created_at': self.created_at.isoformat(),
         }
+
+
+class TransportRecord(models.Model):
+    transport_id = models.CharField(max_length=128, primary_key=True)
+    batch = models.ForeignKey(Herb, on_delete=models.CASCADE, related_name='transport_records')
+    transporter_id = models.CharField(max_length=64)
+    pickup_location = models.CharField(max_length=255)
+    dropoff_location = models.CharField(max_length=255)
+    start_time = models.DateTimeField(null=True, blank=True)
+    end_time = models.DateTimeField(null=True, blank=True)
+    gps_tracking_url = models.URLField(null=True, blank=True)
+    status = models.CharField(max_length=64, default='in_transit')
+    estimated_duration = models.IntegerField(null=True, blank=True)
+    actual_duration = models.IntegerField(null=True, blank=True)
+    distance_km = models.FloatField(null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def to_dict(self):
+        return {
+            'transport_id': self.transport_id,
+            'batch_id': self.batch.batch_id,
+            'transporter_id': self.transporter_id,
+            'pickup_location': self.pickup_location,
+            'dropoff_location': self.dropoff_location,
+            'start_time': self.start_time.isoformat() if self.start_time else None,
+            'end_time': self.end_time.isoformat() if self.end_time else None,
+            'gps_tracking_url': self.gps_tracking_url,
+            'status': self.status,
+            'estimated_duration': self.estimated_duration,
+            'actual_duration': self.actual_duration,
+            'distance_km': self.distance_km,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class LabReport(models.Model):
+    report_id = models.CharField(max_length=128, primary_key=True)
+    batch = models.ForeignKey(Herb, on_delete=models.CASCADE, related_name='lab_reports')
+    lab_id = models.CharField(max_length=64)
+    test_type = models.CharField(max_length=100)
+    results_summary = models.TextField()
+    certification = models.BooleanField(default=False)
+    certification_level = models.CharField(max_length=50, null=True, blank=True)
+    report_url = models.URLField(null=True, blank=True)
+    test_date = models.DateField(null=True, blank=True)
+    purity_percentage = models.FloatField(null=True, blank=True)
+    moisture_content = models.FloatField(null=True, blank=True)
+    ash_content = models.FloatField(null=True, blank=True)
+    heavy_metals_present = models.BooleanField(default=False)
+    pesticides_detected = models.BooleanField(default=False)
+    active_compounds = models.TextField(null=True, blank=True)
+    potency_rating = models.CharField(max_length=20, null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+    recommendations = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def to_dict(self):
+        return {
+            'report_id': self.report_id,
+            'batch_id': self.batch.batch_id,
+            'lab_id': self.lab_id,
+            'test_type': self.test_type,
+            'results_summary': self.results_summary,
+            'certification': self.certification,
+            'certification_level': self.certification_level,
+            'report_url': self.report_url,
+            'test_date': self.test_date.isoformat() if self.test_date else None,
+            'purity_percentage': self.purity_percentage,
+            'moisture_content': self.moisture_content,
+            'ash_content': self.ash_content,
+            'heavy_metals_present': self.heavy_metals_present,
+            'pesticides_detected': self.pesticides_detected,
+            'active_compounds': self.active_compounds,
+            'potency_rating': self.potency_rating,
+            'notes': self.notes,
+            'recommendations': self.recommendations,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }

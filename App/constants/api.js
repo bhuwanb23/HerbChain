@@ -13,17 +13,17 @@ function resolveDevApiBaseUrl() {
 
     // Android emulator cannot reach localhost; use 10.0.2.2
     if (Platform.OS === 'android') {
-      // If running on emulator and host is localhost, map to 10.0.2.2
+      // If running on emulator and host is localhost, map to 10.0.2.2 (Django on 8000)
       if (host === 'localhost' || host === '127.0.0.1') {
-        return 'http://10.0.2.2:5000';
+        return 'http://10.0.2.2:8000';
       }
     }
 
     // iOS simulator can use localhost, but prefer LAN IP if available
     const ipOrLocal = host && host !== 'undefined' ? host : 'localhost';
-    return `http://${ipOrLocal}:5000`;
+    return `http://${ipOrLocal}:8000`;
   } catch {
-    return 'http://localhost:5000';
+    return 'http://localhost:8000';
   }
 }
 
