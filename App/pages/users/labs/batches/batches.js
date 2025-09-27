@@ -109,7 +109,13 @@ const BatchesPage = ({ navigation }) => {
             {detail?.active_qr ? (
               <View style={{ alignItems: 'center', marginBottom: 16 }}>
                 <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 6 }}>{t.labBatches?.labQR || 'Lab QR'}</Text>
-                <Image source={{ uri: detail.active_qr }} style={{ width: 180, height: 180, backgroundColor: '#FFF', borderRadius: 12 }} />
+                {
+                  (() => {
+                    const raw = detail.active_qr;
+                    const uri = (raw && raw.startsWith && raw.startsWith('data:')) ? raw : `${API_BASE_URL}/api/v1/herbs/${detail.batch_id}/qr_image`;
+                    return <Image source={{ uri }} style={{ width: 180, height: 180, backgroundColor: '#FFF', borderRadius: 12 }} />;
+                  })()
+                }
               </View>
             ) : null}
             <View style={{ backgroundColor: '#FFF', borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB', padding: 12 }}>

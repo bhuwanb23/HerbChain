@@ -15,6 +15,19 @@ try:
 except Exception:
     qrcode = None
 
+
+def _data_uri_to_bytes(data_uri):
+    """Convert a data URI (data:image/png;base64,...) to raw bytes and mime type."""
+    if not data_uri or not data_uri.startswith('data:'):
+        return None, None
+    try:
+        header, b64 = data_uri.split(',', 1)
+        mime = header.split(':')[1].split(';')[0]
+        raw = base64.b64decode(b64)
+        return raw, mime
+    except Exception:
+        return None, None
+
 from .translation_service import translation_service
 
 
@@ -352,6 +365,38 @@ def get_current_qr(request, batch_id):
     return JsonResponse({'batch_id': batch_id, 'qr_code': herb.active_qr, 'current_owner': herb.farmer.user_id if herb.farmer else None})
 
 
+def get_qr_image(request, batch_id):
+    """Return the active QR for a herb as image/png binary so clients (including Expo Go) can fetch it via URL."""
+    herb = get_object_or_404(Herb, batch_id=batch_id)
+    if not herb.active_qr:
+        return JsonResponse({'error': 'No active QR code found'}, status=404)
+
+    raw, mime = _data_uri_to_bytes(herb.active_qr)
+    if raw and mime:
+        # Return binary response with appropriate content-type
+        from django.http import HttpResponse
+        return HttpResponse(raw, content_type=mime)
+
+    # Fallback: attempt to regenerate the QR server-side if qrcode available
+    if qrcode:
+        try:
+            # Try to parse minimal payload from stored QR string (may be repr of dict)
+            payload = herb.batch_id
+            qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
+            qr.add_data(str(payload))
+            qr.make(fit=True)
+            img = qr.make_image(fill_color='black', back_color='white')
+            buf = io.BytesIO()
+            img.save(buf, format='PNG')
+            buf.seek(0)
+            from django.http import HttpResponse
+            return HttpResponse(buf.getvalue(), content_type='image/png')
+        except Exception:
+            return JsonResponse({'error': 'Failed to generate QR image'}, status=500)
+
+    return JsonResponse({'error': 'QR image not available'}, status=404)
+
+
 def get_available_herbs(request):
     herbs = Herb.objects.filter(quality_status='pending').order_by('-harvest_date')
     herbs_with_farmer = []
@@ -360,6 +405,20 @@ def get_available_herbs(request):
         herb_data['farmer'] = herb.farmer.to_dict() if herb.farmer else None
         herbs_with_farmer.append(herb_data)
     return JsonResponse({'herbs': herbs_with_farmer, 'total': len(herbs_with_farmer), 'status': 'available'})
+
+
+def get_herbs_by_farmer(request, farmer_id):
+    # Return all herb batches created by a given farmer
+    farmer = User.objects.filter(user_id=farmer_id, role='farmer').first()
+    if not farmer:
+        return JsonResponse({'error': 'Farmer not found'}, status=404)
+    herbs = Herb.objects.filter(farmer=farmer).order_by('-harvest_date')
+    herbs_data = []
+    for h in herbs:
+        d = h.to_dict()
+        d['farmer'] = farmer.to_dict()
+        herbs_data.append(d)
+    return JsonResponse({'farmer': farmer.to_dict(), 'herbs': herbs_data, 'total': len(herbs_data)})
 
 
 @csrf_exempt

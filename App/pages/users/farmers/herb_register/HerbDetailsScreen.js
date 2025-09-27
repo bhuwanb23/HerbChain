@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { API_BASE_URL } from '../../../../constants/api';
 import { useGlobalTranslation } from '../../../../language/GlobalTranslationContext';
 
 const Row = ({ label, value }) => (
@@ -43,7 +44,7 @@ const HerbDetailsScreen = ({ batch, onBack }) => {
             <Text style={[styles.label, { marginBottom: 8 }]}>{t.herbRegister.qrCode}</Text>
             <View style={styles.qrContainer}>
               <Image 
-                source={{ uri: batch.qr_code || batch.active_qr }} 
+                source={{ uri: (batch.qr_code && batch.qr_code.startsWith && batch.qr_code.startsWith('data:')) ? batch.qr_code : (batch.batch_id ? `${API_BASE_URL}/api/v1/herbs/${batch.batch_id}/qr_image` : (batch.qr_code || batch.active_qr)) }} 
                 style={styles.qrCode}
                 resizeMode="contain"
               />

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
+import { API_BASE_URL } from '../../../../../constants/api';
 
 export const TripCard = ({ mode, item, onScan, showQR = true }) => {
   const { t } = useGlobalTranslation();
@@ -27,7 +28,9 @@ export const TripCard = ({ mode, item, onScan, showQR = true }) => {
       </View>
 
       {!isPending && showQR && (() => {
-        const qr = item.new_qr_code || item.active_qr;
+  // Resolve QR image URI: if it's a data URI keep it, otherwise prefer the server qr_image endpoint
+  const rawQr = item.new_qr_code || item.active_qr;
+  const qr = (rawQr && rawQr.startsWith && rawQr.startsWith('data:')) ? rawQr : (item.batch_id ? `${API_BASE_URL}/api/v1/herbs/${item.batch_id}/qr_image` : rawQr);
         if (!qr) return null;
         return (
           <View style={{ marginTop: 8, alignItems: 'center' }}>

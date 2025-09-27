@@ -3,7 +3,24 @@
  * Handles on-demand translation of dynamic content using backend translation API
  */
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api/v1/translate'; // Local Django translate endpoint
+import { API_BASE_URL } from '../constants/api';
+import { Platform } from 'react-native';
+
+// Ensure Android emulators reach the host machine when the app resolves localhost.
+function normalizeHostForAndroid(url) {
+  try {
+    if (Platform.OS === 'android') {
+      // Replace localhost or 127.0.0.1 with Android emulator host mapping
+      return url.replace('127.0.0.1', '10.0.2.2').replace('localhost', '10.0.2.2');
+    }
+  } catch (e) {
+    // ignore and fall back to original url
+  }
+  return url;
+}
+
+// Build the translate service base from the app-level API base URL.
+const TRANSLATE_BASE = `${normalizeHostForAndroid(API_BASE_URL)}/api/v1/translate`;
 
 class DynamicTranslationAPI {
   constructor() {
@@ -57,7 +74,7 @@ class DynamicTranslationAPI {
 
       console.log('🌍 Translating text to', targetLang + ':', text.substring(0, 50) + '...');
 
-      const response = await fetch(`${API_BASE_URL}/text`, {
+  const response = await fetch(`${TRANSLATE_BASE}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +126,7 @@ class DynamicTranslationAPI {
 
       console.log('🌍 Batch translating', textsToTranslate.length, 'texts to', targetLang);
 
-      const response = await fetch(`${API_BASE_URL}/batch`, {
+  const response = await fetch(`${TRANSLATE_BASE}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -167,10 +184,10 @@ class DynamicTranslationAPI {
       }
 
       console.log('💰 Translating payment data to', targetLang);
-      console.log('💰 API URL:', `${API_BASE_URL}/payments`);
+  console.log('💰 API URL:', `${TRANSLATE_BASE}`);
       console.log('💰 Payload:', { transactions: transactions.length + ' transactions', target_lang: targetLang });
 
-      const response = await fetch(`${API_BASE_URL}/payments`, {
+  const response = await fetch(`${TRANSLATE_BASE}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -216,7 +233,7 @@ class DynamicTranslationAPI {
 
       console.log('🌿 Translating herb data to', targetLang);
 
-      const response = await fetch(`${API_BASE_URL}/herb-data`, {
+  const response = await fetch(`${TRANSLATE_BASE}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -270,7 +287,7 @@ class DynamicTranslationAPI {
    */
   async getSupportedLanguages() {
     try {
-      const response = await fetch(`${API_BASE_URL}/languages`);
+  const response = await fetch(`${TRANSLATE_BASE}/languages`);
       const data = await response.json();
       return data.supported_languages || {};
     } catch (error) {
