@@ -28,29 +28,33 @@ urlpatterns = [
     path('api/v1/users/<str:user_id>/update', views.user_detail, name='update_user'),
 
     # Herbs
+    # Collection/list endpoints (allow no-slash variant)
     path('api/v1/herbs/', views.list_herbs, name='list_herbs'),
-    # Accept requests without trailing slash (some clients omit it)
     path('api/v1/herbs', views.list_herbs, name='list_herbs_no_slash'),
+
+    # Specific, concrete herb collection endpoints (must come before dynamic batch_id)
+    path('api/v1/herbs/available', views.get_available_herbs, name='get_available_herbs'),
+    path('api/v1/herbs/pending_pickup', views.get_pending_pickup, name='get_pending_pickup'),
+    path('api/v1/herbs/farmer/<str:farmer_id>', views.get_herbs_by_farmer, name='get_herbs_by_farmer'),
+    path('api/v1/herbs/lab/<str:lab_id>/accepted', views.get_lab_accepted_herbs, name='get_lab_accepted_herbs'),
+    path('api/v1/herbs/lab/<str:lab_id>/archived', views.get_lab_archived, name='get_lab_archived'),
+    path('api/v1/herbs/lab/<str:lab_id>/testing', views.get_lab_testing_queue, name='get_lab_testing_queue'),
+    path('api/v1/herbs/transporter/<str:transporter_id>/active', views.get_transporter_active, name='get_transporter_active'),
+    path('api/v1/herbs/transporter/<str:transporter_id>/completed', views.get_transporter_completed, name='get_transporter_completed'),
+    path('api/v1/herbs/approved_for_manufacturer', views.get_approved_for_manufacturer, name='get_approved_for_manufacturer'),
+
+    # Per-batch endpoints (dynamic) - placed after concrete endpoints so names like
+    # 'pending_pickup' don't get treated as a batch_id.
     path('api/v1/herbs/<str:batch_id>', views.get_herb, name='get_herb'),
     path('api/v1/herbs/<str:batch_id>/ownership', views.get_ownership_history, name='get_ownership_history'),
     path('api/v1/herbs/<str:batch_id>/qr', views.get_current_qr, name='get_current_qr'),
     path('api/v1/herbs/<str:batch_id>/qr_image', views.get_qr_image, name='get_qr_image'),
-    path('api/v1/herbs/available', views.get_available_herbs, name='get_available_herbs'),
-    path('api/v1/herbs/farmer/<str:farmer_id>', views.get_herbs_by_farmer, name='get_herbs_by_farmer'),
     path('api/v1/herbs/<str:batch_id>/accept', views.accept_herb_for_testing, name='accept_herb_for_testing'),
-    path('api/v1/herbs/lab/<str:lab_id>/accepted', views.get_lab_accepted_herbs, name='get_lab_accepted_herbs'),
-    path('api/v1/herbs/pending_pickup', views.get_pending_pickup, name='get_pending_pickup'),
     path('api/v1/herbs/<str:batch_id>/pickup', views.pickup_herb, name='pickup_herb'),
-    path('api/v1/herbs/transporter/<str:transporter_id>/active', views.get_transporter_active, name='get_transporter_active'),
-    path('api/v1/herbs/transporter/<str:transporter_id>/completed', views.get_transporter_completed, name='get_transporter_completed'),
     path('api/v1/herbs/<str:batch_id>/deliver', views.deliver_to_lab, name='deliver_to_lab'),
-    path('api/v1/herbs/lab/<str:lab_id>/archived', views.get_lab_archived, name='get_lab_archived'),
-    path('api/v1/herbs/lab/<str:lab_id>/testing', views.get_lab_testing_queue, name='get_lab_testing_queue'),
     path('api/v1/herbs/<str:batch_id>/lab_report', views.create_lab_report, name='create_lab_report'),
     # `create_lab_report` now handles GET list and POST create similar to Flask
-    # compatibility route retained for older callers
     path('api/v1/herbs/<str:batch_id>/lab_report/list', views.create_lab_report, name='list_lab_reports'),
-    path('api/v1/herbs/approved_for_manufacturer', views.get_approved_for_manufacturer, name='get_approved_for_manufacturer'),
     path('api/v1/herbs/<str:batch_id>/order_by_manufacturer', views.order_by_manufacturer, name='order_by_manufacturer'),
     path('api/v1/herbs/<str:batch_id>/receive_by_manufacturer', views.receive_by_manufacturer, name='receive_by_manufacturer'),
     path('api/v1/herbs/<str:batch_id>/deliver_to_manufacturer', views.deliver_to_manufacturer, name='deliver_to_manufacturer'),
