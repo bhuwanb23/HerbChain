@@ -30,13 +30,18 @@ dist/
 .cache/
 coverage/
 
-# Fabric artifacts & crypto
-backend/blockchain/crypto-config/
-backend/blockchain/channel-artifacts/
-backend/blockchain/genesis.block
-backend/blockchain/**/wallet/
-backend/blockchain/docker/.env
-backend/blockchain/*.tgz
+# Local DB + Flask instance folder
+backend/server/instance/
+backend/server/*.db
+backend/server/*.db-journal
+
+# Archived Fabric artifacts & crypto (kept in _archive/, ignore any locally generated bits)
+_archive/blockchain/crypto-config/
+_archive/blockchain/channel-artifacts/
+_archive/blockchain/genesis.block
+_archive/blockchain/**/wallet/
+_archive/blockchain/docker/.env
+_archive/blockchain/*.tgz
 
 # Logs
 logs/

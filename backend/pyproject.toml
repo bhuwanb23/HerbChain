@@ -1,0 +1,26 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["server/migrations", "server/instance", "../_archive"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "W",   # pycodestyle warnings
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line length — we trust black/ruff-format
+    "B008",  # function calls in default args (Flask uses these a lot)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"server/tests/*" = ["B011"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+extend-exclude = "(server/migrations|server/instance|_archive)"

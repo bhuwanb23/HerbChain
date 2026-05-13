@@ -1,276 +1,177 @@
-# 🌿 HerbChain Backend Server
+# HerbChain — Backend
 
-A comprehensive Flask-based backend server for the HerbChain application with database management, logging, and admin dashboard.
+Flask 3 + SQLAlchemy + Flask-Migrate. SQLite by default, drop-in compatible
+with Postgres via `DATABASE_URL`.
 
-## 🚀 Quick Start
+## Quick start
 
-### 1. Install Dependencies
 ```bash
 cd backend
+python -m venv .venv
+. .venv/Scripts/activate            # PowerShell: .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+cp env.example .env                 # edit JWT_SECRET_KEY + QR_SIGNING_KEY before prod
+
+cd server
+flask --app app db upgrade
+python scripts/seed_demo.py --fresh   # 6 demo users + 3 demo batches
+flask --app app run --host 0.0.0.0 --port 5000
+# Prod-style alternative on Windows:
+#   waitress-serve --listen=0.0.0.0:5000 app:app
+# On Linux/macOS:
+#   gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ```
 
-### 2. Initialize Database
+Tests:
+
 ```bash
-python init_db.py
+cd backend
+pytest
 ```
 
-### 3. Run Server
-```bash
-python run_server.py
+## Architecture
+
+### Data model
+
+| Table | Role |
+| --- | --- |
+| `users` | Identity, role (`farmer | transporter | lab | manufacturer | consumer | admin`), bcrypt password hash, `is_active`. |
+| `herbs` | **Immutable** facts about a harvested batch: species, weight, harvest date, GPS, image URL. |
+| `batch_states` | **Mutable** denormalised current state of each batch: `phase`, `test_result`, `current_holder_id`, `current_qr_token`. One row per herb. |
+| `batch_events` | Append-only timeline (`CREATED`, `TRANSFER`, `LAB_REPORT`, `PRODUCT_LINK`, …). The single source of truth for traceability. |
+| `lab_reports` | Structured lab test metrics (pass/fail outcome lives on `BatchState.test_result`). |
+| `products` / `product_batch_links` | Manufacturer finished goods and the herb batches they consumed. |
+
+### Phase state machine
+
+```
+                          farmer registers batch
+                                   |
+                                   v
+                              with_farmer
+                                   |  transporter scans
+                                   v
+                         in_transit_to_lab
+                                   |  lab scans
+                                   v
+                                at_lab  ──> LAB_REPORT (sets test_result)
+                                   |  transporter scans (only if approved)
+                                   v
+                    in_transit_to_manufacturer
+                                   |  manufacturer scans
+                                   v
+                          with_manufacturer
+                                   |  PRODUCT_LINK
+                                   v
+                               consumed
 ```
 
-### 4. Access Admin Dashboard
-Open your browser and go to: `http://localhost:5000/admin`
+The transition table (`services/transfer_service.py:TRANSITIONS`) is the only
+place this is encoded. Any scan not in the table is rejected with
+`invalid_transition`.
 
-## 📁 Project Structure
+### QR codes (security)
 
-```
-backend/server/
-├── app.py                 # Main Flask application
-├── init_db.py            # Database initialization
-├── run_server.py         # Server startup script
-├── run_tests.py          # Test runner
-├── config/
-│   └── logging.py        # Logging configuration
-├── models/
-│   ├── __init__.py       # Models package
-│   └── farmers/          # Farmer-related models
-│       ├── __init__.py
-│       ├── farmer_profile.py
-│       ├── herb_batch.py
-│       ├── payment.py
-│       ├── training_content.py
-│       ├── training_progress.py
-│       └── README.md
-├── routes/
-│   ├── __init__.py
-│   └── admin.py          # Admin dashboard routes
-├── templates/
-│   └── db_admin.html     # Admin dashboard template
-├── tests/
-│   ├── __init__.py       # Tests package
-│   └── db_test.py        # Database testing utilities
-└── logs/                 # Log files (created automatically)
+QR payloads are compact JWTs signed with `HMAC-SHA256` and `QR_SIGNING_KEY`:
+
+```json
+{ "batch_id": "HERB-…", "holder_id": "…", "phase": "with_farmer",
+  "nonce": "…", "iat": …, "exp": … }
 ```
 
-## 🗄️ Database Models
+Properties enforced by `services/qr_service.py` + `services/transfer_service.py`:
 
-### Farmer Profile
-- Personal information and farm details
-- Authentication and preferences
-- GPS location and farming type
+- **Cryptographic integrity** — signature mismatch ⇒ `invalid_qr`.
+- **Replay protection** — the scanned token must equal `BatchState.current_qr_token`; otherwise `stale_qr`. The previous QR dies the instant the next scan succeeds.
+- **Expiry** — every token has `exp` (default 30 days). Expired ⇒ `invalid_qr`.
+- **Role guard** — `(current_phase, scanner_role)` must be in the transitions table.
 
-### Herb Batches
-- Batch registration with AI detection
-- Species identification and validation
-- QR codes and status tracking
+PNG rendering is on-demand via `GET /api/v1/batches/<id>/qr` and only succeeds
+when the caller is the current holder.
 
-### Payments & Incentives
-- Payment tracking and processing
-- Multiple payment types
-- Transaction references
+### Auth
 
-### Training Content
-- Training modules and materials
-- Multi-language support
-- Difficulty levels and categories
+- `Flask-JWT-Extended` issues access + refresh tokens at `/api/v1/auth/login`.
+- All write endpoints use `@require_role(...)`; nobody trusts an actor ID from
+  the request body.
+- Passwords are bcrypt-hashed via `passlib`.
 
-### Training Progress
-- Farmer progress tracking
-- Completion status and scores
-- Learning analytics
+## API surface
 
-## 🔧 Configuration
+| Method + path | Auth | Role | Purpose |
+| --- | --- | --- | --- |
+| `POST /api/v1/auth/register` | — | — | Create user. |
+| `POST /api/v1/auth/login` | — | — | Email + password ⇒ JWTs. |
+| `POST /api/v1/auth/refresh` | refresh-JWT | — | Refresh access token. |
+| `GET  /api/v1/auth/me` | JWT | — | Current user profile. |
+| `POST /api/v1/batches` | JWT | farmer | Register a batch, mint initial QR. |
+| `GET  /api/v1/batches/mine` | JWT | any | Batches currently held by me. |
+| `GET  /api/v1/batches/<id>` | JWT | any | Batch state + herb + recent events. |
+| `GET  /api/v1/batches/<id>/qr` | JWT | holder | PNG (`image/png`) of the current QR. |
+| `POST /api/v1/batches/<id>/transfer` | JWT | any | Unified scan-to-transfer endpoint. |
+| `POST /api/v1/lab-reports` | JWT | lab | File a report; sets `test_result`. |
+| `POST /api/v1/products` | JWT | manufacturer | Create a finished product from one or more batches. |
+| `GET  /api/v1/traceability/batch/<id>` | — | — | Public journey timeline for a batch. |
+| `GET  /api/v1/traceability/product/<id>` | — | — | Public lineage for a product. |
+| `POST /api/v1/traceability/resolve` | — | — | Resolve any signed QR ⇒ batch or product journey. |
+| `GET  /admin/api/stats` | JWT | admin | Aggregated counts (users by role, batches by phase, test results). |
+| `GET  /admin/api/batches` | JWT | admin | Recent batches + state. |
+| `GET  /admin/api/users` | JWT | admin | User list. |
 
-### Environment Variables
-Create a `.env` file in the backend directory:
+All responses use the envelope `{ "data": ..., "error": null }` or
+`{ "data": null, "error": { "code": "...", "message": "...", "details": ... } }`.
 
-```env
-# Flask Configuration
-SECRET_KEY=your-secret-key-here
-FLASK_ENV=development
-FLASK_DEBUG=True
+## Project layout
 
-# Database Configuration
-DATABASE_URL=sqlite:///herbchain.db
-# For PostgreSQL: postgresql://username:password@localhost/herbchain
-# For MySQL: mysql://username:password@localhost/herbchain
-
-# Server Configuration
-HOST=0.0.0.0
-PORT=5000
-
-# Logging
-LOG_LEVEL=INFO
+```
+backend/
+├── env.example
+├── pytest.ini
+├── requirements.txt
+└── server/
+    ├── app.py                 # Flask factory, error handlers, blueprint registration
+    ├── config/
+    │   └── logging.py
+    ├── migrations/            # Alembic revisions
+    ├── models/                # SQLAlchemy models (see Data model above)
+    ├── routes/                # Blueprints — one file per resource
+    │   ├── admin.py
+    │   ├── auth.py
+    │   ├── batches.py
+    │   ├── lab_reports.py
+    │   ├── products.py
+    │   └── traceability.py
+    ├── schemas/               # marshmallow request schemas
+    ├── services/
+    │   ├── qr_service.py
+    │   ├── transfer_service.py
+    │   └── traceability_service.py
+    ├── utils/
+    │   ├── auth.py            # @require_auth, @require_role, current_user
+    │   └── responses.py       # ok() / error() envelope helpers
+    ├── tests/
+    │   ├── conftest.py
+    │   ├── test_auth.py
+    │   ├── test_transfer_flow.py
+    │   ├── test_qr_security.py
+    │   └── test_traceability.py
+    └── scripts/
+        ├── seed_demo.py
+        ├── migrate_legacy_data.py
+        └── inspect_db.py
 ```
 
-## 📊 Admin Dashboard Features
+## Environment variables
 
-### Overview Tab
-- Database statistics and metrics
-- System health monitoring
-- Real-time data visualization
+See [`env.example`](../env.example). Notable ones:
 
-### Farmers Management
-- View all registered farmers
-- Search and filter capabilities
-- Farmer profile management
+- `JWT_SECRET_KEY` — rotating this invalidates all auth tokens.
+- `QR_SIGNING_KEY` — rotating this invalidates **every** outstanding QR; every batch will need a new one minted before its next scan.
+- `DATABASE_URL` — defaults to `sqlite:///herbchain.db`. Set to a `postgresql+psycopg2://...` URL for Postgres.
 
-### Herb Batches
-- Batch tracking and validation
-- Status management
-- Quality control tools
+## Production notes (local "production-ready")
 
-### Payments
-- Payment processing and tracking
-- Financial analytics
-- Transaction management
-
-### Training Management
-- Content creation and editing
-- Progress monitoring
-- Learning analytics
-
-### System Logs
-- Real-time log viewing
-- Error tracking and debugging
-- System monitoring
-
-### Database Tools
-- Backup and restore functionality
-- Database reset (with confirmation)
-- Data export capabilities
-
-## 🧪 Testing
-
-### Run All Tests
-```bash
-python run_tests.py
-```
-
-### Test Individual Components
-```python
-from tests.db_test import DatabaseTester
-
-tester = DatabaseTester()
-tester.setup_test_db()
-tester.test_farmer_creation()
-tester.cleanup_test_db()
-```
-
-### Performance Testing
-```python
-from tests.db_test import run_performance_test
-run_performance_test()
-```
-
-## 📝 Logging
-
-The application includes comprehensive logging:
-
-- **Application Logs**: `logs/herbchain.log`
-- **Database Logs**: `logs/database.log`
-- **API Logs**: `logs/api.log`
-- **Module-specific Logs**: Individual log files for each module
-
-### Log Levels
-- `DEBUG`: Detailed information for debugging
-- `INFO`: General information about application flow
-- `WARNING`: Warning messages for potential issues
-- `ERROR`: Error messages for failed operations
-
-## 🔌 API Endpoints
-
-### Core Endpoints
-- `GET /` - Root endpoint with server information
-- `GET /health` - Health check endpoint
-- `GET /api/v1/ping` - Ping endpoint
-
-### Admin Endpoints
-- `GET /admin` - Admin dashboard
-- `GET /admin/api/stats` - Database statistics
-- `GET /admin/api/farmers` - Farmers list
-- `GET /admin/api/batches` - Herb batches list
-- `GET /admin/api/payments` - Payments list
-- `GET /admin/api/training` - Training content list
-- `GET /admin/api/logs` - System logs
-- `POST /admin/api/backup` - Create database backup
-- `POST /admin/api/reset` - Reset database
-- `GET /admin/api/health` - Database health check
-
-## 🛠️ Development
-
-### Adding New Models
-1. Create model file in appropriate directory
-2. Add to `models/__init__.py`
-3. Update admin routes if needed
-4. Add tests in `templates/db_test.py`
-
-### Adding New Routes
-1. Create route file in `routes/` directory
-2. Register blueprint in `app.py`
-3. Add logging and error handling
-4. Update admin dashboard if needed
-
-### Database Migrations
-```bash
-# Initialize migrations
-flask db init
-
-# Create migration
-flask db migrate -m "Description of changes"
-
-# Apply migration
-flask db upgrade
-```
-
-## 🚀 Production Deployment
-
-### Environment Setup
-1. Set production environment variables
-2. Use PostgreSQL or MySQL for production
-3. Configure proper logging levels
-4. Set up monitoring and alerting
-
-### Security Considerations
-1. Change default secret key
-2. Use HTTPS in production
-3. Implement proper authentication
-4. Regular security updates
-
-### Performance Optimization
-1. Use connection pooling
-2. Implement caching
-3. Optimize database queries
-4. Monitor performance metrics
-
-## 📚 Documentation
-
-- **Models Documentation**: `models/farmers/README.md`
-- **API Documentation**: Available at `/admin` dashboard
-- **Logging Documentation**: `config/logging.py`
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
-
-## 📄 License
-
-This project is part of the HerbChain application.
-
-## 🆘 Support
-
-For support and questions:
-- Check the logs in the `logs/` directory
-- Use the admin dashboard for monitoring
-- Review the test files for examples
-- Check the model documentation
-
----
-
-**Happy Coding! 🌿**
+- Run via `waitress` (Windows) or `gunicorn` (Linux/macOS), not Flask's dev server.
+- Set strong `JWT_SECRET_KEY` and `QR_SIGNING_KEY`.
+- Keep `CORS_ORIGINS` to an explicit list (not `*`) when exposing to the network.
+- Back up `instance/herbchain.db` regularly — it's the entire state.
