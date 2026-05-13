@@ -1,14 +1,22 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useGlobalTranslation } from '../../../language/GlobalTranslationContext';
 
-const LoginForm = ({ onLogin, onForgotPassword }) => {
+const LoginForm = ({ onLogin, onForgotPassword, busy = false }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { t } = useGlobalTranslation();
 
   const handleLogin = () => {
+    if (busy) return;
     onLogin && onLogin({ email, password });
   };
 
@@ -63,8 +71,16 @@ const LoginForm = ({ onLogin, onForgotPassword }) => {
         <Text style={styles.forgotPasswordText}>{t.login.forgotPassword}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.loginButtonText}>{t.login.loginButton}</Text>
+      <TouchableOpacity
+        style={[styles.loginButton, busy && styles.loginButtonBusy]}
+        onPress={handleLogin}
+        disabled={busy}
+      >
+        {busy ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.loginButtonText}>{t.login.loginButton}</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -141,6 +157,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  loginButtonBusy: { opacity: 0.7 },
   loginButtonText: {
     color: 'white',
     fontSize: 16,
