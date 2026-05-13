@@ -1,12 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Alert,
   Animated,
+  Alert,
   Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import {
   PerfectIntro,
@@ -18,99 +19,47 @@ import {
   LanguageSwitcher,
   LogoSection,
   LoginForm,
-  RoleSelection,
-  SignUpSection,
   FooterLinks,
 } from './components';
-import { GlobalTranslationProvider, useGlobalTranslation } from '../../language/GlobalTranslationContext';
+import { useGlobalTranslation } from '../../language/GlobalTranslationContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const { width } = Dimensions.get('window');
 
 const LoginScreenContent = ({ navigation }) => {
-  const [selectedRole, setSelectedRole] = useState('');
-
-  // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
   const { t, changeLanguage } = useGlobalTranslation();
+  const { login, busy, error } = useAuth();
+  const [localError, setLocalError] = useState(null);
 
   useEffect(() => {
-    // Start login screen animations
     Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 40,
-        friction: 8,
-        useNativeDriver: true,
-      }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 800, useNativeDriver: true }),
+      Animated.spring(scaleAnim, { toValue: 1, tension: 40, friction: 8, useNativeDriver: true }),
     ]).start();
   }, []);
 
-  const translateRole = (roleId) => {
-    switch (roleId) {
-      case 'Farmer':
-        return t.login.roles.farmer;
-      case 'Transporter':
-        return t.login.roles.transporter;
-      case 'Lab':
-        return t.login.roles.lab;
-      case 'AYUSH/Admin':
-        return t.login.roles.ayushAdmin;
-      case 'Consumer':
-        return t.login.roles.consumer;
-      case 'Manufacturer':
-        return t.login.roles.manufacturer;
-      default:
-        return roleId;
-    }
-  };
-
-  const handleLogin = (credentials) => {
-    // Quick login - just check if role is selected
-    if (!selectedRole) {
-      Alert.alert(t.login.errorTitle, t.login.selectRoleFirst);
+  const handleLogin = async ({ email, password }) => {
+    setLocalError(null);
+    const identifier = (email || '').trim();
+    if (!identifier || !password) {
+      setLocalError('Email/user-id and password are required');
       return;
     }
-    
-    // Navigate directly to respective dashboard based on role
-    switch (selectedRole) {
-      case 'Farmer':
-        navigation.navigate('FarmerDashboard');
-        break;
-      case 'Transporter':
-        navigation.navigate('TransporterDashboard');
-        break;
-      case 'Lab':
-        navigation.navigate('LabBatchesPage');
-        break;
-      case 'AYUSH/Admin':
-        navigation.navigate('AdminDashboard');
-        break;
-      case 'Consumer':
-        navigation.navigate('ConsumerDashboard');
-        break;
-      case 'Manufacturer':
-        navigation.navigate('ManufacturerMainPage');
-        break;
-      default:
-        Alert.alert(t.login.successTitle, `${t.login.loginSuccessful} ${translateRole(selectedRole)}`);
+    try {
+      await login(identifier, password);
+      // AuthGate in AppNavigator handles redirect.
+    } catch (err) {
+      setLocalError(err?.message || 'Login failed');
     }
   };
 
   const handleSignUp = () => {
-    Alert.alert(t.login.signUp, t.login.signUpAlert);
+    navigation.navigate('Register');
   };
 
   const handleLanguageChange = (selectedLang) => {
@@ -118,7 +67,10 @@ const LoginScreenContent = ({ navigation }) => {
   };
 
   const handleForgotPassword = () => {
-    Alert.alert(t.login.forgotPassword, t.login.forgotPasswordAlert);
+    Alert.alert(
+      t.login.forgotPassword,
+      'Password reset is not wired up yet. Ask an admin to create a new account.',
+    );
   };
 
   const handlePrivacyPolicy = () => {
@@ -129,16 +81,15 @@ const LoginScreenContent = ({ navigation }) => {
     Alert.alert(t.login.termsOfService, t.login.termsOfServiceAlert);
   };
 
+  const message = localError || error;
+
   return (
-    <SafeAreaWrapper style={styles.container} includeBottom={true}>
-      {/* Background Pattern */}
+    <SafeAreaWrapper style={styles.container} includeBottom>
       <BackgroundPattern />
-      
-      {/* Language Switcher */}
       <LanguageSwitcher onLanguageChange={handleLanguageChange} />
 
-      <ScrollView 
-        style={styles.scrollView} 
+      <ScrollView
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -147,46 +98,37 @@ const LoginScreenContent = ({ navigation }) => {
             styles.content,
             {
               opacity: fadeAnim,
-              transform: [
-                { translateY: slideAnim },
-                { scale: scaleAnim },
-              ],
+              transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
             },
           ]}
         >
-          {/* Logo Section */}
           <LogoSection />
 
-          {/* Login Form */}
-          <LoginForm 
+          <LoginForm
             onLogin={handleLogin}
             onForgotPassword={handleForgotPassword}
+            busy={busy}
           />
 
-          {/* Role Selection */}
-          <RoleSelection 
-            onRoleSelect={setSelectedRole}
-            selectedRole={selectedRole}
-          />
+          {message ? (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{message}</Text>
+            </View>
+          ) : null}
 
-          {/* Sign Up Section */}
-          <SignUpSection onSignUp={handleSignUp} />
-
-          {/* Quick Login Info */}
-          <View style={styles.demoCredentialsContainer}>
-            <Text style={styles.demoCredentialsTitle}>{t.login.quickLoginTitle}</Text>
-            <Text style={styles.demoCredentialsText}>
-              {t.login.quickLoginText}
+          <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
+            <Text style={styles.signUpText}>
+              New to HerbChain?
+              {'  '}
+              <Text style={styles.signUpLink}>Create an account</Text>
             </Text>
-          </View>
+          </TouchableOpacity>
 
-          {/* Footer Links */}
-          <FooterLinks 
+          <FooterLinks
             onPrivacyPolicy={handlePrivacyPolicy}
             onTermsOfService={handleTermsOfService}
           />
 
-          {/* Bottom Spacer for Navigation Bar */}
           <BottomSpacer extraPadding={20} />
         </Animated.View>
       </ScrollView>
@@ -209,46 +151,28 @@ const PerfectLoginScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F0FDF4', // Light green background like HTML
-  },
-  scrollView: {
-    flex: 1,
-  },
+  container: { flex: 1, backgroundColor: '#F0FDF4' },
+  scrollView: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 40,
     paddingHorizontal: 24,
     paddingTop: 32,
   },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  demoCredentialsContainer: {
-    backgroundColor: 'rgba(34, 197, 94, 0.1)',
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 16,
-    width: '100%',
+  content: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  errorBox: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FCA5A5',
     borderWidth: 1,
-    borderColor: 'rgba(34, 197, 94, 0.3)',
+    borderRadius: 12,
+    padding: 12,
+    width: '100%',
+    marginTop: 12,
   },
-  demoCredentialsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#22c55e',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  demoCredentialsText: {
-    fontSize: 12,
-    color: '#374151',
-    lineHeight: 18,
-    textAlign: 'center',
-  },
+  errorText: { color: '#B91C1C', textAlign: 'center', fontWeight: '500' },
+  signUpButton: { marginTop: 18 },
+  signUpText: { fontSize: 14, color: '#374151' },
+  signUpLink: { color: '#065F46', fontWeight: '700' },
 });
 
 export default PerfectLoginScreen;

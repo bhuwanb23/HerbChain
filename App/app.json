@@ -54,6 +54,17 @@
         }
       ],
       "expo-barcode-scanner"
-    ]
+    ],
+    "extra": {
+      "API_BASE_URL": "",
+      "ENABLE_TRANSLATIONS": false,
+      "FEATURE_FLAGS": {
+        "payments": false,
+        "trainings": false,
+        "notifications": false,
+        "reports": false,
+        "incentives": false
+      }
+    }
   }
 }
