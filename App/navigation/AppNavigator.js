@@ -10,26 +10,24 @@ import { useAuth } from '../contexts/AuthContext';
 import PerfectLoginScreen from '../pages/login/PerfectLoginScreen';
 import RegisterScreen from '../pages/login/RegisterScreen';
 
-// Role-specific dashboards
-import FarmerMainPage from '../pages/users/farmers/FarmerMainPage';
-import TransportersPage from '../pages/users/transporters/transporters';
-import LabsPage from '../pages/users/labs/labs';
-import AdminDashboard from '../pages/users/admins/dashboard/dashboard';
-import { ConsumerMainPage, QRScanScreen, HerbDetailsScreen } from '../pages/users/consumers';
-import ManufacturerMainPage from '../pages/users/manufacturers/ManufacturerMainPage';
-import QRScannerScreen from '../pages/users/manufacturers/raw_herb_management/QRScannerScreen';
-import QRScannerScreenLab from '../pages/users/labs/batches/components/QRScannerScreenLab';
+// v1 role homes — wired to the new backend.
+import FarmerHome from '../pages/users/farmers/FarmerHome';
+import TransporterHome from '../pages/users/transporters/TransporterHome';
+import LabHome from '../pages/users/labs/LabHome';
+import ManufacturerHome from '../pages/users/manufacturers/ManufacturerHome';
+import ConsumerHome from '../pages/users/consumers/ConsumerHome';
+import AdminHome from '../pages/users/admins/AdminHome';
 
 const Stack = createStackNavigator();
 
-// Map role -> the initial dashboard route for that user
+// Map role -> the entry screen for that user
 const ROLE_HOME = {
-  farmer: 'FarmerDashboard',
-  transporter: 'TransporterDashboard',
-  lab: 'LabBatchesPage',
-  manufacturer: 'ManufacturerMainPage',
-  consumer: 'ConsumerDashboard',
-  admin: 'AdminDashboard',
+  farmer: 'FarmerHome',
+  transporter: 'TransporterHome',
+  lab: 'LabHome',
+  manufacturer: 'ManufacturerHome',
+  consumer: 'ConsumerHome',
+  admin: 'AdminHome',
 };
 
 function AuthStack() {
@@ -47,29 +45,15 @@ function AuthStack() {
 function AppStack({ initialRoute }) {
   return (
     <Stack.Navigator
-      initialRouteName={initialRoute || 'ConsumerDashboard'}
+      initialRouteName={initialRoute || 'ConsumerHome'}
       screenOptions={{ headerShown: false, gestureEnabled: true }}
     >
-      <Stack.Screen name="FarmerDashboard" component={FarmerMainPage} />
-      <Stack.Screen name="TransporterDashboard" component={TransportersPage} />
-      <Stack.Screen name="LabBatchesPage" component={LabsPage} />
-      <Stack.Screen
-        name="AdminDashboard"
-        component={AdminDashboard}
-        options={{
-          headerShown: true,
-          headerStyle: { backgroundColor: '#F59E0B' },
-          headerTintColor: '#fff',
-          headerTitleStyle: { fontWeight: 'bold' },
-        }}
-      />
-      <Stack.Screen name="ConsumerDashboard" component={ConsumerMainPage} />
-      <Stack.Screen name="ManufacturerMainPage" component={ManufacturerMainPage} />
-
-      <Stack.Screen name="QRScanScreen" component={QRScanScreen} />
-      <Stack.Screen name="HerbDetailsScreen" component={HerbDetailsScreen} />
-      <Stack.Screen name="QRScannerScreen" component={QRScannerScreen} />
-      <Stack.Screen name="QRScannerScreenLab" component={QRScannerScreenLab} />
+      <Stack.Screen name="FarmerHome" component={FarmerHome} />
+      <Stack.Screen name="TransporterHome" component={TransporterHome} />
+      <Stack.Screen name="LabHome" component={LabHome} />
+      <Stack.Screen name="ManufacturerHome" component={ManufacturerHome} />
+      <Stack.Screen name="ConsumerHome" component={ConsumerHome} />
+      <Stack.Screen name="AdminHome" component={AdminHome} />
     </Stack.Navigator>
   );
 }
@@ -86,7 +70,7 @@ function AuthGate() {
   }
 
   if (isLoggedIn) {
-    const initialRoute = ROLE_HOME[role] || 'ConsumerDashboard';
+    const initialRoute = ROLE_HOME[role] || 'ConsumerHome';
     return <AppStack initialRoute={initialRoute} />;
   }
 
