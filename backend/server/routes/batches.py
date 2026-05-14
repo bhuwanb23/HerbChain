@@ -27,6 +27,7 @@ from services.transfer_service import (
     create_batch,
     record_lab_request,
     record_manufacturer_order,
+    split_batch,
     transfer_by_scan,
 )
 from utils.auth import require_auth, require_role
@@ -304,6 +305,56 @@ def order_batch(batch_id: str):
     except TransferError as exc:
         return _handle_transfer_error(exc)
     return ok({"event": event.to_dict()}, 201)
+
+
+# ---------------- batch split (farmer-only) ------------------------
+
+@batches_bp.post("/<batch_id>/split")
+@require_role("farmer")
+def split(batch_id: str):
+    payload = request.get_json(silent=True) or {}
+    splits = payload.get("splits")
+    if not isinstance(splits, list) or not splits:
+        return error("validation_error", "splits must be a non-empty list", 400)
+
+    # Normalize the payload before handing off to the service.
+    normalized: list[dict] = []
+    for item in splits:
+        if not isinstance(item, dict):
+            return error("validation_error", "Each split must be an object", 400)
+        try:
+            kg = float(item.get("weight_kg"))
+        except (TypeError, ValueError):
+            return error("validation_error", "split weight_kg must be numeric", 400)
+        normalized.append({"weight_kg": kg, "note": item.get("note")})
+
+    try:
+        result = split_batch(
+            parent_batch_id=batch_id,
+            actor=g.current_user,
+            splits=normalized,
+        )
+    except TransferError as exc:
+        return _handle_transfer_error(exc)
+
+    return ok(
+        {
+            "parent_batch_id": result.parent_batch_id,
+            "parent_remaining_kg": result.parent_remaining_kg,
+            "parent_consumed": result.parent_consumed,
+            "children": [
+                {
+                    "batch_id": c.batch_id,
+                    "weight_kg": c.weight_kg,
+                    "qr_token": c.qr_token,
+                    "qr_png": qr_service.render_png_data_url(c.qr_token),
+                    "note": c.note,
+                }
+                for c in result.children
+            ],
+        },
+        201,
+    )
 
 
 # ---------------- batch events feed (per-batch audit log) -----------
