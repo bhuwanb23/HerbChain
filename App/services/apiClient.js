@@ -155,6 +155,8 @@ export const BatchesAPI = {
   placeOrder: (token, batchId) =>
     api.post(`/api/v1/batches/${batchId}/order`, { token }),
   events: (token, batchId) => api.get(`/api/v1/batches/${batchId}/events`, { token }),
+  split: (token, batchId, payload) =>
+    api.post(`/api/v1/batches/${batchId}/split`, { token, body: payload }),
 };
 
 export const LabReportsAPI = {
@@ -176,6 +178,54 @@ export const TraceabilityAPI = {
   product: (productId) => api.get(`/api/v1/traceability/product/${productId}`),
   resolve: (qrToken) =>
     api.post('/api/v1/traceability/resolve', { body: { qr_token: qrToken } }),
+};
+
+export const CatalogueAPI = {
+  list: (token, opts = {}) => {
+    const params = new URLSearchParams();
+    if (opts.q) params.set('q', opts.q);
+    if (opts.category) params.set('category', opts.category);
+    const qs = params.toString();
+    return api.get(`/api/v1/catalogue${qs ? `?${qs}` : ''}`, { token });
+  },
+  get: (token, speciesId) => api.get(`/api/v1/catalogue/${speciesId}`, { token }),
+  create: (token, payload) => api.post('/api/v1/catalogue', { token, body: payload }),
+  update: (token, speciesId, payload) =>
+    api.put(`/api/v1/catalogue/${speciesId}`, { token, body: payload }),
+  remove: (token, speciesId) => api.delete(`/api/v1/catalogue/${speciesId}`, { token }),
+};
+
+export const FarmProfileAPI = {
+  getMine: (token) => api.get('/api/v1/farm/me', { token }),
+  upsertMine: (token, payload) => api.put('/api/v1/farm/me', { token, body: payload }),
+};
+
+export const CropPlansAPI = {
+  listMine: (token) => api.get('/api/v1/crop-plans', { token }),
+  get: (token, planId) => api.get(`/api/v1/crop-plans/${planId}`, { token }),
+  create: (token, payload) => api.post('/api/v1/crop-plans', { token, body: payload }),
+  update: (token, planId, payload) =>
+    api.put(`/api/v1/crop-plans/${planId}`, { token, body: payload }),
+  remove: (token, planId) => api.delete(`/api/v1/crop-plans/${planId}`, { token }),
+};
+
+export const RecognitionAPI = {
+  rerank: (token, payload) =>
+    api.post('/api/v1/recognition/herbs', { token, body: payload }),
+};
+
+export const WeatherAPI = {
+  get: (token, lat, lng) =>
+    api.get(`/api/v1/weather?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`, {
+      token,
+    }),
+};
+
+export const PricesAPI = {
+  list: (token) => api.get('/api/v1/prices', { token }),
+  forSpecies: (token, speciesId) =>
+    api.get(`/api/v1/prices/${speciesId}`, { token }),
+  create: (token, payload) => api.post('/api/v1/prices', { token, body: payload }),
 };
 
 export const AdminAPI = {
