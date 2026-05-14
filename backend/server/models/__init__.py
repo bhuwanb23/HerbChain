@@ -24,11 +24,15 @@ def init_app(app):
     # Importing the models registers them with SQLAlchemy's metadata so
     # Flask-Migrate can autogenerate migrations.
     from .users import User  # noqa: F401
+    from .herb_catalogue import HerbCatalogue, PriceQuote  # noqa: F401
     from .herbs import Herb  # noqa: F401
     from .batch_state import BatchState  # noqa: F401
     from .batch_events import BatchEvent  # noqa: F401
     from .lab_reports import LabReport  # noqa: F401
     from .products import Product, ProductBatchLink  # noqa: F401
+    from .farm_profile import FarmProfile  # noqa: F401
+    from .crop_plans import CropPlan  # noqa: F401
+    from .weather_snapshots import WeatherSnapshot  # noqa: F401
 
     return db
 
