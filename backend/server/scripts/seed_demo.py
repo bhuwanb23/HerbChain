@@ -33,10 +33,15 @@ from app import create_app  # noqa: E402
 from models import db  # noqa: E402
 from models.batch_events import BatchEvent  # noqa: E402
 from models.batch_state import BatchState  # noqa: E402
+from models.crop_plans import CropPlan  # noqa: E402
+from models.farm_profile import FarmProfile  # noqa: E402
+from models.herb_catalogue import HerbCatalogue, PriceQuote  # noqa: E402
 from models.herbs import Herb  # noqa: E402
 from models.lab_reports import LabReport  # noqa: E402
 from models.products import Product, ProductBatchLink  # noqa: E402
 from models.users import User  # noqa: E402
+from models.weather_snapshots import WeatherSnapshot  # noqa: E402
+from scripts.ayush_catalogue import AYUSH_SPECIES  # noqa: E402
 from services import qr_service, transfer_service  # noqa: E402
 
 
@@ -106,10 +111,139 @@ def _wipe():
         LabReport,
         BatchState,
         Herb,
+        CropPlan,
+        FarmProfile,
+        PriceQuote,
+        HerbCatalogue,
+        WeatherSnapshot,
         User,
     ):
         deleted = db.session.query(model).delete()
         print(f"  {model.__tablename__}: {deleted} rows")
+    db.session.commit()
+
+
+def _seed_catalogue(admin: User) -> int:
+    """Idempotent insert of the AYUSH catalogue + a starter PriceQuote each."""
+    inserted = 0
+    for spec in AYUSH_SPECIES:
+        existing = HerbCatalogue.query.filter_by(species_id=spec["species_id"]).first()
+        if existing:
+            # keep latest details fresh on re-seed
+            for attr in (
+                "common_name",
+                "scientific_name",
+                "synonyms",
+                "description",
+                "medicinal_uses",
+                "image_url",
+                "season_planting",
+                "season_harvest",
+                "default_unit_price_inr",
+            ):
+                if attr in spec:
+                    setattr(existing, attr, spec[attr])
+            continue
+        row = HerbCatalogue(
+            species_id=spec["species_id"],
+            common_name=spec["common_name"],
+            scientific_name=spec["scientific_name"],
+            ayush_category=spec.get("ayush_category", "ayurveda"),
+            synonyms=spec.get("synonyms") or [],
+            description=spec.get("description"),
+            medicinal_uses=spec.get("medicinal_uses"),
+            image_url=spec.get("image_url"),
+            season_planting=spec.get("season_planting"),
+            season_harvest=spec.get("season_harvest"),
+            default_unit_price_inr=spec.get("default_unit_price_inr"),
+            is_active=True,
+        )
+        db.session.add(row)
+        inserted += 1
+
+        if spec.get("default_unit_price_inr") is not None:
+            db.session.add(
+                PriceQuote(
+                    quote_id=f"PQ-{spec['species_id'][:8].upper()}-INIT",
+                    species_id=spec["species_id"],
+                    price_per_kg_inr=spec["default_unit_price_inr"],
+                    currency="INR",
+                    source="seed",
+                    created_by_admin_id=admin.user_id,
+                    notes="Initial seed quote (admin reference).",
+                )
+            )
+    db.session.commit()
+    print(f"  herb_catalogue: +{inserted} species (total {HerbCatalogue.query.count()})")
+    return inserted
+
+
+def _seed_farm_and_plans(farmer: User) -> None:
+    """Idempotent FarmProfile + three CropPlan rows at different statuses."""
+    import uuid as _uuid
+
+    farm = FarmProfile.query.filter_by(farmer_id=farmer.user_id).first()
+    if farm is None:
+        farm = FarmProfile(
+            farm_id=f"FARM-{farmer.user_id[-6:]}",
+            farmer_id=farmer.user_id,
+            farm_name="Green Valley Demo Farm",
+            land_size_acres=4.5,
+            soil_type="loamy",
+            irrigation_type="drip",
+            certifications=["organic", "good_agri_practices"],
+            address=farmer.location or "Bengaluru, KA",
+            gps_lat=farmer.gps_lat,
+            gps_lng=farmer.gps_lng,
+            notes="Seeded demo farm — replace with your real farm.",
+        )
+        db.session.add(farm)
+
+    today = date.today()
+    samples = [
+        {
+            "species_id": "ashwagandha",
+            "area": 1.0,
+            "planting_offset": -120,
+            "harvest_offset": 30,
+            "status": "growing",
+        },
+        {
+            "species_id": "tulsi",
+            "area": 0.5,
+            "planting_offset": -200,
+            "harvest_offset": -20,
+            "status": "harvested",
+        },
+        {
+            "species_id": "moringa",
+            "area": 1.0,
+            "planting_offset": 14,
+            "harvest_offset": 120,
+            "status": "planned",
+        },
+    ]
+    for spec in samples:
+        existing = (
+            CropPlan.query.filter_by(
+                farmer_id=farmer.user_id, species_id=spec["species_id"]
+            ).first()
+        )
+        if existing:
+            continue
+        plan = CropPlan(
+            plan_id=f"PLAN-{_uuid.uuid4().hex[:8].upper()}",
+            farmer_id=farmer.user_id,
+            species_id=spec["species_id"],
+            area_acres=spec["area"],
+            planting_date=today + timedelta(days=spec["planting_offset"]),
+            expected_harvest_date=today + timedelta(days=spec["harvest_offset"]),
+            status=spec["status"],
+            notes=f"Seeded demo plan: {spec['species_id']}",
+        )
+        if spec["status"] == "harvested":
+            plan.actual_harvest_date = today + timedelta(days=spec["harvest_offset"])
+        db.session.add(plan)
     db.session.commit()
 
 
@@ -263,6 +397,13 @@ def seed(fresh: bool = False):
         transporter = users["transporter"]
         lab = users["lab"]
         manufacturer = users["manufacturer"]
+        admin_user = users["admin"]
+
+        print("\nSeeding AYUSH herb catalogue…")
+        _seed_catalogue(admin_user)
+
+        print("\nSeeding farm profile + crop plans for FARMER001…")
+        _seed_farm_and_plans(farmer)
 
         existing_batches = Herb.query.count()
         if existing_batches >= 3 and not fresh:
@@ -296,6 +437,10 @@ def seed(fresh: bool = False):
 def _summary():
     print("\n=== Seed summary ===")
     print(f"Users:     {User.query.count()}")
+    print(f"Catalogue: {HerbCatalogue.query.count()}")
+    print(f"Prices:    {PriceQuote.query.count()}")
+    print(f"Farms:     {FarmProfile.query.count()}")
+    print(f"CropPlans: {CropPlan.query.count()}")
     print(f"Batches:   {Herb.query.count()}")
     print(f"Events:    {BatchEvent.query.count()}")
     print(f"Reports:   {LabReport.query.count()}")
