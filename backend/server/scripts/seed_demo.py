@@ -418,6 +418,7 @@ def seed(fresh: bool = False):
         b1 = _new_batch(farmer, "Ashwagandha", 10.0, farmer.location)
         b2 = _new_batch(farmer, "Tulsi", 7.5, farmer.location)
         b3 = _new_batch(farmer, "Brahmi", 5.0, farmer.location)
+        b4 = _new_batch(farmer, "Moringa", 12.0, farmer.location)
 
         # Batch 2 -> in transit to lab
         _transfer(b2.batch_id, transporter)
@@ -430,6 +431,22 @@ def seed(fresh: bool = False):
         _transfer(b3.batch_id, manufacturer)
 
         _create_product(manufacturer, "Demo Triphala Mix", [b3.batch_id])
+
+        # Batch 4: parent->2 children split (demonstrates BATCH_SPLIT)
+        print("\nSplitting batch 4 into two child batches…")
+        result = transfer_service.split_batch(
+            parent_batch_id=b4.batch_id,
+            actor=farmer,
+            splits=[
+                {"weight_kg": 7.0, "note": "For Lab partner A"},
+                {"weight_kg": 5.0, "note": "For Lab partner B"},
+            ],
+        )
+        for child in result.children:
+            print(
+                f"  child {child.batch_id} ({child.weight_kg} kg)"
+                f" {('note=' + child.note) if child.note else ''}"
+            )
 
         _summary()
 

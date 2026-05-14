@@ -18,6 +18,16 @@ import ManufacturerHome from '../pages/users/manufacturers/ManufacturerHome';
 import ConsumerHome from '../pages/users/consumers/ConsumerHome';
 import AdminHome from '../pages/users/admins/AdminHome';
 
+// Farmer feature screens
+import FarmProfileScreen from '../pages/users/farmers/farm_profile/FarmProfileScreen';
+import CatalogueScreen from '../pages/users/farmers/catalogue/CatalogueScreen';
+import CatalogueDetailScreen from '../pages/users/farmers/catalogue/CatalogueDetailScreen';
+import CropCalendarScreen from '../pages/users/farmers/crop_calendar/CropCalendarScreen';
+import SmartRegisterScreen from '../pages/users/farmers/smart_register/SmartRegisterScreen';
+import WeatherScreen from '../pages/users/farmers/weather/WeatherScreen';
+import PricesScreen from '../pages/users/farmers/prices/PricesScreen';
+import BatchSplitScreen from '../pages/users/farmers/batch_split/BatchSplitScreen';
+
 const Stack = createStackNavigator();
 
 // Map role -> the entry screen for that user
@@ -54,6 +64,16 @@ function AppStack({ initialRoute }) {
       <Stack.Screen name="ManufacturerHome" component={ManufacturerHome} />
       <Stack.Screen name="ConsumerHome" component={ConsumerHome} />
       <Stack.Screen name="AdminHome" component={AdminHome} />
+
+      {/* Farmer feature stack */}
+      <Stack.Screen name="FarmProfile" component={FarmProfileScreen} />
+      <Stack.Screen name="Catalogue" component={CatalogueScreen} />
+      <Stack.Screen name="CatalogueDetail" component={CatalogueDetailScreen} />
+      <Stack.Screen name="CropCalendar" component={CropCalendarScreen} />
+      <Stack.Screen name="SmartRegister" component={SmartRegisterScreen} />
+      <Stack.Screen name="Weather" component={WeatherScreen} />
+      <Stack.Screen name="Prices" component={PricesScreen} />
+      <Stack.Screen name="BatchSplit" component={BatchSplitScreen} />
     </Stack.Navigator>
   );
 }
