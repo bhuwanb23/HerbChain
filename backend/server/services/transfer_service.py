@@ -299,6 +299,207 @@ def transfer_by_scan(
     )
 
 
+# ---------------------------------------------------------------- batch split
+
+
+@dataclass(frozen=True)
+class SplitChild:
+    batch_id: str
+    weight_kg: float
+    qr_token: str
+    note: Optional[str]
+
+
+@dataclass(frozen=True)
+class SplitResult:
+    parent_batch_id: str
+    parent_remaining_kg: float
+    parent_consumed: bool
+    children: list[SplitChild]
+
+
+def split_batch(
+    *,
+    parent_batch_id: str,
+    actor: User,
+    splits: list[dict],
+) -> SplitResult:
+    """
+    Split a parent batch into N child batches.
+
+    Rules:
+      - actor must be the parent's current holder.
+      - actor must be the parent's original farmer (only farmers split).
+      - parent must be in phase ``with_farmer`` (or ``with_farmer_after_lab``).
+      - sum of children kg must not exceed parent kg.
+      - if remaining == 0, parent is marked ``consumed`` (terminal) and its QR
+        is cleared.
+
+    Each `splits` entry is ``{ "weight_kg": float, "note"?: str }``.
+    """
+    from decimal import Decimal
+
+    if not parent_batch_id:
+        raise TransferError("bad_request", "parent_batch_id is required")
+    if not splits or not isinstance(splits, list):
+        raise TransferError("bad_request", "splits must be a non-empty list")
+
+    parent_herb = Herb.query.filter_by(batch_id=parent_batch_id).first()
+    parent_state = BatchState.query.filter_by(batch_id=parent_batch_id).first()
+    if parent_herb is None or parent_state is None:
+        raise TransferError("not_found", f"Batch '{parent_batch_id}' not found")
+
+    if actor.role != "farmer":
+        raise TransferError("forbidden", "Only farmers can split batches")
+    if parent_herb.farmer_id != actor.user_id:
+        raise TransferError(
+            "forbidden",
+            "Only the original farmer can split this batch",
+        )
+    if parent_state.current_holder_id != actor.user_id:
+        raise TransferError(
+            "forbidden",
+            "You must currently hold the batch to split it",
+        )
+    if parent_state.phase not in {"with_farmer", "with_farmer_after_lab"}:
+        raise TransferError(
+            "invalid_state",
+            f"Cannot split a batch in phase '{parent_state.phase}'",
+        )
+
+    total = Decimal("0")
+    cleaned: list[dict] = []
+    for idx, item in enumerate(splits):
+        try:
+            kg = Decimal(str(item.get("weight_kg")))
+        except Exception as exc:
+            raise TransferError("bad_request", f"splits[{idx}].weight_kg invalid") from exc
+        if kg <= 0:
+            raise TransferError("bad_request", f"splits[{idx}].weight_kg must be > 0")
+        total += kg
+        cleaned.append({"weight_kg": kg, "note": item.get("note")})
+
+    parent_kg = Decimal(str(parent_herb.weight_kg or "0"))
+    if total > parent_kg:
+        raise TransferError(
+            "bad_request",
+            f"Sum of split weights ({total}) exceeds parent batch weight ({parent_kg})",
+        )
+
+    remaining = parent_kg - total
+    children: list[SplitChild] = []
+    children_event_payload: list[dict] = []
+
+    for item in cleaned:
+        child_id = _new_batch_id()
+        child_herb = Herb(
+            batch_id=child_id,
+            farmer_id=actor.user_id,
+            species_id=parent_herb.species_id,
+            species_name=parent_herb.species_name,
+            image_url=parent_herb.image_url,
+            harvest_date=parent_herb.harvest_date,
+            location=parent_herb.location,
+            gps_lat=parent_herb.gps_lat,
+            gps_lng=parent_herb.gps_lng,
+            weight_kg=item["weight_kg"],
+            notes=item.get("note"),
+            parent_batch_id=parent_batch_id,
+        )
+        db.session.add(child_herb)
+
+        token = qr_service.issue_batch_qr(
+            batch_id=child_id,
+            holder_id=actor.user_id,
+            phase="with_farmer",
+        )
+        child_state = BatchState(
+            batch_id=child_id,
+            current_holder_id=actor.user_id,
+            phase="with_farmer",
+            test_result="pending",
+            current_qr_token=token,
+        )
+        db.session.add(child_state)
+
+        child_create_event = BatchEvent(
+            event_id=_new_event_id(),
+            batch_id=child_id,
+            event_type="CREATED",
+            actor_id=actor.user_id,
+            from_party_id=None,
+            to_party_id=actor.user_id,
+            phase_before=None,
+            phase_after="with_farmer",
+            location=parent_herb.location,
+            gps_lat=parent_herb.gps_lat,
+            gps_lng=parent_herb.gps_lng,
+            payload_json={
+                "parent_batch_id": parent_batch_id,
+                "species_name": parent_herb.species_name,
+                "weight_kg": float(item["weight_kg"]),
+                "note": item.get("note"),
+            },
+            qr_token=token,
+        )
+        db.session.add(child_create_event)
+
+        children.append(
+            SplitChild(
+                batch_id=child_id,
+                weight_kg=float(item["weight_kg"]),
+                qr_token=token,
+                note=item.get("note"),
+            )
+        )
+        children_event_payload.append(
+            {
+                "child_batch_id": child_id,
+                "weight_kg": float(item["weight_kg"]),
+                "note": item.get("note"),
+            }
+        )
+
+    parent_consumed = remaining == 0
+    if parent_consumed:
+        parent_state.phase = "consumed"
+        parent_state.current_qr_token = ""
+    parent_state.updated_at = datetime.utcnow()
+
+    parent_split_event = BatchEvent(
+        event_id=_new_event_id(),
+        batch_id=parent_batch_id,
+        event_type="BATCH_SPLIT",
+        actor_id=actor.user_id,
+        from_party_id=actor.user_id,
+        to_party_id=actor.user_id,
+        phase_before=parent_state.phase if not parent_consumed else "with_farmer",
+        phase_after=parent_state.phase,
+        location=parent_herb.location,
+        gps_lat=parent_herb.gps_lat,
+        gps_lng=parent_herb.gps_lng,
+        payload_json={
+            "children": children_event_payload,
+            "remaining_kg": float(remaining),
+            "consumed": parent_consumed,
+        },
+    )
+    db.session.add(parent_split_event)
+
+    try:
+        db.session.commit()
+    except SQLAlchemyError as exc:
+        db.session.rollback()
+        raise TransferError("internal_error", f"Failed to split batch: {exc}") from exc
+
+    return SplitResult(
+        parent_batch_id=parent_batch_id,
+        parent_remaining_kg=float(remaining),
+        parent_consumed=parent_consumed,
+        children=children,
+    )
+
+
 # ------------------------------------------------------------ intent records
 
 

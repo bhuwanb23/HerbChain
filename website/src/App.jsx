@@ -34,42 +34,14 @@ function RequireAuth({ children, role }) {
   return children;
 }
 
-function AppShell() {
-  const [themeMode] = useState('light');
-  const theme = useMemo(() => (themeMode === 'light' ? lightTheme : darkTheme), [themeMode]);
-  const { ready, isLoggedIn } = useAuth();
-  const location = useLocation();
-
-  if (!ready) {
-    return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Box sx={{ p: 6, display: 'flex', justifyContent: 'center' }}>
-          <CircularProgress />
-        </Box>
-      </ThemeProvider>
-    );
-  }
-
-  if (!isLoggedIn && location.pathname !== '/login' && !location.pathname.startsWith('/trace')) {
-    return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </ThemeProvider>
-    );
-  }
-
+function MainLayout() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <>
       <Header />
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Routes>
-          <Route path="/login" element={<Navigate to="/" replace />} />
+          <Route path="/trace" element={<TracePage />} />
+          <Route path="/trace/:batchId" element={<TracePage />} />
           <Route
             path="/"
             element={
@@ -78,8 +50,6 @@ function AppShell() {
               </RequireAuth>
             }
           />
-          <Route path="/trace" element={<TracePage />} />
-          <Route path="/trace/:batchId" element={<TracePage />} />
           <Route
             path="/compliance"
             element={
@@ -123,6 +93,36 @@ function AppShell() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Container>
+    </>
+  );
+}
+
+function AppShell() {
+  const [themeMode] = useState('light');
+  const theme = useMemo(() => (themeMode === 'light' ? lightTheme : darkTheme), [themeMode]);
+  const { ready, isLoggedIn } = useAuth();
+
+  if (!ready) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Box sx={{ p: 6, display: 'flex', justifyContent: 'center' }}>
+          <CircularProgress />
+        </Box>
+      </ThemeProvider>
+    );
+  }
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Routes>
+        <Route
+          path="/login"
+          element={isLoggedIn ? <Navigate to="/" replace /> : <LoginPage />}
+        />
+        <Route path="/*" element={<MainLayout />} />
+      </Routes>
     </ThemeProvider>
   );
 }

@@ -11,16 +11,29 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 import { QrTokenDisplay, RoleHomeShell } from '../../../components';
 import { useAuth } from '../../../contexts/AuthContext';
 import { BatchesAPI } from '../../../services/apiClient';
+import WeatherCard from './weather/WeatherCard';
+
+const QUICK_ACTIONS = [
+  { key: 'SmartRegister', emoji: '📸', label: 'Smart Register' },
+  { key: 'BatchSplit', emoji: '✂️', label: 'Split batch' },
+  { key: 'FarmProfile', emoji: '🌱', label: 'Farm profile' },
+  { key: 'Catalogue', emoji: '🌿', label: 'Catalogue' },
+  { key: 'CropCalendar', emoji: '📅', label: 'Crop calendar' },
+  { key: 'Weather', emoji: '🌤️', label: 'Weather' },
+  { key: 'Prices', emoji: '💰', label: 'Prices' },
+];
 
 const PHASE_LABEL = {
   with_farmer: 'With you',
@@ -37,6 +50,7 @@ function todayIso() {
 }
 
 export default function FarmerHome() {
+  const navigation = useNavigation();
   const { accessToken } = useAuth();
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -130,8 +144,35 @@ export default function FarmerHome() {
         load();
       }}
     >
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.quickRow}
+      >
+        {QUICK_ACTIONS.map((a) => (
+          <TouchableOpacity
+            key={a.key}
+            style={styles.quick}
+            onPress={() => navigation.navigate(a.key)}
+          >
+            <Text style={styles.quickEmoji}>{a.emoji}</Text>
+            <Text style={styles.quickLabel}>{a.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      <View style={{ marginBottom: 12 }}>
+        <WeatherCard onPress={() => navigation.navigate('Weather')} />
+      </View>
+
       <TouchableOpacity style={styles.primary} onPress={() => setShowRegister(true)}>
-        <Text style={styles.primaryText}>+ Register new batch</Text>
+        <Text style={styles.primaryText}>+ Quick register (manual)</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.secondaryBig}
+        onPress={() => navigation.navigate('SmartRegister')}
+      >
+        <Text style={styles.secondaryBigText}>📸 Smart register (AI-assisted)</Text>
       </TouchableOpacity>
 
       {loading ? (
@@ -281,13 +322,36 @@ export default function FarmerHome() {
 }
 
 const styles = StyleSheet.create({
+  quickRow: { paddingVertical: 4, paddingHorizontal: 2, gap: 8, marginBottom: 12 },
+  quick: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+    minWidth: 96,
+    marginRight: 8,
+  },
+  quickEmoji: { fontSize: 22, marginBottom: 4 },
+  quickLabel: { color: '#065F46', fontWeight: '700', fontSize: 12, textAlign: 'center' },
   primary: {
     backgroundColor: '#10B981',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
+    marginBottom: 12,
+  },
+  secondaryBig: {
+    borderColor: '#10B981',
+    borderWidth: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
     marginBottom: 16,
   },
+  secondaryBigText: { color: '#10B981', fontWeight: '700' },
   busy: { opacity: 0.7 },
   primaryText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
   secondary: {

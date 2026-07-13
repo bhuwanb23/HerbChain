@@ -36,11 +36,16 @@ pytest
 | Table | Role |
 | --- | --- |
 | `users` | Identity, role (`farmer | transporter | lab | manufacturer | consumer | admin`), bcrypt password hash, `is_active`. |
-| `herbs` | **Immutable** facts about a harvested batch: species, weight, harvest date, GPS, image URL. |
+| `herbs` | **Immutable** facts about a harvested batch: species, weight, harvest date, GPS, image URL. Optional `species_id` link to `herb_catalogue` and optional `parent_batch_id` self-FK for split children. |
 | `batch_states` | **Mutable** denormalised current state of each batch: `phase`, `test_result`, `current_holder_id`, `current_qr_token`. One row per herb. |
-| `batch_events` | Append-only timeline (`CREATED`, `TRANSFER`, `LAB_REPORT`, `PRODUCT_LINK`, …). The single source of truth for traceability. |
+| `batch_events` | Append-only timeline (`CREATED`, `TRANSFER`, `LAB_REPORT`, `PRODUCT_LINK`, `BATCH_SPLIT`, …). The single source of truth for traceability. |
 | `lab_reports` | Structured lab test metrics (pass/fail outcome lives on `BatchState.test_result`). |
 | `products` / `product_batch_links` | Manufacturer finished goods and the herb batches they consumed. |
+| `herb_catalogue` | Master AYUSH herb species (admin-curated). `species_id`, common + scientific name, synonyms (used by the AI re-ranker), description, medicinal uses, seasons. |
+| `price_quotes` | Admin-recorded market price snapshots per species; latest one wins for display. |
+| `farm_profiles` | One per farmer: land size, soil + irrigation type, certifications, GPS, address. |
+| `crop_plans` | Farmer-owned plant→harvest schedule per species + plot, with status enum. |
+| `weather_snapshots` | Cached weather provider responses keyed on rounded `(lat, lng)`; 1 hr TTL applied by the service. |
 
 ### Phase state machine
 
@@ -109,8 +114,23 @@ when the caller is the current holder.
 | `GET  /api/v1/batches/<id>` | JWT | any | Batch state + herb + recent events. |
 | `GET  /api/v1/batches/<id>/qr` | JWT | holder | PNG (`image/png`) of the current QR. |
 | `POST /api/v1/batches/<id>/transfer` | JWT | any | Unified scan-to-transfer endpoint. |
+| `POST /api/v1/batches/<id>/split` | JWT | farmer | Split a held batch into N children (each gets its own QR). |
 | `POST /api/v1/lab-reports` | JWT | lab | File a report; sets `test_result`. |
 | `POST /api/v1/products` | JWT | manufacturer | Create a finished product from one or more batches. |
+| `GET  /api/v1/farm/me` | JWT | farmer | Read my farm profile. |
+| `PUT  /api/v1/farm/me` | JWT | farmer | Upsert my farm profile. |
+| `GET  /api/v1/catalogue` | JWT | any | Search the AYUSH herb catalogue (`?q=`, `?category=`). |
+| `GET  /api/v1/catalogue/<species_id>` | JWT | any | One species + latest price. |
+| `POST /api/v1/catalogue` | JWT | admin | Add a species. |
+| `PUT  /api/v1/catalogue/<species_id>` | JWT | admin | Update / activate / deactivate a species. |
+| `GET  /api/v1/crop-plans` | JWT | farmer | List my crop plans. |
+| `POST /api/v1/crop-plans` | JWT | farmer | Create a crop plan against a known species. |
+| `PUT/DELETE /api/v1/crop-plans/<id>` | JWT | farmer | Modify my own plan. |
+| `POST /api/v1/recognition/herbs` | JWT | any | Re-rank on-device TFLite candidates against the AYUSH catalogue (top-3). |
+| `GET  /api/v1/weather?lat=&lng=` | JWT | any | Current + 3-day forecast (OpenWeatherMap, falls back to a deterministic stub when no API key is set). |
+| `GET  /api/v1/prices` | JWT | any | Latest price per species. |
+| `GET  /api/v1/prices/<species_id>` | JWT | any | Full history for one species. |
+| `POST /api/v1/prices` | JWT | admin | Record a new price quote. |
 | `GET  /api/v1/traceability/batch/<id>` | — | — | Public journey timeline for a batch. |
 | `GET  /api/v1/traceability/product/<id>` | — | — | Public lineage for a product. |
 | `POST /api/v1/traceability/resolve` | — | — | Resolve any signed QR ⇒ batch or product journey. |
@@ -137,14 +157,22 @@ backend/
     ├── routes/                # Blueprints — one file per resource
     │   ├── admin.py
     │   ├── auth.py
-    │   ├── batches.py
+    │   ├── batches.py         # incl. /<id>/split
+    │   ├── crop_plans.py
+    │   ├── farm.py
+    │   ├── herb_catalogue.py
     │   ├── lab_reports.py
+    │   ├── prices.py
     │   ├── products.py
-    │   └── traceability.py
+    │   ├── recognition.py
+    │   ├── traceability.py
+    │   └── weather.py
     ├── schemas/               # marshmallow request schemas
     ├── services/
     │   ├── qr_service.py
-    │   ├── transfer_service.py
+    │   ├── transfer_service.py     # incl. split_batch
+    │   ├── recognition_service.py  # hybrid rerank against catalogue
+    │   ├── weather_service.py      # provider + cache + stub fallback
     │   └── traceability_service.py
     ├── utils/
     │   ├── auth.py            # @require_auth, @require_role, current_user
@@ -154,7 +182,14 @@ backend/
     │   ├── test_auth.py
     │   ├── test_transfer_flow.py
     │   ├── test_qr_security.py
-    │   └── test_traceability.py
+    │   ├── test_traceability.py
+    │   ├── test_catalogue.py
+    │   ├── test_farm_profile.py
+    │   ├── test_crop_plans.py
+    │   ├── test_recognition.py
+    │   ├── test_batch_split.py
+    │   ├── test_prices.py
+    │   └── test_weather.py
     └── scripts/
         ├── seed_demo.py
         ├── migrate_legacy_data.py
@@ -168,6 +203,7 @@ See [`env.example`](../env.example). Notable ones:
 - `JWT_SECRET_KEY` — rotating this invalidates all auth tokens.
 - `QR_SIGNING_KEY` — rotating this invalidates **every** outstanding QR; every batch will need a new one minted before its next scan.
 - `DATABASE_URL` — defaults to `sqlite:///herbchain.db`. Set to a `postgresql+psycopg2://...` URL for Postgres.
+- `OPENWEATHER_API_KEY` — optional. If unset, `/api/v1/weather` returns a deterministic stubbed payload so the demo works offline.
 
 ## Production notes (local "production-ready")
 

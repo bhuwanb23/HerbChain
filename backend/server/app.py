@@ -86,16 +86,28 @@ def create_app(config_overrides: dict | None = None) -> Flask:
     from routes.admin import admin_bp
     from routes.auth import auth_bp
     from routes.batches import batches_bp
+    from routes.crop_plans import crop_plans_bp
+    from routes.farm import farm_bp
+    from routes.herb_catalogue import catalogue_bp
     from routes.lab_reports import lab_reports_bp
+    from routes.prices import prices_bp
     from routes.products import products_bp
+    from routes.recognition import recognition_bp
     from routes.traceability import traceability_bp
+    from routes.weather import weather_bp
 
     app.register_blueprint(admin_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(batches_bp)
+    app.register_blueprint(crop_plans_bp)
+    app.register_blueprint(farm_bp)
+    app.register_blueprint(catalogue_bp)
     app.register_blueprint(lab_reports_bp)
+    app.register_blueprint(prices_bp)
     app.register_blueprint(products_bp)
+    app.register_blueprint(recognition_bp)
     app.register_blueprint(traceability_bp)
+    app.register_blueprint(weather_bp)
 
     # ----------------------------------------------------------- core routes
 

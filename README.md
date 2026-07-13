@@ -103,8 +103,39 @@ The seeded batches:
 - `HERB-…` (Ashwagandha) — currently `with_farmer`, ready for a transporter pickup.
 - `HERB-…` (Tulsi) — `in_transit_to_lab`, transporter holds it.
 - `HERB-…` (Brahmi) — went the whole way: farmer → transporter → lab (approved) → transporter → manufacturer → product `PROD-…`.
+- `HERB-…` (Moringa) — parent batch that's been split into two children (7 kg + 5 kg); demonstrates the batch-split flow.
 
 Trace the third one in the website at `/trace/<HERB-…>` to see the full timeline.
+
+## Farmer feature pack
+
+In addition to the core scan-and-transfer flow, farmers have a quick-action
+shelf on their home screen with seven AYUSH-focused tools:
+
+| Feature | Backend | Mobile screen |
+| --- | --- | --- |
+| **Farm Profile & Land Records** | `GET/PUT /api/v1/farm/me` | `FarmProfileScreen` |
+| **Herb Catalogue (25 AYUSH species)** | `GET /api/v1/catalogue`, `GET /api/v1/catalogue/<id>` | `CatalogueScreen`, `CatalogueDetailScreen` |
+| **Crop Planning Calendar** | `GET/POST/PUT/DELETE /api/v1/crop-plans` | `CropCalendarScreen` |
+| **AI Hybrid Recognition** | `POST /api/v1/recognition/herbs` | `SmartRegisterScreen` |
+| **Weather Integration** | `GET /api/v1/weather?lat=&lng=` (OpenWeatherMap + stub fallback) | `WeatherCard`, `WeatherScreen` |
+| **Batch Splitting** | `POST /api/v1/batches/<id>/split` | `BatchSplitScreen` |
+| **Price Discovery** | `GET /api/v1/prices`, `GET /api/v1/prices/<species_id>` | `PricesScreen` |
+
+The AI recognition is **hybrid**: the mobile app runs an on-device TFLite plant
+classifier (via `react-native-fast-tflite`) to get a top-N list of `{label, score}`
+candidates, then the backend re-ranks those against the AYUSH `herb_catalogue`
+using fuzzy synonym matching. The Expo Go fallback (no native module available)
+shows the catalogue picker so the user can still drive the rerank manually.
+
+Set `OPENWEATHER_API_KEY` in `backend/.env` to get live weather data; without
+it, the endpoint returns a deterministic stubbed payload so the demo still
+works offline. See [`backend/env.example`](backend/env.example).
+
+Drop a real plant `.tflite` model + matching `LABELS.txt` into
+[`App/assets/models/`](App/assets/models/) and build a custom Expo dev client to
+enable on-device inference. Without those, the manual catalogue picker still
+calls the backend re-ranker and continues into batch registration.
 
 ## Architecture in one screen
 
@@ -151,10 +182,10 @@ HerbChain/
 │   ├── requirements.txt
 │   └── server/
 │       ├── app.py                # Flask application factory
-│       ├── models/               # SQLAlchemy models
-│       ├── routes/               # auth / batches / lab_reports / products / traceability / admin
+│       ├── models/               # SQLAlchemy models (Herb, BatchState, BatchEvent, HerbCatalogue, FarmProfile, CropPlan, PriceQuote, WeatherSnapshot, ...)
+│       ├── routes/               # auth / batches / lab_reports / products / traceability / admin / catalogue / farm / crop_plans / recognition / weather / prices
 │       ├── schemas/              # marshmallow request schemas
-│       ├── services/             # qr_service, transfer_service, traceability_service
+│       ├── services/             # qr_service, transfer_service (incl. split_batch), traceability_service, recognition_service, weather_service
 │       ├── utils/                # auth decorators, response helpers
 │       ├── tests/                # pytest suite
 │       └── scripts/

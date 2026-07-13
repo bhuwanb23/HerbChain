@@ -18,6 +18,7 @@ EVENT_TYPE_CHOICES = (
     "PRODUCT_LINK",                 # manufacturer consumes the batch into a product
     "INTENT_LAB_REQUEST",           # lab has expressed intent to test this batch
     "INTENT_MANUFACTURER_ORDER",    # manufacturer wants to order this batch
+    "BATCH_SPLIT",                  # parent batch split into N child batches
 )
 
 
