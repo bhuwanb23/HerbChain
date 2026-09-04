@@ -10,6 +10,7 @@ const { ApiError } = require("../utils/errors");
 const { toKg, DUP_WINDOW_HOURS, DUP_WEIGHT_TOLERANCE_KG } = require("../constants/batch");
 const { nextBatchCode } = require("./batchCodes");
 const { assertOwnedAssets } = require("./uploads");
+const { mintInitialQr } = require("./qrEngine"); // phase 5: v1 ownership QR born with the batch
 
 const BATCH_INCLUDE = {
   species: { select: { id: true, code: true, common_name: true, scientific_name: true } },
@@ -145,6 +146,7 @@ async function createBatch(user, input) {
               images: assetIds.length,
               unit: input.unit || "kg",
               identification_id: identification ? identification.id : null,
+              qr_version: 1, // phase 5: v1 ownership QR is born ACTIVE with the batch
             },
           },
         });
@@ -158,8 +160,11 @@ async function createBatch(user, input) {
         }
 
         await tx.auditLog.create({
-          data: { actor_user_id: user.id, action: "BATCH_CREATED", target_type: "batch", target_id: batch.id, meta_json: { code, identification_id: identification ? identification.id : null } },
+          data: { actor_user_id: user.id, action: "BATCH_CREATED", target_type: "batch", target_id: batch.id, meta_json: { code, identification_id: identification ? identification.id : null, qr_version: 1 } },
         });
+
+        // Phase 5: mint QR v1 ACTIVE for the farmer in the same transaction.
+        await mintInitialQr(tx, batch.id, user);
 
         // Blockchain-ready anchor: pending — the ledger service picks it up later.
         await tx.blockchainEvent.create({
