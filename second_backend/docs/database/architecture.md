@@ -1,12 +1,13 @@
 # HerbChain Database Architecture (Redesign)
 
-Status: **LIVE** — `package.json` points at `prisma/schema/` (18 files, 80
+Status: **LIVE** — `package.json` points at `prisma/schema/` (19 files, 87
 models). Migrations are applied on the scratch DB and the backend is built
 phase by phase against these models: Phase 2 auth → Phase 3 batches →
 Phase 4 identification → Phase 5 dynamic QR → Phase 6 governed transfers →
-Phase 7 logistics/shipments → Phase 8 lab certification
+Phase 7 logistics/shipments → Phase 8 lab certification →
+Phase 9 manufacturer procurement
 are live (see docs/auth, docs/batch, docs/identification, docs/qr,
-docs/transfers, docs/logistics, docs/lab). The legacy `schema.legacy.prisma`
+docs/transfers, docs/logistics, docs/lab, docs/procurement). The legacy `schema.legacy.prisma`
 + `migrations.legacy/` + old routes/tests are kept as the porting reference.
 
 ## 1. Why a redesign
@@ -53,7 +54,7 @@ correct for a demo but has production gaps:
    a model has more than one FK to the same target.
 9. **Email uniqueness** is on the lowercased value — normalize at write time.
 
-## 3. Domain map (18 files, 80 models)
+## 3. Domain map (19 files, 87 models)
 
 | File | Domain | Models |
 |---|---|---|
@@ -68,6 +69,7 @@ correct for a demo but has production gaps:
 | `50_trace.prisma` | Batches + event timeline + QR scan stream | `Batch`, `BatchEvent`, `QrScanLog` |
 | `51_qr.prisma` | Phase-5 dynamic QR custody tokens | `QrToken`, `QrReplacementLog` |
 | `52_transfer.prisma` | Phase-6 governed two-party transfers | `TransferRequest`, `TransferProof` |
+| `53_procurement.prisma` | Phase-9 manufacturer raw-material procurement | `BatchRequest`, `BatchInventory`, `InventoryAllocation`, `GoodsReceipt`, `InventoryItem`, `InventoryTransaction`, `QualityHold` |
 | `60_products.prisma` | Product master + custody-tracked lots | `Product`, `ProductLot`, `ProductLotEvent`, `ProductLotBatchLink` |
 | `70_commerce.prisma` | Orders & money | `PurchaseOrder`, `OrderItem`, `Invoice`, `Payment`, `Wallet`, `WalletTransaction` |
 | `80_compliance.prisma` | Licenses/recalls/support | `LicenseCert`, `Inspection`, `Recall`, `RecallScope`, `SupportTicket` |
@@ -111,6 +113,15 @@ Shipment (refs batch | product_lot; requester + transporter = User)
 Shipment 1─N ShipmentTrackingPoint (GPS breadcrumbs)
 QrScanLog (refs batch | product_lot | product; plain actor col) — one scan stream
 BlockchainEvent (refs batch_event | product_lot_event | audit_log) — proof anchors
+
+Batch 1─N BatchRequest (manufacturer asks the holder/lab for qty)
+BatchRequest N─1 User ("manufacturer")
+BatchRequest 0─1 InventoryAllocation   (reserved qty, anti-oversell)
+BatchRequest 0─1 Shipment              (auto-created LAB_TO_MANUFACTURER on approval)
+BatchRequest 0─N GoodsReceipt
+Batch 1─1 BatchInventory  (availability pool at the holder)
+Batch 1─N InventoryItem   (per receiving manufacturer) 1─N InventoryTransaction (ledger)
+Batch 1─N QualityHold     (quarantine: active blocks production ops)
 ```
 
 ## 5. Old → new mapping (for the migration step)
@@ -298,8 +309,8 @@ Each module = routes + service + serializers + zod schema, colocated.
 
 ## 8. Verification
 
-- `npx prisma validate --schema prisma/schema` → valid ✅ (18 files, 80 models)
+- `npx prisma validate --schema prisma/schema` → valid ✅ (19 files, 87 models)
 - Migrations applied on the scratch DB (`prisma/scratch_new.db`), `migrate
   status` clean; Prisma client regenerated per phase
 - Active test suites green: auth, batches, identification, qr, transfers,
-  shipments, lab (109 cases)
+  shipments, lab, procurement (115 cases)

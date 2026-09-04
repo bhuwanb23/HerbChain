@@ -132,7 +132,7 @@ only finalize after server validation").
 
 ## 8. Verification
 
-- Schema: 73 models at Phase 7 (80 after Phase 8); migration `20260904120000_phase7_logistics`
+- Schema: 73 models at Phase 7 (80 after Phase 8, 87 after Phase 9); migration `20260904120000_phase7_logistics`
   applied on the scratch DB (data-preserving `RedefineTables` on `shipments`).
 - Suites: **96/96** across auth, batches, identification, qr, transfers,
   shipments (13 new logistics cases: full journey, no-custody-without-request

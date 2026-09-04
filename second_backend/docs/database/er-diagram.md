@@ -1,6 +1,6 @@
 # HerbChain — ER Diagram (Redesigned Schema)
 
-Source of truth: `prisma/schema/` (18 files, 80 models). This file renders the
+Source of truth: `prisma/schema/` (19 files, 87 models). This file renders the
 same structure as Mermaid diagrams grouped by domain — the phase-1 "ER
 Diagram" deliverable. Full conventions: `docs/database/architecture.md`.
 
@@ -266,7 +266,78 @@ erDiagram
     }
 ```
 
-## 5. Products, lots & commerce
+## 5. Procurement (manufacturer raw-material intake, Phase 9)
+
+```mermaid
+erDiagram
+    BATCH ||--o{ BATCH_REQUEST : "procurable when certified + cert valid"
+    USER ||--o{ BATCH_REQUEST : "manufacturer"
+    BATCH_REQUEST |o--o| INVENTORY_ALLOCATION : "reserved qty (anti-oversell)"
+    BATCH_REQUEST |o--o| SHIPMENT : "auto-created on approval"
+    BATCH_REQUEST ||--o{ GOODS_RECEIPT : "GRN at intake"
+    BATCH |o--o| BATCH_INVENTORY : "availability pool at the holder"
+    BATCH ||--o{ INVENTORY_ITEM : "per receiving manufacturer"
+    INVENTORY_ITEM ||--o{ INVENTORY_TRANSACTION : "append-only ledger"
+    BATCH ||--o{ QUALITY_HOLD : "quarantine (active blocks production)"
+
+    BATCH_REQUEST {
+        string id PK
+        string request_no UK
+        string manufacturer_user_id FK
+        string batch_id FK
+        float requested_quantity_kg
+        float approved_quantity_kg
+        string status
+    }
+    BATCH_INVENTORY {
+        string id PK
+        string batch_id FK UK
+        float total_quantity_kg
+        float available_quantity_kg
+        float reserved_quantity_kg
+        float consumed_quantity_kg
+    }
+    INVENTORY_ALLOCATION {
+        string id PK
+        string batch_id FK
+        string request_id FK UK
+        float allocated_quantity_kg
+        string status
+    }
+    GOODS_RECEIPT {
+        string id PK
+        string grn_number UK
+        string manufacturer_user_id FK
+        string batch_id FK
+        string shipment_id FK
+        float accepted_quantity_kg
+        float rejected_quantity_kg
+    }
+    INVENTORY_ITEM {
+        string id PK
+        string manufacturer_user_id FK
+        string batch_id FK
+        float available_quantity_kg
+        float reserved_quantity_kg
+        float consumed_quantity_kg
+        float discarded_quantity_kg
+    }
+    INVENTORY_TRANSACTION {
+        string id PK
+        string inventory_id FK
+        string transaction_type
+        float quantity_kg
+    }
+    QUALITY_HOLD {
+        string id PK
+        string batch_id FK
+        string manufacturer_user_id FK
+        string reason
+        string status
+    }
+```
+
+## 6. Products, lots & commerce
 
 ```mermaid
 erDiagram
@@ -304,7 +375,7 @@ erDiagram
     }
 ```
 
-## 6. Compliance, notifications & intel
+## 7. Compliance, notifications & intel
 
 ```mermaid
 erDiagram
