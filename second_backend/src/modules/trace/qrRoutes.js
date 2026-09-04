@@ -2,11 +2,13 @@
  * QR engine API — /api/v1/qr (docs/phase_5.md APIs).
  *
  *   POST /validate     scan a token -> live custody check (every scan logged)
- *   POST /transfer     receiver presents the holder's token -> atomic custody
+ *   POST /transfer     Phase 6 two-party: receiver presents the holder's token
+ *                      AFTER an approved TransferRequest -> atomic custody
  *                      transfer + QR rotation (old dies, next version born)
  *   POST /regenerate   holder/admin rotate without ownership change
  *                      (lost / damaged / expired / admin replacement)
  *
+ * The governed request/approve/execute flow lives in /api/v1/transfers.
  * The active QR lives on GET /api/v1/batches/:id/qr (holder/admin) with its
  * version history on GET /api/v1/batches/:id/qr/history.
  */
@@ -14,7 +16,7 @@ const express = require("express");
 const { z } = require("zod");
 const { ok, error } = require("../../utils/responses");
 const { requireAuth } = require("../../middleware/auth");
-const { validateToken, transferByToken, regenerateQr } = require("../../services/qrEngine");
+const { validateToken, regenerateQr } = require("../../services/qrEngine");
 
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
@@ -51,6 +53,10 @@ function mountQrRoutes(app) {
   );
 
   // ---------------------------------------------------------- transfer
+  // Phase 6 two-party gate: custody moves only through an APPROVED
+  // TransferRequest. The receiving party scans the holder's QR and, if an
+  // approved request exists for them on that batch, the transfer executes
+  // atomically (ownership + QR rotation + request completed in one tx).
   router.post(
     "/transfer",
     requireAuth,
@@ -59,7 +65,8 @@ function mountQrRoutes(app) {
       if (!parsed.success) {
         return error(res, "validation_error", "token is required", 400);
       }
-      const out = await transferByToken({ token: parsed.data.token, receiver: req.user, meta: scanMeta(req) });
+      const { executeTransfer } = require("../../services/transfers");
+      const out = await executeTransfer(req.user, { token: parsed.data.token, meta: scanMeta(req) });
       return ok(res, out);
     })
   );

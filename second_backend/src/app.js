@@ -58,6 +58,8 @@ function _mountCoreRoutes(app) {
         uploads: "/api/v1/uploads",
         identifications: "/api/v1/identifications",
         qr: "/api/v1/qr (validate | transfer | regenerate)",
+        transfers: "/api/v1/transfers (request | approve | reject | cancel | execute | recover)",
+        batch_ownership: "/api/v1/batches/:id (owner | ownership-history)",
       },
     });
   });
@@ -104,6 +106,10 @@ function _mountRoutes(app) {
   // Phase 5: dynamic QR engine (validate / transfer / regenerate).
   const { mountQrRoutes } = require("./modules/trace/qrRoutes");
   mountQrRoutes(app);
+
+  // Phase 6: governed two-party ownership transfers (request/approve/execute).
+  const { mountTransfersRoutes } = require("./modules/transfers/transfersRoutes");
+  mountTransfersRoutes(app);
 }
 
 // ------------------------------------------------------------- error box
