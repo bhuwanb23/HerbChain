@@ -15,7 +15,7 @@ const { ok, error } = require("./utils/responses");
 
 const logger = getLogger("api");
 
-function createApp() {
+function createApp(options = {}) {
   const app = express();
 
   app.disable("x-powered-by");
@@ -33,6 +33,8 @@ function createApp() {
 
   _mountCoreRoutes(app);
   _mountRoutes(app);
+  // Tests may inject extra route mounters (must run before the 404 handler).
+  for (const mounter of options.extraRoutes || []) mounter(app);
   _mountErrorHandlers(app);
 
   return app;
@@ -50,11 +52,7 @@ function _mountCoreRoutes(app) {
         health: "/health",
         ping: "/api/v1/ping",
         auth: "/api/v1/auth",
-        batches: "/api/v1/batches",
-        lab_reports: "/api/v1/lab-reports",
-        products: "/api/v1/products",
-        traceability: "/api/v1/traceability",
-        admin: "/admin",
+        admin_users: "/api/v1/admin/users",
       },
     });
   });
@@ -75,41 +73,14 @@ function _mountCoreRoutes(app) {
 // They are added one at a time in later steps.
 
 function _mountRoutes(app) {
-  const { mountAuth } = require("./routes/auth");
+  // New-architecture modules (docs/database/architecture.md §6). Legacy route
+  // modules (src/routes/*) belong to the old schema and are ported module by
+  // module as each phase lands.
+  const { mountAuth } = require("./modules/identity/authRoutes");
   mountAuth(app);
 
-  const { mountBatches } = require("./routes/batches");
-  mountBatches(app);
-
-  const { mountLabReports } = require("./routes/labReports");
-  mountLabReports(app);
-
-  const { mountProducts } = require("./routes/products");
-  mountProducts(app);
-
-  const { mountTraceability } = require("./routes/traceability");
-  mountTraceability(app);
-
-  const { mountAdmin } = require("./routes/admin");
+  const { mountAdmin } = require("./modules/identity/adminRoutes");
   mountAdmin(app);
-
-  const { mountCatalogue } = require("./routes/catalogue");
-  mountCatalogue(app);
-
-  const { mountFarm } = require("./routes/farm");
-  mountFarm(app);
-
-  const { mountCropPlans } = require("./routes/cropPlans");
-  mountCropPlans(app);
-
-  const { mountRecognition } = require("./routes/recognition");
-  mountRecognition(app);
-
-  const { mountWeather } = require("./routes/weather");
-  mountWeather(app);
-
-  const { mountPrices } = require("./routes/prices");
-  mountPrices(app);
 }
 
 // ------------------------------------------------------------- error box
