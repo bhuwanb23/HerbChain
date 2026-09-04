@@ -63,6 +63,9 @@ function _mountCoreRoutes(app) {
         shipments: "/api/v1/shipments (create | :id/assign | accept | pickup | location | deliver | pod | timeline)",
         labs: "/api/v1/labs (receive | samples | tests | reviews | certificates | reject | analytics)",
         manufacturer: "/api/v1/manufacturer (certified-batches | request-batch | receive | inventory | quality-holds | analytics)",
+        products: "/api/v1/products (create | :id/lineage | qr/verify | formulas)",
+        manufacturing: "/api/v1/manufacturing (batches create/start/complete/cancel | lots | :lotId/qr | impacts)",
+        product_trace: "/api/v1/batches/:batchId/products (forward trace)",
       },
     });
   });
@@ -126,6 +129,11 @@ function _mountRoutes(app) {
   // GRN + inventory, quality holds, analytics).
   const { mountManufacturerRoutes } = require("./modules/procurement/procurementRoutes");
   mountManufacturerRoutes(app);
+
+  // Phase 10: products & manufacturing lineage (product masters, runs, lots,
+  // permanent product QR, backward/forward trace, recall impact).
+  const { mountProductRoutes } = require("./modules/products/productRoutes");
+  mountProductRoutes(app);
 }
 
 // ------------------------------------------------------------- error box

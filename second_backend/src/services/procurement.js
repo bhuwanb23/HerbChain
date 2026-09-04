@@ -585,6 +585,85 @@ async function assertNoActiveHold(user, inventoryId) {
   return item;
 }
 
+// Tx-scoped kernels (shared with the Phase 10 products service so a run can
+// reserve/consume inventory atomically inside ITS OWN transaction — never
+// nest prisma.$transaction calls). The public wrappers open a transaction and
+// delegate; identical wire behavior.
+
+async function reserveTx(tx, user, { inventory_id, quantity_kg, reference_id = null }) {
+  const qty = parseFloat(quantity_kg);
+  if (!Number.isFinite(qty) || qty <= 0) throw new ApiError("bad_request", "quantity_kg must be positive", 400);
+  const item = await tx.inventoryItem.findUnique({ where: { id: inventory_id } });
+  if (!item || item.manufacturer_user_id !== user.id) {
+    throw new ApiError("forbidden", "You do not own this inventory item", 403);
+  }
+  const hold = await tx.qualityHold.findFirst({ where: { batch_id: item.batch_id, manufacturer_user_id: user.id, status: "active" } });
+  if (hold) throw new ApiError("quality_hold", `Batch is under a quality hold: ${hold.reason}`, 409);
+  if (item.available_quantity_kg < qty) {
+    throw new ApiError("insufficient_stock", `Only ${item.available_quantity_kg} kg available to reserve`, 409);
+  }
+  const updated = await tx.inventoryItem.update({
+    where: { id: item.id },
+    data: { available_quantity_kg: { decrement: qty }, reserved_quantity_kg: { increment: qty } },
+  });
+  await tx.inventoryTransaction.create({
+    data: { inventory_id: item.id, transaction_type: "reserved", quantity_kg: qty, reference_id, notes: "production reservation", created_by_user_id: user.id },
+  });
+  await writeAudit(tx, { actorUserId: user.id, action: "INVENTORY_RESERVED", targetType: "inventory_item", targetId: item.id, meta: { qty, reference_id } });
+  return updated;
+}
+
+async function releaseTx(tx, user, { inventory_id, quantity_kg, reference_id = null }) {
+  const qty = parseFloat(quantity_kg);
+  if (!Number.isFinite(qty) || qty <= 0) throw new ApiError("bad_request", "quantity_kg must be positive", 400);
+  const item = await tx.inventoryItem.findUnique({ where: { id: inventory_id } });
+  if (!item || item.manufacturer_user_id !== user.id) throw new ApiError("forbidden", "You do not own this inventory item", 403);
+  if (item.reserved_quantity_kg < qty) {
+    throw new ApiError("invalid_state", `Only ${item.reserved_quantity_kg} kg are reserved`, 409);
+  }
+  const updated = await tx.inventoryItem.update({
+    where: { id: item.id },
+    data: { available_quantity_kg: { increment: qty }, reserved_quantity_kg: { decrement: qty } },
+  });
+  await tx.inventoryTransaction.create({
+    data: { inventory_id: item.id, transaction_type: "released", quantity_kg: qty, reference_id, notes: "reservation released", created_by_user_id: user.id },
+  });
+  await writeAudit(tx, { actorUserId: user.id, action: "INVENTORY_RELEASED", targetType: "inventory_item", targetId: item.id, meta: { qty, reference_id } });
+  return updated;
+}
+
+async function consumeTx(tx, user, { inventory_id, quantity_kg, reference_id = null, transaction_type = "consumed" }) {
+  const qty = parseFloat(quantity_kg);
+  if (!Number.isFinite(qty) || qty <= 0) throw new ApiError("bad_request", "quantity_kg must be positive", 400);
+  if (!TX_TYPES.includes(transaction_type)) {
+    throw new ApiError("bad_request", `transaction_type must be one of: ${TX_TYPES.join(", ")}`, 400);
+  }
+  const item = await tx.inventoryItem.findUnique({ where: { id: inventory_id } });
+  if (!item || item.manufacturer_user_id !== user.id) {
+    throw new ApiError("forbidden", "You do not own this inventory item", 403);
+  }
+  const hold = await tx.qualityHold.findFirst({ where: { batch_id: item.batch_id, manufacturer_user_id: user.id, status: "active" } });
+  if (hold) throw new ApiError("quality_hold", `Batch is under a quality hold: ${hold.reason}`, 409);
+  const reservable = item.reserved_quantity_kg + item.available_quantity_kg;
+  if (reservable < qty) throw new ApiError("insufficient_stock", `Only ${reservable} kg available to consume`, 409);
+
+  const fromReserved = Math.min(item.reserved_quantity_kg, qty);
+  const fromAvailable = qty - fromReserved;
+  const updated = await tx.inventoryItem.update({
+    where: { id: item.id },
+    data: {
+      reserved_quantity_kg: { decrement: fromReserved },
+      available_quantity_kg: { decrement: fromAvailable },
+      consumed_quantity_kg: { increment: qty },
+    },
+  });
+  await tx.inventoryTransaction.create({
+    data: { inventory_id: item.id, transaction_type, quantity_kg: qty, reference_id, notes: "production consumption", created_by_user_id: user.id },
+  });
+  await writeAudit(tx, { actorUserId: user.id, action: "INVENTORY_CONSUMED", targetType: "inventory_item", targetId: item.id, meta: { qty, reference_id, transaction_type } });
+  return updated;
+}
+
 /** Reserve qty for a production run (available -> reserved). */
 async function reserveInventory(user, { inventory_id, quantity_kg, reference_id = null }) {
   const qty = parseFloat(quantity_kg);
@@ -593,22 +672,12 @@ async function reserveInventory(user, { inventory_id, quantity_kg, reference_id 
   if (item.available_quantity_kg < qty) {
     throw new ApiError("insufficient_stock", `Only ${item.available_quantity_kg} kg available to reserve`, 409);
   }
-  const row = await prisma.$transaction(async (tx) => {
-    const updated = await tx.inventoryItem.update({
-      where: { id: item.id },
-      data: { available_quantity_kg: { decrement: qty }, reserved_quantity_kg: { increment: qty } },
-    });
-    await tx.inventoryTransaction.create({
-      data: { inventory_id: item.id, transaction_type: "reserved", quantity_kg: qty, reference_id, notes: "production reservation", created_by_user_id: user.id },
-    });
-    await writeAudit(tx, { actorUserId: user.id, action: "INVENTORY_RESERVED", targetType: "inventory_item", targetId: item.id, meta: { qty, reference_id } });
-    return updated;
-  });
+  const row = await prisma.$transaction((tx) => reserveTx(tx, user, { inventory_id, quantity_kg, reference_id }));
   return prisma.inventoryItem.findUnique({ where: { id: row.id }, include: { batch: { select: { id: true, code: true } } } });
 }
 
 /** Release a reservation back to available. */
-async function releaseInventory(user, { inventory_id, quantity_kg }) {
+async function releaseInventory(user, { inventory_id, quantity_kg, reference_id = null }) {
   const qty = parseFloat(quantity_kg);
   if (!Number.isFinite(qty) || qty <= 0) throw new ApiError("bad_request", "quantity_kg must be positive", 400);
   const item = await prisma.inventoryItem.findUnique({ where: { id: inventory_id } });
@@ -616,45 +685,22 @@ async function releaseInventory(user, { inventory_id, quantity_kg }) {
   if (item.reserved_quantity_kg < qty) {
     throw new ApiError("invalid_state", `Only ${item.reserved_quantity_kg} kg are reserved`, 409);
   }
-  const row = await prisma.$transaction(async (tx) => {
-    const updated = await tx.inventoryItem.update({
-      where: { id: item.id },
-      data: { available_quantity_kg: { increment: qty }, reserved_quantity_kg: { decrement: qty } },
-    });
-    await tx.inventoryTransaction.create({
-      data: { inventory_id: item.id, transaction_type: "released", quantity_kg: qty, notes: "reservation released", created_by_user_id: user.id },
-    });
-    await writeAudit(tx, { actorUserId: user.id, action: "INVENTORY_RELEASED", targetType: "inventory_item", targetId: item.id, meta: { qty } });
-    return updated;
-  });
+  const row = await prisma.$transaction((tx) => releaseTx(tx, user, { inventory_id, quantity_kg, reference_id }));
   return prisma.inventoryItem.findUnique({ where: { id: row.id }, include: { batch: { select: { id: true, code: true } } } });
 }
 
 /** Consume qty into production (reserved -> consumed; falls back to available). */
-async function consumeInventory(user, { inventory_id, quantity_kg, reference_id = null }) {
+async function consumeInventory(user, { inventory_id, quantity_kg, reference_id = null, transaction_type = "consumed" }) {
   const qty = parseFloat(quantity_kg);
   if (!Number.isFinite(qty) || qty <= 0) throw new ApiError("bad_request", "quantity_kg must be positive", 400);
+  if (!TX_TYPES.includes(transaction_type)) {
+    throw new ApiError("bad_request", `transaction_type must be one of: ${TX_TYPES.join(", ")}`, 400);
+  }
   const item = await assertNoActiveHold(user, inventory_id);
   const reservable = item.reserved_quantity_kg + item.available_quantity_kg;
   if (reservable < qty) throw new ApiError("insufficient_stock", `Only ${reservable} kg available to consume`, 409);
 
-  const fromReserved = Math.min(item.reserved_quantity_kg, qty);
-  const fromAvailable = qty - fromReserved;
-  const row = await prisma.$transaction(async (tx) => {
-    const updated = await tx.inventoryItem.update({
-      where: { id: item.id },
-      data: {
-        reserved_quantity_kg: { decrement: fromReserved },
-        available_quantity_kg: { decrement: fromAvailable },
-        consumed_quantity_kg: { increment: qty },
-      },
-    });
-    await tx.inventoryTransaction.create({
-      data: { inventory_id: item.id, transaction_type: "consumed", quantity_kg: qty, reference_id, notes: "production consumption", created_by_user_id: user.id },
-    });
-    await writeAudit(tx, { actorUserId: user.id, action: "INVENTORY_CONSUMED", targetType: "inventory_item", targetId: item.id, meta: { qty, reference_id } });
-    return updated;
-  });
+  const row = await prisma.$transaction((tx) => consumeTx(tx, user, { inventory_id, quantity_kg, reference_id, transaction_type }));
   return prisma.inventoryItem.findUnique({ where: { id: row.id }, include: { batch: { select: { id: true, code: true } } } });
 }
 
@@ -807,7 +853,7 @@ async function analytics(user) {
     select: { id: true, status: true, delivered_at: true },
   });
   const transactions = await prisma.inventoryTransaction.findMany({
-    where: { inventory: { manufacturer_user_id: user.id }, transaction_type: { in: ["received", "consumed", "discarded"] } },
+    where: { inventory: { manufacturer_user_id: user.id }, transaction_type: { in: ["received", "consumed", "consumed_for_production", "discarded"] } },
     select: { transaction_type: true, quantity_kg: true, created_at: true },
   });
 
@@ -833,7 +879,7 @@ async function analytics(user) {
     monthly.set(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, 0);
   }
   for (const t of transactions) {
-    if (!["consumed", "discarded"].includes(t.transaction_type)) continue;
+    if (!["consumed", "consumed_for_production", "discarded"].includes(t.transaction_type)) continue;
     const key = `${t.created_at.getFullYear()}-${String(t.created_at.getMonth() + 1).padStart(2, "0")}`;
     if (monthly.has(key)) monthly.set(key, monthly.get(key) + t.quantity_kg);
   }
@@ -888,18 +934,42 @@ async function recallStatus(user, { batch_id }) {
     prisma.goodsReceipt.findMany({ where: { batch_id } }),
     prisma.batchRequest.findMany({ where: { batch_id } }),
   ]);
-  // Product lots that consumed this batch (products phase links them).
-  const productLinks = await prisma.productLotBatchLink.findMany({
+  // Products that consumed this batch (phase 10 run-ingredient model):
+  // forward trace HERB-001 -> manufacturing runs -> finished lots.
+  const ingredientLinks = await prisma.manufacturingBatchIngredient.findMany({
     where: { batch_id },
-    include: { lot: { select: { id: true, code: true, product: { select: { id: true, name: true } }, current_holder_user_id: true } } },
+    include: {
+      run: { select: { id: true, code: true, status: true, product: { select: { id: true, name: true, code: true } } } },
+    },
   });
+  const productLinks = [];
+  for (const ing of ingredientLinks) {
+    const lot = await prisma.productLot.findUnique({ where: { manufacturing_batch_id: ing.manufacturing_batch_id } });
+    productLinks.push({
+      run: { id: ing.run.id, code: ing.run.code, status: ing.run.status },
+      product: { id: ing.run.product.id, code: ing.run.product.code, name: ing.run.product.name },
+      lot_id: lot ? lot.id : null,
+      lot_code: lot ? lot.code : null,
+      current_holder_user_id: lot ? lot.current_holder_user_id : ing.run.manufacturer_user_id,
+    });
+  }
   return {
     batch: { id: batch.id, code: batch.code, species: batch.species },
     certificate: batch.certifications[0] ? { certificate_number: batch.certifications[0].certificate_number, status: batch.certifications[0].status, expiry_date: batch.certifications[0].expiry_date } : null,
     inventory: item ? { available_kg: item.available_quantity_kg, reserved_kg: item.reserved_quantity_kg, consumed_kg: item.consumed_quantity_kg, discarded_kg: item.discarded_quantity_kg } : null,
     goods_receipts: receipts.map((r) => ({ grn_number: r.grn_number, accepted_kg: r.accepted_quantity_kg, rejected_kg: r.rejected_quantity_kg, received_at: r.received_at })),
     request_count: requests.length,
-    products_affected: productLinks.map((l) => ({ lot_id: l.lot.id, lot_code: l.lot.code, product_id: l.lot.product.id, product_name: l.lot.product.name, holder_user_id: l.lot.current_holder_user_id })),
+    products_affected: productLinks.map((l) => ({
+      run_id: l.run.id,
+      run_code: l.run.code,
+      run_status: l.run.status,
+      product_id: l.product.id,
+      product_code: l.product.code,
+      product_name: l.product.name,
+      lot_id: l.lot_id,
+      lot_code: l.lot_code,
+      holder_user_id: l.current_holder_user_id,
+    })),
   };
 }
 
@@ -959,4 +1029,9 @@ module.exports = {
   ensureBatchInventory,
   nextRequestCode,
   nextGrnCode,
+  // phase 10 — tx-scoped kernels (products service composes them inside its
+  // own manufacturing-run transaction; never nest prisma.$transaction)
+  reserveTx,
+  releaseTx,
+  consumeTx,
 };
