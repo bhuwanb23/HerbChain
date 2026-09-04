@@ -66,11 +66,19 @@ every attempt to `qr_scan_logs`:
 | transferred / revoked / invalidated | `replay` (copy of a dead QR stays dead) |
 | ACTIVE + live | `success` → { batch, owner, version, status } |
 
-**Transfer** — `POST /api/v1/qr/transfer` (receiver presents the holder's
-token) is the atomic engine, in ONE transaction: guards → kill old token
-(`transferred`) → create next version for the receiver → move
-`Batch.phase/current_holder` → append `TRANSFER` event + scan log + audit +
-pending blockchain anchor. Any failure rolls everything back.
+**Transfer** — `POST /api/v1/qr/transfer` is the atomic engine, in ONE
+transaction: guards → kill old token (`transferred`) → create next version
+for the receiver → move `Batch.phase/current_holder` → append `TRANSFER`
+event + scan log + audit + pending blockchain anchor. Any failure rolls
+everything back.
+
+> **Phase 6 supersession:** custody now requires a two-party agreement — this
+> endpoint refuses to move anything without an APPROVED `TransferRequest`
+> (`transfer_not_requested`). The governed lifecycle lives in
+> `POST /api/v1/transfers/*` (request → approve → execute, docs/transfers/
+> architecture.md); `/qr/transfer` remains the scan-and-execute entry that
+> resolves the receiver's approved request. `qrRoutes.js` routes through the
+> same executor as the transfers module, so there is one custody code path.
 
 **Regenerate** — `POST /api/v1/qr/regenerate` (holder or admin; reason
 LOST/DAMAGED/EXPIRED/ADMIN_REPLACEMENT) rotates **without** an ownership

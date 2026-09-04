@@ -1,11 +1,12 @@
 # HerbChain Database Architecture (Redesign)
 
-Status: **LIVE** — `package.json` points at `prisma/schema/` (17 files, 63
+Status: **LIVE** — `package.json` points at `prisma/schema/` (18 files, 65
 models). Migrations are applied on the scratch DB and the backend is built
 phase by phase against these models: Phase 2 auth → Phase 3 batches →
-Phase 4 identification → Phase 5 dynamic QR are live (see docs/auth,
-docs/batch, docs/identification, docs/qr). The legacy `schema.legacy.prisma`
-+ `migrations.legacy/` + old routes/tests are kept as the porting reference.
+Phase 4 identification → Phase 5 dynamic QR → Phase 6 governed transfers
+are live (see docs/auth, docs/batch, docs/identification, docs/qr,
+docs/transfers). The legacy `schema.legacy.prisma` + `migrations.legacy/` +
+old routes/tests are kept as the porting reference.
 
 ## 1. Why a redesign
 
@@ -51,7 +52,7 @@ correct for a demo but has production gaps:
    a model has more than one FK to the same target.
 9. **Email uniqueness** is on the lowercased value — normalize at write time.
 
-## 3. Domain map (17 files, 63 models)
+## 3. Domain map (18 files, 65 models)
 
 | File | Domain | Models |
 |---|---|---|
@@ -65,6 +66,7 @@ correct for a demo but has production gaps:
 | `40_quality.prisma` | Lab & structured tests | `LabProfile`, `TestParameter`, `LabReport`, `LabTestResult` |
 | `50_trace.prisma` | Batches + event timeline + QR scan stream | `Batch`, `BatchEvent`, `QrScanLog` |
 | `51_qr.prisma` | Phase-5 dynamic QR custody tokens | `QrToken`, `QrReplacementLog` |
+| `52_transfer.prisma` | Phase-6 governed two-party transfers | `TransferRequest`, `TransferProof` |
 | `60_products.prisma` | Product master + custody-tracked lots | `Product`, `ProductLot`, `ProductLotEvent`, `ProductLotBatchLink` |
 | `70_commerce.prisma` | Orders & money | `PurchaseOrder`, `OrderItem`, `Invoice`, `Payment`, `Wallet`, `WalletTransaction` |
 | `80_compliance.prisma` | Licenses/recalls/support | `LicenseCert`, `Inspection`, `Recall`, `RecallScope`, `SupportTicket` |
@@ -208,6 +210,8 @@ added because it was missing.
 | `ownership_history` | ✅ | `BatchEvent` (+ `ProductLotEvent` on the product side) |
 | `qr_tokens` | ⬆ | `QrToken` — versioned custody tokens (v1 ACTIVE at batch birth; rotated by transfers/replacements; raw token encrypted at rest, lookup by SHA-256) |
 | `qr_scan_logs` | ➕ | `QrScanLog` — every scan: custody, checks AND anonymous consumer views |
+| `transfer_requests` | ➕ | `TransferRequest` — Phase-6 two-party consent: receiver requests, current holder approves; completed inside the transfer transaction |
+| `transfer_proofs` | ➕ | `TransferProof` — handover evidence (photo asset, signatures, remarks) tied to the TRANSFER BatchEvent |
 | `shipment_requests` | ➕ | `Shipment` (`requested → assigned → picked_up → in_transit → delivered \| failed \| cancelled`) |
 | `shipment_tracking` | ➕ | `ShipmentTrackingPoint` (GPS breadcrumbs per shipment) |
 | `lab_requests` | 🔀 | `BatchEvent` `INTENT_LAB_REQUEST` + phase `at_lab` (event-driven queue; revisit if a stateful queue is wanted) |
@@ -281,7 +285,7 @@ Each module = routes + service + serializers + zod schema, colocated.
 
 ## 8. Verification
 
-- `npx prisma validate --schema prisma/schema` → valid ✅ (17 files, 63 models)
+- `npx prisma validate --schema prisma/schema` → valid ✅ (18 files, 65 models)
 - Migrations applied on the scratch DB (`prisma/scratch_new.db`), `migrate
   status` clean; Prisma client regenerated per phase
 - Active test suites green: auth, batches, identification, qr (75 cases)

@@ -145,6 +145,12 @@ erDiagram
     QR_TOKEN ||--o{ BATCH : "one ACTIVE per batch (51_qr)"
     QR_TOKEN ||--o{ USER : "owner"
     QR_TOKEN ||--o{ QR_REPLACEMENT_LOG : "old/new"
+    BATCH ||--o{ TRANSFER_REQUEST : "governed handovers (52_transfer)"
+    USER ||--o{ TRANSFER_REQUEST : "from (current holder at request)"
+    USER ||--o{ TRANSFER_REQUEST : "to (receiver)"
+    TRANSFER_REQUEST ||--o{ TRANSFER_PROOF : "handover evidence"
+    TRANSFER_REQUEST }o--|| BATCH_EVENT : "completed by"
+    TRANSFER_PROOF ||--o{ ASSET : "photo"
     BATCH_EVENT {
         string id PK
         string batch_id FK
