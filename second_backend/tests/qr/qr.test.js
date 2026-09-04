@@ -1,15 +1,15 @@
 /**
- * Phase 5 dynamic QR engine tests — versioned, stateful ownership tokens.
+ * Phase 5/6 dynamic QR engine tests — versioned, stateful ownership tokens.
  *
- * Verifies the spec's core claims on an isolated DB:
+ * Phase 6 hardens the journey: custody moves only through an approved
+ * two-party TransferRequest (receiver requests -> current holder approves ->
+ * receiver executes with the scanned holder QR). Verifies on an isolated DB:
  *  - v1 is born ACTIVE at batch creation (owner = farmer)
  *  - one ACTIVE token per batch, always (DB partial index + transaction)
- *  - custody transfers rotate the QR inside one atomic transaction
- *    (spec journey: farmer v1 -> transporter v2 -> lab v3 -> transporter v4
- *     -> manufacturer v5, with phase transitions)
+ *  - governed custody journey farmer v1 -> transporter v2 -> lab v3 ->
+ *    transporter v4 -> manufacturer v5, with QR rotation per hop
  *  - replay protection: transferred/revoked/expired tokens die
- *  - replacement (lost/damaged/admin) rotates without ownership change and
- *    is logged in qr_replacement_logs
+ *  - replacement (lost/damaged/admin) rotates without ownership change
  *  - every scan/attempt lands in qr_scan_logs with the right outcome
  */
 const { test, before, after } = require("node:test");
@@ -69,9 +69,39 @@ async function card(batchId, token) {
   return res.body.data.qr;
 }
 
+/** Active QR token for the holder. */
+async function tokenOf(batchId, holderToken) {
+  const qr = await card(batchId, holderToken);
+  return qr.url.split("/qr/")[1];
+}
+
 const validate = (token, body) => request(app).post("/api/v1/qr/validate").set("Authorization", `Bearer ${token}`).send(body);
 const transfer = (token, body) => request(app).post("/api/v1/qr/transfer").set("Authorization", `Bearer ${token}`).send(body);
 const regenerate = (token, body) => request(app).post("/api/v1/qr/regenerate").set("Authorization", `Bearer ${token}`).send(body);
+const reqCustody = (token, body) => request(app).post("/api/v1/transfers/request").set("Authorization", `Bearer ${token}`).send(body);
+const approveReq = (token, body) => request(app).post("/api/v1/transfers/approve").set("Authorization", `Bearer ${token}`).send(body);
+
+/**
+ * One governed hop: receiver requests custody -> holder approves -> receiver
+ * executes with the holder's scanned QR. Returns the execute response.
+ */
+async function governedHop({ receiverToken, holderToken, batchId, expectType = null }) {
+  const r = await reqCustody(receiverToken, { batch_id: batchId });
+  assert.equal(r.status, 201, JSON.stringify(r.body));
+  if (expectType) assert.equal(r.body.data.request.type, expectType);
+  assert.equal(r.body.data.request.status, "pending");
+  const requestId = r.body.data.request.id;
+
+  const a = await approveReq(holderToken, { request_id: requestId });
+  assert.equal(a.status, 200, JSON.stringify(a.body));
+  assert.equal(a.body.data.request.status, "approved");
+
+  const token = await tokenOf(batchId, holderToken);
+  const ex = await transfer(receiverToken, { token });
+  assert.equal(ex.status, 200, JSON.stringify(ex.body));
+  assert.equal(ex.body.data.request.status, "completed");
+  return ex;
+}
 
 const activeCount = (batchId) => prisma.qrToken.count({ where: { batch_id: batchId, status: "active" } });
 
@@ -129,14 +159,18 @@ test("validate: unknown token -> not_found, logged", async () => {
 
 // ------------------------------------------------ transfer journey v1..v5
 
-test("custody journey farmer->transporter->lab->transporter->manufacturer rotates QR atomically", async () => {
+test("governed custody journey farmer->transporter->lab->transporter->manufacturer rotates QR atomically", async () => {
   const batch = await createBatch(farmer.token);
+  let holderToken = farmer.token;
+  const preToken1 = await tokenOf(batch.id, farmer.token); // v1 (born)
 
-  // -- v1 farmer (born) -> v2 transporter (in_transit_to_lab)
-  const qr1 = await card(batch.id, farmer.token);
-  const token1 = qr1.url.split("/qr/")[1];
-  const hop1 = await transfer(transporter.token, { token: token1, gps_lat: 13.1, gps_lng: 80.2 });
-  assert.equal(hop1.status, 200, JSON.stringify(hop1.body));
+  // -- v1 farmer -> v2 transporter (in_transit_to_lab)
+  const hop1 = await governedHop({
+    receiverToken: transporter.token,
+    holderToken,
+    batchId: batch.id,
+    expectType: "FARMER_TO_TRANSPORTER",
+  });
   assert.equal(hop1.body.data.old_version, 1);
   assert.equal(hop1.body.data.new_version, 2);
   assert.equal(hop1.body.data.phase_after, "in_transit_to_lab");
@@ -146,39 +180,35 @@ test("custody journey farmer->transporter->lab->transporter->manufacturer rotate
   let holder = await prisma.batch.findUnique({ where: { id: batch.id } });
   assert.equal(holder.current_holder_user_id, transporter.user.id);
   assert.equal(holder.phase, "in_transit_to_lab");
+  holderToken = transporter.token;
 
-  // old token is dead (replay) and the new one validates for the transporter
-  const replay1 = await validate(farmer.token, { token: token1 });
+  // old v1 token is dead (replay); the live v2 validates for the transporter
+  const replay1 = await validate(farmer.token, { token: preToken1 });
   assert.equal(replay1.body.data.valid, false);
   assert.equal(replay1.body.data.reason, "replay");
-  const qr2 = await card(batch.id, transporter.token);
-  const token2 = qr2.url.split("/qr/")[1];
-  assert.equal(qr2.version, 2);
-  const ok2 = await validate(transporter.token, { token: token2 });
+  const ok2 = await validate(transporter.token, { token: await tokenOf(batch.id, transporter.token) });
   assert.equal(ok2.body.data.valid, true);
   assert.equal(ok2.body.data.owner.role, "transporter");
 
   // -- v2 transporter -> v3 lab (at_lab)
-  const hop2 = await transfer(lab.token, { token: token2 });
-  assert.equal(hop2.status, 200);
+  const hop2 = await governedHop({ receiverToken: lab.token, holderToken, batchId: batch.id, expectType: "TRANSPORTER_TO_LAB" });
   assert.equal(hop2.body.data.new_version, 3);
   holder = await prisma.batch.findUnique({ where: { id: batch.id } });
   assert.equal(holder.current_holder_user_id, lab.user.id);
   assert.equal(holder.phase, "at_lab");
+  holderToken = lab.token;
+
   const qr3 = await card(batch.id, lab.token);
-  const token3 = qr3.url.split("/qr/")[1];
+  assert.equal(qr3.version, 3);
 
   // -- v3 lab -> v4 transporter (in_transit_to_manufacturer)
-  const hop3 = await transfer(transporter.token, { token: token3 });
-  assert.equal(hop3.status, 200);
+  const hop3 = await governedHop({ receiverToken: transporter.token, holderToken, batchId: batch.id, expectType: "LAB_TO_TRANSPORTER" });
   assert.equal(hop3.body.data.new_version, 4);
   assert.equal(hop3.body.data.phase_after, "in_transit_to_manufacturer");
-  const qr4 = await card(batch.id, transporter.token);
-  const token4 = qr4.url.split("/qr/")[1];
+  holderToken = transporter.token;
 
   // -- v4 transporter -> v5 manufacturer (with_manufacturer — terminal)
-  const hop4 = await transfer(manufacturer.token, { token: token4 });
-  assert.equal(hop4.status, 200);
+  const hop4 = await governedHop({ receiverToken: manufacturer.token, holderToken, batchId: batch.id, expectType: "TRANSPORTER_TO_MANUFACTURER" });
   assert.equal(hop4.body.data.new_version, 5);
   assert.equal(hop4.body.data.phase_after, "with_manufacturer");
   const qr5 = await card(batch.id, manufacturer.token);
@@ -196,6 +226,7 @@ test("custody journey farmer->transporter->lab->transporter->manufacturer rotate
   assert.equal(events[3].phase_after, "with_manufacturer");
   assert.equal(events[0].payload_json.token_version, 1);
   assert.equal(events[0].payload_json.new_token_version, 2);
+  assert.equal(events[0].payload_json.request_id, hop1.body.data.request.id);
   const anchored = await prisma.blockchainEvent.count({
     where: { anchor_code: "TRANSFERRED", entity_id: { in: events.map((e) => e.id) } },
   });
@@ -215,55 +246,60 @@ test("custody journey farmer->transporter->lab->transporter->manufacturer rotate
 
 // ---------------------------------------------------------------- guards
 
-test("guards: wrong role, self-transfer, terminal phase, unverified receiver", async () => {
+test("guards: unrequested transfers blocked; self/unverified/consumer blocked at request", async () => {
   const batch = await createBatch(farmer.token);
 
-  // Manufacturer cannot pull straight from the farmer (matrix violation).
-  const qrF = await card(batch.id, farmer.token);
-  const wrong = await transfer(manufacturer.token, { token: qrF.url.split("/qr/")[1] });
-  assert.equal(wrong.status, 409);
-  assert.equal(wrong.body.error.code, "invalid_transition");
+  // Manufacturer cannot request custody straight from the farmer (matrix violation).
+  const wrongReq = await reqCustody(manufacturer.token, { batch_id: batch.id });
+  assert.equal(wrongReq.status, 409);
+  assert.equal(wrongReq.body.error.code, "invalid_transition");
 
-  // Farmer cannot self-transfer.
-  const self = await transfer(farmer.token, { token: qrF.url.split("/qr/")[1] });
-  assert.equal(self.status, 409);
-  assert.equal(self.body.error.code, "self_transfer");
+  // The current holder (farmer) cannot request their own batch.
+  const selfReq = await reqCustody(farmer.token, { batch_id: batch.id });
+  assert.equal(selfReq.status, 403); // farmer is not a receiver role
   assert.equal(await activeCount(batch.id), 1); // nothing mutated
 
-  // Unverified lab cannot receive (AYUSH gate).
-  const unver = await transfer(unverifiedLab.token, { token: qrF.url.split("/qr/")[1] });
-  assert.equal(unver.status, 403);
-  assert.equal(unver.body.error.code, "account_not_verified");
+  // Unverified lab cannot request (AYUSH gate).
+  const unverReq = await reqCustody(unverifiedLab.token, { batch_id: batch.id });
+  assert.equal(unverReq.status, 403);
+  assert.equal(unverReq.body.error.code, "account_not_verified");
 
-  // Consumer has no custody role -> matrix violation.
-  const consumerTry = await transfer(consumer.token, { token: qrF.url.split("/qr/")[1] });
-  assert.equal(consumerTry.status, 409);
+  // Consumer has no custody role.
+  const consumerReq = await reqCustody(consumer.token, { batch_id: batch.id });
+  assert.equal(consumerReq.status, 403);
 
-  // Legit journey to the terminal phase (transporter -> lab -> manufacturer
-  // self-collect), then the phase is sealed.
-  const qrA = await card(batch.id, farmer.token);
-  const hopT = await transfer(transporter.token, { token: qrA.url.split("/qr/")[1] });
+  // Approved request for the transporter, but a different party (lab) tries
+  // to execute with the farmer's token -> blocked (no approved request for lab).
+  const req = await reqCustody(transporter.token, { batch_id: batch.id });
+  const reqId = req.body.data.request.id;
+  await approveReq(farmer.token, { request_id: reqId });
+  const stolen = await transfer(lab.token, { token: await tokenOf(batch.id, farmer.token) });
+  assert.equal(stolen.status, 409);
+  assert.equal(stolen.body.error.code, "transfer_not_requested");
+
+  // Holder cancels the stale approved request before the real journey.
+  const cancel = await request(app)
+    .post("/api/v1/transfers/cancel")
+    .set("Authorization", `Bearer ${farmer.token}`)
+    .send({ request_id: reqId });
+  assert.equal(cancel.status, 200);
+  assert.equal(cancel.body.data.request.status, "cancelled");
+
+  // Legit journey to the terminal phase, then the phase is sealed.
+  const hopT = await governedHop({ receiverToken: transporter.token, holderToken: farmer.token, batchId: batch.id });
   assert.equal(hopT.status, 200);
-  const qrT = await card(batch.id, transporter.token);
-  const hopL = await transfer(lab.token, { token: qrT.url.split("/qr/")[1] });
+  const hopL = await governedHop({ receiverToken: lab.token, holderToken: transporter.token, batchId: batch.id });
   assert.equal(hopL.status, 200);
-  const qrL = await card(batch.id, lab.token);
-  const hopM = await transfer(manufacturer.token, { token: qrL.url.split("/qr/")[1] });
-  assert.equal(hopM.status, 200);
+  const hopM = await governedHop({ receiverToken: manufacturer.token, holderToken: lab.token, batchId: batch.id });
   assert.equal(hopM.body.data.phase_after, "with_manufacturer");
 
-  // Terminal: nobody can move it onward.
-  const qrM = await card(batch.id, manufacturer.token);
-  const staleTry = await transfer(manufacturer.token, { token: qrM.url.split("/qr/")[1] });
-  assert.equal(staleTry.status, 409);
-  assert.equal(staleTry.body.error.code, "self_transfer"); // they hold it
-  const stranger = await transfer(transporter.token, { token: qrM.url.split("/qr/")[1] });
+  // Terminal: nobody can request or move it onward.
+  const terminalReq = await reqCustody(transporter.token, { batch_id: batch.id });
+  assert.equal(terminalReq.status, 409);
+  assert.equal(terminalReq.body.error.code, "invalid_transition");
+  const stranger = await transfer(transporter.token, { token: await tokenOf(batch.id, manufacturer.token) });
   assert.equal(stranger.status, 409);
-  assert.equal(stranger.body.error.code, "invalid_transition");
-
-  // Unauthorised role attempts were logged as anomalies.
-  const unauth = await prisma.qrScanLog.count({ where: { target_type: "batch", target_id: batch.id, outcome: "unauthorized" } });
-  assert.ok(unauth >= 2);
+  assert.equal(stranger.body.error.code, "transfer_not_requested");
 });
 
 // -------------------------------------------------------------- regenerate
@@ -337,22 +373,16 @@ test("regenerate: admin can rotate any batch (ADMIN_REPLACEMENT); expiry regener
   assert.equal(qr3.owner_user_id, farmer.user.id);
 });
 
-test("one-active invariant survives parallel-ish rotations", async () => {
+test("one-active invariant survives interleaved governed hops + regenerations", async () => {
   const batch = await createBatch(farmer.token);
-  const qr = await card(batch.id, farmer.token);
-  const token = qr.url.split("/qr/")[1];
 
-  // Interleave transfers + regenerations; the count must stay at 1.
-  await transfer(transporter.token, { token });
-  const qr2 = await card(batch.id, transporter.token);
+  await governedHop({ receiverToken: transporter.token, holderToken: farmer.token, batchId: batch.id });
   await regenerate(transporter.token, { batch_id: batch.id, reason: "DAMAGED" });
   const qr3 = await card(batch.id, transporter.token);
-  const hop = await transfer(lab.token, { token: qr3.url.split("/qr/")[1] });
-  assert.equal(hop.status, 200);
-  const qr4 = await card(batch.id, lab.token);
-  assert.equal(qr4.version, 4);
+  assert.equal(qr3.version, 3);
+  const hop = await governedHop({ receiverToken: lab.token, holderToken: transporter.token, batchId: batch.id });
+  assert.equal(hop.body.data.new_version, 4);
   assert.equal(await activeCount(batch.id), 1);
-  void qr2;
 
   // DB-level guard: creating a second ACTIVE token for the same batch fails.
   await assert.rejects(
