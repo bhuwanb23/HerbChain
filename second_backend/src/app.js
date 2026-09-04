@@ -62,6 +62,7 @@ function _mountCoreRoutes(app) {
         batch_ownership: "/api/v1/batches/:id (owner | ownership-history)",
         shipments: "/api/v1/shipments (create | :id/assign | accept | pickup | location | deliver | pod | timeline)",
         labs: "/api/v1/labs (receive | samples | tests | reviews | certificates | reject | analytics)",
+        manufacturer: "/api/v1/manufacturer (certified-batches | request-batch | receive | inventory | quality-holds | analytics)",
       },
     });
   });
@@ -120,6 +121,11 @@ function _mountRoutes(app) {
   // Phase 8: laboratory certification (receive/samples/tests/review/COA).
   const { mountLabRoutes } = require("./modules/lab/labRoutes");
   mountLabRoutes(app);
+
+  // Phase 9: manufacturer procurement (certified marketplace, requests,
+  // GRN + inventory, quality holds, analytics).
+  const { mountManufacturerRoutes } = require("./modules/procurement/procurementRoutes");
+  mountManufacturerRoutes(app);
 }
 
 // ------------------------------------------------------------- error box

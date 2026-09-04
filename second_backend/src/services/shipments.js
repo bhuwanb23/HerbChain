@@ -119,8 +119,14 @@ async function nextShipmentCode(tx) {
  * Create a shipment request (spec: lab requesting a batch / manufacturer
  * requesting a batch / admin intervention). The destination party is the
  * requester; origin = the batch's current holder snapshot.
+ *
+ * Internal option `opts.requesterUserId` (used by the Phase-9 procurement
+ * engine): the acting caller may be the holder approving a procurement
+ * request, while the shipment must belong to the MANUFACTURER (requester +
+ * destination). The acting user must be the batch's current holder or an
+ * admin; the override must reference a verified manufacturer account.
  */
-async function createShipment(user, input) {
+async function createShipment(user, input, opts = {}) {
   if (!REQUESTER_ROLES.includes(user.role) && user.role !== "admin") {
     throw new ApiError("forbidden", `A ${user.role} cannot raise a shipment request`, 403);
   }
@@ -138,9 +144,23 @@ async function createShipment(user, input) {
   const batch = await prisma.batch.findUnique({ where: { id: input.ref_id } });
   if (!batch) throw new ApiError("not_found", "Batch not found", 404);
 
+  // Internal procurement override: shipment belongs to the manufacturer
+  // (requester + destination), created on approval by the holder/admin.
+  let requesterId = user.id;
+  if (opts.requesterUserId) {
+    if (user.role !== "admin" && batch.current_holder_user_id !== user.id) {
+      throw new ApiError("forbidden", "Only the batch holder (or an admin) can auto-create a procurement shipment", 403);
+    }
+    const requester = await prisma.user.findUnique({ where: { id: opts.requesterUserId } });
+    if (!requester || requester.role !== "manufacturer" || !requester.is_active) {
+      throw new ApiError("bad_request", "requesterUserId must reference an active manufacturer account", 400);
+    }
+    requesterId = requester.id;
+  }
+
   // The requester is the destination party; origin = current holder snapshot.
   const origin = batch.current_holder_user_id;
-  const toUser = user.role === "admin" && input.to_user_id ? input.to_user_id : user.id;
+  const toUser = user.role === "admin" && input.to_user_id ? input.to_user_id : requesterId;
   const fromRole = (await prisma.user.findUnique({ where: { id: origin }, select: { role: true } })).role;
   const toRole = (await prisma.user.findUnique({ where: { id: toUser }, select: { role: true } })).role;
 
@@ -165,7 +185,7 @@ async function createShipment(user, input) {
         ref_id: batch.id,
         shipment_type: shipmentType,
         priority: input.priority || "NORMAL",
-        requested_by_user_id: user.id,
+        requested_by_user_id: requesterId,
         from_user_id: origin,
         from_role: fromRole,
         to_user_id: toUser,
@@ -185,10 +205,10 @@ async function createShipment(user, input) {
       },
     });
     await writeTimeline(tx, row.id, "REQUESTED", {
-      actorUserId: user.id,
-      data: { code, batch_code: batch.code, shipment_type: shipmentType },
+      actorUserId: requesterId,
+      data: { code, batch_code: batch.code, shipment_type: shipmentType, auto_created: Boolean(opts.requesterUserId) },
     });
-    await writeAudit(tx, { actorUserId: user.id, action: "SHIPMENT_REQUESTED", shipmentId: row.id, meta: { code, batch_id: batch.id, shipment_type: shipmentType } });
+    await writeAudit(tx, { actorUserId: user.id, action: "SHIPMENT_REQUESTED", shipmentId: row.id, meta: { code, batch_id: batch.id, shipment_type: shipmentType, requester_user_id: requesterId, auto_created: Boolean(opts.requesterUserId) } });
     return row;
   });
 
