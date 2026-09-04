@@ -60,6 +60,7 @@ function _mountCoreRoutes(app) {
         qr: "/api/v1/qr (validate | transfer | regenerate)",
         transfers: "/api/v1/transfers (request | approve | reject | cancel | execute | recover)",
         batch_ownership: "/api/v1/batches/:id (owner | ownership-history)",
+        shipments: "/api/v1/shipments (create | :id/assign | accept | pickup | location | deliver | pod | timeline)",
       },
     });
   });
@@ -110,6 +111,10 @@ function _mountRoutes(app) {
   // Phase 6: governed two-party ownership transfers (request/approve/execute).
   const { mountTransfersRoutes } = require("./modules/transfers/transfersRoutes");
   mountTransfersRoutes(app);
+
+  // Phase 7: shipment & logistics (create/assign/pickup/track/deliver/pod).
+  const { mountShipmentRoutes } = require("./modules/shipments/shipmentsRoutes");
+  mountShipmentRoutes(app);
 }
 
 // ------------------------------------------------------------- error box
