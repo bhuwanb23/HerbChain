@@ -15,6 +15,7 @@ const { registerUser, PROFILE_MODEL, PROFILE_FK, PROFILE_CODE_FIELD } = require(
 const { approveUser } = require("../services/verification");
 const { hashPassword } = require("../services/passwords");
 const { getLogger } = require("../config/logging");
+const { AYUSH_SPECIES } = require("./ayushCatalogue");
 
 const logger = getLogger("seed");
 
@@ -75,6 +76,43 @@ async function ensureDemoAccount(def, admin) {
   return user;
 }
 
+/** Upsert the 25-species AYUSH catalogue (idempotent). */
+async function seedSpecies() {
+  let created = 0;
+  for (const s of AYUSH_SPECIES) {
+    const code = s.species_id; // lowercase slug codes (e.g. "tulsi", "aloe-vera")
+    const species = await prisma.species.upsert({
+      where: { code },
+      update: {
+        common_name: s.common_name,
+        scientific_name: s.scientific_name,
+        ayush_category: "ayurveda",
+        season_planting: s.season_planting,
+        season_harvest: s.season_harvest,
+        is_active: true,
+      },
+      create: {
+        code,
+        common_name: s.common_name,
+        scientific_name: s.scientific_name,
+        family: null,
+        ayush_category: "ayurveda",
+        season_planting: s.season_planting,
+        season_harvest: s.season_harvest,
+        is_active: true,
+      },
+    });
+    created += 1;
+    for (const name of s.synonyms || []) {
+      const exists = await prisma.speciesSynonym.findFirst({ where: { species_id: species.id, name } });
+      if (!exists) {
+        await prisma.speciesSynonym.create({ data: { species_id: species.id, name, language: "en" } });
+      }
+    }
+  }
+  return { species: created, synonyms: AYUSH_SPECIES.reduce((n, s) => n + (s.synonyms || []).length, 0) };
+}
+
 async function main() {
   const fresh = process.argv.includes("--fresh");
   if (fresh) {
@@ -85,6 +123,9 @@ async function main() {
 
   const rbac = await seedRbac();
   logger.info(`RBAC catalog: ${rbac.permissions} permissions, ${rbac.grants} role grants`);
+
+  const catalogue = await seedSpecies();
+  logger.info(`Species catalogue: ${catalogue.species} species, ${catalogue.synonyms} synonyms`);
 
   const admin = await upsertAdmin();
   logger.info(`Admin ready: ${ADMIN_EMAIL}`);
