@@ -72,6 +72,11 @@ model User {
   batch_events_from     BatchEvent[]  @relation("EventFrom")
   batch_events_to       BatchEvent[]  @relation("EventTo")
 
+  // phase 5 — dynamic QR tokens (51_qr.prisma)
+  qr_tokens_owned      QrToken[]           @relation("QrOwner")
+  qr_tokens_generated  QrToken[]           @relation("QrGenerator")
+  qr_replacements      QrReplacementLog[]  @relation("QrReplacer")
+
   // quality
   lab_reports LabReport[] @relation("LabReporter")
 

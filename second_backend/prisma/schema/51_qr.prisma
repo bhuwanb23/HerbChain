@@ -1,0 +1,77 @@
+// ============================================================================
+// QR — dynamic ownership tokens (Phase 5, docs/phase_5.md).
+// ----------------------------------------------------------------------------
+// Supersedes the stateless nonce QR decision (database/architecture.md §5b.2):
+// a QR now represents CURRENT OWNERSHIP STATE, so the engine keeps one
+// versioned, stateful token row per custody step. Every ownership transfer
+// deactivates the current token (transferred) and activates the next version
+// for the new holder — one ACTIVE token per batch, enforced in the transfer
+// transaction (and by a partial unique index, see the migration).
+//
+// Security: the raw token is NEVER stored in plaintext. Lookups use its
+// SHA-256 hash (sessions/API-key convention) and the row also keeps an
+// AES-256-GCM ciphertext of the raw token (key derived from the server
+// secret) so the current holder can re-print the SAME active QR — a printed
+// copy stays valid until rotation, never re-mints per GET.
+// ============================================================================
+
+// One custody token per (batch, version). v1 is minted ACTIVE inside the
+// batch-creation transaction; every transfer/regeneration rotates it.
+// status: active | transferred | expired | invalidated | revoked
+// deactivation_reason: transfer | expired | replaced_lost | replaced_damaged |
+//                      admin_replacement | invalidated (fraud)
+model QrToken {
+  id                   String    @id @default(cuid())
+  batch_id             String
+  version              Int // 1-based; (batch_id, version) unique
+  token_hash           String    @unique // sha256 of the raw token (lookup key)
+  token_cipher         String // AES-256-GCM ciphertext of the raw token (reprint)
+  token_prefix         String // short display prefix, e.g. "hbc_92kDj7…"
+  status               String    @default("active") // code list above
+  owner_user_id        String // who this QR proves custody for
+  owner_role           String // role snapshot at mint time (audit stability)
+  generated_by_user_id String // who minted it
+  generated_at         DateTime  @default(now())
+  activated_at         DateTime? // set when the token became the live QR
+  deactivated_at       DateTime? // set when transferred/expired/revoked
+  expiry_at            DateTime // token TTL (env QR_TOKEN_TTL_DAYS) — NOT ownership expiry
+  deactivation_reason  String? // code list above
+  created_at           DateTime  @default(now())
+
+  batch          Batch @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  owner          User  @relation("QrOwner", fields: [owner_user_id], references: [id])
+  generated_by   User  @relation("QrGenerator", fields: [generated_by_user_id], references: [id])
+
+  replacements_as_old QrReplacementLog[] @relation("QrReplacedFrom")
+  replacements_as_new QrReplacementLog[] @relation("QrReplacedTo")
+
+  @@unique([batch_id, version])
+  @@index([batch_id, status])
+  @@index([owner_user_id])
+  @@index([status, expiry_at])
+  @@map("qr_tokens")
+}
+
+// Non-transfer rotations (lost/damaged/expired/admin) — the audit trail of
+// "old died, new born" with the same owner. Transfers are recorded in
+// BatchEvent + the token status change; replacements here.
+// reason: LOST | DAMAGED | EXPIRED | ADMIN_REPLACEMENT
+model QrReplacementLog {
+  id            String   @id @default(cuid())
+  batch_id      String
+  old_token_id  String?
+  new_token_id  String?
+  old_version   Int?
+  new_version   Int?
+  reason        String // code list above
+  created_by_user_id String
+  created_at    DateTime @default(now())
+
+  batch      Batch     @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  old_token  QrToken?  @relation("QrReplacedFrom", fields: [old_token_id], references: [id], onDelete: SetNull)
+  new_token  QrToken?  @relation("QrReplacedTo", fields: [new_token_id], references: [id], onDelete: SetNull)
+  created_by User      @relation("QrReplacer", fields: [created_by_user_id], references: [id])
+
+  @@index([batch_id, created_at])
+  @@map("qr_replacement_logs")
+}
