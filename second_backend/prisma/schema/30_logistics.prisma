@@ -1,0 +1,142 @@
+// ============================================================================
+// LOGISTICS — transporter & manufacturer operational data, warehouses, stock.
+// ----------------------------------------------------------------------------
+// TransporterProfile / ManufacturerProfile are the 1:1 org rows for their
+// users. Warehouses are physical storage sites (transporter hub, factory
+// godown, distributor depot). StockMovement is an append-only ledger of what
+// entered/left each warehouse, referencing batches or products.
+// ============================================================================
+
+model TransporterProfile {
+  id              String   @id @default(cuid())
+  transporter_id  String   @unique
+  company_name    String?
+  registration_no String?
+  fleet_summary   String? // e.g. "2 tempos, 1 reefer van"
+  serviceable_regions String? // free text or JSON-ish list
+  insurance_valid_until DateTime?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  transporter User @relation(fields: [transporter_id], references: [id], onDelete: Cascade)
+
+  @@map("transporter_profiles")
+}
+
+model ManufacturerProfile {
+  id                 String   @id @default(cuid())
+  manufacturer_id    String   @unique
+  company_name       String?
+  gstin              String? // goods & services tax id
+  ayush_license_no   String? // license to manufacture AYUSH drugs
+  facility_city      String?
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  manufacturer User @relation(fields: [manufacturer_id], references: [id], onDelete: Cascade)
+
+  @@map("manufacturer_profiles")
+}
+
+// Distributor & retailer org rows — distribution now carries custody in the
+// product-lot chain, so these parties get real profile data like the others.
+model DistributorProfile {
+  id              String   @id @default(cuid())
+  distributor_id  String   @unique
+  company_name    String?
+  gstin           String?
+  region          String? // served region(s)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  distributor User @relation(fields: [distributor_id], references: [id], onDelete: Cascade)
+
+  @@map("distributor_profiles")
+}
+
+model RetailerProfile {
+  id         String   @id @default(cuid())
+  retailer_id String  @unique
+  store_name String?
+  gstin      String?
+  store_type String? // pharmacy | health_store | grocery | online | other
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  retailer User @relation(fields: [retailer_id], references: [id], onDelete: Cascade)
+
+  @@map("retailer_profiles")
+}
+
+// Physical storage/handling site. owner_user_id is the party that runs it.
+// kind: farm_storage | transporter_hub | lab_storage | factory_godown |
+//       distributor_depot | retail
+model Warehouse {
+  id          String   @id @default(cuid())
+  owner_user_id String
+  kind        String   @default("factory_godown") // code list above
+  name        String
+  address_id  String?
+  gps_lat     Float?
+  gps_lng     Float?
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  owner User @relation(fields: [owner_user_id], references: [id], onDelete: Cascade)
+
+  movements StockMovement[]
+  positions StockPosition[]
+
+  @@index([owner_user_id])
+  @@index([kind])
+  @@map("warehouses")
+}
+
+// Append-only stock ledger entry. ref_type/ref_id point at a batch or product
+// (polymorphic): quantity_kg moves bulk lots, quantity_units moves finished
+// goods. direction: in | out | adjust
+// reason: receive | ship | split_in | split_out | produce_consume | damage |
+//         expiry | recount | order_dispatch | order_receive
+// Balances are NOT stored here — see StockPosition (current state).
+model StockMovement {
+  id          String   @id @default(cuid())
+  warehouse_id String
+  actor_user_id String
+  ref_type    String // batch | product
+  ref_id      String
+  direction   String // in | out | adjust
+  reason      String // code list above
+  quantity_kg Float?
+  quantity_units Int?
+  reference_doc String? // order/invoice number tying this movement
+  notes       String?
+  created_at  DateTime @default(now())
+
+  warehouse Warehouse @relation(fields: [warehouse_id], references: [id], onDelete: Cascade)
+  actor     User      @relation(fields: [actor_user_id], references: [id])
+
+  @@index([warehouse_id])
+  @@index([ref_type, ref_id])
+  @@index([created_at])
+  @@map("stock_movements")
+}
+
+// Current stock state per warehouse/ref — the O(1) read side of the ledger,
+// updated transactionally with each StockMovement (mirrors Wallet.balance vs
+// WalletTransaction). One row per (warehouse, batch or product).
+model StockPosition {
+  id          String   @id @default(cuid())
+  warehouse_id String
+  ref_type    String // batch | product
+  ref_id      String
+  quantity_kg Float    @default(0) // bulk lots
+  quantity_units Int    @default(0) // finished goods
+  updated_at  DateTime @updatedAt
+  created_at  DateTime @default(now())
+
+  warehouse Warehouse @relation(fields: [warehouse_id], references: [id], onDelete: Cascade)
+
+  @@unique([warehouse_id, ref_type, ref_id])
+  @@map("stock_positions")
+}

@@ -1,0 +1,62 @@
+// ============================================================================
+// NOTIFICATIONS — templates, per-recipient notifications, push device tokens.
+// ============================================================================
+
+// Reusable message templates. channels lists allowed delivery channels, e.g.
+// ["in_app","push","email"]. Body may contain {placeholders}.
+model NotificationTemplate {
+  id         String   @id @default(cuid())
+  code       String   @unique // e.g. "batch_transferred", "lab_report_ready"
+  name       String
+  channels   String   @default("in_app") // comma list: in_app,push,email
+  title      String
+  body       String
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  notifications Notification[]
+
+  @@map("notification_templates")
+}
+
+// One outbound notification per recipient. In-app rendering + audit record of
+// pushes/emails sent. type mirrors the template code when template-driven.
+// channel: in_app | push | email
+model Notification {
+  id             String    @id @default(cuid())
+  recipient_user_id String
+  template_id    String?
+  type           String // e.g. "batch_transferred" | "recall" | "system"
+  channel        String    @default("in_app") // in_app | push | email
+  title          String
+  body           String
+  data_json      Json?     // deep links / entity refs for the client
+  is_read        Boolean   @default(false)
+  read_at        DateTime?
+  sent_at        DateTime? // delivery confirmation for push/email
+  created_at     DateTime  @default(now())
+
+  recipient User                 @relation(fields: [recipient_user_id], references: [id], onDelete: Cascade)
+  template  NotificationTemplate? @relation(fields: [template_id], references: [id], onDelete: SetNull)
+
+  @@index([recipient_user_id, is_read, created_at])
+  @@index([type])
+  @@map("notifications")
+}
+
+// Push-token registry so the notification worker knows where to deliver.
+model DeviceToken {
+  id            String    @id @default(cuid())
+  user_id       String
+  platform      String // android | ios | web
+  token         String    @unique // FCM / APNs / web-push token
+  last_seen_at  DateTime?
+  created_at    DateTime  @default(now())
+  revoked_at    DateTime?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("device_tokens")
+}

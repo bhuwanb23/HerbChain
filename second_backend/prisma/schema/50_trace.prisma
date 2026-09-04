@@ -1,0 +1,99 @@
+// ============================================================================
+// TRACE — batches (traceable lots) and their custody timeline.
+// ----------------------------------------------------------------------------
+// `Batch` is the core supply-chain entity: a harvest lot. The old design kept
+// batch data and mutable state in two tables; here the phase/holder/test
+// status live directly on the row (single source of truth), and every change
+// is appended to BatchEvent — the immutable, signed audit timeline that powers
+// consumer traceability.
+//
+// phase state machine (src/constants will own the transitions):
+//   with_farmer -> in_transit_to_lab -> at_lab -> in_transit_to_manufacturer
+//               -> with_manufacturer -> consumed
+// plus split/bookkeeping phases as needed.
+// ============================================================================
+
+model Batch {
+  id             String   @id @default(cuid())
+  code           String   @unique // e.g. "BAT-2026-0001" (was HERB-…)
+
+  // provenance
+  farmer_id      String
+  species_id     String
+  plot_id        String?  // FarmPlot.id when grown on a registered plot
+  crop_plan_id   String?  // CropPlan.id when tied to a planting cycle
+  parent_batch_id String? // set when this batch was created by a split
+
+  // harvest facts
+  harvest_date   DateTime?
+  location       String?
+  gps_lat        Float?
+  gps_lng        Float?
+  weight_kg      Float // net weight at creation; splits book weight on children
+  notes          String?
+
+  // current custody/state (single-row source of truth)
+  phase               String @default("with_farmer") // code list above
+  current_holder_user_id String // last party in custody
+  test_status         String @default("pending") // pending | approved | rejected
+  qr_nonce            Int    @default(0) // anti-replay counter (see 00_base conventions)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // relations
+  farmer      User      @relation("BatchFarmer", fields: [farmer_id], references: [id])
+  species     Species   @relation(fields: [species_id], references: [id], onDelete: Restrict)
+  plot        FarmPlot? @relation(fields: [plot_id], references: [id], onDelete: SetNull)
+  crop_plan   CropPlan? @relation(fields: [crop_plan_id], references: [id], onDelete: SetNull)
+  parent      Batch?    @relation("BatchSplit", fields: [parent_batch_id], references: [id], onDelete: SetNull)
+  children    Batch[]   @relation("BatchSplit")
+  current_holder User   @relation("BatchHolder", fields: [current_holder_user_id], references: [id])
+
+  events      BatchEvent[]
+  lab_reports LabReport[]
+  product_lot_links ProductLotBatchLink[]
+
+  @@index([code])
+  @@index([farmer_id])
+  @@index([species_id])
+  @@index([phase])
+  @@index([current_holder_user_id])
+  @@index([parent_batch_id])
+  @@index([created_at])
+  @@map("batches")
+}
+
+// Append-only custody/activity timeline. One row per immutable fact — created,
+// transfer, lab report, product link, split, intent. Never updated or hard
+// deleted; payload_json carries typed extras (distances, qty, report refs).
+// event_type codes: CREATED | TRANSFER | LAB_REPORT | PRODUCT_LINK |
+//                   BATCH_SPLIT | INTENT_LAB_REQUEST | INTENT_MANUFACTURER_ORDER
+// qr_token_hash is optional forensics only — replay protection is the nonce.
+model BatchEvent {
+  id            String   @id @default(cuid())
+  batch_id      String
+  event_type    String // code list above
+  actor_user_id String // who performed the action
+  from_user_id  String? // custody handoff: previous holder
+  to_user_id    String? // custody handoff: next holder
+  phase_before  String?
+  phase_after   String?
+  location      String?
+  gps_lat       Float?
+  gps_lng       Float?
+  payload_json  Json?   // {quantity_kg, distance_km, report_id, product_id, note}
+  qr_token_hash String? // sha256 of the token consumed, if a scan happened
+  created_at    DateTime @default(now())
+
+  batch Batch @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  actor User @relation("EventActor", fields: [actor_user_id], references: [id])
+  from_user User? @relation("EventFrom", fields: [from_user_id], references: [id])
+  to_user   User? @relation("EventTo", fields: [to_user_id], references: [id])
+
+  @@index([batch_id, created_at])
+  @@index([event_type])
+  @@index([actor_user_id])
+  @@index([created_at])
+  @@map("batch_events")
+}

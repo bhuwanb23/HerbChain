@@ -1,0 +1,45 @@
+// ============================================================================
+// INTEL — market pricing + weather intelligence for farmers.
+// ============================================================================
+
+// One price observation for a species; the "latest" price = most recent row
+// per (species_id, market) — index supports that lookup. Created by admin or
+// harvested from an external market feed (`source`).
+// market: local | mandi | wholesale | retail | export
+// source: admin | demo | provider
+model PriceQuote {
+  id                String    @id @default(cuid())
+  species_id        String
+  price_per_kg_paise Int // integer paise (e.g. 18000 == ₹180.00)
+  currency          String    @default("INR")
+  market            String    @default("local") // code list above
+  source            String    @default("admin") // code list above
+  effective_at      DateTime  @default(now())
+  notes             String?
+  created_by_user_id String?
+  created_at        DateTime  @default(now())
+
+  species Species @relation(fields: [species_id], references: [id], onDelete: Cascade)
+  creator User?  @relation("PriceQuoter", fields: [created_by_user_id], references: [id], onDelete: SetNull)
+
+  @@index([species_id, effective_at])
+  @@index([market])
+  @@index([created_at])
+  @@map("price_quotes")
+}
+
+// Cached provider weather payload for a lat/lng cell. fetch key = rounded
+// lat/lng; the newest row per cell is served until it expires (service-layer
+// TTL). payload_json mirrors the provider response (current + forecast).
+// provider: openweathermap | stub
+model WeatherSnapshot {
+  id          String   @id @default(cuid())
+  gps_lat     Float
+  gps_lng     Float
+  provider    String   @default("openweathermap")
+  payload_json Json
+  fetched_at  DateTime @default(now())
+
+  @@index([gps_lat, gps_lng, fetched_at])
+  @@map("weather_snapshots")
+}

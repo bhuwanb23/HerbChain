@@ -1,0 +1,111 @@
+// ============================================================================
+// PRODUCTS — finished goods, their production lots, and distribution custody.
+// ----------------------------------------------------------------------------
+// Traceability continues past the factory gate. A `Product` is the master
+// record (name/SKU); every manufactured run is a `ProductLot` with its own
+// quantity, custody chain and QR. Lots move manufacturer -> distributor ->
+// retailer and terminate when sold to a consumer. Composition (which batches
+// went in) is recorded per lot in ProductLotBatchLink.
+//
+// ProductLot phase machine (constants module will own transitions):
+//   with_manufacturer -> in_transit_to_distributor -> with_distributor
+//     -> in_transit_to_retailer -> with_retailer -> sold
+// ============================================================================
+
+// status: draft | active | retired
+model Product {
+  id                String   @id @default(cuid())
+  code              String   @unique // internal product code
+  manufacturer_user_id String
+  name              String
+  sku               String?  @unique // sellable SKU when published
+  description       String?
+  status            String   @default("draft") // code list above
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  deleted_at        DateTime?
+
+  manufacturer User          @relation("ProductManufacturer", fields: [manufacturer_user_id], references: [id])
+  lots         ProductLot[]
+
+  @@index([manufacturer_user_id])
+  @@index([status])
+  @@map("products")
+}
+
+// One manufactured run of a product (a traceable lot of packs/units).
+// QR is stateless: signed claims embed `qr_nonce`, which increments on every
+// custody transfer — no token material is stored, replay is impossible.
+model ProductLot {
+  id              String   @id @default(cuid())
+  code            String   @unique // e.g. "PLT-2026-0001"
+  product_id      String
+  quantity_units  Int      @default(0) // packs/bottles in this run
+  units_remaining Int      @default(0) // sell-out counter; = quantity_units at LOT_CREATED,
+                                       // decremented by each SALE event (mirrors StockPosition)
+  phase           String   @default("with_manufacturer") // code list above
+  current_holder_user_id String
+  qr_nonce        Int      @default(0) // anti-replay counter (see 00_base)
+  notes           String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  product    Product               @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  holder     User                  @relation("LotHolder", fields: [current_holder_user_id], references: [id])
+  events     ProductLotEvent[]
+  batch_links ProductLotBatchLink[]
+
+  @@index([code])
+  @@index([product_id])
+  @@index([phase])
+  @@index([current_holder_user_id])
+  @@index([created_at])
+  @@map("product_lots")
+}
+
+// Append-only timeline for a product lot — mirrors BatchEvent. Every custody
+// hop and the terminal consumer sale lands here, feeding the consumer-facing
+// "farm to shelf" journey.
+// event_type: LOT_CREATED | TRANSFER | SALE
+model ProductLotEvent {
+  id            String    @id @default(cuid())
+  lot_id        String
+  event_type    String // code list above
+  actor_user_id String // who performed the action (scanner / seller)
+  from_user_id  String? // custody handoff: previous holder
+  to_user_id    String? // custody handoff: next holder
+  phase_before  String?
+  phase_after   String?
+  location      String?
+  gps_lat       Float?
+  gps_lng       Float?
+  payload_json  Json? // {consumer_user_id?, units_sold?, distance_km?, note}
+  created_at    DateTime @default(now())
+
+  lot   ProductLot @relation(fields: [lot_id], references: [id], onDelete: Cascade)
+  actor User       @relation("LotEventActor", fields: [actor_user_id], references: [id])
+  from_user User?  @relation("LotEventFrom", fields: [from_user_id], references: [id])
+  to_user   User?  @relation("LotEventTo", fields: [to_user_id], references: [id])
+
+  @@index([lot_id, created_at])
+  @@index([event_type])
+  @@map("product_lot_events")
+}
+
+// Composition per lot: which batches were consumed to make THIS run.
+// (One batch can seed many lots; one lot draws from many batches.)
+model ProductLotBatchLink {
+  id          String  @id @default(cuid())
+  lot_id      String
+  batch_id    String
+  quantity_kg Float
+  position    Int     @default(0) // display order in the bill of materials
+  created_at  DateTime @default(now())
+
+  lot   ProductLot @relation(fields: [lot_id], references: [id], onDelete: Cascade)
+  batch Batch      @relation(fields: [batch_id], references: [id], onDelete: Restrict)
+
+  @@unique([lot_id, batch_id])
+  @@index([batch_id])
+  @@map("product_lot_batch_links")
+}

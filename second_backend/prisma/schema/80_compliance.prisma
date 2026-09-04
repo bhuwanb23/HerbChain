@@ -1,0 +1,123 @@
+// ============================================================================
+// COMPLIANCE — licenses & certifications, inspections, recalls, support.
+// ============================================================================
+
+// A license/certificate held by a party (user). Supporting scans attach via
+// EntityDocument (entity_type = "license", entity_id = this row's id).
+// type: ayush_license | fssai | organic_cert | lab_nabl | gmp | gsp | other
+// status: active | expired | suspended | revoked | pending_renewal
+model LicenseCert {
+  id             String    @id @default(cuid())
+  holder_user_id String
+  type           String // code list above
+  license_no     String? @unique // unique when present; SQLite allows many NULLs
+  issuer         String? // issuing authority name
+  issued_at      DateTime?
+  expires_at     DateTime?
+  status         String    @default("active") // code list above
+  notes          String?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  holder User @relation(fields: [holder_user_id], references: [id], onDelete: Cascade)
+
+  @@index([holder_user_id])
+  @@index([type])
+  @@index([status])
+  @@map("license_certs")
+}
+
+// Compliance/quality inspection of any entity (user, warehouse, batch,
+// product). outcome drives follow-ups.
+// target_type: user | warehouse | batch | product
+// outcome: pending | passed | failed | action_required
+model Inspection {
+  id              String    @id @default(cuid())
+  inspector_user_id String
+  target_type     String // code list above
+  target_id       String
+  scheduled_at    DateTime?
+  completed_at    DateTime?
+  outcome         String    @default("pending") // code list above
+  findings        String?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  inspector User @relation("Inspector", fields: [inspector_user_id], references: [id])
+
+  @@index([inspector_user_id])
+  @@index([target_type, target_id])
+  @@index([outcome])
+  @@map("inspections")
+}
+
+// A recall campaign. ref_type/ref_id give the headline target (product or
+// batch); RecallScope rows narrow it to specific lots/batches when needed
+// (e.g. "only batches B1, B2 inside product P").
+// severity: info | warning | urgent | critical
+// status: draft | issued | closed
+model Recall {
+  id         String    @id @default(cuid())
+  recall_no  String    @unique // e.g. "REC-2026-0003"
+  ref_type   String // product | batch | product_lot
+  ref_id     String
+  severity   String    @default("warning") // code list above
+  reason     String
+  status     String    @default("draft") // draft | issued | closed
+  issued_at  DateTime?
+  resolved_at DateTime?
+  created_by_user_id String?
+  notes      String?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+
+  scopes RecallScope[]
+
+  @@index([status])
+  @@index([ref_type, ref_id])
+  @@map("recalls")
+}
+
+// Lot-level scope of a recall: each row names one affected unit (a batch, a
+// product lot, or a product when the whole line is affected). Empty scopes =
+// the recall applies to the headline ref only.
+// scope_type: product | product_lot | batch
+model RecallScope {
+  id         String   @id @default(cuid())
+  recall_id  String
+  scope_type String // code list above
+  scope_id   String
+  note       String?
+  created_at DateTime @default(now())
+
+  recall Recall @relation(fields: [recall_id], references: [id], onDelete: Cascade)
+
+  @@unique([recall_id, scope_type, scope_id])
+  @@index([scope_type, scope_id])
+  @@map("recall_scopes")
+}
+
+// status: open | in_progress | resolved | closed
+// priority: low | medium | high | urgent
+model SupportTicket {
+  id            String   @id @default(cuid())
+  ticket_no     String   @unique // e.g. "TCK-2026-0007"
+  requester_user_id String?
+  category      String? // billing | traceability | account | technical | other
+  subject       String
+  body          String
+  priority      String   @default("medium") // code list above
+  status        String   @default("open") // code list above
+  assignee_user_id String?
+  resolved_at   DateTime?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  requester User? @relation("TicketRequester", fields: [requester_user_id], references: [id], onDelete: SetNull)
+  assignee  User? @relation("TicketAssignee", fields: [assignee_user_id], references: [id], onDelete: SetNull)
+
+  @@index([requester_user_id])
+  @@index([assignee_user_id])
+  @@index([status])
+  @@map("support_tickets")
+}

@@ -1,0 +1,71 @@
+// ============================================================================
+// HerbChain redesigned schema — BASE
+// ----------------------------------------------------------------------------
+// This folder (prisma/schema/*.prisma) is the TARGET database architecture for
+// the redesigned HerbChain backend. It is NOT yet wired into package.json /
+// the running app — the active schema remains prisma/schema.prisma until the
+// migration step flips package.json's `prisma.schema` to this folder.
+//
+// Domain layout (files are ordered by dependency, models may reference each
+// other across files):
+//   00_base.prisma          generator + datasource + conventions
+//   01_identity.prisma      users + addresses (login/identity core)
+//   02_security.prisma      sessions, api keys, global audit log
+//   03_assets.prisma        files/media + polymorphic entity attachments
+//   10_catalogue.prisma     AYUSH species taxonomy + localized content
+//   20_agronomy.prisma      farmer profile, plots, crop plans, farm activity
+//   30_logistics.prisma     transporter/manufacturer profiles, warehouses,
+//                           stock movements
+//   40_quality.prisma       lab profile, structured test parameters/results
+//   50_trace.prisma         batches (the traceable lots) + append-only events
+//   60_products.prisma      finished products + batch composition
+//   70_commerce.prisma      purchase orders, invoices, payments, wallets
+//   80_compliance.prisma    licenses, inspections, recalls, support tickets
+//   90_notifications.prisma templates, notifications, device tokens
+//   95_intel.prisma         price quotes, weather snapshots
+//
+// The full conventions reference lives in docs/database/architecture.md.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Schema-wide conventions (implemented across every file below)
+// ---------------------------------------------------------------------------
+// 1. Primary keys: every table gets `id String @id @default(cuid())`.
+//    Human-facing identifiers (batch codes, order numbers, invoice numbers,
+//    SKUs, license numbers) are separate UNIQUE columns — business keys are
+//    never PKs, so they stay renameable/regenerable.
+//
+// 2. Timestamps: `created_at` on everything, `updated_at` on mutable rows.
+//    Trace records (BatchEvent, StockMovement, AuditLog, Payment) are
+//    append-only and deliberately have NO `updated_at`.
+//
+// 3. Soft delete: `deleted_at` ONLY on mutable master data where a hard
+//    delete would destroy history (User, Species, Product). Supply-chain
+//    records are immutable by design.
+//
+// 4. Enums: SQLite has no native enums in Prisma, so enumerable columns are
+//    TEXT with code-level validation (zod + a single constants module). The
+//    allowed values are listed in a comment above every such column.
+//
+// 5. Money: stored as INTEGER minor units (`*_paise`) — never Float.
+//    Serializers convert to decimal rupees for the wire format.
+//    Int ceiling = ~21.4M INR per column; documented in architecture.md.
+//
+// 6. Dates: stored as DateTime (UTC); "YYYY-MM-DD"-style business dates are
+//    formatted at the serializer layer.
+//
+// 7. Foreign keys reference `id` columns; named relations carry explicit
+//    @relation names when a model has multiple FKs to the same target.
+//
+// 8. `deleted_at`/soft-delete lookups must add the filter in code — Prisma
+//    has no row-level default scoping.
+// ===========================================================================

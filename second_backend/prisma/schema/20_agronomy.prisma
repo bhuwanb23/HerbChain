@@ -1,0 +1,114 @@
+// ============================================================================
+// AGRONOMY — farmer operational data.
+// ----------------------------------------------------------------------------
+// FarmerProfile is the 1:1 org/profile row for a `farmer` user. A farm owns
+// many plots; crop plans (per species, per plot, per season) carry planting
+// cycles; FarmActivity is an append-only log of on-ground actions. Harvested
+// batches can point back to a plot + crop plan for true field-to-batch
+// traceability.
+// ============================================================================
+
+model FarmerProfile {
+  id               String   @id @default(cuid())
+  farmer_id        String   @unique
+  farm_name        String?
+  established_year Int?
+  land_size_acres  Float?
+  soil_type        String? // code: clay | loam | sandy | alluvial | laterite | black
+  irrigation_type  String? // code: rainfed | drip | sprinkler | canal | manual
+  farming_practices String? // organic | conventional | biodynamic | natural
+  default_address_id String? // -> Address.id
+  gps_lat          Float?
+  gps_lng          Float?
+  notes            String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  farmer User @relation(fields: [farmer_id], references: [id], onDelete: Cascade)
+  plots  FarmPlot[]
+
+  @@map("farmer_profiles")
+}
+
+// A physical plot/field under a farm. Batches can record which plot they came
+// from (geo-located lot traceability).
+model FarmPlot {
+  id          String   @id @default(cuid())
+  profile_id  String // FarmerProfile.id
+  name        String
+  area_acres  Float?
+  soil_type   String?
+  status      String   @default("active") // active | fallow | retired
+  gps_lat     Float?
+  gps_lng     Float?
+  notes       String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  profile FarmerProfile @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+  // farmers reference plots via farmer_id on the plot owner's user for query ergonomics:
+  // handled by profile lookup in code.
+
+  crop_plans CropPlan[]
+  batches    Batch[]
+
+  @@index([profile_id])
+  @@index([status])
+  @@map("farm_plots")
+}
+
+// One planting cycle. Status is a small state machine:
+// planned -> sown -> growing -> harvested | cancelled
+model CropPlan {
+  id                   String   @id @default(cuid())
+  farmer_id            String
+  species_id           String
+  plot_id              String?
+  season_label         String? // e.g. "Kharif 2026"
+  area_acres           Float?
+  expected_yield_kg    Float?
+  planting_date        DateTime?
+  expected_harvest_date DateTime?
+  actual_harvest_date  DateTime?
+  status               String   @default("planned") // code list above
+  notes                String?
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+  deleted_at           DateTime?
+
+  farmer   User      @relation(fields: [farmer_id], references: [id], onDelete: Cascade)
+  species  Species   @relation(fields: [species_id], references: [id], onDelete: Restrict)
+  plot     FarmPlot? @relation(fields: [plot_id], references: [id], onDelete: SetNull)
+
+  activities FarmActivity[]
+  batches    Batch[]
+
+  @@index([farmer_id])
+  @@index([species_id])
+  @@index([plot_id])
+  @@index([status])
+  @@map("crop_plans")
+}
+
+// Append-only on-ground activity log for a crop plan (sowing, irrigation,
+// fertilization, pest control, harvest). Gives batches an auditable growing
+// history beyond the custody chain.
+// type: sow | irrigate | fertilize | pest_control | weed | prune | harvest | other
+model FarmActivity {
+  id          String   @id @default(cuid())
+  crop_plan_id String
+  actor_user_id String
+  type        String // code list above
+  performed_at DateTime @default(now())
+  notes       String?
+  inputs_json Json? // e.g. {"fertilizer":"vermicompost","qty_kg":50}
+  created_at  DateTime @default(now())
+
+  crop_plan CropPlan @relation(fields: [crop_plan_id], references: [id], onDelete: Cascade)
+  actor     User     @relation("FarmActivityActor", fields: [actor_user_id], references: [id])
+
+  @@index([crop_plan_id])
+  @@index([type])
+  @@index([performed_at])
+  @@map("farm_activities")
+}

@@ -1,0 +1,46 @@
+// ============================================================================
+// ASSETS — central file/media registry.
+// ----------------------------------------------------------------------------
+// Any uploaded file (species photos, product images, lab report PDFs, license
+// scans, recall notices) lives once in `assets`; EntityDocument links it to
+// any entity without per-entity join tables.
+// ============================================================================
+
+model Asset {
+  id          String   @id @default(cuid())
+  owner_user_id String? // uploader
+  kind        String   @default("image") // image | document | video | other
+  mime_type   String?
+  size_bytes  Int?
+  storage_key String?  // object-store key / local path
+  url         String?  // public CDN URL when served
+  alt_text    String?
+  created_at  DateTime @default(now())
+
+  owner       User?             @relation("AssetOwner", fields: [owner_user_id], references: [id], onDelete: SetNull)
+  avatar_of   User?             @relation("UserAvatar") // set when this asset IS the user's avatar
+  documents   EntityDocument[]
+
+  @@index([owner_user_id])
+  @@map("assets")
+}
+
+// Polymorphic attachment: one Asset can be attached to many entities and one
+// entity can hold many assets (e.g. a species with 3 photos, or a lab report
+// with a PDF + a raw data sheet). entity_type is a code list resolved by the
+// app: species | product | batch | lab_report | license | inspection | recall.
+model EntityDocument {
+  id         String   @id @default(cuid())
+  asset_id   String
+  entity_type String // code list above
+  entity_id  String // id of the row that owns this document
+  doc_kind   String   @default("attachment") // image | logo | report | certificate | attachment | raw_data
+  created_by_user_id String?
+  created_at DateTime @default(now())
+
+  asset Asset @relation(fields: [asset_id], references: [id], onDelete: Cascade)
+
+  @@index([entity_type, entity_id])
+  @@index([asset_id])
+  @@map("entity_documents")
+}

@@ -1,0 +1,93 @@
+// ============================================================================
+// QUALITY — lab org data + structured test results.
+// ----------------------------------------------------------------------------
+// LabReport is the header (which batch, which lab, overall outcome).
+// LabTestResult rows hold one measured parameter each, referencing the
+// TestParameter vocabulary — so heavy metals, pesticides, microbial counts and
+// actives are queryable and comparable, not buried in free text.
+// ============================================================================
+
+model LabProfile {
+  id            String   @id @default(cuid())
+  lab_id        String   @unique
+  lab_name      String?
+  nabl_accredited Boolean @default(false)
+  accreditation_no String?
+  address_id    String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  lab User @relation(fields: [lab_id], references: [id], onDelete: Cascade)
+
+  @@map("lab_profiles")
+}
+
+// Vocabulary of measurable parameters. Seeded from AYUSH/WHO pharmacopoeia
+// limits. limit_standard is a human-readable spec (e.g. "≤ 10 ppm as per
+// AYUSH pharmacopoeia"); precise machine limits can live on the result row.
+model TestParameter {
+  id            String   @id @default(cuid())
+  code          String   @unique // e.g. "lead", "arsenic", "total_aerobic_microbial"
+  name          String
+  category      String // heavy_metal | pesticide | microbial | active | organoleptic | other
+  unit          String? // ppm | ppb | cfu/g | % | — 
+  method        String? // e.g. "AAS", "ICP-MS", "HPLC", "Plate count"
+  limit_standard String?
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+
+  results LabTestResult[]
+
+  @@index([category])
+  @@map("test_parameters")
+}
+
+// Per-batch lab test run. outcome drives the trace state machine:
+// outcome: approved | rejected | conditional
+model LabReport {
+  id           String   @id @default(cuid())
+  code         String   @unique // e.g. "LR-2026-0001"
+  batch_id     String
+  lab_user_id  String
+  species_id   String?
+  test_date    DateTime
+  outcome      String   @default("pending") // pending | approved | rejected | conditional
+  summary      String? // free-text findings / conclusion
+  certification_level String? // e.g. "AYUSH Grade A"
+  report_asset_id String? // primary PDF (extra docs via EntityDocument)
+  signed_by_user_id String? // plain FK (no relation): responsible chemist/analyst
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  batch Batch   @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  lab   User    @relation("LabReporter", fields: [lab_user_id], references: [id])
+  species Species? @relation(fields: [species_id], references: [id], onDelete: SetNull)
+
+  results LabTestResult[]
+
+  @@index([batch_id])
+  @@index([lab_user_id])
+  @@index([outcome])
+  @@map("lab_reports")
+}
+
+// One measured value per parameter per report. value_numeric + unit override
+// the parameter defaults when needed; result is pass/fail/na against the spec.
+// result: pass | fail | na
+model LabTestResult {
+  id           String   @id @default(cuid())
+  report_id    String
+  parameter_id String
+  value_numeric Float?
+  value_text   String?
+  unit         String?
+  result       String   @default("na") // pass | fail | na
+  notes        String?
+  created_at   DateTime @default(now())
+
+  report    LabReport     @relation(fields: [report_id], references: [id], onDelete: Cascade)
+  parameter TestParameter @relation(fields: [parameter_id], references: [id], onDelete: Restrict)
+
+  @@unique([report_id, parameter_id])
+  @@map("lab_test_results")
+}
