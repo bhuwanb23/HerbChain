@@ -113,7 +113,7 @@ BlockchainEvent (refs batch_event | product_lot_event | audit_log) — proof anc
 | `FarmProfile` | folded into `FarmerProfile` + new `FarmPlot` | org row stays 1:1 |
 | `HerbCatalogue` | `Species` + `SpeciesSynonym` + `SpeciesContent` | synonyms JSON → rows; add medicinal-use M:N |
 | `PriceQuote` | `PriceQuote` | money → paise; add market/source |
-| `Herb` | `Batch` | code HERB-… → BAT-…; state columns merged in |
+| `Herb` | `Batch` | code `HERB-YYYY-NNNNNN` (unique business key; docs/phase_3.md spec); state columns merged in |
 | `BatchState` | merged into `Batch` | phase/holder/test_status on the row |
 | `BatchEvent` | `BatchEvent` | from/to renamed, token hash stored |
 | `LabReport` | `LabReport` + `LabTestResult` + `TestParameter` | loose fields → parameter rows |
