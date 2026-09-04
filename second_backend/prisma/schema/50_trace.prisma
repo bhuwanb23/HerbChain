@@ -73,6 +73,14 @@ model Batch {
   rejection_records    RejectionRecord[]
   species_verifications SpeciesVerificationLog[]
 
+  // phase 9 — manufacturer procurement (53_procurement.prisma)
+  procurement_requests BatchRequest[]
+  inventory            BatchInventory?
+  allocations          InventoryAllocation[]
+  receipts             GoodsReceipt[]
+  inventory_items      InventoryItem[]
+  quality_holds        QualityHold[]
+
   @@index([code])
   @@index([farmer_id])
   @@index([species_id])

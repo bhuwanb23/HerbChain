@@ -94,6 +94,12 @@ model User {
   shipments_from         Shipment[] @relation("ShipmentOrigin")
   shipments_to           Shipment[] @relation("ShipmentDestination")
 
+  // phase 9 — manufacturer procurement (53_procurement.prisma)
+  procurement_requests BatchRequest[] @relation("ProcurementRequester")
+  goods_receipts       GoodsReceipt[] @relation("ProcurementReceiver")
+  inventory_items      InventoryItem[] @relation("InventoryOwner")
+  quality_holds        QualityHold[]  @relation("HoldOwner")
+
   // products & commerce
   products_manufactured Product[]          @relation("ProductManufacturer")
   product_lots_held     ProductLot[]      @relation("LotHolder")

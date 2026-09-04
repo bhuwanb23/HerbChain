@@ -182,6 +182,7 @@ model Shipment {
   to_user_id        String? // destination party
   to_role           String?
   assigned_transporter_user_id String?
+  procurement_request_id String?   @unique // phase 9 — the BatchRequest that auto-created this shipment
 
   origin_location   String?
   origin_gps_lat    Float?
@@ -208,6 +209,10 @@ model Shipment {
   from_user    User? @relation("ShipmentOrigin", fields: [from_user_id], references: [id], onDelete: SetNull)
   to_user      User? @relation("ShipmentDestination", fields: [to_user_id], references: [id], onDelete: SetNull)
 
+  // phase 9 — procurement (53_procurement.prisma)
+  procurement_request BatchRequest? @relation("ProcurementShipment", fields: [procurement_request_id], references: [id], onDelete: SetNull) // auto-created on request approval
+  receipts GoodsReceipt[] // GRNs closed against this shipment
+
   tracking    ShipmentTrackingPoint[]
   assignments TransporterAssignment[]
   pickup_events    PickupEvent[]
@@ -222,6 +227,7 @@ model Shipment {
   @@index([assigned_transporter_user_id, status])
   @@index([status])
   @@index([requested_by_user_id])
+  @@index([procurement_request_id])
   @@index([created_at])
   @@map("shipments")
 }
