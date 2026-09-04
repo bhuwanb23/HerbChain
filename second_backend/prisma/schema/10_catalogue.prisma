@@ -30,7 +30,7 @@ model Species {
   batches         Batch[]
   crop_plans      CropPlan[]
   price_quotes    PriceQuote[]
-  lab_reports     LabReport[]
+  certified_batches Certification[] // phase 8 COA species (40_quality.prisma)
   ai_top_species        AiIdentification[] @relation("AiTopSpecies")
   ai_selected_species   AiIdentification[] @relation("AiSelectedSpecies")
   ai_feedback_predicted AiFeedback[]       @relation("FeedbackPredicted")

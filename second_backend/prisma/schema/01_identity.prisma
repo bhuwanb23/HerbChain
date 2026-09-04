@@ -17,6 +17,8 @@ model User {
   phone          String?   @unique
   password_hash  String
   role           String // code list above
+  lab_role       String? // analyst | supervisor — phase 8 role separation
+                          // inside lab accounts (spec §8 two-level review)
   locale         String    @default("en")
   avatar_asset_id String?  @unique // -> Asset.id (set via optional relation below)
 
@@ -83,9 +85,6 @@ model User {
   transfer_requests_created  TransferRequest[] @relation("TransferRequester")
   transfer_requests_approved TransferRequest[] @relation("TransferApprover")
   transfer_proofs            TransferProof[]   @relation("TransferProofAuthor")
-
-  // quality
-  lab_reports LabReport[] @relation("LabReporter")
 
   // logistics & stock
   warehouses_owned Warehouse[]

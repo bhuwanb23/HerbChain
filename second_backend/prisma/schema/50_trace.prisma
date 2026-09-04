@@ -38,7 +38,11 @@ model Batch {
   // current custody/state (single-row source of truth)
   phase               String @default("with_farmer") // code list above
   current_holder_user_id String // last party in custody
-  test_status         String @default("pending") // pending | approved | rejected
+  // certification substate (phase 8 — docs/phase_8.md): the custody phase
+  // stays `at_lab` while the lab validates; this column tracks the lab
+  // workflow: pending -> received_by_lab -> sample_created -> under_testing
+  // -> certified | rejected
+  test_status         String @default("pending")
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -53,13 +57,21 @@ model Batch {
   current_holder User   @relation("BatchHolder", fields: [current_holder_user_id], references: [id])
 
   events      BatchEvent[]
-  lab_reports LabReport[]
   product_lot_links ProductLotBatchLink[]
   identifications AiIdentification[] // recognition that produced this batch
   ai_feedback     AiFeedback[]
   qr_tokens   QrToken[] // versioned custody tokens (phase 5 — one ACTIVE per batch)
   qr_replacements QrReplacementLog[]
   transfer_requests TransferRequest[] // governed handovers (phase 6)
+
+  // phase 8 — laboratory certification (40_quality.prisma)
+  lab_receipts         LabReceipt[]
+  samples              SampleRecord[]
+  lab_tests            LabTest[]
+  lab_documents        LabDocument[]
+  certifications       Certification[]
+  rejection_records    RejectionRecord[]
+  species_verifications SpeciesVerificationLog[]
 
   @@index([code])
   @@index([farmer_id])
@@ -74,8 +86,11 @@ model Batch {
 // Append-only custody/activity timeline. One row per immutable fact — created,
 // transfer, lab report, product link, split, intent. Never updated or hard
 // deleted; payload_json carries typed extras (distances, qty, report refs).
-// event_type codes: CREATED | TRANSFER | LAB_REPORT | PRODUCT_LINK |
-//                   BATCH_SPLIT | INTENT_LAB_REQUEST | INTENT_MANUFACTURER_ORDER
+// event_type codes: CREATED | TRANSFER | PRODUCT_LINK | BATCH_SPLIT |
+//                   INTENT_LAB_REQUEST | INTENT_MANUFACTURER_ORDER |
+//                   LAB_RECEIVED | SAMPLE_CREATED | LAB_TEST | TEST_SUBMITTED |
+//                   TEST_REVIEWED | LAB_CERTIFIED | LAB_REJECTED |
+//                   SPECIES_MISMATCH
 // qr_token_hash is optional forensics only — replay protection is the nonce.
 model BatchEvent {
   id            String   @id @default(cuid())
