@@ -53,6 +53,9 @@ function _mountCoreRoutes(app) {
         ping: "/api/v1/ping",
         auth: "/api/v1/auth",
         admin_users: "/api/v1/admin/users",
+        species: "/api/v1/species",
+        batches: "/api/v1/batches",
+        uploads: "/api/v1/uploads",
       },
     });
   });
@@ -81,6 +84,16 @@ function _mountRoutes(app) {
 
   const { mountAdmin } = require("./modules/identity/adminRoutes");
   mountAdmin(app);
+
+  // Phase 3: batch management (trace module) + species read path + uploads.
+  const { mountBatchRoutes } = require("./modules/trace/batchRoutes");
+  mountBatchRoutes(app);
+
+  const { mountSpeciesRoutes } = require("./modules/catalogue/speciesRoutes");
+  mountSpeciesRoutes(app);
+
+  const { mountUploadRoutes } = require("./modules/uploads/uploadsRoutes");
+  mountUploadRoutes(app);
 }
 
 // ------------------------------------------------------------- error box
