@@ -12,9 +12,11 @@ model Asset {
   kind        String   @default("image") // image | document | video | other
   mime_type   String?
   size_bytes  Int?
+  filename    String? // original client filename (audit metadata)
   storage_key String?  // object-store key / local path
   url         String?  // public CDN URL when served
   alt_text    String?
+  metadata_json Json? // capture metadata: {captured_at, gps_lat, gps_lng, device_id}
   created_at  DateTime @default(now())
 
   owner       User?             @relation("AssetOwner", fields: [owner_user_id], references: [id], onDelete: SetNull)
@@ -39,6 +41,7 @@ model EntityDocument {
   entity_id  String // id of the row that owns this document
   doc_kind   String   @default("attachment") // image | logo | report | certificate | attachment | raw_data |
                                              // herb_image | packaging_image | transport_image | proof_of_delivery
+  is_primary Boolean  @default(false) // hero image for the entity (e.g. a batch's primary photo)
   created_by_user_id String?
   created_at DateTime @default(now())
 

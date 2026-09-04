@@ -25,12 +25,15 @@ model Batch {
   parent_batch_id String? // set when this batch was created by a split
 
   // harvest facts
-  harvest_date   DateTime?
-  location       String?
-  gps_lat        Float?
-  gps_lng        Float?
-  weight_kg      Float // net weight at creation; splits book weight on children
-  notes          String?
+  harvest_date      DateTime?
+  location          String? // readable address / village text
+  gps_lat           Float?
+  gps_lng           Float?
+  gps_accuracy_m    Float? // raw GPS accuracy reported by the device
+  weight_kg         Float // net weight in kg at creation; splits book weight on children
+  cultivation_type  String? // organic | conventional | wild_collection (farmer's claim)
+  attributes_json   Json? // optional organoleptic facts: {color, odor, moisture, notes}
+  notes             String?
 
   // current custody/state (single-row source of truth)
   phase               String @default("with_farmer") // code list above
