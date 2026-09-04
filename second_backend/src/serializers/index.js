@@ -138,6 +138,101 @@ function serializeProduct(product, { includeLinks = false, links = [] } = {}) {
   return out;
 }
 
+function serializeSpecies(species, { includePrices = false, latestPrice = null } = {}) {
+  if (!species) return null;
+  const out = {
+    species_id: species.species_id,
+    common_name: species.common_name,
+    scientific_name: species.scientific_name,
+    ayush_category: species.ayush_category,
+    synonyms: species.synonyms || [],
+    description: species.description,
+    medicinal_uses: species.medicinal_uses,
+    image_url: species.image_url,
+    season_planting: species.season_planting,
+    season_harvest: species.season_harvest,
+    default_unit_price_inr:
+      species.default_unit_price_inr != null ? Number(species.default_unit_price_inr) : null,
+    is_active: species.is_active,
+    created_at: iso(species.created_at),
+    updated_at: iso(species.updated_at),
+  };
+  if (includePrices) out.latest_price = latestPrice ? serializePriceQuote(latestPrice) : null;
+  return out;
+}
+
+function serializePriceQuote(quote) {
+  if (!quote) return null;
+  return {
+    quote_id: quote.quote_id,
+    species_id: quote.species_id,
+    price_per_kg_inr: quote.price_per_kg_inr != null ? Number(quote.price_per_kg_inr) : null,
+    currency: quote.currency,
+    source: quote.source,
+    effective_at: iso(quote.effective_at),
+    created_by_admin_id: quote.created_by_admin_id,
+    notes: quote.notes,
+    created_at: iso(quote.created_at),
+  };
+}
+
+function serializeFarm(farm) {
+  if (!farm) return null;
+  return {
+    farm_id: farm.farm_id,
+    farmer_id: farm.farmer_id,
+    farm_name: farm.farm_name,
+    land_size_acres: farm.land_size_acres != null ? Number(farm.land_size_acres) : null,
+    soil_type: farm.soil_type,
+    irrigation_type: farm.irrigation_type,
+    certifications: farm.certifications || [],
+    address: farm.address,
+    gps_lat: farm.gps_lat,
+    gps_lng: farm.gps_lng,
+    notes: farm.notes,
+    created_at: iso(farm.created_at),
+    updated_at: iso(farm.updated_at),
+  };
+}
+
+function serializeCropPlan(plan, { includeSpecies = false, species = null } = {}) {
+  if (!plan) return null;
+  const out = {
+    plan_id: plan.plan_id,
+    farmer_id: plan.farmer_id,
+    species_id: plan.species_id,
+    area_acres: plan.area_acres != null ? Number(plan.area_acres) : null,
+    planting_date: plan.planting_date,
+    expected_harvest_date: plan.expected_harvest_date,
+    actual_harvest_date: plan.actual_harvest_date,
+    status: plan.status,
+    notes: plan.notes,
+    created_at: iso(plan.created_at),
+    updated_at: iso(plan.updated_at),
+  };
+  if (includeSpecies && species) {
+    out.species = {
+      species_id: species.species_id,
+      common_name: species.common_name,
+      scientific_name: species.scientific_name,
+      image_url: species.image_url,
+    };
+  }
+  return out;
+}
+
+function serializeSnapshot(snapshot) {
+  if (!snapshot) return null;
+  return {
+    snapshot_id: snapshot.snapshot_id,
+    gps_lat: snapshot.gps_lat,
+    gps_lng: snapshot.gps_lng,
+    provider: snapshot.provider,
+    payload: snapshot.payload_json,
+    fetched_at: iso(snapshot.fetched_at),
+  };
+}
+
 module.exports = {
   iso,
   serializeUser,
@@ -147,4 +242,9 @@ module.exports = {
   serializeLabReport,
   serializeProduct,
   serializeProductLink,
+  serializeSpecies,
+  serializePriceQuote,
+  serializeFarm,
+  serializeCropPlan,
+  serializeSnapshot,
 };

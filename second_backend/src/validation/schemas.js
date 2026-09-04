@@ -109,6 +109,103 @@ const createProductSchema = z.object({
   source_batches: z.array(productBatchLinkSchema).min(1),
 });
 
+// -------------------------------------------------------------- catalogue
+
+const AYUSH_CATEGORIES = ["ayurveda", "unani", "siddha", "homeopathy", "general"];
+
+const createCatalogueEntrySchema = z.object({
+  species_id: z.string().min(3).max(50).optional(),
+  common_name: z.string().min(1).max(120),
+  scientific_name: z.string().min(1).max(160),
+  ayush_category: z.enum(AYUSH_CATEGORIES).default("ayurveda"),
+  synonyms: z.array(z.string()).default([]),
+  description: z.string().nullable().optional(),
+  medicinal_uses: z.string().nullable().optional(),
+  image_url: z.string().nullable().optional(),
+  season_planting: z.string().nullable().optional(),
+  season_harvest: z.string().nullable().optional(),
+  default_unit_price_inr: nullableFloat.optional(),
+});
+
+const updateCatalogueEntrySchema = z.object({
+  common_name: z.string().min(1).max(120).optional(),
+  scientific_name: z.string().min(1).max(160).optional(),
+  ayush_category: z.enum(AYUSH_CATEGORIES).optional(),
+  synonyms: z.array(z.string()).optional(),
+  description: z.string().nullable().optional(),
+  medicinal_uses: z.string().nullable().optional(),
+  image_url: z.string().nullable().optional(),
+  season_planting: z.string().nullable().optional(),
+  season_harvest: z.string().nullable().optional(),
+  default_unit_price_inr: nullableFloat.optional(),
+  is_active: z.boolean().optional(),
+});
+
+// ------------------------------------------------------------------- farm
+
+const SOIL_TYPES = ["alluvial", "black", "red", "laterite", "sandy", "loamy", "clay", "saline", "other"];
+const IRRIGATION_TYPES = ["rainfed", "drip", "sprinkler", "flood", "borewell", "canal", "mixed", "other"];
+
+const farmProfileSchema = z.object({
+  farm_name: z.string().max(120).nullable().optional(),
+  land_size_acres: z.coerce.number().min(0).nullable().optional(),
+  soil_type: z.enum(SOIL_TYPES).nullable().optional(),
+  irrigation_type: z.enum(IRRIGATION_TYPES).nullable().optional(),
+  certifications: z.array(z.string()).optional(),
+  address: z.string().max(300).nullable().optional(),
+  gps_lat: nullableFloat.optional(),
+  gps_lng: nullableFloat.optional(),
+  notes: z.string().nullable().optional(),
+});
+
+// ------------------------------------------------------------- crop plans
+
+const CROP_PLAN_STATUS = ["planned", "sown", "growing", "harvested", "cancelled"];
+
+const createCropPlanSchema = z.object({
+  species_id: z.string().min(1).max(50),
+  area_acres: z.coerce.number().min(0).nullable().optional(),
+  planting_date: isoDate,
+  expected_harvest_date: isoDate,
+  status: z.enum(CROP_PLAN_STATUS).default("planned"),
+  notes: z.string().nullable().optional(),
+});
+
+const updateCropPlanSchema = z.object({
+  species_id: z.string().min(1).max(50).optional(),
+  area_acres: z.coerce.number().min(0).nullable().optional(),
+  planting_date: isoDate.optional(),
+  expected_harvest_date: isoDate.optional(),
+  actual_harvest_date: isoDate.nullable().optional(),
+  status: z.enum(CROP_PLAN_STATUS).optional(),
+  notes: z.string().nullable().optional(),
+});
+
+// ------------------------------------------------------------ recognition
+
+const candidateSchema = z.object({
+  label: z.string().min(1).max(200),
+  score: z.coerce.number().min(0).max(1),
+});
+
+const rerankSchema = z.object({
+  candidates: z.array(candidateSchema).min(1).max(20),
+  gps_lat: nullableFloat.optional(),
+  gps_lng: nullableFloat.optional(),
+  image_url: z.string().nullable().optional(),
+  top_k: z.coerce.number().int().min(1).max(10).default(3),
+});
+
+// ----------------------------------------------------------------- prices
+
+const createPriceQuoteSchema = z.object({
+  species_id: z.string().min(1).max(50),
+  price_per_kg_inr: z.coerce.number().min(0),
+  currency: z.string().min(2).max(8).default("INR"),
+  source: z.string().min(1).max(40).default("admin"),
+  notes: z.string().nullable().optional(),
+});
+
 module.exports = {
   isoDate,
   nullableFloat,
@@ -120,4 +217,12 @@ module.exports = {
   createLabReportSchema,
   productBatchLinkSchema,
   createProductSchema,
+  createCatalogueEntrySchema,
+  updateCatalogueEntrySchema,
+  farmProfileSchema,
+  createCropPlanSchema,
+  updateCropPlanSchema,
+  candidateSchema,
+  rerankSchema,
+  createPriceQuoteSchema,
 };
