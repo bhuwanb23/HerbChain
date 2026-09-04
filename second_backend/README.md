@@ -52,13 +52,19 @@ second_backend/
 
 ## Porting status (from the Flask backend)
 
+All Flask functionality has been ported 1:1 and verified:
+
 - [x] Base scaffold: Express app, config, Prisma schema (all tables)
-- [ ] Auth (register / login / refresh / me + RBAC)
-- [ ] QR service + transfer state machine + batch split
-- [ ] Batch / lab-report / product routes
-- [ ] Catalogue / farm / crop-plans / prices / recognition / weather / traceability / admin
-- [ ] Seed script + 25-species AYUSH catalogue
-- [ ] Test suite port + parity check
+- [x] Auth (register / login / refresh / me + RBAC)
+- [x] QR service + transfer state machine + batch split
+- [x] Batch / lab-report / product routes
+- [x] Catalogue / farm / crop-plans / prices / recognition / weather / traceability / admin
+- [x] Seed script + 25-species AYUSH catalogue
+- [x] Test suite port + parity check — **53 tests, 53 passing** (`npm test`), matching the Flask pytest suite count
+
+Tests run with `node --test` against isolated per-process SQLite databases
+(`.testdb/`, gitignored), using supertest against the Express app — no server
+port needed.
 
 ## Parity notes
 
