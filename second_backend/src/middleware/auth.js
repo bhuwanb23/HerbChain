@@ -1,30 +1,17 @@
 /**
- * Auth middleware — ports of utils/auth.py.
+ * Auth middleware (new schema, docs/auth/architecture.md §4/§5).
  *
- * Identity always comes from the JWT subject (`sub`), which we set to the
- * user's `user_id` when issuing tokens (same as Flask-JWT-Extended).
+ * Identity is DB-truth: every request re-loads the user so role changes,
+ * verification and deactivation apply on the next request. Access tokens
+ * carry `sid` (Session.id); if that session has been revoked or expired the
+ * request is rejected immediately — logout/password-change bite instantly.
  */
 const jwt = require("jsonwebtoken");
 const { env } = require("../config/env");
 const { prisma } = require("../db/client");
 const { error } = require("../utils/responses");
-
-/** Issue an access/refresh token for a user (matches routes/auth.py _make_tokens). */
-function signToken(user, type, expiresIn) {
-  return jwt.sign(
-    { role: user.role, name: user.name, type },
-    env.JWT_SECRET_KEY,
-    { subject: user.user_id, expiresIn }
-  );
-}
-
-function makeTokens(user) {
-  return {
-    access_token: signToken(user, "access", env.JWT_ACCESS_TOKEN_EXPIRES),
-    refresh_token: signToken(user, "refresh", env.JWT_REFRESH_TOKEN_EXPIRES),
-    token_type: "Bearer",
-  };
-}
+const { isSessionActive } = require("../services/sessions");
+const { userHasPermission, isVerificationGated } = require("../services/authorization");
 
 function extractToken(req) {
   const header = req.headers.authorization || "";
@@ -35,7 +22,7 @@ function extractToken(req) {
   return null;
 }
 
-/** Map jsonwebtoken failures onto the Flask-JWT-Extended error codes. */
+/** Map jsonwebtoken failures onto the wire error codes. */
 function handleJwtError(res, err) {
   if (err && err.name === "TokenExpiredError") {
     return error(res, "token_expired", "Token has expired", 401);
@@ -43,56 +30,93 @@ function handleJwtError(res, err) {
   return error(res, "unauthorized", `Invalid token: ${err.message}`, 401);
 }
 
-/** Require a valid JWT; loads req.user for the handler. */
-async function requireAuth(req, res, next) {
+/** Verify the access token in the Authorization header. Returns payload or null (responds on failure). */
+function readAccessToken(req, res) {
   const token = extractToken(req);
   if (!token) {
-    return error(res, "unauthorized", "Missing or invalid token", 401);
+    error(res, "unauthorized", "Missing or invalid token", 401);
+    return null;
   }
-
-  let payload;
   try {
-    payload = jwt.verify(token, env.JWT_SECRET_KEY, { algorithms: ["HS256"] });
+    return jwt.verify(token, env.JWT_SECRET_KEY, { algorithms: ["HS256"] });
   } catch (err) {
-    return handleJwtError(res, err);
+    handleJwtError(res, err);
+    return null;
+  }
+}
+
+/** Load the fresh user; sets req.user + req.sessionId. Responds with 401/403 on failure. */
+async function authenticate(req, res) {
+  const payload = readAccessToken(req, res);
+  if (!payload) return null;
+  if (payload.type !== "access") {
+    error(res, "unauthorized", "Only access tokens are allowed", 401);
+    return null;
   }
 
-  const user = await prisma.user.findUnique({ where: { user_id: payload.sub } });
+  const user = await prisma.user.findUnique({ where: { id: payload.sub } });
   if (!user) {
-    return error(res, "unauthorized", "Token references a missing user", 401);
+    error(res, "unauthorized", "Token references a missing user", 401);
+    return null;
   }
   if (!user.is_active) {
-    return error(res, "forbidden", "User account is disabled", 403);
+    error(res, "forbidden", "User account is disabled", 403);
+    return null;
+  }
+
+  if (payload.sid) {
+    const active = await isSessionActive(payload.sid);
+    if (!active) {
+      error(res, "unauthorized", "Session has been revoked or expired", 401);
+      return null;
+    }
   }
 
   req.user = user;
+  req.sessionId = payload.sid || null;
+  return payload;
+}
+
+/** Require a valid access token; sets req.user. */
+async function requireAuth(req, res, next) {
+  const payload = await authenticate(req, res);
+  if (!payload) return; // authenticate already responded
   return next();
 }
 
-/** Require a valid JWT AND that the user's role is one of `roles`. */
+/**
+ * Require auth + a granted permission (DB rows). Also enforces the AYUSH
+ * verification gate for org roles (docs/auth/architecture.md §4).
+ */
+function requirePermission(key) {
+  return async (req, res, next) => {
+    const payload = await authenticate(req, res);
+    if (!payload) return;
+
+    if (isVerificationGated(req.user, key)) {
+      return error(
+        res,
+        "account_not_verified",
+        "Account is pending AYUSH verification — this action is unavailable until approved",
+        403
+      );
+    }
+
+    const allowed = await userHasPermission(req.user, key);
+    if (!allowed) {
+      return error(res, "forbidden", "You do not have permission to perform this action", 403);
+    }
+    return next();
+  };
+}
+
+/** Coarse role gate (kept for parity; prefer requirePermission for new code). */
 function requireRole(...roles) {
   const allowed = new Set(roles);
   return async (req, res, next) => {
-    const token = extractToken(req);
-    if (!token) {
-      return error(res, "unauthorized", "Missing or invalid token", 401);
-    }
-
-    let payload;
-    try {
-      payload = jwt.verify(token, env.JWT_SECRET_KEY, { algorithms: ["HS256"] });
-    } catch (err) {
-      return handleJwtError(res, err);
-    }
-
-    const user = await prisma.user.findUnique({ where: { user_id: payload.sub } });
-    if (!user) {
-      return error(res, "unauthorized", "Token references a missing user", 401);
-    }
-    if (!user.is_active) {
-      return error(res, "forbidden", "User account is disabled", 403);
-    }
-    if (!allowed.has(user.role)) {
+    const payload = await authenticate(req, res);
+    if (!payload) return;
+    if (!allowed.has(req.user.role)) {
       return error(
         res,
         "forbidden",
@@ -100,17 +124,15 @@ function requireRole(...roles) {
         403
       );
     }
-
-    req.user = user;
     return next();
   };
 }
 
 module.exports = {
-  makeTokens,
-  signToken,
   extractToken,
   handleJwtError,
+  authenticate,
   requireAuth,
+  requirePermission,
   requireRole,
 };
