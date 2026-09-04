@@ -59,6 +59,7 @@ model Batch {
   ai_feedback     AiFeedback[]
   qr_tokens   QrToken[] // versioned custody tokens (phase 5 — one ACTIVE per batch)
   qr_replacements QrReplacementLog[]
+  transfer_requests TransferRequest[] // governed handovers (phase 6)
 
   @@index([code])
   @@index([farmer_id])
@@ -96,6 +97,9 @@ model BatchEvent {
   actor User @relation("EventActor", fields: [actor_user_id], references: [id])
   from_user User? @relation("EventFrom", fields: [from_user_id], references: [id])
   to_user   User? @relation("EventTo", fields: [to_user_id], references: [id])
+
+  transfer_request TransferRequest? @relation("CompletedByEvent") // phase 6 completion ref
+  transfer_proofs  TransferProof[]  @relation("TransferProofEvent")
 
   @@index([batch_id, created_at])
   @@index([event_type])

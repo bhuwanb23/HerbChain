@@ -77,6 +77,13 @@ model User {
   qr_tokens_generated  QrToken[]           @relation("QrGenerator")
   qr_replacements      QrReplacementLog[]  @relation("QrReplacer")
 
+  // phase 6 — governed transfer requests + proofs (52_transfer.prisma)
+  transfer_requests_from     TransferRequest[] @relation("TransferFrom")
+  transfer_requests_to       TransferRequest[] @relation("TransferTo")
+  transfer_requests_created  TransferRequest[] @relation("TransferRequester")
+  transfer_requests_approved TransferRequest[] @relation("TransferApprover")
+  transfer_proofs            TransferProof[]   @relation("TransferProofAuthor")
+
   // quality
   lab_reports LabReport[] @relation("LabReporter")
 

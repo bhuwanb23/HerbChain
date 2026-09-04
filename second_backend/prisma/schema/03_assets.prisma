@@ -24,6 +24,7 @@ model Asset {
   documents   EntityDocument[]
   ai_requests      AiRequest[]        // phase 4 recognition uploads
   ai_identifications AiIdentification[]
+  transfer_proofs  TransferProof[]     // phase 6 handover photo evidence
 
   @@index([owner_user_id])
   @@map("assets")
