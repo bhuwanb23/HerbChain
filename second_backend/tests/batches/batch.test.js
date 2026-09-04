@@ -120,7 +120,14 @@ test("batch create happy path: one transaction -> batch + docs + event + audit +
 
   const dbRow = await prisma.batch.findUnique({ where: { id: batch.id } });
   assert.equal(dbRow.current_holder_user_id, dbRow.farmer_id);
-  assert.equal(dbRow.qr_nonce, 0);
+
+  // Phase 5: QR v1 is born ACTIVE with the batch, owned by the farmer.
+  const qr = await prisma.qrToken.findFirst({ where: { batch_id: batch.id } });
+  assert.equal(qr.version, 1);
+  assert.equal(qr.status, "active");
+  assert.equal(qr.owner_user_id, dbRow.farmer_id);
+  assert.equal(qr.token_prefix.startsWith("hbc_"), true);
+  assert.ok(qr.token_cipher); // encrypted raw kept for re-printing
 
   const ev = await prisma.batchEvent.findFirst({ where: { batch_id: batch.id } });
   assert.equal(ev.event_type, "CREATED");
@@ -219,7 +226,7 @@ test("origin is immutable: no route exposes edits to farmer/species/harvest/gps"
   }
 });
 
-test("QR mint + verify: current nonce valid, tampered invalid, stale nonce invalid", async () => {
+test("QR card: active v1 token with captioned PNG; old stateless verify route is gone", async () => {
   const token = await farmerA();
   const img = await uploadPhoto(token);
   const created = await request(app).post("/api/v1/batches").set("Authorization", `Bearer ${token}`).send(payload({ species_code: "ashwagandha", quantity: 5, asset_ids: [img.body.data.asset.id] }));
@@ -227,23 +234,32 @@ test("QR mint + verify: current nonce valid, tampered invalid, stale nonce inval
 
   const qr = await request(app).get(`/api/v1/batches/${batchId}/qr`).set("Authorization", `Bearer ${token}`);
   assert.equal(qr.status, 200);
-  assert.ok(qr.body.data.png.startsWith("data:image/png"));
-  const qrToken = qr.body.data.url.split("/qr/")[1];
+  assert.equal(qr.body.data.code.startsWith("HERB-"), true);
+  assert.equal(qr.body.data.qr.version, 1);
+  assert.equal(qr.body.data.qr.status, "active");
+  assert.match(qr.body.data.qr.token_prefix, /^hbc_/);
+  assert.ok(qr.body.data.qr.png.startsWith("data:image/png"));
+  assert.match(qr.body.data.qr.url, /\/qr\/hbc_/);
 
-  const okVerify = await request(app).post(`/api/v1/batches/${batchId}/qr/verify`).set("Authorization", `Bearer ${token}`).send({ token: qrToken });
-  assert.equal(okVerify.body.data.valid, true);
+  // The printed token validates against the live engine.
+  const qrToken = qr.body.data.qr.url.split("/qr/")[1];
+  const val = await request(app).post("/api/v1/qr/validate").set("Authorization", `Bearer ${token}`).send({ token: qrToken });
+  assert.equal(val.status, 200);
+  assert.equal(val.body.data.valid, true);
+  assert.equal(val.body.data.version, 1);
+  assert.equal(val.body.data.owner.role, "farmer");
 
-  const bad = await request(app).post(`/api/v1/batches/${batchId}/qr/verify`).set("Authorization", `Bearer ${token}`).send({ token: "tampered-token" });
-  assert.equal(bad.body.data.valid, false);
+  const hist = await request(app).get(`/api/v1/batches/${batchId}/qr/history`).set("Authorization", `Bearer ${token}`);
+  assert.equal(hist.status, 200);
+  assert.equal(hist.body.data.tokens.length, 1);
+  assert.equal(hist.body.data.tokens[0].version, 1);
 
-  // Nonce bumped (a transfer would do this) -> the printed QR dies.
-  await prisma.batch.update({ where: { id: batchId }, data: { qr_nonce: { increment: 1 } } });
-  const stale = await request(app).post(`/api/v1/batches/${batchId}/qr/verify`).set("Authorization", `Bearer ${token}`).send({ token: qrToken });
-  assert.equal(stale.body.data.valid, false);
-  assert.equal(stale.body.data.nonce_current, 1);
+  // Stateless-era endpoint is removed -> 404.
+  const gone = await request(app).post(`/api/v1/batches/${batchId}/qr/verify`).set("Authorization", `Bearer ${token}`).send({ token: qrToken });
+  assert.equal(gone.status, 404);
 });
 
-test("QR mint is restricted to holder/admin", async () => {
+test("QR card is restricted to holder/admin", async () => {
   const token = await farmerA();
   const img = await uploadPhoto(token);
   const created = await request(app).post("/api/v1/batches").set("Authorization", `Bearer ${token}`).send(payload({ quantity: 3, asset_ids: [img.body.data.asset.id] }));
