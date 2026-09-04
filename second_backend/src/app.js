@@ -57,6 +57,7 @@ function _mountCoreRoutes(app) {
         batches: "/api/v1/batches",
         uploads: "/api/v1/uploads",
         identifications: "/api/v1/identifications",
+        qr: "/api/v1/qr (validate | transfer | regenerate)",
       },
     });
   });
@@ -99,6 +100,10 @@ function _mountRoutes(app) {
   // Phase 4: AI/ML species identification (identification module).
   const { mountIdentificationRoutes } = require("./modules/identification/identificationRoutes");
   mountIdentificationRoutes(app);
+
+  // Phase 5: dynamic QR engine (validate / transfer / regenerate).
+  const { mountQrRoutes } = require("./modules/trace/qrRoutes");
+  mountQrRoutes(app);
 }
 
 // ------------------------------------------------------------- error box

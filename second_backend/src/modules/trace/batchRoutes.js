@@ -4,11 +4,10 @@
 const express = require("express");
 const { ok, error } = require("../../utils/responses");
 const { requireAuth, requirePermission } = require("../../middleware/auth");
-const { createBatch, listOwn, getById, getEvents, resolveSpecies, assertCanView, assertCanMint } = require("../../services/batches");
-const { mintBatchQr, verifyBatchQrToken, tokenMatchesBatch } = require("../../services/qrMint");
-const { batchCreateSchema, qrVerifySchema, zodDetails } = require("../../validation/batchSchemas");
+const { createBatch, listOwn, getById, getEvents, assertCanView, assertCanMint } = require("../../services/batches");
+const { qrCard, qrHistory } = require("../../services/qrEngine");
+const { batchCreateSchema, zodDetails } = require("../../validation/batchSchemas");
 const { serializeBatch, serializeEvent } = require("./batchSerializer");
-const { writeAudit } = require("../../services/audit");
 
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
@@ -72,41 +71,31 @@ function mountBatchRoutes(app) {
     })
   );
 
-  // ----------------------------------------------------------- QR mint
+  // -------------------------------------------------- active QR card
+  // Phase 5 dynamic QR engine: returns the ACTIVE ownership token + a
+  // captioned PNG (batch code + version). Same token re-prints until rotation.
   router.get(
     "/:id/qr",
     requirePermission("batch.view"),
     wrap(async (req, res) => {
       const batch = await getById(req.params.id);
       if (!batch) return error(res, "not_found", "Batch not found", 404);
-      assertCanMint(req.user, batch);
-      const qr = await mintBatchQr(batch);
-      return ok(res, { batch_id: batch.id, code: qr.code, url: qr.url, png: qr.png, version: qr.version });
+      assertCanMint(req.user, batch); // holder or admin
+      const card = await qrCard(batch, req.user);
+      return ok(res, card);
     })
   );
 
-  // ------------------------------------------------------ QR verify
-  router.post(
-    "/:id/qr/verify",
+  // ---------------------------------------------------- QR history
+  router.get(
+    "/:id/qr/history",
     requirePermission("batch.view"),
     wrap(async (req, res) => {
-      const parsed = qrVerifySchema.safeParse(req.body ?? {});
-      if (!parsed.success) {
-        return error(res, "validation_error", "token is required", 400);
-      }
       const batch = await getById(req.params.id);
       if (!batch) return error(res, "not_found", "Batch not found", 404);
-      assertCanMint(req.user, batch);
-
-      let payload;
-      try {
-        payload = verifyBatchQrToken(parsed.data.token);
-      } catch {
-        return ok(res, { valid: false, reason: "invalid_signature" });
-      }
-      const valid = tokenMatchesBatch(payload, batch);
-      if (valid) await writeAudit({ actorUserId: req.user.id, action: "QR_VERIFIED", targetType: "batch", targetId: batch.id, meta: { code: batch.code } });
-      return ok(res, { valid, batch_id: batch.id, code: batch.code, nonce_current: batch.qr_nonce, nonce_in_token: payload.nonce });
+      assertCanMint(req.user, batch); // holder or admin
+      const history = await qrHistory(batch.id);
+      return ok(res, { batch_id: batch.id, code: batch.code, ...history });
     })
   );
 
