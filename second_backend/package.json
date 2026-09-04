@@ -5,6 +5,9 @@
   "private": true,
   "type": "commonjs",
   "main": "src/index.js",
+  "prisma": {
+    "schema": "prisma/schema"
+  },
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
