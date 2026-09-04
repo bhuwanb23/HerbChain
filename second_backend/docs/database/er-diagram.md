@@ -1,6 +1,6 @@
 # HerbChain — ER Diagram (Redesigned Schema)
 
-Source of truth: `prisma/schema/` (19 files, 87 models). This file renders the
+Source of truth: `prisma/schema/` (19 files, 92 models). This file renders the
 same structure as Mermaid diagrams grouped by domain — the phase-1 "ER
 Diagram" deliverable. Full conventions: `docs/database/architecture.md`.
 
@@ -337,17 +337,26 @@ erDiagram
     }
 ```
 
-## 6. Products, lots & commerce
+## 6. Products, manufacturing & lineage (Phase 10) + commerce
 
 ```mermaid
 erDiagram
     USER ||--o{ PRODUCT : "manufacturer"
-    PRODUCT ||--o{ PRODUCT_LOT : "production runs"
+    PRODUCT ||--o{ MANUFACTURING_BATCH : "production runs (MFG)"
+    PRODUCT ||--o{ PRODUCT_FORMULA : "standard recipe lines"
+    SPECIES ||--o{ PRODUCT_FORMULA : "ingredient species"
+    MANUFACTURING_BATCH ||--o{ MANUFACTURING_BATCH_INGREDIENT : "reserved -> consumed | released"
+    BATCH ||--o{ MANUFACTURING_BATCH_INGREDIENT : "source herb batch"
+    INVENTORY_ITEM ||--o{ MANUFACTURING_BATCH_INGREDIENT : "reserved quantity (Phase 9 pool)"
+    PRODUCT ||--o{ PRODUCT_LOT : "finished lots"
     USER ||--o{ PRODUCT_LOT : "current holder"
+    MANUFACTURING_BATCH |o--o| PRODUCT_LOT : "one lot per completed run"
+    PRODUCT_LOT ||--o| PRODUCT_QR_TOKEN : "permanent (hash + cipher)"
     PRODUCT_LOT ||--o{ PRODUCT_LOT_EVENT : "custody + sale timeline"
     USER ||--o{ PRODUCT_LOT_EVENT : "actor / from / to"
-    PRODUCT_LOT ||--o{ PRODUCT_LOT_BATCH_LINK : "composition"
-    BATCH ||--o{ PRODUCT_LOT_BATCH_LINK : "source batches"
+    PRODUCT_LOT ||--o{ PRODUCT_LINEAGE_SNAPSHOT : "frozen at completion"
+    BATCH ||--o{ AFFECTED_PRODUCT : "recall blast radius"
+    PRODUCT ||--o{ AFFECTED_PRODUCT : ""
 
     USER ||--o{ PURCHASE_ORDER : "buyer"
     USER ||--o{ PURCHASE_ORDER : "seller"
@@ -357,21 +366,65 @@ erDiagram
     USER ||--o{ WALLET : "1:1"
     WALLET ||--o{ WALLET_TRANSACTION : "ledger"
 
+    PRODUCT {
+        string id PK
+        string code UK
+        string manufacturer_user_id FK
+        string status
+        int expiry_months
+    }
+    MANUFACTURING_BATCH {
+        string id PK
+        string code UK
+        string product_id FK
+        string manufacturer_user_id FK
+        string status
+        int planned_units
+    }
+    MANUFACTURING_BATCH_INGREDIENT {
+        string id PK
+        string manufacturing_batch_id FK
+        string batch_id FK
+        string inventory_item_id FK
+        float quantity_kg
+        string state
+    }
+    PRODUCT_FORMULA {
+        string id PK
+        string product_id FK
+        string species_code FK
+        float standard_quantity
+        string unit
+    }
     PRODUCT_LOT {
         string id PK
         string code UK
         string product_id FK
+        string manufacturing_batch_id FK
         int quantity_units
         int units_remaining
         string phase
         string current_holder_user_id FK
-        int qr_nonce
     }
-    PRODUCT_LOT_BATCH_LINK {
+    PRODUCT_QR_TOKEN {
         string id PK
+        string lot_id FK UK
+        string token_hash UK
+        string token_cipher
+        string status
+    }
+    PRODUCT_LINEAGE_SNAPSHOT {
+        string id PK
+        string product_id FK
         string lot_id FK
+        string snapshot_hash
+    }
+    AFFECTED_PRODUCT {
+        string id PK
         string batch_id FK
-        float quantity_kg
+        string product_id FK
+        string impact_type
+        string status
     }
 ```
 

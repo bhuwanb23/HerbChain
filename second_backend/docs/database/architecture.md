@@ -1,14 +1,15 @@
 # HerbChain Database Architecture (Redesign)
 
-Status: **LIVE** — `package.json` points at `prisma/schema/` (19 files, 87
+Status: **LIVE** — `package.json` points at `prisma/schema/` (19 files, 92
 models). Migrations are applied on the scratch DB and the backend is built
 phase by phase against these models: Phase 2 auth → Phase 3 batches →
 Phase 4 identification → Phase 5 dynamic QR → Phase 6 governed transfers →
 Phase 7 logistics/shipments → Phase 8 lab certification →
-Phase 9 manufacturer procurement
+Phase 9 manufacturer procurement → Phase 10 products & lineage
 are live (see docs/auth, docs/batch, docs/identification, docs/qr,
-docs/transfers, docs/logistics, docs/lab, docs/procurement). The legacy `schema.legacy.prisma`
-+ `migrations.legacy/` + old routes/tests are kept as the porting reference.
+docs/transfers, docs/logistics, docs/lab, docs/procurement,
+docs/products). The legacy `schema.legacy.prisma` + `migrations.legacy/` + old
+routes/tests are kept as the porting reference.
 
 ## 1. Why a redesign
 
@@ -54,7 +55,7 @@ correct for a demo but has production gaps:
    a model has more than one FK to the same target.
 9. **Email uniqueness** is on the lowercased value — normalize at write time.
 
-## 3. Domain map (19 files, 87 models)
+## 3. Domain map (19 files, 92 models)
 
 | File | Domain | Models |
 |---|---|---|
@@ -70,7 +71,7 @@ correct for a demo but has production gaps:
 | `51_qr.prisma` | Phase-5 dynamic QR custody tokens | `QrToken`, `QrReplacementLog` |
 | `52_transfer.prisma` | Phase-6 governed two-party transfers | `TransferRequest`, `TransferProof` |
 | `53_procurement.prisma` | Phase-9 manufacturer raw-material procurement | `BatchRequest`, `BatchInventory`, `InventoryAllocation`, `GoodsReceipt`, `InventoryItem`, `InventoryTransaction`, `QualityHold` |
-| `60_products.prisma` | Product master + custody-tracked lots | `Product`, `ProductLot`, `ProductLotEvent`, `ProductLotBatchLink` |
+| `60_products.prisma` | Products, manufacturing runs & lineage (Phase 10) | `Product`, `ProductFormula`, `ManufacturingBatch`, `ManufacturingBatchIngredient`, `ProductLot`, `ProductQrToken`, `ProductLotEvent`, `ProductLineageSnapshot`, `AffectedProduct` |
 | `70_commerce.prisma` | Orders & money | `PurchaseOrder`, `OrderItem`, `Invoice`, `Payment`, `Wallet`, `WalletTransaction` |
 | `80_compliance.prisma` | Licenses/recalls/support | `LicenseCert`, `Inspection`, `Recall`, `RecallScope`, `SupportTicket` |
 | `90_notifications.prisma` | Messaging | `NotificationTemplate`, `Notification`, `DeviceToken` |
@@ -101,8 +102,14 @@ Batch 1─N LabDocument / SpeciesVerificationLog (farmer vs AI vs lab)
 Batch 0─1 Certification | RejectionRecord (terminal outcome)
 
 User 1─N Product ("manufactured")   User 1─N ProductLot ("held")
-Product 1─N ProductLot 1─N ProductLotEvent (append-only timeline)
-ProductLot N─M Batch (via ProductLotBatchLink, quantity_kg per link)
+Product 1─N ManufacturingBatch (runs) 1─N ManufacturingBatchIngredient
+ManufacturingBatchIngredient N─1 Batch (source) N─1 InventoryItem (reserved qty)
+ManufacturingBatchIngredient: reserved -> consumed (run completes) | released (run cancelled)
+Product 1─N ProductFormula N─1 Species (standard recipe lines)
+ManufacturingBatch 1─0..1 ProductLot (one finished lot per completed run)
+ProductLot 1─1 ProductQrToken (permanent — minted at LOT_CREATED, hash lookup)
+ProductLot 1─N ProductLotEvent / ProductLineageSnapshot (frozen at completion)
+Batch N─M Product (via AffectedProduct — recall blast radius)
 Lot chain: manufacturer -> distributor -> retailer -> sold
 
 Recall 1─N RecallScope (product / product_lot / batch granularity)
@@ -137,8 +144,8 @@ Batch 1─N QualityHold     (quarantine: active blocks production ops)
 | `BatchState` | merged into `Batch` | phase/holder/test_status on the row |
 | `BatchEvent` | `BatchEvent` | from/to renamed, token hash stored |
 | `LabReport` | `LabReceipt` + `SampleRecord` + `LabTest` + `LabTestResult` + `LabReview` + `TestParameter` | Phase-8 redesign (docs/lab/architecture.md §5): header+flat results → sample/test/parameter spine; old tables dropped |
-| `Product` | `Product` (master) + `ProductLot` + `ProductLotEvent` | product QR token moved to lot nonce; distribution custody added |
-| `ProductBatchLink` | `ProductLotBatchLink` | composition is per manufactured run, not per product master |
+| `Product` | `Product` (master) | Phase-10 redesign (docs/products/architecture.md): explicit `ManufacturingBatch` run per production event |
+| `ProductBatchLink` | `ManufacturingBatchIngredient` | composition is per manufactured run (reserved → consumed edge), not per product master |
 | `CropPlan` | `CropPlan` + `FarmActivity` | dates → DateTime |
 | `WeatherSnapshot` | `WeatherSnapshot` | unchanged shape |
 | — (new) | security, assets, logistics (warehouses, stock, **shipments**), commerce, compliance, notifications, intel, **blockchain anchors** | see §3 |
@@ -155,8 +162,10 @@ Batch 1─N QualityHold     (quarantine: active blocks production ops)
    inside the same transaction (old → transferred, next version → active for
    the new holder). Raw tokens are stored AES-256-GCM-encrypted and looked up
    by SHA-256; "one ACTIVE QR per batch" is enforced in the transaction AND
-   by a partial unique index. Product lots (60_products) keep their stateless
-   nonce design until the products phase (docs/qr/architecture.md).
+   by a partial unique index. **Product lots got their permanent QR in Phase
+   10** (docs/products/architecture.md): `ProductQrToken` minted once inside
+   the completing run's transaction — raw token never stored (hash + cipher
+   only), `active → revoked` via recall/QA.
 3. **Recalls are lot-scoped.** `RecallScope` rows can target specific batches /
    lots inside a product; empty scopes = product-wide. Resolve endpoints will
    surface active recalls on scans.
@@ -241,9 +250,9 @@ added because it was missing.
 | `lab_requests` | 🔀 | `BatchEvent` `INTENT_LAB_REQUEST` + phase `at_lab` (event-driven queue; revisit if a stateful queue is wanted) |
 | `lab_tests` | ⬆ | `LabTest` (per sample, per category) → `LabTestResult` (one row per parameter) + `TestParameter` vocabulary; `LabReceipt` intake + `SampleRecord` + `LabReview` two-level review (Phase 8) |
 | `certifications` | 🔀 | `Certification` (COA: sha256 hash, lab snapshot, sample/test/parameter counts, `active\|revoked`) + `RejectionRecord` (reason + action); org licenses in `LicenseCert` |
-| `manufacturing_batches` | 🔀 | `ProductLot` — each run of a `Product` with own custody chain |
+| `manufacturing_batches` | 🔀 | `ManufacturingBatch` (explicit production run, MFG-…) → one `ProductLot` (PRD-…) per completed run (Phase 10) |
 | `products` | ✅ | `Product` (master) |
-| `product_ingredients` | ✅ | `ProductLotBatchLink` (composition per run, `quantity_kg` per link) |
+| `product_ingredients` | ✅ | `ManufacturingBatchIngredient` (per-run composition edges, `quantity_kg`; inventory-backed) |
 | `blockchain_events` | ➕ | `BlockchainEvent` (proof anchors: tx_hash, block_number, chain, status) |
 | `notifications` | ✅ | `Notification` (+ `NotificationTemplate`, `DeviceToken`) |
 | `audit_logs` | ✅ | `AuditLog` (admin/system) + domain timelines (`BatchEvent`, `ProductLotEvent`) |
@@ -309,8 +318,8 @@ Each module = routes + service + serializers + zod schema, colocated.
 
 ## 8. Verification
 
-- `npx prisma validate --schema prisma/schema` → valid ✅ (19 files, 87 models)
+- `npx prisma validate --schema prisma/schema` → valid ✅ (19 files, 92 models)
 - Migrations applied on the scratch DB (`prisma/scratch_new.db`), `migrate
   status` clean; Prisma client regenerated per phase
 - Active test suites green: auth, batches, identification, qr, transfers,
-  shipments, lab, procurement (115 cases)
+  shipments, lab, procurement, products (124 cases)

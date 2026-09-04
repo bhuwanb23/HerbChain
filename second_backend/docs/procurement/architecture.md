@@ -2,8 +2,9 @@
 
 Status: **LIVE** — `/api/v1/manufacturer/*` mounted, 7 new models
 (`53_procurement.prisma`), migration `20260904140000_phase9_procurement`,
-schema **80 → 87 models**. Tests: `tests/procurement/` (6 suites-cases… 6
-scenarios over real HTTP), part of `npm test` (115 cases total).
+schema **80 → 87 models** (92 after Phase 10). Tests:
+`tests/procurement/` (6 scenarios over real HTTP), part of `npm test` (124
+cases total).
 
 Spec: `docs/phase_9.md`.
 
@@ -160,8 +161,9 @@ and consume refuse with `quality_hold`. Resolution is audited.
   labs/farmers, certification success, consumption/utilization KPIs,
   avg procurement time.
 - `recallStatus(batch)`: where a batch sits today (stock + receipts +
-  request count + products that consumed it via `ProductLotBatchLink`) so
-  an AYUSH recall can be answered instantly (spec §13).
+  request count + the runs that consumed it via `ManufacturingBatchIngredient`
+  (Phase 10), feeding `AffectedProduct`) so an AYUSH recall can be answered
+  instantly (spec §13).
 
 ## 6. API surface (`src/modules/procurement/`, mount `/api/v1/manufacturer`)
 

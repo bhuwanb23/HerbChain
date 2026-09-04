@@ -123,7 +123,8 @@ The batch side adds: `GET /batches/:id` now returns the lab dossier and the
 
 ## 6. Verification
 
-- `npx prisma validate --schema prisma/schema` → valid ✅ (80 models).
+- `npx prisma validate --schema prisma/schema` → valid ✅ (80 models; 92 at
+  Phase 10).
 - Migration `20260904130000_phase8_lab` applied; template DB regenerated
   (migrations-only, each suite self-bootstraps species/parameters).
 - `npm test` → **109/109** across all seven suites (13 new lab cases:
