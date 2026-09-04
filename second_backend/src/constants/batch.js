@@ -21,6 +21,7 @@ const PHASE_STATUS_LABEL = { with_farmer: "CREATED" };
 
 function statusLabel(phase, testStatus = "pending") {
   if (testStatus === "rejected") return "FAILED";
+  if (testStatus === "certified") return "CERTIFIED";
   if (PHASE_STATUS_LABEL[phase]) return PHASE_STATUS_LABEL[phase];
   return phase.toUpperCase();
 }
