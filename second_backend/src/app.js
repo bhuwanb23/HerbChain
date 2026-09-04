@@ -56,6 +56,7 @@ function _mountCoreRoutes(app) {
         species: "/api/v1/species",
         batches: "/api/v1/batches",
         uploads: "/api/v1/uploads",
+        identifications: "/api/v1/identifications",
       },
     });
   });
@@ -94,6 +95,10 @@ function _mountRoutes(app) {
 
   const { mountUploadRoutes } = require("./modules/uploads/uploadsRoutes");
   mountUploadRoutes(app);
+
+  // Phase 4: AI/ML species identification (identification module).
+  const { mountIdentificationRoutes } = require("./modules/identification/identificationRoutes");
+  mountIdentificationRoutes(app);
 }
 
 // ------------------------------------------------------------- error box
@@ -117,7 +122,7 @@ function _mountErrorHandlers(app) {
     if (err instanceof ApiError) {
       const status =
         err instanceof TransferError ? transferErrorStatus(err.code) : err.status || 400;
-      return error(res, err.code, err.message, status);
+      return error(res, err.code, err.message, status, err.details || null);
     }
     return next(err);
   });

@@ -18,6 +18,7 @@ const PERMISSIONS = [
   { key: "lab.test", module: "lab", description: "Conduct / record lab tests" },
   { key: "lab.certify", module: "lab", description: "Approve (certify) a batch" },
   { key: "lab.reject", module: "lab", description: "Reject a batch on test failure" },
+  { key: "identification.detect", module: "identification", description: "Run AI/ML herb recognition and confirm results" },
   { key: "product.create", module: "product", description: "Create a finished product / lot" },
   { key: "product.link", module: "product", description: "Link source batches to a lot" },
   { key: "product.qr", module: "product", description: "Generate lot QRs" },
@@ -33,7 +34,7 @@ const PERMISSIONS = [
 
 const GRANTS = {
   consumer: ["profile.self", "trace.resolve"],
-  farmer: ["profile.self", "trace.resolve", "batch.create", "batch.view", "batch.transfer"],
+  farmer: ["profile.self", "trace.resolve", "identification.detect", "batch.create", "batch.view", "batch.transfer"],
   transporter: ["profile.self", "trace.resolve", "batch.view", "batch.transfer", "shipment.manage", "shipment.assign"],
   lab: ["profile.self", "trace.resolve", "batch.view", "batch.request", "batch.receive", "lab.test", "lab.certify", "lab.reject"],
   manufacturer: ["profile.self", "trace.resolve", "batch.view", "batch.request", "batch.receive", "product.create", "product.link", "product.qr", "shipment.manage"],
