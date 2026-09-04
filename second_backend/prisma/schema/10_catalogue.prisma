@@ -31,6 +31,10 @@ model Species {
   crop_plans      CropPlan[]
   price_quotes    PriceQuote[]
   lab_reports     LabReport[]
+  ai_top_species        AiIdentification[] @relation("AiTopSpecies")
+  ai_selected_species   AiIdentification[] @relation("AiSelectedSpecies")
+  ai_feedback_predicted AiFeedback[]       @relation("FeedbackPredicted")
+  ai_feedback_lab       AiFeedback[]       @relation("FeedbackLab")
 
   curator User? @relation("SpeciesCurator", fields: [created_by_user_id], references: [id], onDelete: SetNull)
 

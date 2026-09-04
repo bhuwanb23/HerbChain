@@ -47,6 +47,10 @@ model User {
   device_tokens       DeviceToken[]
   notifications       Notification[]
 
+  // recognition (phase 4 — AI/ML identification, 96_identification.prisma)
+  ai_requests       AiRequest[]        @relation("AiRequester")
+  ai_identifications AiIdentification[] @relation("AiFarmer")
+
   // per-role profile rows (1:1, domain files own the opposite side)
   farmer_profile       FarmerProfile?
   transporter_profile  TransporterProfile?

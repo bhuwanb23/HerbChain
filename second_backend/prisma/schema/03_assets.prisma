@@ -22,6 +22,8 @@ model Asset {
   owner       User?             @relation("AssetOwner", fields: [owner_user_id], references: [id], onDelete: SetNull)
   avatar_of   User?             @relation("UserAvatar") // set when this asset IS the user's avatar
   documents   EntityDocument[]
+  ai_requests      AiRequest[]        // phase 4 recognition uploads
+  ai_identifications AiIdentification[]
 
   @@index([owner_user_id])
   @@map("assets")

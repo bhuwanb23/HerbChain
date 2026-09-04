@@ -1,0 +1,138 @@
+// ============================================================================
+// IDENTIFICATION — AI/ML-assisted species recognition (Phase 4, docs/phase_4.md).
+// ----------------------------------------------------------------------------
+// The recognition layer that speeds up farmer batch registration. Recognition
+// NEVER certifies a herb — the lab is the final scientific authority. These
+// tables persist every recognition request, its top-N predictions, the
+// farmer's confirmation (accept / change / reject), and later lab-vs-
+// prediction feedback. That growing dataset is the training corpus for the
+// custom AYUSH model (spec Stage 2-4) and the audit trail for model reviews.
+//
+// Providers: mock | gemini | azure_custom_vision (+ future local models) —
+// selected per-request by the gateway (src/services/identification).
+// AI output is never trusted as text: every predicted label resolves against
+// the master catalogue through species_synonyms / common_name /
+// scientific_name / code before anything is stored.
+// ============================================================================
+
+// One recognition REQUEST to a provider (or a cache hit). The model-audit log
+// row: provider + model + latency + success + cache usage per call.
+model AiRequest {
+  id               String    @id @default(cuid())
+  user_id          String // farmer who uploaded the image
+  asset_id         String? // the uploaded image (Asset row)
+  provider         String // mock | gemini | azure_custom_vision
+  model_name       String
+  model_version    String
+  image_hash       String? // sha256 of the file — integrity + cache key
+  response_time_ms Int?
+  http_status      Int?
+  success          Boolean   @default(true)
+  error_code       String? // provider_error | timeout | invalid_image | unmapped | …
+  is_cached        Boolean   @default(false) // true when served from ImageHashCache
+  created_at       DateTime  @default(now())
+
+  user           User              @relation("AiRequester", fields: [user_id], references: [id])
+  asset          Asset?            @relation(fields: [asset_id], references: [id], onDelete: SetNull)
+  identification AiIdentification?
+
+  @@index([user_id, created_at])
+  @@index([provider, created_at])
+  @@index([image_hash])
+  @@index([success])
+  @@map("ai_requests")
+}
+
+// Recognition result cache: same file hash + provider/model returns the stored
+// top-N result without a second (paid/slow) call — farmers retrying or the
+// same image re-uploaded never double-bills. Only successful results cache.
+model ImageHashCache {
+  id            String    @id @default(cuid())
+  image_hash    String // sha256 of the file bytes
+  provider      String
+  model_name    String
+  model_version String
+  result_json   Json // { quality, predictions, model } — wire-shaped result
+  hits          Int       @default(0)
+  expires_at    DateTime
+  created_at    DateTime  @default(now())
+  last_hit_at   DateTime?
+
+  @@unique([image_hash, provider, model_name, model_version])
+  @@index([expires_at])
+  @@map("image_hashes")
+}
+
+// A farmer-facing identification attempt: quality verdict + top-N predictions
+// + the farmer's decision. One row per detection call; `status` drives the
+// confirmation step of the registration flow.
+// status: pending | confirmed | rejected | quality_failed | error
+// verdict (confidence band of the top prediction): high >=90 | medium 70-89
+//         | low <70 | manual (nothing mapped)
+model AiIdentification {
+  id                 String    @id @default(cuid())
+  user_id            String
+  asset_id           String? // image analysed
+  request_id         String?   @unique // AiRequest that produced the predictions
+  image_hash         String?
+
+  // recognition output
+  quality_json       Json? // { ok, sharpness, brightness, width, height, reasons[] }
+  predictions_json   Json // top-N: [{code, common_name, scientific_name, confidence, mapped}]
+  top_species_id     String? // best catalogue match (null => unmapped / manual)
+  confidence         Float? // confidence of the top prediction (0-100)
+  verdict            String   @default("manual") // high | medium | low | manual
+  provider           String?
+  model_name         String?
+  model_version      String?
+
+  // farmer decision
+  status             String    @default("pending")
+  accepted           Boolean? // true = AI top pick accepted as-is (no change)
+  selected_species_id String? // farmer's own pick (null if rejected / skipped)
+  mismatch           Boolean? // true = farmer chose differently than AI top pick
+  rejected_reason    String? // wrong_species | poor_image | other
+  batch_id           String? // set when this identification registers a batch
+
+  created_at   DateTime @default(now())
+  confirmed_at DateTime?
+  updated_at   DateTime @updatedAt
+
+  user            User              @relation("AiFarmer", fields: [user_id], references: [id])
+  asset           Asset?            @relation(fields: [asset_id], references: [id], onDelete: SetNull)
+  request         AiRequest?        @relation(fields: [request_id], references: [id], onDelete: SetNull)
+  top_species     Species?          @relation("AiTopSpecies", fields: [top_species_id], references: [id], onDelete: SetNull)
+  selected_species Species?         @relation("AiSelectedSpecies", fields: [selected_species_id], references: [id], onDelete: SetNull)
+  batch           Batch?            @relation(fields: [batch_id], references: [id], onDelete: SetNull)
+  feedback        AiFeedback?
+
+  @@index([user_id, created_at])
+  @@index([status])
+  @@index([created_at])
+  @@index([batch_id])
+  @@map("ai_identifications")
+}
+
+// Post-lab accuracy feedback (spec ai_feedback): what the model predicted vs
+// what the lab certified. Written when a batch's lab report resolves — it
+// powers the accuracy report and eventually model retraining.
+// match: correct | incorrect | unverifiable
+model AiFeedback {
+  id                   String    @id @default(cuid())
+  identification_id    String    @unique
+  batch_id             String
+  predicted_species_id String? // species the model suggested (may be null)
+  lab_species_id       String? // species the lab certified
+  match                String // correct | incorrect | unverifiable
+  notes                String?
+  created_at           DateTime  @default(now())
+
+  identification AiIdentification @relation(fields: [identification_id], references: [id], onDelete: Cascade)
+  batch          Batch            @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  predicted_species Species? @relation("FeedbackPredicted", fields: [predicted_species_id], references: [id], onDelete: SetNull)
+  lab_species       Species? @relation("FeedbackLab", fields: [lab_species_id], references: [id], onDelete: SetNull)
+
+  @@index([batch_id])
+  @@index([match])
+  @@map("ai_feedback")
+}

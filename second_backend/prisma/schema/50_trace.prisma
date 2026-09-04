@@ -56,6 +56,8 @@ model Batch {
   events      BatchEvent[]
   lab_reports LabReport[]
   product_lot_links ProductLotBatchLink[]
+  identifications AiIdentification[] // recognition that produced this batch
+  ai_feedback     AiFeedback[]
 
   @@index([code])
   @@index([farmer_id])
