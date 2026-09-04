@@ -140,9 +140,11 @@ erDiagram
         string test_status
         float weight_kg
         string current_holder_user_id FK
-        int qr_nonce
         string parent_batch_id FK
     }
+    QR_TOKEN ||--o{ BATCH : "one ACTIVE per batch (51_qr)"
+    QR_TOKEN ||--o{ USER : "owner"
+    QR_TOKEN ||--o{ QR_REPLACEMENT_LOG : "old/new"
     BATCH_EVENT {
         string id PK
         string batch_id FK

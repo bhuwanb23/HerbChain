@@ -1,10 +1,11 @@
 # Batch Management — Phase 3 Implementation Plan (new backend)
 
-Status: **PLAN** for `second_backend` against the redesigned 57-model schema.
-Product spec: `docs/phase_3.md` (untracked, user-authored). Auth (Phase 2) is
-done: registration with AYUSH verification gates, rotating sessions, DB-driven
-RBAC. This plan is the reconciliation + build order for Phase 3 — **no code
-written yet**.
+Status: **IMPLEMENTED** (Phase 3 live — batches, uploads, species, initial
+QR). Supersession note: the QR parts of this doc (§6/§8 — the interim
+stateless nonce design, `Batch.qr_nonce`, `GET /batches/:id/qr` minting on
+demand, `POST /batches/:id/qr/verify`) were replaced by the **Phase 5 dynamic
+QR engine**: `docs/qr/architecture.md` + `prisma/schema/51_qr.prisma`.
+Kept here as the phase-3 build record.
 
 ## 1. Scope (from docs/phase_3.md)
 

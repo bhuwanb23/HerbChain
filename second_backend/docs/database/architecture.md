@@ -1,11 +1,11 @@
 # HerbChain Database Architecture (Redesign)
 
-Status: **LIVE SCHEMA (flipped)** — `package.json` points at `prisma/schema/`
-(multi-file, 53 models) and the init + coverage migrations are applied on a
-scratch DB. The service layer is mid-rewrite against these models; the legacy
-`schema.legacy.prisma` + `migrations.legacy/` are kept as the porting
-reference, and the old 53-test suite belongs to the old schema and is being
-rewritten module by module.
+Status: **LIVE** — `package.json` points at `prisma/schema/` (17 files, 63
+models). Migrations are applied on the scratch DB and the backend is built
+phase by phase against these models: Phase 2 auth → Phase 3 batches →
+Phase 4 identification → Phase 5 dynamic QR are live (see docs/auth,
+docs/batch, docs/identification, docs/qr). The legacy `schema.legacy.prisma`
++ `migrations.legacy/` + old routes/tests are kept as the porting reference.
 
 ## 1. Why a redesign
 
@@ -51,7 +51,7 @@ correct for a demo but has production gaps:
    a model has more than one FK to the same target.
 9. **Email uniqueness** is on the lowercased value — normalize at write time.
 
-## 3. Domain map (15 files, 53 models)
+## 3. Domain map (17 files, 63 models)
 
 | File | Domain | Models |
 |---|---|---|
@@ -64,11 +64,13 @@ correct for a demo but has production gaps:
 | `30_logistics.prisma` | Transport/manufacture/distribution + stock + shipments | `TransporterProfile`, `ManufacturerProfile`, `DistributorProfile`, `RetailerProfile`, `Warehouse`, `StockMovement`, `StockPosition`, `Shipment`, `ShipmentTrackingPoint` |
 | `40_quality.prisma` | Lab & structured tests | `LabProfile`, `TestParameter`, `LabReport`, `LabTestResult` |
 | `50_trace.prisma` | Batches + event timeline + QR scan stream | `Batch`, `BatchEvent`, `QrScanLog` |
+| `51_qr.prisma` | Phase-5 dynamic QR custody tokens | `QrToken`, `QrReplacementLog` |
 | `60_products.prisma` | Product master + custody-tracked lots | `Product`, `ProductLot`, `ProductLotEvent`, `ProductLotBatchLink` |
 | `70_commerce.prisma` | Orders & money | `PurchaseOrder`, `OrderItem`, `Invoice`, `Payment`, `Wallet`, `WalletTransaction` |
 | `80_compliance.prisma` | Licenses/recalls/support | `LicenseCert`, `Inspection`, `Recall`, `RecallScope`, `SupportTicket` |
 | `90_notifications.prisma` | Messaging | `NotificationTemplate`, `Notification`, `DeviceToken` |
 | `95_intel.prisma` | Prices & weather | `PriceQuote`, `WeatherSnapshot` |
+| `96_identification.prisma` | Phase-4 AI/ML recognition | `AiRequest`, `AiIdentification`, `ImageHashCache`, `AiFeedback` |
 | `97_blockchain.prisma` | Blockchain proof anchors | `BlockchainEvent` |
 
 ## 4. Relationship spine
@@ -129,10 +131,14 @@ BlockchainEvent (refs batch_event | product_lot_event | audit_log) — proof anc
    (consumed into a lot); ProductLots then carry custody manufacturer →
    distributor → retailer and terminate in a `SALE` event when a consumer
    buys. Consumer scan shows the lot journey + every source batch.
-2. **QRs are stateless nonce tokens.** Signed claims embed a `qr_nonce` that
-   increments on each transfer; replay is rejected by nonce mismatch. **No
-   token material is stored** — `current_qr_token`/`qr_token_revoked_at` are
-   gone from Batch; lots carry only their nonce; `GET /qr` mints on demand.
+2. **Batch QRs are stateful, versioned custody tokens (Phase 5).**
+   `docs/phase_5.md` superseded the earlier stateless-nonce idea: every batch
+   mints `QrToken` v1 ACTIVE at creation, and each custody transfer rotates it
+   inside the same transaction (old → transferred, next version → active for
+   the new holder). Raw tokens are stored AES-256-GCM-encrypted and looked up
+   by SHA-256; "one ACTIVE QR per batch" is enforced in the transaction AND
+   by a partial unique index. Product lots (60_products) keep their stateless
+   nonce design until the products phase (docs/qr/architecture.md).
 3. **Recalls are lot-scoped.** `RecallScope` rows can target specific batches /
    lots inside a product; empty scopes = product-wide. Resolve endpoints will
    surface active recalls on scans.
@@ -200,7 +206,7 @@ added because it was missing.
 | `batch_images` | 🔀 | `Asset` + `EntityDocument` (`entity_type=batch`, `doc_kind=herb_image`\|`packaging_image`\|`transport_image`) |
 | `current_ownership` | 🔀 | `Batch.current_holder_user_id` + `phase` + `qr_nonce`; `ProductLot` mirror |
 | `ownership_history` | ✅ | `BatchEvent` (+ `ProductLotEvent` on the product side) |
-| `qr_tokens` | 🔀 | Stateless nonce QRs (§5b.2) — token never stored; minted on demand |
+| `qr_tokens` | ⬆ | `QrToken` — versioned custody tokens (v1 ACTIVE at batch birth; rotated by transfers/replacements; raw token encrypted at rest, lookup by SHA-256) |
 | `qr_scan_logs` | ➕ | `QrScanLog` — every scan: custody, checks AND anonymous consumer views |
 | `shipment_requests` | ➕ | `Shipment` (`requested → assigned → picked_up → in_transit → delivered \| failed \| cancelled`) |
 | `shipment_tracking` | ➕ | `ShipmentTrackingPoint` (GPS breadcrumbs per shipment) |
@@ -275,11 +281,7 @@ Each module = routes + service + serializers + zod schema, colocated.
 
 ## 8. Verification
 
-- `npx prisma validate --schema prisma/schema` → valid ✅ (15 files, 53 models)
-- Migrations applied on the scratch DB (`prisma/scratch_new.db`):
-  `20260904054252_init` (49 tables) + `20260904064500_phase1_coverage_gaps`
-  (→ 53 tables); `migrate status` clean
-- `package.json` `prisma.schema` = `prisma/schema` (flipped); Prisma client
-  regenerated against the 53-model schema
-- Next: rewrite modules + seed + tests against the new models module by
-  module, keeping the suite green at each step.
+- `npx prisma validate --schema prisma/schema` → valid ✅ (17 files, 63 models)
+- Migrations applied on the scratch DB (`prisma/scratch_new.db`), `migrate
+  status` clean; Prisma client regenerated per phase
+- Active test suites green: auth, batches, identification, qr (75 cases)
