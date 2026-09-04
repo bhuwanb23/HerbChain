@@ -27,8 +27,13 @@ const env = {
   JWT_ACCESS_TOKEN_EXPIRES: process.env.JWT_ACCESS_TOKEN_EXPIRES || "15m", // jsonwebtoken duration
   JWT_REFRESH_TOKEN_EXPIRES: process.env.JWT_REFRESH_TOKEN_EXPIRES || "30d",
 
-  // QR signing key (read directly by qrService; kept here for visibility)
+  // QR signing key (legacy stateless qrService; kept for visibility)
   QR_SIGNING_KEY: process.env.QR_SIGNING_KEY || process.env.SECRET_KEY || "dev-qr-change-me",
+
+  // phase 5 — dynamic QR engine (docs/qr/architecture.md)
+  QR_TOKEN_TTL_DAYS: intOr(process.env.QR_TOKEN_TTL_DAYS, 30), // spec: token expiry, not ownership expiry
+  QR_TOKEN_BYTES: intOr(process.env.QR_TOKEN_BYTES, 24), // random bytes per token (192 bits)
+  QR_TOKEN_PREFIX: process.env.QR_TOKEN_PREFIX || "hbc_",
 
   // CORS — comma-separated origins or "*"
   CORS_ORIGINS: (process.env.CORS_ORIGINS || "*").trim(),
