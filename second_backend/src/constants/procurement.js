@@ -31,6 +31,7 @@ const TX_TYPES = [
   "reserved", // locked for a production run
   "released", // reservation cancelled -> back to available
   "consumed", // used in production
+  "consumed_for_production", // consumed when a manufacturing run COMPLETES (phase 10)
   "adjusted", // recount / correction
   "discarded", // spoiled / damaged / destroyed
 ];

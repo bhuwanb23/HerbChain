@@ -76,6 +76,12 @@ const env = {
   REQUEST_CODE_PREFIX: process.env.REQUEST_CODE_PREFIX || "REQ", // REQ-YYYY-000001
   GRN_CODE_PREFIX: process.env.GRN_CODE_PREFIX || "GRN", // GRN-YYYY-000001
   CERT_EXPIRY_WARNING_DAYS: intOr(process.env.CERT_EXPIRY_WARNING_DAYS, 90), // dashboard "expiring soon"
+
+  // phase 10 — products & manufacturing lineage (docs/phase_10.md)
+  PRODUCT_CODE_PREFIX: process.env.PRODUCT_CODE_PREFIX || "PROD", // PROD-YYYY-000001
+  MFG_CODE_PREFIX: process.env.MFG_CODE_PREFIX || "MFG", // MFG-YYYY-000001 (production runs)
+  PRD_CODE_PREFIX: process.env.PRD_CODE_PREFIX || "PRD", // PRD-YYYY-000001 (finished lots)
+  PRODUCT_QR_PREFIX: process.env.PRODUCT_QR_PREFIX || "prd_", // permanent product QR tokens
 };
 
 function corsOriginList() {
