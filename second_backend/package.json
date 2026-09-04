@@ -16,7 +16,8 @@
     "migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
     "generate": "prisma generate",
-    "test": "node --test tests/"
+    "test": "node --test tests/",
+    "test:auth": "node --test tests/auth/"
   },
   "dependencies": {
     "@prisma/client": "^6.16.0",

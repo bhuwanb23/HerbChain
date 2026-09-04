@@ -24,7 +24,7 @@ const env = {
 
   // auth
   JWT_SECRET_KEY: process.env.JWT_SECRET_KEY || process.env.SECRET_KEY || "dev-jwt-change-me",
-  JWT_ACCESS_TOKEN_EXPIRES: process.env.JWT_ACCESS_TOKEN_EXPIRES || "12h", // jsonwebtoken duration
+  JWT_ACCESS_TOKEN_EXPIRES: process.env.JWT_ACCESS_TOKEN_EXPIRES || "15m", // jsonwebtoken duration
   JWT_REFRESH_TOKEN_EXPIRES: process.env.JWT_REFRESH_TOKEN_EXPIRES || "30d",
 
   // QR signing key (read directly by qrService; kept here for visibility)
@@ -32,6 +32,9 @@ const env = {
 
   // CORS — comma-separated origins or "*"
   CORS_ORIGINS: (process.env.CORS_ORIGINS || "*").trim(),
+
+  // frontend host for password-reset links (mailer stub)
+  FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3000",
 
   // logging
   LOG_LEVEL: (process.env.LOG_LEVEL || "INFO").toUpperCase(),
