@@ -1,6 +1,6 @@
 # HerbChain — ER Diagram (Redesigned Schema)
 
-Source of truth: `prisma/schema/` (15 files, 57 models). This file renders the
+Source of truth: `prisma/schema/` (18 files, 73 models). This file renders the
 same structure as Mermaid diagrams grouped by domain — the phase-1 "ER
 Diagram" deliverable. Full conventions: `docs/database/architecture.md`.
 
@@ -100,8 +100,17 @@ erDiagram
     USER ||--o{ STOCK_MOVEMENT : "actor"
 
     USER ||--o{ SHIPMENT : "requested_by"
+    USER o|--o{ SHIPMENT : "origin / destination"
     USER o|--o{ SHIPMENT : "assigned transporter"
     SHIPMENT ||--o{ SHIPMENT_TRACKING : "GPS breadcrumbs"
+    SHIPMENT ||--o{ TRANSPORTER_ASSIGNMENT : "one pending job"
+    SHIPMENT ||--o{ PICKUP_EVENT : "evidence"
+    SHIPMENT ||--o{ DELIVERY_EVENT : "receiver scans"
+    SHIPMENT ||--o{ SHIPMENT_EVENT : "timeline"
+    SHIPMENT ||--o{ SHIPMENT_DOCUMENT : "invoice / certs"
+    SHIPMENT ||--o{ FAILED_DELIVERY_LOG : "why it failed"
+    SHIPMENT |o--o| PROOF_OF_DELIVERY : "POD 1:1"
+    SHIPMENT |o--o| SHIPMENT_METRIC : "expected vs actual"
 
     WAREHOUSE {
         string id PK
@@ -112,9 +121,53 @@ erDiagram
         string id PK
         string shipment_no UK
         string ref_type
+        string shipment_type
         string status
         string requested_by_user_id FK
+        string from_user_id FK
+        string to_user_id FK
         string assigned_transporter_user_id FK
+        float geofence_radius_m
+    }
+    PICKUP_EVENT {
+        string id PK
+        string shipment_id FK
+        float pickup_lat
+        float pickup_lng
+        string photo_url
+        datetime pickup_time
+    }
+    DELIVERY_EVENT {
+        string id PK
+        string shipment_id FK
+        string receiver_user_id FK
+        string receiver_role
+        float delivery_lat
+        float delivery_lng
+    }
+    PROOF_OF_DELIVERY {
+        string id PK
+        string shipment_id FK UK
+        string receiver_name
+        string receiver_signature
+        string receiver_photo_url
+        string delivery_photo_url
+        string remarks
+    }
+    SHIPMENT_EVENT {
+        string id PK
+        string shipment_id FK
+        string event_type
+        json event_data
+        string created_by_user_id FK
+        datetime created_at
+    }
+    SHIPMENT_METRIC {
+        string id PK
+        string shipment_id FK UK
+        float expected_hours
+        float actual_hours
+        int delay_minutes
     }
 ```
 

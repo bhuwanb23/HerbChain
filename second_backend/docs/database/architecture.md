@@ -3,7 +3,7 @@
 Status: **LIVE** — `package.json` points at `prisma/schema/` (18 files, 65
 models). Migrations are applied on the scratch DB and the backend is built
 phase by phase against these models: Phase 2 auth → Phase 3 batches →
-Phase 4 identification → Phase 5 dynamic QR → Phase 6 governed transfers
+Phase 4 identification → Phase 5 dynamic QR → Phase 6 governed transfers → Phase 7 logistics/shipments
 are live (see docs/auth, docs/batch, docs/identification, docs/qr,
 docs/transfers). The legacy `schema.legacy.prisma` + `migrations.legacy/` +
 old routes/tests are kept as the porting reference.
@@ -52,7 +52,7 @@ correct for a demo but has production gaps:
    a model has more than one FK to the same target.
 9. **Email uniqueness** is on the lowercased value — normalize at write time.
 
-## 3. Domain map (18 files, 65 models)
+## 3. Domain map (18 files, 73 models)
 
 | File | Domain | Models |
 |---|---|---|
@@ -62,7 +62,7 @@ correct for a demo but has production gaps:
 | `03_assets.prisma` | Media/files registry | `Asset`, `EntityDocument` |
 | `10_catalogue.prisma` | AYUSH species taxonomy | `Species`, `SpeciesSynonym`, `SpeciesContent`, `MedicinalUse`, `SpeciesMedicinalUse` |
 | `20_agronomy.prisma` | Farmer operations | `FarmerProfile`, `FarmPlot`, `CropPlan`, `FarmActivity` |
-| `30_logistics.prisma` | Transport/manufacture/distribution + stock + shipments | `TransporterProfile`, `ManufacturerProfile`, `DistributorProfile`, `RetailerProfile`, `Warehouse`, `StockMovement`, `StockPosition`, `Shipment`, `ShipmentTrackingPoint` |
+| `30_logistics.prisma` | Transport/manufacture/distribution + stock + shipments + Phase-7 logistics execution | `TransporterProfile`, `ManufacturerProfile`, `DistributorProfile`, `RetailerProfile`, `Warehouse`, `StockMovement`, `StockPosition`, `Shipment`, `ShipmentTrackingPoint`, `TransporterAssignment`, `PickupEvent`, `DeliveryEvent`, `ProofOfDelivery`, `ShipmentEvent`, `ShipmentDocument`, `ShipmentMetric`, `FailedDeliveryLog` |
 | `40_quality.prisma` | Lab & structured tests | `LabProfile`, `TestParameter`, `LabReport`, `LabTestResult` |
 | `50_trace.prisma` | Batches + event timeline + QR scan stream | `Batch`, `BatchEvent`, `QrScanLog` |
 | `51_qr.prisma` | Phase-5 dynamic QR custody tokens | `QrToken`, `QrReplacementLog` |
@@ -212,8 +212,16 @@ added because it was missing.
 | `qr_scan_logs` | ➕ | `QrScanLog` — every scan: custody, checks AND anonymous consumer views |
 | `transfer_requests` | ➕ | `TransferRequest` — Phase-6 two-party consent: receiver requests, current holder approves; completed inside the transfer transaction |
 | `transfer_proofs` | ➕ | `TransferProof` — handover evidence (photo asset, signatures, remarks) tied to the TRANSFER BatchEvent |
-| `shipment_requests` | ➕ | `Shipment` (`requested → assigned → picked_up → in_transit → delivered \| failed \| cancelled`) |
-| `shipment_tracking` | ➕ | `ShipmentTrackingPoint` (GPS breadcrumbs per shipment) |
+| `shipment_requests` | 🔀 | `Shipment` Phase-7 machine: `requested → assigned → accepted → arrived_for_pickup → picked_up → in_transit → arrived_destination → delivered → completed` \| `cancelled` \| `failed` \| `rejected`; type/priority/route snapshots + geofence; pickup & delivery **orchestrate** a governed Phase-6 custody hop |
+| `shipment_tracking` | ➕ | `ShipmentTrackingPoint` (GPS breadcrumbs per shipment; speed/accuracy; offline buffered sync) |
+| `transporter_assignments` | ➕ | `TransporterAssignment` — one PENDING attempt per job; `pending → accepted \| declined \| cancelled`, reassignment after a decline |
+| `pickup_events` | ➕ | `PickupEvent` — evidence at handover (GPS, photo, remarks, transporter) |
+| `delivery_events` | ➕ | `DeliveryEvent` — receiver identity + role + GPS at the scan moment |
+| `proof_of_delivery` | ➕ | `ProofOfDelivery` — 1:1 per shipment: receiver name/signature/photos, remarks, uploaded_at |
+| `shipment_events` | ➕ | `ShipmentEvent` — append-only logistics timeline (REQUESTED…COMPLETED, GPS_UPDATED, DELAYED…) |
+| `shipment_documents` | ➕ | `ShipmentDocument` — invoice / lab request / transfer doc / certificate |
+| `shipment_metrics` | ➕ | `ShipmentMetric` — expected vs actual hours + delay minutes/reason at completion |
+| `failed_delivery_logs` | ➕ | `FailedDeliveryLog` — receiver unavailable / wrong batch / qc / damaged + photo |
 | `lab_requests` | 🔀 | `BatchEvent` `INTENT_LAB_REQUEST` + phase `at_lab` (event-driven queue; revisit if a stateful queue is wanted) |
 | `lab_tests` | ⬆ | `LabTestResult` (one row per parameter) + `TestParameter` vocabulary |
 | `certifications` | 🔀 | `LabReport` outcome `approved`/`rejected` + report asset; org licenses in `LicenseCert` |
@@ -285,7 +293,8 @@ Each module = routes + service + serializers + zod schema, colocated.
 
 ## 8. Verification
 
-- `npx prisma validate --schema prisma/schema` → valid ✅ (18 files, 65 models)
+- `npx prisma validate --schema prisma/schema` → valid ✅ (18 files, 73 models)
 - Migrations applied on the scratch DB (`prisma/scratch_new.db`), `migrate
   status` clean; Prisma client regenerated per phase
-- Active test suites green: auth, batches, identification, qr (75 cases)
+- Active test suites green: auth, batches, identification, qr, transfers,
+  shipments (96 cases)
