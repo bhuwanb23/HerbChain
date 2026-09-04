@@ -61,6 +61,7 @@ function _mountCoreRoutes(app) {
         transfers: "/api/v1/transfers (request | approve | reject | cancel | execute | recover)",
         batch_ownership: "/api/v1/batches/:id (owner | ownership-history)",
         shipments: "/api/v1/shipments (create | :id/assign | accept | pickup | location | deliver | pod | timeline)",
+        labs: "/api/v1/labs (receive | samples | tests | reviews | certificates | reject | analytics)",
       },
     });
   });
@@ -115,6 +116,10 @@ function _mountRoutes(app) {
   // Phase 7: shipment & logistics (create/assign/pickup/track/deliver/pod).
   const { mountShipmentRoutes } = require("./modules/shipments/shipmentsRoutes");
   mountShipmentRoutes(app);
+
+  // Phase 8: laboratory certification (receive/samples/tests/review/COA).
+  const { mountLabRoutes } = require("./modules/lab/labRoutes");
+  mountLabRoutes(app);
 }
 
 // ------------------------------------------------------------- error box
