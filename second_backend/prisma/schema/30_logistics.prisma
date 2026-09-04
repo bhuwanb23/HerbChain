@@ -153,50 +153,90 @@ model StockPosition {
 // planning/execution side of the custody chain: QR scans record WHO took
 // custody; Shipment records the request, assigned transporter, route and
 // proof of delivery. ref_type/ref_id are polymorphic (batch | product_lot).
-// status: requested -> assigned -> picked_up -> in_transit -> delivered
-//         | failed | cancelled
+//
+// Phase 7 = the full logistics state machine (docs/phase_7.md):
+// status: requested -> assigned -> accepted -> arrived_for_pickup -> picked_up
+//         -> in_transit -> arrived_destination -> delivered -> completed
+// failure paths: cancelled | failed | rejected
+// shipment_type: FARM_TO_LAB | LAB_TO_MANUFACTURER | MANUFACTURER_TO_WAREHOUSE
+//                | CUSTOM
+// priority: LOW | NORMAL | HIGH | URGENT
+//
+// Ownership and shipment are SEPARATE concepts (spec Core Philosophy):
+// Shipment tracks WHERE cargo physically is + who carries it; WHO owns it is
+// the batch's custody chain (Batch + QrToken + TransferRequest). At pickup
+// and delivery the shipment module ORCHESTRATES a governed Phase-6 custody
+// handover (approved TransferRequest + QR rotation) — never a bare update.
 model Shipment {
   id                String    @id @default(cuid())
-  shipment_no       String    @unique // e.g. "SHP-2026-0001"
+  shipment_no       String    @unique // e.g. "SHIP-2026-000001"
   ref_type          String // batch | product_lot
   ref_id            String
-  requested_by_user_id String // who asked for the move (holder of the ref)
+  shipment_type     String    @default("CUSTOM") // code list above
+  priority          String    @default("NORMAL") // code list above
+
+  // route snapshots (plain FKs — the origin/destination parties)
+  requested_by_user_id String // who raised the request (destination party, normally)
+  from_user_id      String? // origin party (current holder at request time)
+  from_role         String? // snapshot for the audit trail
+  to_user_id        String? // destination party
+  to_role           String?
   assigned_transporter_user_id String?
+
   origin_location   String?
   origin_gps_lat    Float?
   origin_gps_lng    Float?
   destination_location String?
   destination_gps_lat Float?
   destination_gps_lng Float?
+  geofence_radius_m Float?   @default(100) // delivery fence (spec: 100 m example)
   quantity_kg       Float? // declared load when moving bulk batches
   quantity_units    Int? // declared load when moving finished lots
   status            String    @default("requested") // code list above
   scheduled_pickup_at DateTime?
+  expected_delivery_at DateTime? // for delay metrics (expected vs actual)
   actual_pickup_at  DateTime?
+  arrived_destination_at DateTime?
   delivered_at      DateTime? // proof of delivery moment (receiver confirms)
+  failure_reason    String? // when failed | rejected
   notes             String?
   created_at        DateTime  @default(now())
   updated_at        DateTime  @updatedAt
 
   requested_by User  @relation("ShipmentRequester", fields: [requested_by_user_id], references: [id], onDelete: Restrict)
   transporter  User? @relation("ShipmentTransporter", fields: [assigned_transporter_user_id], references: [id], onDelete: SetNull)
+  from_user    User? @relation("ShipmentOrigin", fields: [from_user_id], references: [id], onDelete: SetNull)
+  to_user      User? @relation("ShipmentDestination", fields: [to_user_id], references: [id], onDelete: SetNull)
 
-  tracking ShipmentTrackingPoint[]
+  tracking    ShipmentTrackingPoint[]
+  assignments TransporterAssignment[]
+  pickup_events    PickupEvent[]
+  delivery_events  DeliveryEvent[]
+  events      ShipmentEvent[]
+  documents   ShipmentDocument[]
+  metric      ShipmentMetric?
+  proof       ProofOfDelivery?
+  failed_logs FailedDeliveryLog[]
 
   @@index([ref_type, ref_id])
   @@index([assigned_transporter_user_id, status])
   @@index([status])
+  @@index([requested_by_user_id])
   @@index([created_at])
   @@map("shipments")
 }
 
 // GPS breadcrumbs captured along a shipment's route (driver app / IoT).
-// Append-only. captured_by_user_id is a plain FK (no relation).
+// Append-only. captured_by_user_id is a plain FK (no relation). Offline
+// support: clients buffer points while disconnected and sync them here; the
+// server never accepts a breadcrumb as proof of custody (see shipments.md).
 model ShipmentTrackingPoint {
   id         String   @id @default(cuid())
   shipment_id String
   gps_lat    Float
   gps_lng    Float
+  speed_kph  Float?
+  accuracy_m Float?
   captured_at DateTime @default(now())
   captured_by_user_id String?
   note       String?
@@ -205,4 +245,161 @@ model ShipmentTrackingPoint {
 
   @@index([shipment_id, captured_at])
   @@map("shipment_tracking")
+}
+
+// ---------------------------------------------------------------------------
+// Phase 7 — shipment execution evidence + timeline (docs/phase_7.md). All
+// child rows are append-only logistics records. User ids below are plain FKs
+// (no Prisma relation) unless noted — consistent with QrScanLog / AuditLog.
+// ---------------------------------------------------------------------------
+
+// One transporter-assignment attempt per shipment (reassignment allowed after
+// a decline). status: pending -> accepted | declined | cancelled.
+model TransporterAssignment {
+  id               String   @id @default(cuid())
+  shipment_id      String
+  transporter_user_id String // plain FK
+  assigned_by_user_id  String // who assigned (admin / system / requester)
+  status           String   @default("pending") // pending | accepted | declined | cancelled
+  assigned_at      DateTime @default(now())
+  decided_at       DateTime?
+  decline_reason   String?
+
+  shipment Shipment @relation(fields: [shipment_id], references: [id], onDelete: Cascade)
+
+  @@index([shipment_id, status])
+  @@index([transporter_user_id, status])
+  @@map("transporter_assignments")
+}
+
+// Evidence captured at the moment cargo is handed to the transporter: GPS,
+// photo, remarks. The governed custody handover itself happens through the
+// Phase-6 QR engine (batch/QR stay the ownership truth); this row records the
+// logistics fact of the pickup.
+model PickupEvent {
+  id               String   @id @default(cuid())
+  shipment_id      String
+  transporter_user_id String // plain FK
+  pickup_lat       Float?
+  pickup_lng       Float?
+  accuracy_m       Float?
+  photo_url        String? // snapshot (asset may be GC'd; url stays for audit)
+  photo_asset_id   String? // plain FK into assets
+  remarks          String?
+  pickup_time      DateTime @default(now())
+
+  shipment Shipment @relation(fields: [shipment_id], references: [id], onDelete: Cascade)
+
+  @@index([shipment_id])
+  @@map("pickup_events")
+}
+
+// Receiver-side confirmation of arrival + delivery (scan-based). The actual
+// custody change runs through the governed transfer engine; this row records
+// the receiver's GPS + identity at the handover moment.
+model DeliveryEvent {
+  id               String   @id @default(cuid())
+  shipment_id      String
+  receiver_user_id String // plain FK
+  receiver_role    String // role snapshot
+  delivery_lat     Float?
+  delivery_lng     Float?
+  accuracy_m       Float?
+  remarks          String?
+  delivered_at     DateTime @default(now())
+
+  shipment Shipment @relation(fields: [shipment_id], references: [id], onDelete: Cascade)
+
+  @@index([shipment_id])
+  @@map("delivery_events")
+}
+
+// One proof-of-delivery record per shipment (upserted by /pod). Receiver
+// confirmation + GPS + timestamp are captured by the delivery event; this row
+// adds signatures + photos for the audit file.
+model ProofOfDelivery {
+  id            String   @id @default(cuid())
+  shipment_id   String   @unique
+  receiver_name String?
+  receiver_signature String? // typed/inked acknowledgement text or note
+  receiver_photo_url String? // photo of the receiver / ID
+  delivery_photo_url  String? // photo of the delivered goods / location
+  remarks       String?
+  uploaded_at   DateTime @default(now())
+  uploaded_by_user_id String? // plain FK
+
+  shipment Shipment @relation(fields: [shipment_id], references: [id], onDelete: Cascade)
+
+  @@map("proof_of_deliveries")
+}
+
+// Shipment timeline (spec Shipment Timeline Engine). Append-only; event_type
+// codes: REQUESTED | ASSIGNED | ACCEPTED | DECLINED | ARRIVED_FOR_PICKUP |
+// PICKED_UP | STARTED | STOPPED | DELAYED | ARRIVED_DESTINATION | DELIVERED |
+// COMPLETED | CANCELLED | FAILED | REJECTED | POD_UPLOADED | DOCUMENT_ADDED |
+// GPS_UPDATED
+model ShipmentEvent {
+  id            String   @id @default(cuid())
+  shipment_id   String
+  event_type    String // code list above
+  event_data    Json? // typed extras: {lat, lng, reason, version, …}
+  created_by_user_id String? // plain FK
+  created_at    DateTime @default(now())
+
+  shipment Shipment @relation(fields: [shipment_id], references: [id], onDelete: Cascade)
+
+  @@index([shipment_id, created_at])
+  @@map("shipment_events")
+}
+
+// Attached documents (invoice, lab request, transfer doc, certificates).
+// document_type: invoice | lab_request | transfer_document | certificate |
+//                other
+model ShipmentDocument {
+  id            String   @id @default(cuid())
+  shipment_id   String
+  document_type String
+  document_url  String?
+  document_asset_id String? // plain FK into assets
+  uploaded_by_user_id String? // plain FK
+  created_at    DateTime @default(now())
+
+  shipment Shipment @relation(fields: [shipment_id], references: [id], onDelete: Cascade)
+
+  @@index([shipment_id])
+  @@map("shipment_documents")
+}
+
+// Delay/performance metrics computed at completion (expected vs actual).
+// delay_reason: weather | traffic | vehicle_issue | route_issue | manual_delay
+model ShipmentMetric {
+  id            String   @id @default(cuid())
+  shipment_id   String   @unique
+  expected_hours Float?
+  actual_hours  Float?
+  delay_minutes Int?
+  delay_reason  String?
+  computed_at   DateTime @default(now())
+
+  shipment Shipment @relation(fields: [shipment_id], references: [id], onDelete: Cascade)
+
+  @@map("shipment_metrics")
+}
+
+// Why a delivery failed. reason: receiver_unavailable | wrong_batch |
+// qc_issue | damaged | other
+model FailedDeliveryLog {
+  id            String   @id @default(cuid())
+  shipment_id   String
+  reason        String // code list above
+  photo_url     String?
+  photo_asset_id String? // plain FK
+  remarks       String?
+  created_by_user_id String? // plain FK
+  created_at    DateTime @default(now())
+
+  shipment Shipment @relation(fields: [shipment_id], references: [id], onDelete: Cascade)
+
+  @@index([shipment_id])
+  @@map("failed_delivery_logs")
 }

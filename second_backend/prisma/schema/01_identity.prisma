@@ -92,6 +92,8 @@ model User {
   stock_movements  StockMovement[]
   shipments_requested    Shipment[] @relation("ShipmentRequester")
   shipments_transported  Shipment[] @relation("ShipmentTransporter")
+  shipments_from         Shipment[] @relation("ShipmentOrigin")
+  shipments_to           Shipment[] @relation("ShipmentDestination")
 
   // products & commerce
   products_manufactured Product[]          @relation("ProductManufacturer")
