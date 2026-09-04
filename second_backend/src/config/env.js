@@ -67,6 +67,10 @@ const env = {
   RECOGNITION_MIN_BRIGHTNESS: intOr(process.env.RECOGNITION_MIN_BRIGHTNESS, 25),
   RECOGNITION_DAILY_LIMIT: intOr(process.env.RECOGNITION_DAILY_LIMIT, 50), // spec: 50 AI requests/day/user
   RECOGNITION_CACHE_TTL_DAYS: intOr(process.env.RECOGNITION_CACHE_TTL_DAYS, 30),
+
+  // phase 7 — shipments & logistics (docs/phase_7.md)
+  SHIPMENT_FENCE_RADIUS_M: intOr(process.env.SHIPMENT_FENCE_RADIUS_M, 100), // spec: 100 m example
+  SHIPMENT_CODE_PREFIX: process.env.SHIPMENT_CODE_PREFIX || "SHIP", // SHIP-YYYY-000001
 };
 
 function corsOriginList() {
