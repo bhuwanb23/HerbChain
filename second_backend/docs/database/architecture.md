@@ -1,9 +1,11 @@
 # HerbChain Database Architecture (Redesign)
 
-Status: **BLUEPRINT** — the target schema lives in `prisma/schema/` (multi-file) and
-has been validated, but is **not yet wired** into the running app. The active schema
-remains `prisma/schema.prisma` until the migration step flips `package.json`'s
-`prisma.schema` to the folder and the service layer is rewritten against it.
+Status: **LIVE SCHEMA (flipped)** — `package.json` points at `prisma/schema/`
+(multi-file, 53 models) and the init + coverage migrations are applied on a
+scratch DB. The service layer is mid-rewrite against these models; the legacy
+`schema.legacy.prisma` + `migrations.legacy/` are kept as the porting
+reference, and the old 53-test suite belongs to the old schema and is being
+rewritten module by module.
 
 ## 1. Why a redesign
 
@@ -49,7 +51,7 @@ correct for a demo but has production gaps:
    a model has more than one FK to the same target.
 9. **Email uniqueness** is on the lowercased value — normalize at write time.
 
-## 3. Domain map (14 files, 43 models)
+## 3. Domain map (15 files, 53 models)
 
 | File | Domain | Models |
 |---|---|---|
@@ -59,14 +61,15 @@ correct for a demo but has production gaps:
 | `03_assets.prisma` | Media/files registry | `Asset`, `EntityDocument` |
 | `10_catalogue.prisma` | AYUSH species taxonomy | `Species`, `SpeciesSynonym`, `SpeciesContent`, `MedicinalUse`, `SpeciesMedicinalUse` |
 | `20_agronomy.prisma` | Farmer operations | `FarmerProfile`, `FarmPlot`, `CropPlan`, `FarmActivity` |
-| `30_logistics.prisma` | Transport/manufacture/distribution + stock | `TransporterProfile`, `ManufacturerProfile`, `DistributorProfile`, `RetailerProfile`, `Warehouse`, `StockMovement`, `StockPosition` |
+| `30_logistics.prisma` | Transport/manufacture/distribution + stock + shipments | `TransporterProfile`, `ManufacturerProfile`, `DistributorProfile`, `RetailerProfile`, `Warehouse`, `StockMovement`, `StockPosition`, `Shipment`, `ShipmentTrackingPoint` |
 | `40_quality.prisma` | Lab & structured tests | `LabProfile`, `TestParameter`, `LabReport`, `LabTestResult` |
-| `50_trace.prisma` | Batches + event timeline | `Batch`, `BatchEvent` |
+| `50_trace.prisma` | Batches + event timeline + QR scan stream | `Batch`, `BatchEvent`, `QrScanLog` |
 | `60_products.prisma` | Product master + custody-tracked lots | `Product`, `ProductLot`, `ProductLotEvent`, `ProductLotBatchLink` |
 | `70_commerce.prisma` | Orders & money | `PurchaseOrder`, `OrderItem`, `Invoice`, `Payment`, `Wallet`, `WalletTransaction` |
 | `80_compliance.prisma` | Licenses/recalls/support | `LicenseCert`, `Inspection`, `Recall`, `RecallScope`, `SupportTicket` |
 | `90_notifications.prisma` | Messaging | `NotificationTemplate`, `Notification`, `DeviceToken` |
 | `95_intel.prisma` | Prices & weather | `PriceQuote`, `WeatherSnapshot` |
+| `97_blockchain.prisma` | Blockchain proof anchors | `BlockchainEvent` |
 
 ## 4. Relationship spine
 
@@ -94,6 +97,11 @@ Lot chain: manufacturer -> distributor -> retailer -> sold
 Recall 1─N RecallScope (product / product_lot / batch granularity)
 PurchaseOrder 1─N OrderItem      (buyer/seller = User)
 PurchaseOrder 1─N Invoice 1─N Payment
+
+Shipment (refs batch | product_lot; requester + transporter = User)
+Shipment 1─N ShipmentTrackingPoint (GPS breadcrumbs)
+QrScanLog (refs batch | product_lot | product; plain actor col) — one scan stream
+BlockchainEvent (refs batch_event | product_lot_event | audit_log) — proof anchors
 ```
 
 ## 5. Old → new mapping (for the migration step)
@@ -113,7 +121,7 @@ PurchaseOrder 1─N Invoice 1─N Payment
 | `ProductBatchLink` | `ProductLotBatchLink` | composition is per manufactured run, not per product master |
 | `CropPlan` | `CropPlan` + `FarmActivity` | dates → DateTime |
 | `WeatherSnapshot` | `WeatherSnapshot` | unchanged shape |
-| — (new) | security, assets, logistics, commerce, compliance, notifications domains | see §3 |
+| — (new) | security, assets, logistics (warehouses, stock, **shipments**), commerce, compliance, notifications, intel, **blockchain anchors** | see §3 |
 
 ## 5b. Decisions locked (from architecture review)
 
@@ -172,6 +180,53 @@ Rules:
 - Split (child lots) and return (reverse custody) are schema-ready but NOT in
   v1.
 
+## 5d. Phase-1 (docs/phase_1.md) coverage audit
+
+Every core table from the phase-1 spec is present — direct, merged by
+redesign, or added in the coverage pass below. ✅ = direct match, ⬆ =
+superset/normalized upgrade, 🔀 = merged/redesigned (mapping column), ➕ =
+added because it was missing.
+
+| Phase-1 table | Status | Model / mapping |
+|---|---|---|
+| `users` | ✅ | `User` (role set extended: +consumer/retailer/distributor/admin) |
+| `user_profiles` | 🔀 | `User` fields + `Address` rows (district added) + per-role profile rows |
+| `farmers` | ✅ | `FarmerProfile` (+`farmer_code`, `organic_certified`); licenses → `LicenseCert` |
+| `transporters` | ✅ | `TransporterProfile` (+`transporter_code`, `vehicle_number`/`vehicle_type`, `is_active`) |
+| `laboratories` | ✅ | `LabProfile` (+`lab_code`, `verification_status`) |
+| `manufacturers` | ✅ | `ManufacturerProfile` (+`manufacturer_code`, `verification_status`) |
+| `herbs` | ⬆ | `Species` + `SpeciesSynonym` + `SpeciesContent` + `MedicinalUse` (M:N) |
+| `herb_batches` | ✅ | `Batch` (phase/test_status on the row; weight in kg; GPS) |
+| `batch_images` | 🔀 | `Asset` + `EntityDocument` (`entity_type=batch`, `doc_kind=herb_image`\|`packaging_image`\|`transport_image`) |
+| `current_ownership` | 🔀 | `Batch.current_holder_user_id` + `phase` + `qr_nonce`; `ProductLot` mirror |
+| `ownership_history` | ✅ | `BatchEvent` (+ `ProductLotEvent` on the product side) |
+| `qr_tokens` | 🔀 | Stateless nonce QRs (§5b.2) — token never stored; minted on demand |
+| `qr_scan_logs` | ➕ | `QrScanLog` — every scan: custody, checks AND anonymous consumer views |
+| `shipment_requests` | ➕ | `Shipment` (`requested → assigned → picked_up → in_transit → delivered \| failed \| cancelled`) |
+| `shipment_tracking` | ➕ | `ShipmentTrackingPoint` (GPS breadcrumbs per shipment) |
+| `lab_requests` | 🔀 | `BatchEvent` `INTENT_LAB_REQUEST` + phase `at_lab` (event-driven queue; revisit if a stateful queue is wanted) |
+| `lab_tests` | ⬆ | `LabTestResult` (one row per parameter) + `TestParameter` vocabulary |
+| `certifications` | 🔀 | `LabReport` outcome `approved`/`rejected` + report asset; org licenses in `LicenseCert` |
+| `manufacturing_batches` | 🔀 | `ProductLot` — each run of a `Product` with own custody chain |
+| `products` | ✅ | `Product` (master) |
+| `product_ingredients` | ✅ | `ProductLotBatchLink` (composition per run, `quantity_kg` per link) |
+| `blockchain_events` | ➕ | `BlockchainEvent` (proof anchors: tx_hash, block_number, chain, status) |
+| `notifications` | ✅ | `Notification` (+ `NotificationTemplate`, `DeviceToken`) |
+| `audit_logs` | ✅ | `AuditLog` (admin/system) + domain timelines (`BatchEvent`, `ProductLotEvent`) |
+| `consumer_scans` | 🔀 | merged into `QrScanLog` (`purpose=consumer_view`, anonymous actor) — one tamper signal stream |
+
+Design notes:
+- `qr_scan_logs` + `consumer_scans` are one table on purpose: failed/
+  unauthorized/replay custody scans and post-sale consumer views are the same
+  **anomaly stream** an AYUSH monitor needs for diversion/counterfeit signal
+  detection, and a single stream is filterable by `target_type`/`purpose`.
+- Batch-status values from phase-1 (CREATED…ARCHIVED) map onto `phase` +
+  `test_status` + `qr` minting rules; `ARCHIVED` will be a soft terminal state
+  at the service layer.
+- GPS appears wherever custody facts land: batch, events, shipments,
+  tracking points, scan logs, plots, profiles — so "where was it, who handled
+  it" is queryable end to end.
+
 ## 6. Planned codebase architecture (next steps after schema sign-off)
 
 The `src/` tree will mirror the domains so files stay small and ownership is
@@ -220,8 +275,11 @@ Each module = routes + service + serializers + zod schema, colocated.
 
 ## 8. Verification
 
-- `DATABASE_URL="file:./dev.db" npx prisma validate --schema prisma/schema` → valid ✅
-- App + its 53 tests still run against the OLD `prisma/schema.prisma` (untouched)
-- Migration step (next): flip `package.json` `prisma.schema` → folder, run
-  `prisma migrate dev` against a scratch DB, then rewrite modules + seed + tests
-  module by module, keeping the suite green at each step.
+- `npx prisma validate --schema prisma/schema` → valid ✅ (15 files, 53 models)
+- Migrations applied on the scratch DB (`prisma/scratch_new.db`):
+  `20260904054252_init` (49 tables) + `20260904064500_phase1_coverage_gaps`
+  (→ 53 tables); `migrate status` clean
+- `package.json` `prisma.schema` = `prisma/schema` (flipped); Prisma client
+  regenerated against the 53-model schema
+- Next: rewrite modules + seed + tests against the new models module by
+  module, keeping the suite green at each step.
