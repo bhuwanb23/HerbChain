@@ -26,6 +26,8 @@ model User {
   kyc_status      String    @default("none") // none | pending | verified | rejected
   is_active       Boolean   @default(true)
   last_login_at   DateTime?
+  failed_login_count Int    @default(0) // consecutive failures; reset on success (fraud lock)
+  locked_until    DateTime? // temporary fraud lock: 5 strikes -> 15m / 1h / 24h
 
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt
@@ -34,13 +36,16 @@ model User {
   avatar_asset  Asset?     @relation("UserAvatar", fields: [avatar_asset_id], references: [id], onDelete: SetNull)
   assets_owned  Asset[]    @relation("AssetOwner")
   addresses     Address[]
+  verification_requests  VerificationRequest[] @relation("VerificationSubject")
+  verification_reviews  VerificationRequest[] @relation("VerificationReviewer")
 
   // security / activity (defined across other domain files)
-  sessions         Session[]
-  api_keys         ApiKey[]
-  audit_actions    AuditLog[]    @relation("AuditActor")
-  device_tokens    DeviceToken[]
-  notifications    Notification[]
+  sessions            Session[]
+  password_reset_tokens PasswordResetToken[]
+  api_keys            ApiKey[]
+  audit_actions       AuditLog[]    @relation("AuditActor")
+  device_tokens       DeviceToken[]
+  notifications       Notification[]
 
   // per-role profile rows (1:1, domain files own the opposite side)
   farmer_profile       FarmerProfile?
@@ -112,4 +117,29 @@ model Address {
 
   @@index([user_id])
   @@map("addresses")
+}
+
+// A user/org verification workflow item — auto-created when an org-role
+// account registers (pending) and resolved by an AYUSH admin on approve /
+// reject. Supporting documents attach later via EntityDocument with
+// entity_type = verification_request once the assets phase lands.
+// req_type: org_registration | govt_id | license | address | other
+// status: pending | approved | rejected
+model VerificationRequest {
+  id                   String    @id @default(cuid())
+  user_id              String
+  req_type             String    @default("org_registration") // code list above
+  status               String    @default("pending") // code list above
+  verified_by_user_id  String?
+  verified_at          DateTime?
+  notes                String?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+
+  user     User  @relation("VerificationSubject", fields: [user_id], references: [id], onDelete: Cascade)
+  reviewer User? @relation("VerificationReviewer", fields: [verified_by_user_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id, status])
+  @@index([status])
+  @@map("verification_requests")
 }
