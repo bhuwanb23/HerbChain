@@ -9,6 +9,7 @@ const { prisma } = require("../db/client");
 const { ApiError } = require("../utils/errors");
 const { toKg, DUP_WINDOW_HOURS, DUP_WEIGHT_TOLERANCE_KG } = require("../constants/batch");
 const { nextBatchCode } = require("./batchCodes");
+const { assertOwnedAssets } = require("./uploads");
 
 const BATCH_INCLUDE = {
   species: { select: { id: true, code: true, common_name: true, scientific_name: true } },
@@ -37,10 +38,53 @@ async function resolveSpecies({ species_id = null, species_code = null } = {}) {
 
 /**
  * Create a batch inside one transaction.
- * @returns { { batch, duplicate_warning: boolean, images_attached: number } }
+ *
+ * Phase 4 integration: when `identification_id` is present (a confirmed AI/ML
+ * identification owned by this farmer) the species is derived from it and the
+ * analysed photo is attached automatically — the farmer never uploads twice.
+ *
+ * @returns { { batch, duplicate_warning: boolean, images_attached: number, identification_id: string|null } }
  */
 async function createBatch(user, input) {
-  const species = await resolveSpecies(input);
+  // Load the confirmed identification (farmer-owned, unused) when referenced.
+  let identification = null;
+  if (input.identification_id) {
+    identification = await prisma.aiIdentification.findFirst({
+      where: { id: input.identification_id, user_id: user.id },
+      select: { id: true, status: true, batch_id: true, selected_species_id: true, top_species_id: true, asset_id: true },
+    });
+    if (!identification) throw new ApiError("not_found", "Identification not found", 404);
+    if (identification.status !== "confirmed") {
+      throw new ApiError("bad_request", "Identification must be confirmed before registering a batch", 400);
+    }
+    if (identification.batch_id) {
+      throw new ApiError("invalid_state", "This identification is already linked to a batch", 409);
+    }
+  }
+
+  // Species: explicit input wins; otherwise the identification's confirmed pick.
+  const species = input.species_id || input.species_code
+    ? await resolveSpecies(input)
+    : await resolveSpecies({
+        species_id: identification ? identification.selected_species_id || identification.top_species_id : null,
+      }).catch(() => {
+        throw new ApiError("bad_request", "Identification carries no confirmed species — select one manually", 400);
+      });
+
+  // Images: explicit uploads + the identification's analysed photo (once).
+  const requestedAssets = input.asset_ids || [];
+  const assetIds = [...requestedAssets];
+  if (identification && identification.asset_id && !assetIds.includes(identification.asset_id)) {
+    assetIds.push(identification.asset_id);
+  }
+  if (!assetIds.length) {
+    throw new ApiError("bad_request", "At least one image is required (upload one or confirm an identification)", 400);
+  }
+  await assertOwnedAssets(user.id, assetIds); // all must belong to this farmer
+  const primaryAssetId =
+    input.primary_asset_id ||
+    (identification && assetIds.includes(identification.asset_id) ? identification.asset_id : assetIds[0]);
+
   const weightKg = toKg(input.quantity, input.unit || "kg");
   const duplicate = await looksDuplicate(user.id, species.id, input.harvest_date, weightKg);
 
@@ -69,15 +113,15 @@ async function createBatch(user, input) {
           },
         });
 
-        // Attach images (1..10, already validated as owned by this farmer).
-        for (let i = 0; i < input.asset_ids.length; i++) {
+        // Attach images (1..10, all owned by this farmer).
+        for (let i = 0; i < assetIds.length; i++) {
           await tx.entityDocument.create({
             data: {
-              asset_id: input.asset_ids[i],
+              asset_id: assetIds[i],
               entity_type: "batch",
               entity_id: batch.id,
               doc_kind: "herb_image",
-              is_primary: input.asset_ids[i] === input.primary_asset_id,
+              is_primary: assetIds[i] === primaryAssetId,
               created_by_user_id: user.id,
             },
           });
@@ -98,14 +142,23 @@ async function createBatch(user, input) {
             payload_json: {
               quantity_kg: weightKg,
               cultivation_type: input.cultivation_type,
-              images: input.asset_ids.length,
+              images: assetIds.length,
               unit: input.unit || "kg",
+              identification_id: identification ? identification.id : null,
             },
           },
         });
 
+        // Link the identification to its batch (training + audit trail).
+        if (identification) {
+          await tx.aiIdentification.update({
+            where: { id: identification.id },
+            data: { batch_id: batch.id },
+          });
+        }
+
         await tx.auditLog.create({
-          data: { actor_user_id: user.id, action: "BATCH_CREATED", target_type: "batch", target_id: batch.id, meta_json: { code } },
+          data: { actor_user_id: user.id, action: "BATCH_CREATED", target_type: "batch", target_id: batch.id, meta_json: { code, identification_id: identification ? identification.id : null } },
         });
 
         // Blockchain-ready anchor: pending — the ledger service picks it up later.
@@ -122,7 +175,12 @@ async function createBatch(user, input) {
   }
 
   const batch = await getById(batchId);
-  return { batch, duplicate_warning: duplicate, images_attached: input.asset_ids.length };
+  return {
+    batch,
+    duplicate_warning: duplicate,
+    images_attached: assetIds.length,
+    identification_id: identification ? identification.id : null,
+  };
 }
 
 /** Duplicate-warning: same farmer+species+harvest date+weight within the window. */
