@@ -41,6 +41,8 @@ const env = {
 
   // upload limit
   MAX_CONTENT_LENGTH: intOr(process.env.MAX_CONTENT_LENGTH, 16 * 1024 * 1024),
+  UPLOAD_DIR: process.env.UPLOAD_DIR || "uploads", // storage driver root (relative = repo root of second_backend)
+  MAX_FILE_SIZE: intOr(process.env.MAX_FILE_SIZE, 8 * 1024 * 1024),
 
   // optional integrations
   OPENWEATHER_API_KEY: process.env.OPENWEATHER_API_KEY || "",
