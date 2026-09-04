@@ -263,35 +263,43 @@ async function assertReceiverEligible(receiver) {
 }
 
 /**
- * Scan-based custody transfer + QR rotation in ONE transaction (spec atomic
- * rule). The receiver presents the current holder's ACTIVE token; the engine
- * validates, checks the (phase, role) matrix, then atomically: deactivate old
- * token -> create next version for the receiver -> move the batch -> append
- * TRANSFER event + scan log + audit + blockchain anchor.
+ * Custody transfer + QR rotation in ONE transaction (spec atomic rule).
+ *
+ * Phase 6 hardens the handover: ownership may only move (a) through an
+ * APPROVED two-party TransferRequest — request row is marked COMPLETED inside
+ * this same transaction — or (b) by an admin ADMIN_RECOVERY, where the batch's
+ * ACTIVE token record is supplied directly (`record`) because the raw token
+ * may be lost. In all cases: deactivate old token -> create next version for
+ * the receiver -> move the batch -> append TRANSFER event (with GPS) + scan
+ * log + audit + blockchain anchor.
  */
-async function transferByToken({ token, receiver, meta = {} }) {
-  const record = await prisma.qrToken.findUnique({
-    where: { token_hash: hashToken(token) },
-    include: {
-      batch: { select: { id: true, code: true, phase: true, current_holder_user_id: true } },
-    },
-  });
-  if (!record) {
-    await logScan({ batchId: null, actorUserId: receiver.id, outcome: SCAN.not_found, failureReason: "unknown_token", meta });
-    throw new ApiError("not_found", "QR token not recognised", 404);
-  }
-  const { batch } = record;
+async function transferByToken({ token = null, receiver, meta = {}, request = null, record = null }) {
+  const isRecovery = Boolean(request && request.type === "ADMIN_RECOVERY");
 
+  if (record) {
+    // Admin recovery path: token may be lost — the engine is handed the
+    // batch's ACTIVE token row directly and the guard is admin-only.
+    if (!isRecovery || receiver.role !== "admin") {
+      throw new ApiError("forbidden", "Direct record transfers require an admin ADMIN_RECOVERY request", 403);
+    }
+  } else {
+    if (!token) throw new ApiError("bad_request", "token is required", 400);
+    const found = await prisma.qrToken.findUnique({
+      where: { token_hash: hashToken(token) },
+      include: {
+        batch: { select: { id: true, code: true, phase: true, current_holder_user_id: true } },
+      },
+    });
+    if (!found) {
+      await logScan({ batchId: null, actorUserId: receiver.id, outcome: SCAN.not_found, failureReason: "unknown_token", meta });
+      throw new ApiError("not_found", "QR token not recognised", 404);
+    }
+    record = found;
+  }
+
+  const { batch } = record;
   await assertReceiverEligible(receiver);
 
-  if (record.status === "active" && record.expiry_at <= new Date()) {
-    await prisma.qrToken.update({
-      where: { id: record.id },
-      data: { status: "expired", deactivated_at: new Date(), deactivation_reason: "expired" },
-    });
-    await logScan({ batchId: batch.id, actorUserId: receiver.id, outcome: SCAN.expired, failureReason: "token_expired", meta });
-    throw new ApiError("qr_expired", "This QR has expired — ask the current holder to regenerate it", 409);
-  }
   if (record.status !== "active") {
     const expired = record.status === "expired";
     await logScan({
@@ -307,6 +315,15 @@ async function transferByToken({ token, receiver, meta = {} }) {
       409
     );
   }
+  if (record.expiry_at <= new Date()) {
+    // ACTIVE but past TTL: flip + reject (recovery must regenerate first).
+    await prisma.qrToken.update({
+      where: { id: record.id },
+      data: { status: "expired", deactivated_at: new Date(), deactivation_reason: "expired" },
+    });
+    await logScan({ batchId: batch.id, actorUserId: receiver.id, outcome: SCAN.expired, failureReason: "token_expired", meta });
+    throw new ApiError("qr_expired", "This QR has expired — regenerate before transferring", 409);
+  }
   if (record.owner_user_id !== batch.current_holder_user_id) {
     throw new ApiError("qr_state_mismatch", "QR owner and batch holder are out of sync — admin review required", 409);
   }
@@ -316,8 +333,29 @@ async function transferByToken({ token, receiver, meta = {} }) {
   if (TERMINAL_PHASES.includes(batch.phase)) {
     throw new ApiError("invalid_transition", `Batches in phase '${batch.phase}' cannot be transferred`, 409);
   }
-  const nextPhase = nextPhaseFor(batch.phase, receiver.role);
-  if (!nextPhase) {
+
+  // Phase 6: every governed move carries an APPROVED request for THIS move.
+  if (!isRecovery) {
+    if (!request) {
+      throw new ApiError(
+        "transfer_not_requested",
+        "No approved transfer request for this move — request from the receiving party and get the holder's approval first",
+        409
+      );
+    }
+    if (request.batch_id !== batch.id || request.to_user_id !== receiver.id || request.status !== "approved") {
+      throw new ApiError("invalid_state", "The approved transfer request does not match this batch and receiver", 409);
+    }
+    if (request.from_user_id !== batch.current_holder_user_id) {
+      throw new ApiError("stale_holder", "The batch holder changed since this request was approved — re-request", 409);
+    }
+  }
+
+  const fromUserId = batch.current_holder_user_id;
+  const oldVersion = record.version;
+  const isRecoveryPhase = isRecovery ? batch.phase : null;
+  const nextPhase = isRecovery ? batch.phase : nextPhaseFor(batch.phase, receiver.role);
+  if (!isRecovery && !nextPhase) {
     await logScan({ batchId: batch.id, actorUserId: receiver.id, outcome: SCAN.unauthorized, failureReason: `role_not_allowed:${receiver.role}@${batch.phase}`, meta });
     throw new ApiError(
       "invalid_transition",
@@ -325,9 +363,6 @@ async function transferByToken({ token, receiver, meta = {} }) {
       409
     );
   }
-
-  const fromUserId = batch.current_holder_user_id;
-  const oldVersion = record.version;
 
   const out = await prisma.$transaction(async (tx) => {
     // 1) Kill the presented token.
@@ -351,7 +386,8 @@ async function transferByToken({ token, receiver, meta = {} }) {
       data: { phase: nextPhase, current_holder_user_id: receiver.id },
     });
 
-    // 4) Immutable TRANSFER event + scan log + audit + ledger anchor.
+    // 4) Immutable TRANSFER event (GPS + request metadata) + scan + audit +
+    //    ledger anchor — all in this transaction.
     const event = await tx.batchEvent.create({
       data: {
         batch_id: batch.id,
@@ -361,7 +397,16 @@ async function transferByToken({ token, receiver, meta = {} }) {
         to_user_id: receiver.id,
         phase_before: batch.phase,
         phase_after: nextPhase,
-        payload_json: { method: "qr_transfer", token_version: oldVersion, new_token_version: next.version },
+        location: meta.location || null,
+        gps_lat: meta.gpsLat ?? null,
+        gps_lng: meta.gpsLng ?? null,
+        payload_json: {
+          method: isRecovery ? "admin_recovery" : "qr_transfer",
+          token_version: oldVersion,
+          new_token_version: next.version,
+          request_id: request ? request.id : null,
+          transfer_type: request ? request.type : null,
+        },
         created_at: new Date(),
       },
     });
@@ -384,12 +429,30 @@ async function transferByToken({ token, receiver, meta = {} }) {
         action: "BATCH_TRANSFERRED",
         target_type: "batch",
         target_id: batch.id,
-        meta_json: { code: batch.code, from_user_id: fromUserId, phase_before: batch.phase, phase_after: nextPhase, token_version: oldVersion, new_token_version: next.version },
+        meta_json: {
+          code: batch.code,
+          from_user_id: fromUserId,
+          to_user_id: receiver.id,
+          phase_before: batch.phase,
+          phase_after: nextPhase,
+          token_version: oldVersion,
+          new_token_version: next.version,
+          request_id: request ? request.id : null,
+          transfer_type: request ? request.type : null,
+        },
       },
     });
     await tx.blockchainEvent.create({
       data: { anchor_code: "TRANSFERRED", entity_type: "batch_event", entity_id: event.id, status: "pending" },
     });
+
+    // 5) Close the governed request in the same transaction.
+    if (request) {
+      await tx.transferRequest.update({
+        where: { id: request.id },
+        data: { status: "completed", completed_at: new Date(), batch_event_id: event.id },
+      });
+    }
 
     return { next, raw };
   });
@@ -598,4 +661,5 @@ module.exports = {
   regenerateQr,
   qrCard,
   qrHistory,
+  assertReceiverEligible,
 };
