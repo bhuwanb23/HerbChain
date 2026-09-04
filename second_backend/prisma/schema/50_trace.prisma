@@ -57,7 +57,8 @@ model Batch {
   current_holder User   @relation("BatchHolder", fields: [current_holder_user_id], references: [id])
 
   events      BatchEvent[]
-  product_lot_links ProductLotBatchLink[]
+  run_ingredients ManufacturingBatchIngredient[] // phase 10 — consumed by manufacturing runs
+  affected_products AffectedProduct[] // phase 10 — recall blast-radius rows
   identifications AiIdentification[] // recognition that produced this batch
   ai_feedback     AiFeedback[]
   qr_tokens   QrToken[] // versioned custody tokens (phase 5 — one ACTIVE per batch)

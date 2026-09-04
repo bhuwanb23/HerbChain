@@ -27,6 +27,7 @@ model Species {
   synonyms        SpeciesSynonym[]
   content         SpeciesContent[]
   medicinal_uses  SpeciesMedicinalUse[]
+  formulas        ProductFormula[] // phase 10 — standard product recipes
   batches         Batch[]
   crop_plans      CropPlan[]
   price_quotes    PriceQuote[]

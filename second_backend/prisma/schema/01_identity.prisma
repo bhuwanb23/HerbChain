@@ -100,12 +100,14 @@ model User {
   inventory_items      InventoryItem[] @relation("InventoryOwner")
   quality_holds        QualityHold[]  @relation("HoldOwner")
 
-  // products & commerce
+  // products & commerce (phase 10 lineage engine — 60_products.prisma)
   products_manufactured Product[]          @relation("ProductManufacturer")
   product_lots_held     ProductLot[]      @relation("LotHolder")
   lot_events_actor      ProductLotEvent[] @relation("LotEventActor")
   lot_events_from       ProductLotEvent[] @relation("LotEventFrom")
   lot_events_to         ProductLotEvent[] @relation("LotEventTo")
+  manufacturing_runs    ManufacturingBatch[] @relation("RunManufacturer")
+  product_qr_minted     ProductQrToken[]   @relation("ProductQrMinter")
   orders_buyer          PurchaseOrder[]    @relation("OrderBuyer")
   orders_seller         PurchaseOrder[]    @relation("OrderSeller")
   wallets               Wallet[]
