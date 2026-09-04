@@ -71,6 +71,11 @@ const env = {
   // phase 7 — shipments & logistics (docs/phase_7.md)
   SHIPMENT_FENCE_RADIUS_M: intOr(process.env.SHIPMENT_FENCE_RADIUS_M, 100), // spec: 100 m example
   SHIPMENT_CODE_PREFIX: process.env.SHIPMENT_CODE_PREFIX || "SHIP", // SHIP-YYYY-000001
+
+  // phase 9 — manufacturer procurement (docs/phase_9.md)
+  REQUEST_CODE_PREFIX: process.env.REQUEST_CODE_PREFIX || "REQ", // REQ-YYYY-000001
+  GRN_CODE_PREFIX: process.env.GRN_CODE_PREFIX || "GRN", // GRN-YYYY-000001
+  CERT_EXPIRY_WARNING_DAYS: intOr(process.env.CERT_EXPIRY_WARNING_DAYS, 90), // dashboard "expiring soon"
 };
 
 function corsOriginList() {
