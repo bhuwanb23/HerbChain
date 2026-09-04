@@ -52,10 +52,72 @@ const loginSchema = z.object({
   password: z.string().min(1).max(128),
 });
 
+// ---------------------------------------------------------------- batches
+
+const createBatchSchema = z.object({
+  species_name: z.string().min(1).max(100),
+  harvest_date: isoDate,
+  location: z.string().min(1).max(200),
+  weight_kg: z.coerce.number().min(0.01),
+  image_url: z.string().nullable().optional(),
+  gps_lat: nullableFloat.optional(),
+  gps_lng: nullableFloat.optional(),
+  notes: z.string().nullable().optional(),
+});
+
+const transferSchema = z.object({
+  scanned_qr_token: z.string().min(10),
+  location: z.string().nullable().optional(),
+  gps_lat: nullableFloat.optional(),
+  gps_lng: nullableFloat.optional(),
+  notes: z.string().nullable().optional(),
+});
+
+// ------------------------------------------------------------- lab reports
+
+const createLabReportSchema = z.object({
+  batch_id: z.string().min(1).max(50),
+  test_type: z.string().min(1).max(100),
+  test_date: isoDate,
+  results_summary: z.string().min(1),
+  outcome: z.enum(["approved", "rejected"]),
+  certification_level: z.string().nullable().optional(),
+  purity_percentage: nullableFloat.optional(),
+  moisture_content: nullableFloat.optional(),
+  ash_content: nullableFloat.optional(),
+  heavy_metals_present: z.boolean().nullable().optional(),
+  pesticides_detected: z.boolean().nullable().optional(),
+  active_compounds: z.string().nullable().optional(),
+  potency_rating: z.string().nullable().optional(),
+  report_url: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  recommendations: z.string().nullable().optional(),
+});
+
+// --------------------------------------------------------------- products
+
+const productBatchLinkSchema = z.object({
+  batch_id: z.string().min(1).max(50),
+  quantity_kg: z.coerce.number().min(0.01),
+});
+
+const createProductSchema = z.object({
+  name: z.string().min(1).max(200),
+  sku: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  image_url: z.string().nullable().optional(),
+  source_batches: z.array(productBatchLinkSchema).min(1),
+});
+
 module.exports = {
   isoDate,
   nullableFloat,
   zodDetails,
   registerSchema,
   loginSchema,
+  createBatchSchema,
+  transferSchema,
+  createLabReportSchema,
+  productBatchLinkSchema,
+  createProductSchema,
 };

@@ -126,6 +126,18 @@ function _mountErrorHandlers(app) {
     next(err);
   });
 
+  // Application errors (ApiError / TransferError) -> mapped status codes
+  const { ApiError, TransferError, transferErrorStatus } = require("./utils/errors");
+  // eslint-disable-next-line no-unused-vars
+  app.use((err, req, res, next) => {
+    if (err instanceof ApiError) {
+      const status =
+        err instanceof TransferError ? transferErrorStatus(err.code) : err.status || 400;
+      return error(res, err.code, err.message, status);
+    }
+    return next(err);
+  });
+
   // 404 for anything unmatched
   app.use((req, res) => {
     error(res, "not_found", "Resource not found", 404);

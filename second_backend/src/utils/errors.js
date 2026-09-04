@@ -23,4 +23,25 @@ class TransferError extends ApiError {
   }
 }
 
-module.exports = { ApiError, TransferError };
+// HTTP status per TransferError code — mirrors _handle_transfer_error in
+// backend/server/routes/batches.py.
+const TRANSFER_ERROR_STATUS = {
+  not_found: 404,
+  forbidden: 403,
+  bad_request: 400,
+  unauthorized: 401,
+  invalid_qr: 400,
+  stale_qr: 409,
+  qr_state_mismatch: 409,
+  invalid_transition: 409,
+  not_approved: 409,
+  self_transfer: 409,
+  invalid_state: 409,
+  internal_error: 500,
+};
+
+function transferErrorStatus(code) {
+  return TRANSFER_ERROR_STATUS[code] ?? 400;
+}
+
+module.exports = { ApiError, TransferError, transferErrorStatus };
