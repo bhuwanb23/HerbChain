@@ -1,12 +1,13 @@
 # HerbChain Database Architecture (Redesign)
 
-Status: **LIVE** — `package.json` points at `prisma/schema/` (18 files, 65
+Status: **LIVE** — `package.json` points at `prisma/schema/` (18 files, 80
 models). Migrations are applied on the scratch DB and the backend is built
 phase by phase against these models: Phase 2 auth → Phase 3 batches →
-Phase 4 identification → Phase 5 dynamic QR → Phase 6 governed transfers → Phase 7 logistics/shipments
+Phase 4 identification → Phase 5 dynamic QR → Phase 6 governed transfers →
+Phase 7 logistics/shipments → Phase 8 lab certification
 are live (see docs/auth, docs/batch, docs/identification, docs/qr,
-docs/transfers). The legacy `schema.legacy.prisma` + `migrations.legacy/` +
-old routes/tests are kept as the porting reference.
+docs/transfers, docs/logistics, docs/lab). The legacy `schema.legacy.prisma`
++ `migrations.legacy/` + old routes/tests are kept as the porting reference.
 
 ## 1. Why a redesign
 
@@ -52,7 +53,7 @@ correct for a demo but has production gaps:
    a model has more than one FK to the same target.
 9. **Email uniqueness** is on the lowercased value — normalize at write time.
 
-## 3. Domain map (18 files, 73 models)
+## 3. Domain map (18 files, 80 models)
 
 | File | Domain | Models |
 |---|---|---|
@@ -63,7 +64,7 @@ correct for a demo but has production gaps:
 | `10_catalogue.prisma` | AYUSH species taxonomy | `Species`, `SpeciesSynonym`, `SpeciesContent`, `MedicinalUse`, `SpeciesMedicinalUse` |
 | `20_agronomy.prisma` | Farmer operations | `FarmerProfile`, `FarmPlot`, `CropPlan`, `FarmActivity` |
 | `30_logistics.prisma` | Transport/manufacture/distribution + stock + shipments + Phase-7 logistics execution | `TransporterProfile`, `ManufacturerProfile`, `DistributorProfile`, `RetailerProfile`, `Warehouse`, `StockMovement`, `StockPosition`, `Shipment`, `ShipmentTrackingPoint`, `TransporterAssignment`, `PickupEvent`, `DeliveryEvent`, `ProofOfDelivery`, `ShipmentEvent`, `ShipmentDocument`, `ShipmentMetric`, `FailedDeliveryLog` |
-| `40_quality.prisma` | Lab & structured tests | `LabProfile`, `TestParameter`, `LabReport`, `LabTestResult` |
+| `40_quality.prisma` | Lab certification (Phase 8) | `LabProfile`, `TestParameter`, `LabReceipt`, `SampleRecord`, `LabTest`, `LabTestResult`, `LabReview`, `LabDocument`, `SpeciesVerificationLog`, `Certification`, `RejectionRecord` |
 | `50_trace.prisma` | Batches + event timeline + QR scan stream | `Batch`, `BatchEvent`, `QrScanLog` |
 | `51_qr.prisma` | Phase-5 dynamic QR custody tokens | `QrToken`, `QrReplacementLog` |
 | `52_transfer.prisma` | Phase-6 governed two-party transfers | `TransferRequest`, `TransferProof` |
@@ -91,7 +92,11 @@ Species 1─N PriceQuote
 User 1─N Batch ("created")         User 1─N Batch ("held")
 Batch N─1 Species / FarmPlot? / CropPlan? / Batch(self, split)
 Batch 1─N BatchEvent (append-only timeline)
-Batch 1─N LabReport 1─N LabTestResult N─1 TestParameter
+Batch 1─1 LabReceipt        (intake checklist)
+Batch 1─N SampleRecord 1─N LabTest 1─N LabTestResult N─1 TestParameter
+LabTest 1─N LabReview (supervisor two-level review)
+Batch 1─N LabDocument / SpeciesVerificationLog (farmer vs AI vs lab)
+Batch 0─1 Certification | RejectionRecord (terminal outcome)
 
 User 1─N Product ("manufactured")   User 1─N ProductLot ("held")
 Product 1─N ProductLot 1─N ProductLotEvent (append-only timeline)
@@ -120,7 +125,7 @@ BlockchainEvent (refs batch_event | product_lot_event | audit_log) — proof anc
 | `Herb` | `Batch` | code `HERB-YYYY-NNNNNN` (unique business key; docs/phase_3.md spec); state columns merged in |
 | `BatchState` | merged into `Batch` | phase/holder/test_status on the row |
 | `BatchEvent` | `BatchEvent` | from/to renamed, token hash stored |
-| `LabReport` | `LabReport` + `LabTestResult` + `TestParameter` | loose fields → parameter rows |
+| `LabReport` | `LabReceipt` + `SampleRecord` + `LabTest` + `LabTestResult` + `LabReview` + `TestParameter` | Phase-8 redesign (docs/lab/architecture.md §5): header+flat results → sample/test/parameter spine; old tables dropped |
 | `Product` | `Product` (master) + `ProductLot` + `ProductLotEvent` | product QR token moved to lot nonce; distribution custody added |
 | `ProductBatchLink` | `ProductLotBatchLink` | composition is per manufactured run, not per product master |
 | `CropPlan` | `CropPlan` + `FarmActivity` | dates → DateTime |
@@ -223,8 +228,8 @@ added because it was missing.
 | `shipment_metrics` | ➕ | `ShipmentMetric` — expected vs actual hours + delay minutes/reason at completion |
 | `failed_delivery_logs` | ➕ | `FailedDeliveryLog` — receiver unavailable / wrong batch / qc / damaged + photo |
 | `lab_requests` | 🔀 | `BatchEvent` `INTENT_LAB_REQUEST` + phase `at_lab` (event-driven queue; revisit if a stateful queue is wanted) |
-| `lab_tests` | ⬆ | `LabTestResult` (one row per parameter) + `TestParameter` vocabulary |
-| `certifications` | 🔀 | `LabReport` outcome `approved`/`rejected` + report asset; org licenses in `LicenseCert` |
+| `lab_tests` | ⬆ | `LabTest` (per sample, per category) → `LabTestResult` (one row per parameter) + `TestParameter` vocabulary; `LabReceipt` intake + `SampleRecord` + `LabReview` two-level review (Phase 8) |
+| `certifications` | 🔀 | `Certification` (COA: sha256 hash, lab snapshot, sample/test/parameter counts, `active\|revoked`) + `RejectionRecord` (reason + action); org licenses in `LicenseCert` |
 | `manufacturing_batches` | 🔀 | `ProductLot` — each run of a `Product` with own custody chain |
 | `products` | ✅ | `Product` (master) |
 | `product_ingredients` | ✅ | `ProductLotBatchLink` (composition per run, `quantity_kg` per link) |
@@ -293,8 +298,8 @@ Each module = routes + service + serializers + zod schema, colocated.
 
 ## 8. Verification
 
-- `npx prisma validate --schema prisma/schema` → valid ✅ (18 files, 73 models)
+- `npx prisma validate --schema prisma/schema` → valid ✅ (18 files, 80 models)
 - Migrations applied on the scratch DB (`prisma/scratch_new.db`), `migrate
   status` clean; Prisma client regenerated per phase
 - Active test suites green: auth, batches, identification, qr, transfers,
-  shipments (96 cases)
+  shipments, lab (109 cases)

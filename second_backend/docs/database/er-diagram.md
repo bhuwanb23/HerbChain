@@ -1,6 +1,6 @@
 # HerbChain — ER Diagram (Redesigned Schema)
 
-Source of truth: `prisma/schema/` (18 files, 73 models). This file renders the
+Source of truth: `prisma/schema/` (18 files, 80 models). This file renders the
 same structure as Mermaid diagrams grouped by domain — the phase-1 "ER
 Diagram" deliverable. Full conventions: `docs/database/architecture.md`.
 
@@ -181,10 +181,16 @@ erDiagram
     BATCH ||--o{ BATCH_EVENT : "immutable timeline"
     USER ||--o{ BATCH_EVENT : "actor / from / to"
 
-    BATCH ||--o{ LAB_REPORT : "test runs"
-    USER ||--o{ LAB_REPORT : "lab"
-    LAB_REPORT ||--o{ LAB_TEST_RESULT : "one per parameter"
+    BATCH |o--o| LAB_RECEIPT : "intake checklist"
+    BATCH ||--o{ SAMPLE_RECORD : "samples drawn"
+    SAMPLE_RECORD ||--o{ LAB_TEST : "test runs"
+    LAB_TEST ||--o{ LAB_TEST_RESULT : "one per parameter"
     TEST_PARAMETER ||--o{ LAB_TEST_RESULT : "vocabulary"
+    LAB_TEST ||--o{ LAB_REVIEW : "supervisor two-level review"
+    BATCH ||--o{ LAB_DOCUMENT : "reports / COA PDFs"
+    BATCH ||--o{ SPECIES_VERIFICATION_LOG : "farmer vs AI vs lab"
+    BATCH |o--o| CERTIFICATION : "COA (sha256)"
+    BATCH |o--o| REJECTION_RECORD : "why it failed"
 
     BATCH {
         string id PK
@@ -211,11 +217,52 @@ erDiagram
         string actor_user_id FK
         datetime created_at
     }
-    LAB_REPORT {
+    LAB_RECEIPT {
         string id PK
-        string code UK
+        string batch_id FK UK
+        string condition_status
+        float received_quantity_kg
+    }
+    SAMPLE_RECORD {
+        string id PK
+        string sample_code UK
         string batch_id FK
+        float sample_weight_kg
+    }
+    LAB_TEST {
+        string id PK
+        string batch_id FK
+        string sample_id FK
+        string test_category
+        string status
         string outcome
+    }
+    LAB_TEST_RESULT {
+        string id PK
+        string test_id FK
+        string parameter_id FK
+        float observed_value_numeric
+        string result
+    }
+    LAB_REVIEW {
+        string id PK
+        string test_id FK
+        string review_status
+        string reviewed_by_user_id FK
+    }
+    CERTIFICATION {
+        string id PK
+        string certificate_number UK
+        string batch_id FK UK
+        string certificate_hash
+        int pass_count
+        string status
+    }
+    REJECTION_RECORD {
+        string id PK
+        string batch_id FK UK
+        string reason
+        string action
     }
 ```
 
