@@ -16,10 +16,11 @@
     "migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
     "generate": "prisma generate",
-    "test": "node --test tests/auth tests/batches tests/identification",
+    "test": "node --test tests/auth tests/batches tests/identification tests/qr",
     "test:auth": "node --test tests/auth/",
     "test:batches": "node --test tests/batches/",
-    "test:identification": "node --test tests/identification/"
+    "test:identification": "node --test tests/identification/",
+    "test:qr": "node --test tests/qr/"
   },
   "dependencies": {
     "@prisma/client": "^6.16.0",
