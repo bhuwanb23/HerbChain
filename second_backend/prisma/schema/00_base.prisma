@@ -23,6 +23,7 @@
 //   80_compliance.prisma    licenses, inspections, recalls, support tickets
 //   90_notifications.prisma templates, notifications, device tokens
 //   95_intel.prisma         price quotes, weather snapshots
+//   97_blockchain.prisma    blockchain proof anchors
 //
 // The full conventions reference lives in docs/database/architecture.md.
 // ============================================================================

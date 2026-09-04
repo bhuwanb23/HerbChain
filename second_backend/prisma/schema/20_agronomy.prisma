@@ -11,12 +11,14 @@
 model FarmerProfile {
   id               String   @id @default(cuid())
   farmer_id        String   @unique
+  farmer_code      String?  @unique // e.g. "FRM-2026-0012"; assigned at onboarding
   farm_name        String?
   established_year Int?
   land_size_acres  Float?
   soil_type        String? // code: clay | loam | sandy | alluvial | laterite | black
   irrigation_type  String? // code: rainfed | drip | sprinkler | canal | manual
   farming_practices String? // organic | conventional | biodynamic | natural
+  organic_certified Boolean  @default(false) // display flag; the authoritative record is LicenseCert (type = organic_cert)
   default_address_id String? // -> Address.id
   gps_lat          Float?
   gps_lng          Float?

@@ -28,13 +28,17 @@ model Asset {
 // Polymorphic attachment: one Asset can be attached to many entities and one
 // entity can hold many assets (e.g. a species with 3 photos, or a lab report
 // with a PDF + a raw data sheet). entity_type is a code list resolved by the
-// app: species | product | batch | lab_report | license | inspection | recall.
+// app: species | product | product_lot | batch | lab_report | license |
+// inspection | recall | shipment | support_ticket.
+// Batch photos (phase-1 batch_images) attach as entity_type = batch with
+// doc_kind = herb_image / packaging_image / transport_image.
 model EntityDocument {
   id         String   @id @default(cuid())
   asset_id   String
   entity_type String // code list above
   entity_id  String // id of the row that owns this document
-  doc_kind   String   @default("attachment") // image | logo | report | certificate | attachment | raw_data
+  doc_kind   String   @default("attachment") // image | logo | report | certificate | attachment | raw_data |
+                                             // herb_image | packaging_image | transport_image | proof_of_delivery
   created_by_user_id String?
   created_at DateTime @default(now())
 

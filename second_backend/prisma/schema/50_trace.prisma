@@ -97,3 +97,35 @@ model BatchEvent {
   @@index([created_at])
   @@map("batch_events")
 }
+
+// Every QR scan attempt — custody handoffs AND anonymous consumer views. This
+// is the tamper/counterfeit signal stream: an `unauthorized`, `expired` or
+// `replay` outcome on a custody scan is how diversion attempts surface, and
+// consumer_view rows feed counterfeit detection (the same lot scanned in
+// wildly different places, or scanned after sale). Merges phase-1's
+// qr_scan_logs + consumer_scans into one queryable stream — target_type /
+// purpose tell them apart. Append-only, high volume (coarse retention later).
+// target_type: batch | product_lot | product
+// purpose: custody_transfer | ownership_check | consumer_view
+// outcome: success | unauthorized | expired | replay | invalid | not_found
+model QrScanLog {
+  id            String   @id @default(cuid())
+  target_type   String // code list above
+  target_id     String
+  purpose       String   @default("custody_transfer") // code list above
+  actor_user_id String? // null => anonymous consumer scan (plain FK, no relation)
+  device_id     String?
+  ip_address    String?
+  location      String?
+  gps_lat       Float?
+  gps_lng       Float?
+  outcome       String // code list above
+  failure_reason String?
+  created_at    DateTime @default(now())
+
+  @@index([target_type, target_id, created_at])
+  @@index([purpose, created_at])
+  @@index([outcome])
+  @@index([actor_user_id])
+  @@map("qr_scan_logs")
+}

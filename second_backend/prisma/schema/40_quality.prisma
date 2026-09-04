@@ -10,10 +10,12 @@
 model LabProfile {
   id            String   @id @default(cuid())
   lab_id        String   @unique
+  lab_code      String?  @unique // e.g. "LAB-2026-0004"; assigned at onboarding
   lab_name      String?
   nabl_accredited Boolean @default(false)
   accreditation_no String?
   address_id    String?
+  verification_status String @default("pending") // pending | verified | rejected
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 

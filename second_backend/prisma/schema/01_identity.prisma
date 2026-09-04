@@ -69,6 +69,8 @@ model User {
   // logistics & stock
   warehouses_owned Warehouse[]
   stock_movements  StockMovement[]
+  shipments_requested    Shipment[] @relation("ShipmentRequester")
+  shipments_transported  Shipment[] @relation("ShipmentTransporter")
 
   // products & commerce
   products_manufactured Product[]          @relation("ProductManufacturer")
@@ -98,6 +100,7 @@ model Address {
   line1      String
   line2      String?
   city       String
+  district   String?
   state      String
   postal_code String?
   country    String   @default("IN")

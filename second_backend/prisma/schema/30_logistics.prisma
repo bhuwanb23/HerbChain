@@ -10,9 +10,13 @@
 model TransporterProfile {
   id              String   @id @default(cuid())
   transporter_id  String   @unique
+  transporter_code String? @unique // e.g. "TRP-2026-0008"; assigned at onboarding
   company_name    String?
   registration_no String?
   fleet_summary   String? // e.g. "2 tempos, 1 reefer van"
+  vehicle_number  String? // primary vehicle plate (multi-vehicle fleets -> child table later)
+  vehicle_type    String? // tempo | truck | van | reefer | two_wheeler | other
+  is_active       Boolean  @default(true)
   serviceable_regions String? // free text or JSON-ish list
   insurance_valid_until DateTime?
   created_at      DateTime @default(now())
@@ -26,10 +30,12 @@ model TransporterProfile {
 model ManufacturerProfile {
   id                 String   @id @default(cuid())
   manufacturer_id    String   @unique
+  manufacturer_code  String?  @unique // e.g. "MFR-2026-0003"; assigned at onboarding
   company_name       String?
   gstin              String? // goods & services tax id
   ayush_license_no   String? // license to manufacture AYUSH drugs
   facility_city      String?
+  verification_status String  @default("pending") // pending | verified | rejected
   created_at         DateTime @default(now())
   updated_at         DateTime @updatedAt
 
@@ -43,6 +49,7 @@ model ManufacturerProfile {
 model DistributorProfile {
   id              String   @id @default(cuid())
   distributor_id  String   @unique
+  distributor_code String? @unique // e.g. "DST-2026-0005"
   company_name    String?
   gstin           String?
   region          String? // served region(s)
@@ -57,6 +64,7 @@ model DistributorProfile {
 model RetailerProfile {
   id         String   @id @default(cuid())
   retailer_id String  @unique
+  retailer_code String? @unique // e.g. "RTL-2026-0009"
   store_name String?
   gstin      String?
   store_type String? // pharmacy | health_store | grocery | online | other
@@ -139,4 +147,62 @@ model StockPosition {
 
   @@unique([warehouse_id, ref_type, ref_id])
   @@map("stock_positions")
+}
+
+// A pickup->delivery assignment for one batch or product lot. This is the
+// planning/execution side of the custody chain: QR scans record WHO took
+// custody; Shipment records the request, assigned transporter, route and
+// proof of delivery. ref_type/ref_id are polymorphic (batch | product_lot).
+// status: requested -> assigned -> picked_up -> in_transit -> delivered
+//         | failed | cancelled
+model Shipment {
+  id                String    @id @default(cuid())
+  shipment_no       String    @unique // e.g. "SHP-2026-0001"
+  ref_type          String // batch | product_lot
+  ref_id            String
+  requested_by_user_id String // who asked for the move (holder of the ref)
+  assigned_transporter_user_id String?
+  origin_location   String?
+  origin_gps_lat    Float?
+  origin_gps_lng    Float?
+  destination_location String?
+  destination_gps_lat Float?
+  destination_gps_lng Float?
+  quantity_kg       Float? // declared load when moving bulk batches
+  quantity_units    Int? // declared load when moving finished lots
+  status            String    @default("requested") // code list above
+  scheduled_pickup_at DateTime?
+  actual_pickup_at  DateTime?
+  delivered_at      DateTime? // proof of delivery moment (receiver confirms)
+  notes             String?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  requested_by User  @relation("ShipmentRequester", fields: [requested_by_user_id], references: [id], onDelete: Restrict)
+  transporter  User? @relation("ShipmentTransporter", fields: [assigned_transporter_user_id], references: [id], onDelete: SetNull)
+
+  tracking ShipmentTrackingPoint[]
+
+  @@index([ref_type, ref_id])
+  @@index([assigned_transporter_user_id, status])
+  @@index([status])
+  @@index([created_at])
+  @@map("shipments")
+}
+
+// GPS breadcrumbs captured along a shipment's route (driver app / IoT).
+// Append-only. captured_by_user_id is a plain FK (no relation).
+model ShipmentTrackingPoint {
+  id         String   @id @default(cuid())
+  shipment_id String
+  gps_lat    Float
+  gps_lng    Float
+  captured_at DateTime @default(now())
+  captured_by_user_id String?
+  note       String?
+
+  shipment Shipment @relation(fields: [shipment_id], references: [id], onDelete: Cascade)
+
+  @@index([shipment_id, captured_at])
+  @@map("shipment_tracking")
 }
