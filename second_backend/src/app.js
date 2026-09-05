@@ -148,6 +148,13 @@ function _mountRoutes(app) {
   // governance reads under /api/v1/blockchain.
   const { mountBlockchainRoutes } = require("./modules/blockchain/blockchainRoutes");
   mountBlockchainRoutes(app);
+
+  // Phase 13: AYUSH admin portal — the regulatory control tower
+  // (dashboard, universal search, traceability explorers, shipments,
+  // failed certifications, compliance alerts, recalls, investigations,
+  // scores, notifications, reports, map, audit) under /api/v1/admin/portal.
+  const { mountAdminPortalRoutes } = require("./modules/admin/adminPortalRoutes");
+  mountAdminPortalRoutes(app);
 }
 
 // ------------------------------------------------------------- error box
