@@ -98,6 +98,16 @@ const env = {
   COUNTERFEIT_BURST_WINDOW_MS: intOr(process.env.COUNTERFEIT_BURST_WINDOW_MS, 60 * 1000),
   COUNTERFEIT_DAILY_VOLUME: intOr(process.env.COUNTERFEIT_DAILY_VOLUME, 100), // scans / token / day
   COUNTERFEIT_UNKNOWN_BURST: intOr(process.env.COUNTERFEIT_UNKNOWN_BURST, 10), // unknown tokens in a minute
+
+  // phase 12 — permissioned blockchain layer (docs/phase_12.md)
+  // provider: "" (auto) | mock (default, SQLite hash chain) | fabric (stub)
+  LEDGER_PROVIDER: (process.env.LEDGER_PROVIDER || "mock").trim().toLowerCase(),
+  BLOCKCHAIN_CHAIN_NAME: process.env.BLOCKCHAIN_CHAIN_NAME || "herbchain", // permissioned chain id
+  BLOCKCHAIN_WORKER_ENABLED: String(process.env.BLOCKCHAIN_WORKER_ENABLED ?? "true").toLowerCase() !== "false",
+  BLOCKCHAIN_WORKER_INTERVAL_MS: intOr(process.env.BLOCKCHAIN_WORKER_INTERVAL_MS, 5000), // server boot interval
+  BLOCKCHAIN_MAX_RETRIES: intOr(process.env.BLOCKCHAIN_MAX_RETRIES, 5), // spec: 1m/5m/15m/30m/1h then FAILED
+  BLOCKCHAIN_RETRY_BASE_MS: intOr(process.env.BLOCKCHAIN_RETRY_BASE_MS, 60000), // 1st backoff = 1 minute
+  BLOCKCHAIN_PROCESS_LIMIT: intOr(process.env.BLOCKCHAIN_PROCESS_LIMIT, 25), // rows per worker tick
 };
 
 function corsOriginList() {
