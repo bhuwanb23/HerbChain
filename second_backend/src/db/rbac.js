@@ -35,6 +35,7 @@ const PERMISSIONS = [
   { key: "admin.audit.view", module: "admin", description: "Read audit logs" },
   { key: "admin.trace.view", module: "admin", description: "Trace any batch/product (AYUSH oversight)" },
   { key: "admin.analytics.view", module: "admin", description: "Read analytics dashboards" },
+  { key: "verify.analytics.view", module: "verify", description: "Read consumer scan analytics & counterfeit alerts" },
 ];
 
 const GRANTS = {
@@ -42,10 +43,10 @@ const GRANTS = {
   farmer: ["profile.self", "trace.resolve", "identification.detect", "batch.create", "batch.view", "batch.transfer"],
   transporter: ["profile.self", "trace.resolve", "batch.view", "batch.transfer", "shipment.manage", "shipment.assign"],
   lab: ["profile.self", "trace.resolve", "batch.view", "batch.request", "batch.receive", "lab.test", "lab.certify", "lab.reject", "procurement.approve"],
-  manufacturer: ["profile.self", "trace.resolve", "batch.view", "batch.request", "batch.receive", "product.create", "product.link", "product.qr", "shipment.manage", "procurement.view", "procurement.request", "procurement.receive", "procurement.inventory"],
+  manufacturer: ["profile.self", "trace.resolve", "batch.view", "batch.request", "batch.receive", "product.create", "product.link", "product.qr", "shipment.manage", "procurement.view", "procurement.request", "procurement.receive", "procurement.inventory", "verify.analytics.view"],
   distributor: ["profile.self", "trace.resolve", "product.create", "product.link", "product.qr", "product.sell", "shipment.manage"],
   retailer: ["profile.self", "trace.resolve", "product.sell", "shipment.manage"],
-  admin: ["admin.users.manage", "admin.users.view", "admin.audit.view", "admin.trace.view", "admin.analytics.view"],
+  admin: ["admin.users.manage", "admin.users.view", "admin.audit.view", "admin.trace.view", "admin.analytics.view", "verify.analytics.view"],
 };
 
 /** Idempotent: upserts the catalog and grants (called by seed/bootstrap). */

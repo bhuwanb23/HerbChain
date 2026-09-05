@@ -82,6 +82,22 @@ const env = {
   MFG_CODE_PREFIX: process.env.MFG_CODE_PREFIX || "MFG", // MFG-YYYY-000001 (production runs)
   PRD_CODE_PREFIX: process.env.PRD_CODE_PREFIX || "PRD", // PRD-YYYY-000001 (finished lots)
   PRODUCT_QR_PREFIX: process.env.PRODUCT_QR_PREFIX || "prd_", // permanent product QR tokens
+
+  // phase 11 — consumer verification portal (docs/phase_11.md)
+  // public portal base for passport deep links (spec: https://verify.…/p/<token>)
+  VERIFY_PUBLIC_URL: (process.env.VERIFY_PUBLIC_URL || `${process.env.FRONTEND_URL || "http://localhost:3000"}/p`).replace(/\/+$/, ""),
+  // public endpoints: sliding-window rate limit per IP (spec: 100/min example)
+  PUBLIC_VERIFY_RATE_LIMIT: intOr(process.env.PUBLIC_VERIFY_RATE_LIMIT, 100),
+  PUBLIC_VERIFY_RATE_WINDOW_MS: intOr(process.env.PUBLIC_VERIFY_RATE_WINDOW_MS, 60000),
+  // passport fast-path cache TTL (spec: cache popular passports)
+  VERIFY_CACHE_TTL_SECONDS: intOr(process.env.VERIFY_CACHE_TTL_SECONDS, 300),
+  // counterfeit detection thresholds (spec "Counterfeit Detection")
+  COUNTERFEIT_GEO_KM: intOr(process.env.COUNTERFEIT_GEO_KM, 500), // same token, >500 km apart
+  COUNTERFEIT_GEO_WINDOW_MS: intOr(process.env.COUNTERFEIT_GEO_WINDOW_MS, 15 * 60 * 1000),
+  COUNTERFEIT_BURST_COUNT: intOr(process.env.COUNTERFEIT_BURST_COUNT, 20), // scans in the window
+  COUNTERFEIT_BURST_WINDOW_MS: intOr(process.env.COUNTERFEIT_BURST_WINDOW_MS, 60 * 1000),
+  COUNTERFEIT_DAILY_VOLUME: intOr(process.env.COUNTERFEIT_DAILY_VOLUME, 100), // scans / token / day
+  COUNTERFEIT_UNKNOWN_BURST: intOr(process.env.COUNTERFEIT_UNKNOWN_BURST, 10), // unknown tokens in a minute
 };
 
 function corsOriginList() {
