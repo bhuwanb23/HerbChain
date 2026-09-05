@@ -68,6 +68,7 @@ function _mountCoreRoutes(app) {
         product_trace: "/api/v1/batches/:batchId/products (forward trace)",
         verify_public: "/verify (scan | product/:token | journey | certificate) — public passport",
         verify_internal: "/api/v1/verify (analytics | scans | alerts | alerts/:id/resolve)",
+        blockchain: "/api/v1/blockchain (dashboard | events | transactions | batches/:id | products/:id | verify/:hash | process | requeue | nodes | contracts | audit)",
       },
     });
   });
@@ -142,6 +143,11 @@ function _mountRoutes(app) {
   // /api/v1/verify.
   const { mountVerificationRoutes } = require("./modules/verification/verificationRoutes");
   mountVerificationRoutes(app);
+
+  // Phase 12: permissioned blockchain trust layer — event queue worker +
+  // governance reads under /api/v1/blockchain.
+  const { mountBlockchainRoutes } = require("./modules/blockchain/blockchainRoutes");
+  mountBlockchainRoutes(app);
 }
 
 // ------------------------------------------------------------- error box
