@@ -13,6 +13,7 @@ const { prisma } = require("../db/client");
 const { seedRbac } = require("../db/rbac");
 const { registerUser, PROFILE_MODEL, PROFILE_FK, PROFILE_CODE_FIELD } = require("../services/accounts");
 const { approveUser } = require("../services/verification");
+const { seedBlockchain } = require("../services/blockchain");
 const { hashPassword } = require("../services/passwords");
 const { getLogger } = require("../config/logging");
 const { AYUSH_SPECIES } = require("./ayushCatalogue");
@@ -129,6 +130,9 @@ async function main() {
 
   const admin = await upsertAdmin();
   logger.info(`Admin ready: ${ADMIN_EMAIL}`);
+
+  const chain = await seedBlockchain();
+  logger.info(`Blockchain network: ${chain.nodes} nodes, ${chain.contracts} contract version`);
 
   for (const def of DEMO_ACCOUNTS) {
     await ensureDemoAccount(def, admin);

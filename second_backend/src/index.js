@@ -17,6 +17,13 @@ function main() {
     logger.info(`HerbChain backend listening on http://${env.HOST}:${env.PORT}`);
     logger.info(`Database: ${env.DATABASE_URL}`);
   });
+
+  // Phase 12: drain the blockchain event queue in the background (the API
+  // never calls the ledger directly — docs/phase_12.md "Event Queue").
+  if (env.BLOCKCHAIN_WORKER_ENABLED) {
+    const { startWorker } = require("./services/blockchainWorker");
+    startWorker();
+  }
 }
 
 main();
