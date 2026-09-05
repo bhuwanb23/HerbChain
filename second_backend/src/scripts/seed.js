@@ -134,6 +134,11 @@ async function main() {
   const chain = await seedBlockchain();
   logger.info(`Blockchain network: ${chain.nodes} nodes, ${chain.contracts} contract version`);
 
+  // Phase 14: notification template catalog (docs/phase_14.md).
+  const { seedTemplates } = require("../services/notifications");
+  const templates = await seedTemplates();
+  logger.info(`Notification templates: ${templates} seeded`);
+
   for (const def of DEMO_ACCOUNTS) {
     await ensureDemoAccount(def, admin);
   }

@@ -155,6 +155,12 @@ function _mountRoutes(app) {
   // scores, notifications, reports, map, audit) under /api/v1/admin/portal.
   const { mountAdminPortalRoutes } = require("./modules/admin/adminPortalRoutes");
   mountAdminPortalRoutes(app);
+
+  // Phase 14: notifications & alerts — the communication layer
+  // (inbox, preferences, devices, broadcasts, admin center + analytics)
+  // under /api/v1/notifications.
+  const { mountNotificationRoutes } = require("./modules/notifications/notificationRoutes");
+  mountNotificationRoutes(app);
 }
 
 // ------------------------------------------------------------- error box

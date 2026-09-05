@@ -24,6 +24,13 @@ function main() {
     const { startWorker } = require("./services/blockchainWorker");
     startWorker();
   }
+
+  // Phase 14: notification queue worker — deliver queued messages, fire
+  // scheduled reminders/escalations in the background (docs/phase_14.md).
+  if (env.NOTIFICATION_WORKER_ENABLED) {
+    const { startWorker: startNotifWorker } = require("./services/notificationWorker");
+    startNotifWorker();
+  }
 }
 
 main();
