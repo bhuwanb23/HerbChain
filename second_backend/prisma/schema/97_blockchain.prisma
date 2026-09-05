@@ -1,32 +1,152 @@
 // ============================================================================
-// BLOCKCHAIN — proof anchors for trusted domain events.
+// BLOCKCHAIN — permissioned trust layer (Phase 12, docs/phase_12.md).
 // ----------------------------------------------------------------------------
-// Phase 12 of the roadmap: only trusted, high-value events (batch created,
-// transfer executed, certification issued, product created, batch linked)
-// get anchored to a permissioned ledger. This table is the INDEX of what was
-// anchored where: which domain event row, on which chain, with which
-// transaction hash and block. The ledger itself lives off-DB; this row is the
-// verifiable receipt. entity_type/entity_id point at the domain event row
-// (batch_event, product_lot_event, audit_log) — polymorphic, no relation.
-// status: pending | confirmed | failed
+// HYBRID architecture: the database remains the operational system of record.
+// The ledger is the SOURCE OF PROOF: only trusted milestones (batch created,
+// ownership transferred, certified, product created, batch linked, recalls,
+// compliance flags) are queued, hashed and anchored. Never images, PDFs, GPS
+// logs, product details, profiles or inventory — those stay in the DB.
+//
+// Pipeline (spec "Event Queue Architecture"):
+//   API → PostgreSQL → blockchain_event_queue (same tx) → worker → ledger
+// The app NEVER calls the ledger directly. A worker (interval + manual +
+// CLI) picks PENDING rows that are due, derives the canonical hash of the
+// business facts from the live DB (hashing strategy: SHA-256 of a canonical
+// payload, NOT the whole record), validates the smart-contract rules, submits
+// the block to the permissioned chain and records the receipt.
+//
+// Tamper detection: recompute the canonical hash from the current DB and
+// compare with the frozen payload_hash on the chain → VALID | TAMPERED.
+//
+// The mock ledger (default provider, SQLite stack) is an append-only hash
+// chain persisted in blockchain_transactions: each block carries prev_hash +
+// payload_hash, so chain integrity is verifiable with no external service.
+// A real Hyperledger Fabric adapter can replace it via LEDGER_PROVIDER
+// (same submitBlock interface) without touching the queue/worker.
+//
+// Node permissions (spec): AYUSH = governance/read/write/audit; lab = cert
+// events + read; manufacturer = product events + read; transporters = none
+// (backend only). Consensus = RAFT on the real network (permissioned, no PoW).
 // ============================================================================
 
+// THE EVENT QUEUE — one row per trusted milestone awaiting the ledger.
+// entity_type/entity_id are polymorphic refs to the domain event row
+// (batch_event | product_lot_event | audit_log). The worker fills
+// tx_hash/block_number/block_time on success.
+// anchor_code = event kind (spec enum): BATCH_CREATED | TRANSFERRED
+// (≈ OWNERSHIP_TRANSFERRED) | CERTIFIED (≈ LAB_CERTIFIED) | REJECTED |
+// PRODUCT_CREATED | LINKED (≈ BATCH_LINKED_TO_PRODUCT) | PRODUCT_RECALLED |
+// USER_VERIFIED | COMPLIANCE_FLAGGED | + procurement facts (MATERIAL_RECEIVED…)
+// status: pending | processing | completed | failed
 model BlockchainEvent {
-  id          String   @id @default(cuid())
-  anchor_code String // mirrored event kind for readability:
-                     // BATCH_CREATED | TRANSFERRED | CERTIFIED | REJECTED |
-                     // PRODUCT_CREATED | LINKED | SALE | …
-  entity_type String // batch_event | product_lot_event | audit_log
-  entity_id   String
-  chain       String   @default("polygon") // polygon | ethereum | hyperledger | other
-  tx_hash     String?  @unique // set once the anchor transaction is broadcast
-  block_number Int?
-  block_time  DateTime? // block timestamp, once confirmed
-  status      String   @default("pending") // pending | confirmed | failed
-  recorded_at DateTime @default(now())
+  id                String    @id @default(cuid())
+  anchor_code       String // event kind (code list above)
+  entity_type       String // batch_event | product_lot_event | audit_log
+  entity_id         String
+  payload_json      Json? // optional snapshot metadata at enqueue time
+  performed_by_user_id String? // plain FK — the actor (null for system events)
+  chain             String    @default("herbchain") // herbchain (permissioned) | polygon | ethereum | fabric | other
+  tx_hash           String?   @unique // receipt hash, once anchored
+  block_number      Int?
+  block_time        DateTime? // block timestamp once confirmed
+  status            String    @default("pending") // pending | processing | completed | failed
+  attempts          Int       @default(0) // processing attempts so far
+  max_retries       Int       @default(5) // terminal FAILED after this many
+  next_attempt_at   DateTime? // backoff gate (null = due now)
+  last_error        String? // most recent failure message
+  processed_at      DateTime?
+  recorded_at       DateTime  @default(now())
+
+  transaction BlockchainTransaction?
 
   @@index([entity_type, entity_id])
-  @@index([status])
+  @@index([anchor_code, status])
+  @@index([status, next_attempt_at])
   @@index([recorded_at])
-  @@map("blockchain_events")
+  @@map("blockchain_event_queue")
+}
+
+// The LEDGER RECEIPT — one row per anchored block (spec blockchain_transactions).
+// transaction_hash = the block hash; the mock chain links blocks via
+// prev_hash + monotonic block_number so the whole chain is verifiable.
+// status: submitted | confirmed
+model BlockchainTransaction {
+  id               String    @id @default(cuid())
+  event_id         String    @unique // 1:1 with the queue row
+  transaction_hash String    @unique // block hash (mock: sha256 of the block)
+  block_number     Int       @unique // chain order (monotonic, no gaps)
+  prev_hash        String? // hash of the previous block (null = genesis)
+  event_type       String // mirrored anchor_code
+  entity_type      String
+  entity_id        String
+  payload_hash     String // sha256 of the canonical business facts (tamper anchor)
+  performed_by     String? // actor snapshot
+  chain            String    @default("herbchain")
+  status           String    @default("confirmed") // submitted | confirmed
+  confirmed_at     DateTime  @default(now())
+  created_at       DateTime  @default(now())
+
+  event BlockchainEvent @relation(fields: [event_id], references: [id], onDelete: Restrict)
+
+  @@index([entity_type, entity_id])
+  @@index([event_type])
+  @@index([block_number])
+  @@map("blockchain_transactions")
+}
+
+// Permissioned NETWORK participants (spec "Network Participants").
+// org_type: ayush | lab | manufacturer | regional_authority | orderer
+// role: governance | validator | orderer | observer
+// status: active | inactive
+model BlockchainNode {
+  id           String    @id @default(cuid())
+  node_code    String    @unique // e.g. "AYUSH-GOV-01", "LAB-01", "MFR-01"
+  org_type     String // code list above
+  name         String
+  endpoint     String? // peer/orderer URL when provisioned
+  role         String    @default("validator") // code list above
+  status       String    @default("active") // active | inactive
+  last_seen_at DateTime? // heartbeat from the worker/ops
+  created_at   DateTime  @default(now())
+
+  @@index([org_type])
+  @@index([status])
+  @@map("blockchain_nodes")
+}
+
+// The deployed SMART CONTRACT versions (spec "Smart Contract Design").
+// functions_json: [{name, description, input}]; rules_json: the security
+// rule set (spec "Smart Contract Security Rules" 1–5).
+model SmartContractVersion {
+  id                String    @id @default(cuid())
+  contract_name     String // e.g. "Batch Contract"
+  version           String // semantic, e.g. "1.0.0"
+  description       String?
+  functions_json    Json? // contract functions
+  rules_json        Json? // security rules
+  deployed_by_user_id String? // plain FK — admin who deployed
+  deployed_at       DateTime  @default(now())
+  is_active         Boolean   @default(true)
+  created_at        DateTime  @default(now())
+
+  @@unique([contract_name, version])
+  @@index([contract_name, is_active])
+  @@map("smart_contract_versions")
+}
+
+// Domain-specific audit trail for the queue/ledger lifecycle
+// (spec blockchain_audit_logs). The general AuditLog keeps app-level actions;
+// this one records the chain lifecycle: queued | processed | failed |
+// retried | requeued | verified | tampered | chain_verified.
+model BlockchainAuditLog {
+  id          String   @id @default(cuid())
+  event_id    String? // the queue row this entry refers to (plain FK)
+  action      String // code list above
+  actor       String? // user id or "worker"
+  detail_json Json?
+  created_at  DateTime @default(now())
+
+  @@index([event_id])
+  @@index([action, created_at])
+  @@map("blockchain_audit_logs")
 }
