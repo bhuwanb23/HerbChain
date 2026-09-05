@@ -1,0 +1,158 @@
+// ============================================================================
+// PHASE 15 — FILE STORAGE / DOCUMENT MANAGEMENT (docs/phase_15.md)
+// ----------------------------------------------------------------------------
+// The evidence repository. Files NEVER live in the database — the storage
+// driver (src/services/storage.js; local disk v1, S3/Azure behind the same
+// interface) holds bytes, these tables hold the registry + lifecycle:
+//   Document           — master file registry (one row per logical document)
+//   DocumentVersion    — every upload of the same logical doc (never overwrite)
+//   DocumentAccessLog  — VIEW/DOWNLOAD/UPLOAD/DELETE/SHARE audit
+//   DocumentShare      — consumer-safe PUBLIC share codes
+//   DocumentRetentionRule — per-category retention (months / permanent)
+//   CertificateDocument — certificate-number -> document + hash link
+//   StorageJob         — async pipeline (virus scan / chunk / archive)
+//
+// Entity refs are plain polymorphic FKs (entity_type + entity_id), the same
+// convention as the regulatory / blockchain / verification tables.
+
+model Document {
+  id             String   @id @default(cuid())
+  document_no    String   @unique // e.g. "DOC-2026-000001"
+  category       String // herbs | laboratory | certificates | shipments | products | compliance | investigations | user
+  entity_type    String // batch | lab_report | certificate | shipment | product | product_lot | user | compliance | investigation
+  entity_id      String? // id of the owning row (null = unbound/standalone)
+  file_name      String // original client filename (audit metadata)
+  storage_key    String // object-store key / local path (the bytes)
+  public_url     String?
+  file_type      String   @default("image") // image | document | spreadsheet | video
+  mime_type      String?
+  file_size      Int // bytes
+  checksum_sha256 String // integrity anchor — verify() recomputes against the bytes
+  visibility     String   @default("RESTRICTED") // PUBLIC | RESTRICTED | CONFIDENTIAL | REGULATORY
+  status         String   @default("validated") // uploaded | validated | archived | deleted
+  uploaded_by_user_id String
+  uploaded_at    DateTime @default(now())
+  archived_at    DateTime?
+  deleted_at     DateTime?
+
+  versions  DocumentVersion[]
+  access_logs DocumentAccessLog[]
+  shares    DocumentShare[]
+  certificate_links CertificateDocument[]
+  storage_jobs StorageJob[]
+
+  @@index([category, status])
+  @@index([entity_type, entity_id])
+  @@index([uploaded_by_user_id])
+  @@index([uploaded_at])
+  @@map("documents")
+}
+
+// Never overwrite files — each upload of a logical document is a version.
+// The Document row always points at its latest version's bytes (storage_key
+// on Document = current); this table keeps the full history.
+model DocumentVersion {
+  id              String   @id @default(cuid())
+  document_id     String
+  version         Int
+  storage_key     String // this version's bytes (never mutated)
+  checksum_sha256 String
+  file_size       Int
+  file_name       String
+  uploaded_by_user_id String
+  uploaded_at     DateTime @default(now())
+
+  document Document @relation(fields: [document_id], references: [id], onDelete: Cascade)
+
+  @@unique([document_id, version])
+  @@map("document_versions")
+}
+
+// Every access is logged (docs/phase_14 audit philosophy applied to files).
+// action: UPLOAD | VIEW | DOWNLOAD | VERIFY | SHARE | DELETE | ARCHIVE
+model DocumentAccessLog {
+  id          String   @id @default(cuid())
+  document_id String
+  user_id     String? // null = anonymous consumer via a public share
+  action      String
+  ip_address  String?
+  created_at  DateTime @default(now())
+
+  document Document @relation(fields: [document_id], references: [id], onDelete: Cascade)
+
+  @@index([document_id, created_at])
+  @@index([user_id])
+  @@map("document_access_logs")
+}
+
+// Public / shared access. A PUBLIC document with an active share is readable
+// by consumers through the short code (passport certificates). Shares are
+// revocable and can expire.
+model DocumentShare {
+  id             String    @id @default(cuid())
+  document_id    String
+  share_code     String    @unique // short random code for the public URL
+  created_by_user_id String
+  expires_at     DateTime?
+  revoked_at     DateTime?
+  download_count Int       @default(0)
+  created_at     DateTime  @default(now())
+
+  document Document @relation(fields: [document_id], references: [id], onDelete: Cascade)
+
+  @@index([document_id])
+  @@map("document_shares")
+}
+
+// Retention policy per category (docs/phase_14 "Retention Policies").
+// retention_months null = permanent. The worker archives/deletes files past
+// their window.
+model DocumentRetentionRule {
+  id               String   @id @default(cuid())
+  category         String   @unique // herbs | laboratory | certificates | ...
+  retention_months Int? // null = permanent
+  is_active        Boolean  @default(true)
+  created_at       DateTime @default(now())
+
+  @@map("document_retention_rules")
+}
+
+// Certificate <-> document link + independent hash (docs/phase_15
+// "Certificate Management"): lets the consumer passport / AYUSH verify a
+// certificate PDF's integrity without trusting the document registry alone.
+model CertificateDocument {
+  id                String   @id @default(cuid())
+  certificate_number String // mirrors Certification.certificate_number
+  document_id       String
+  certificate_hash  String? // sha256 of the canonical certificate payload
+  issued_by_user_id String?
+  issued_at         DateTime @default(now())
+
+  document Document @relation(fields: [document_id], references: [id], onDelete: Cascade)
+
+  @@index([certificate_number])
+  @@index([document_id])
+  @@map("certificate_documents")
+}
+
+// Async pipeline row: virus scan (stub — provider seam), large-file chunk
+// assembly, archive / delete per retention. status: queued | processing |
+// done | failed. Worker (src/services/documentWorker.js) drains on a timer.
+model StorageJob {
+  id             String   @id @default(cuid())
+  kind           String // virus_scan | chunk_upload | archive | delete
+  document_id    String?
+  status         String   @default("queued") // queued | processing | done | failed
+  attempts       Int      @default(0)
+  payload_json   Json? // { chunk_total, chunk_index, ... }
+  last_error     String?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  completed_at   DateTime?
+
+  document Document? @relation(fields: [document_id], references: [id], onDelete: SetNull)
+
+  @@index([status, created_at])
+  @@index([kind])
+  @@map("storage_jobs")
+}
