@@ -51,6 +51,9 @@ model User {
   audit_actions       AuditLog[]    @relation("AuditActor")
   device_tokens       DeviceToken[]
   notifications       Notification[]
+  notification_queue  NotificationQueue[] @relation("NotificationQueueRecipient")
+  notification_preference NotificationPreference?
+  scheduled_notifications ScheduledNotification[] @relation("ScheduledNotificationRecipient")
 
   // recognition (phase 4 — AI/ML identification, 96_identification.prisma)
   ai_requests       AiRequest[]        @relation("AiRequester")
