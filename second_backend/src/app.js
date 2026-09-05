@@ -66,6 +66,8 @@ function _mountCoreRoutes(app) {
         products: "/api/v1/products (create | :id/lineage | qr/verify | formulas)",
         manufacturing: "/api/v1/manufacturing (batches create/start/complete/cancel | lots | :lotId/qr | impacts)",
         product_trace: "/api/v1/batches/:batchId/products (forward trace)",
+        verify_public: "/verify (scan | product/:token | journey | certificate) — public passport",
+        verify_internal: "/api/v1/verify (analytics | scans | alerts | alerts/:id/resolve)",
       },
     });
   });
@@ -134,6 +136,12 @@ function _mountRoutes(app) {
   // permanent product QR, backward/forward trace, recall impact).
   const { mountProductRoutes } = require("./modules/products/productRoutes");
   mountProductRoutes(app);
+
+  // Phase 11: consumer verification portal — public /verify endpoints
+  // (rate-limited, no auth) + AYUSH/manufacturer analytics under
+  // /api/v1/verify.
+  const { mountVerificationRoutes } = require("./modules/verification/verificationRoutes");
+  mountVerificationRoutes(app);
 }
 
 // ------------------------------------------------------------- error box
