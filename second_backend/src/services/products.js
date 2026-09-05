@@ -1040,7 +1040,11 @@ async function assessBatchImpact(user, { batch_id, impact_type, notes = null }) 
           detected_at: new Date(),
         },
       });
-      await tx.product.update({ where: { id: product.id }, data: { status: "recalled" } });
+      // Recall is a public-facing verdict: flip the persisted engine status
+      // and purge the passport cache so no consumer ever serves a stale
+      // VERIFIED passport (phase 11 — docs/phase_11.md check 2).
+      await tx.product.update({ where: { id: product.id }, data: { status: "recalled", verification_status: "RECALLED" } });
+      await tx.productVerificationCache.deleteMany({ where: { product_id: product.id } });
       await writeAudit(tx, {
         actorUserId: user.id,
         action: "AFFECTED_PRODUCT_OPENED",
@@ -1095,6 +1099,10 @@ async function resolveAffectedProduct(user, { affected_id, note = null }) {
       where: { id: affected.id },
       data: { status: "resolved", resolved_at: new Date(), notes: note || affected.notes },
     });
+    // Drop the passport cache so the next scan re-evaluates (the product
+    // stays recalled until an admin re-activates it, but caches must never
+    // serve the pre-recall snapshot).
+    await tx.productVerificationCache.deleteMany({ where: { product_id: affected.product_id } });
     await writeAudit(tx, {
       actorUserId: user.id,
       action: "AFFECTED_PRODUCT_RESOLVED",
