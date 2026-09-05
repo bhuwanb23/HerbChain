@@ -56,7 +56,7 @@ correct for a demo but has production gaps:
    a model has more than one FK to the same target.
 9. **Email uniqueness** is on the lowercased value — normalize at write time.
 
-## 3. Domain map (20 files, 99 models)
+## 3. Domain map (21 files, 105 models)
 
 | File | Domain | Models |
 |---|---|---|
@@ -75,7 +75,8 @@ correct for a demo but has production gaps:
 | `60_products.prisma` | Products, manufacturing runs & lineage (Phase 10) | `Product` (+persisted `verification_status`), `ProductFormula`, `ManufacturingBatch`, `ManufacturingBatchIngredient`, `ProductLot`, `ProductQrToken`, `ProductLotEvent`, `ProductLineageSnapshot`, `AffectedProduct` |
 | `65_verification.prisma` | Consumer verification portal (Phase 11) | `ConsumerScan`, `CounterfeitAlert`, `ProductVerificationCache` |
 | `70_commerce.prisma` | Orders & money | `PurchaseOrder`, `OrderItem`, `Invoice`, `Payment`, `Wallet`, `WalletTransaction` |
-| `80_compliance.prisma` | Licenses/recalls/support | `LicenseCert`, `Inspection`, `Recall`, `RecallScope`, `SupportTicket` |
+| `74_regulatory.prisma` | AYUSH regulatory monitoring (Phase 13) | `ComplianceAlert`, `InvestigationCase`, `InvestigationEntity`, `ComplianceScore`, `AdminNotification`, `ReportExport` |
+| `80_compliance.prisma` | Licenses/recalls/support | `LicenseCert`, `Inspection`, `Recall` (+Phase-13 statuses), `RecallScope`, `SupportTicket` |
 | `90_notifications.prisma` | Messaging | `NotificationTemplate`, `Notification`, `DeviceToken` |
 | `95_intel.prisma` | Prices & weather | `PriceQuote`, `WeatherSnapshot` |
 | `96_identification.prisma` | Phase-4 AI/ML recognition | `AiRequest`, `AiIdentification`, `ImageHashCache`, `AiFeedback` |
@@ -271,6 +272,11 @@ added because it was missing.
 | `products` | ✅ | `Product` (master) |
 | `product_ingredients` | ✅ | `ManufacturingBatchIngredient` (per-run composition edges, `quantity_kg`; inventory-backed) |
 | `blockchain_events` | 🔀 | `BlockchainEvent` → the Phase-12 **event queue** (status pending→processing→completed|failed, attempts/max_retries, backoff `next_attempt_at`, `last_error`, `performed_by_user_id`); the worker drains it into `BlockchainTransaction` (hash chain: prev_hash, payload_hash, block_number, confirmed_at) + `BlockchainNode` (permissioned orgs) + `SmartContractVersion` (contract functions + security rules 1–5) + `BlockchainAuditLog` |
+| `compliance_alerts` | ➕ | `ComplianceAlert` (rules-engine + admin alerts; severity LOW→CRITICAL; polymorphic entity refs) |
+| `investigation_cases` / `investigation_entities` | ➕ | `InvestigationCase` (INV-…) + ordered `InvestigationEntity` subjects/witnesses/affected (Phase 13) |
+| `compliance_scores` | ➕ | `ComplianceScore` (0–100 + grade, per farmer/lab/manufacturer/transporter, factors JSON) |
+| `admin_notifications` | ➕ | `AdminNotification` — AYUSH feed (broadcast or per-admin, recall/alert/lab-registration events) |
+| `report_exports` | ➕ | `ReportExport` — CSV live exports + pdf/excel job slots (Phase 13 reporting) |
 | `notifications` | ✅ | `Notification` (+ `NotificationTemplate`, `DeviceToken`) |
 | `audit_logs` | ✅ | `AuditLog` (admin/system) + domain timelines (`BatchEvent`, `ProductLotEvent`) |
 | `consumer_scans` | 🔀 | `QrScanLog` (`purpose=consumer_view`) until Phase 11, then the dedicated `ConsumerScan` (country/state/city, device_type, ip, outcome) + the forensic `qr_scan_logs` row stays as the tamper signal stream (GPS, failure reasons) |
@@ -332,7 +338,7 @@ Each module = routes + service + serializers + zod schema, colocated.
 
 ## 8. Verification
 
-- `npx prisma validate --schema prisma/schema` → valid ✅ (20 files, 99 models)
+- `npx prisma validate --schema prisma/schema` → valid ✅ (21 files, 105 models)
 - Migrations applied on the scratch DB (`prisma/scratch_new.db`), `migrate
   status` clean; Prisma client regenerated per phase
 - Active test suites green: auth, batches, identification, qr, transfers,

@@ -1,6 +1,6 @@
 # HerbChain — ER Diagram (Redesigned Schema)
 
-Source of truth: `prisma/schema/` (20 files, 99 models). This file renders the
+Source of truth: `prisma/schema/` (21 files, 105 models). This file renders the
 same structure as Mermaid diagrams grouped by domain — the phase-1 "ER
 Diagram" deliverable. Full conventions: `docs/database/architecture.md`.
 
@@ -9,7 +9,8 @@ Legend: `||` one, `o{` zero-or-many, `|{` exactly-one-many, `o|` zero-or-one.
 Polymorphic references (plain columns, resolved in code — no FK/relation):
 `EntityDocument.entity_*`, `StockMovement.ref_*`, `StockPosition.ref_*`,
 `OrderItem.ref_*`, `Shipment.ref_*`, `QrScanLog.target_*`, `Recall.ref_*`,
-`RecallScope.scope_*`, `Inspection.target_*`, `BlockchainEvent.entity_*`.
+`RecallScope.scope_*`, `Inspection.target_*`, `BlockchainEvent.entity_*`,
+`ComplianceAlert.entity_*`, `InvestigationEntity.entity_*`.
 
 ## 1. Identity & Security
 
@@ -526,3 +527,27 @@ system of record and the chain is recomputable for tamper detection
 `SmartContractVersion` ships contract functions + security rules 1–5 that
 the worker enforces as a defense-in-depth gate, and `BlockchainAuditLog`
 records every queue/txn action for the AYUSH audit trail.
+
+## 10. AYUSH regulatory monitoring (Phase 13)
+
+```mermaid
+erDiagram
+    INVESTIGATION_CASE ||--o{ INVESTIGATION_ENTITY : "involved entities"
+```
+
+`ComplianceAlert` is the centralized risk stream — raised by the rules
+engine (repeated batch failures, species fraud, invalid transfers,
+duplicate registrations, suspicious QR scans, recall events, certificate
+expiry, high lab pass rates) and by admin actions, with
+`severity LOW | MEDIUM | HIGH | CRITICAL` and `open | acknowledged |
+resolved` lifecycle. `InvestigationCase` (INV-…) carries an ordered set of
+`InvestigationEntity` rows (subject / witness / affected) for complaints,
+fraud, recalls and audits. `ComplianceScore` persists the 0–100 entity
+score + grade + factor breakdown (certification success, mismatches,
+violations, recalls, timeliness). `AdminNotification` is the AYUSH feed
+(broadcast or per-admin; recall events, high-severity alerts, new lab
+registrations). `ReportExport` records regulatory report jobs — CSV is
+exported live through the storage driver, pdf/excel are pipeline slots.
+Recalls use the extended `Recall.status` code list (draft | issued |
+active | resolved | closed) and the recall center auto-scopes
+`RecallScope` rows + `AffectedProduct` impacts.
