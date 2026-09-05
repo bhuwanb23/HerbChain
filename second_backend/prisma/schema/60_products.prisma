@@ -42,6 +42,11 @@ model Product {
   pack_size           String? // e.g. "60 capsules", "100g tin"
   expiry_months       Int? // shelf life months — drives lot expiry dates
   status              String   @default("draft") // code list above
+  // phase 11 — persisted engine verdict (docs/phase_11.md): VERIFIED |
+  // EXPIRED | RECALLED | UNDER_INVESTIGATION | INVALID | unverified
+  // (pre-first-scan default). Updated on every consumer scan; the passport
+  // engine computes it live from status + QR + lineage + certificates.
+  verification_status String   @default("unverified")
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
   deleted_at          DateTime?
@@ -52,6 +57,9 @@ model Product {
   lots         ProductLot[]
   lineage_snapshots ProductLineageSnapshot[]
   affected_products AffectedProduct[]
+  consumer_scans ConsumerScan[]         @relation("ConsumerScanProduct")
+  counterfeit_alerts CounterfeitAlert[] @relation("AlertProduct")
+  verification_caches ProductVerificationCache[]
 
   @@index([manufacturer_user_id])
   @@index([status])
@@ -158,6 +166,8 @@ model ProductLot {
   holder  User                   @relation("LotHolder", fields: [current_holder_user_id], references: [id])
   events  ProductLotEvent[]
   qr_token ProductQrToken?
+  consumer_scans ConsumerScan[]
+  counterfeit_alerts CounterfeitAlert[]
 
   @@index([code])
   @@index([product_id])
