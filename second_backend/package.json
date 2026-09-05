@@ -16,7 +16,7 @@
     "migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
     "generate": "prisma generate",
-    "test": "node --test tests/auth tests/batches tests/identification tests/qr tests/transfers tests/shipments tests/lab tests/procurement tests/products tests/verification tests/blockchain tests/admin tests/notifications",
+    "test": "node --test tests/auth tests/batches tests/identification tests/qr tests/transfers tests/shipments tests/lab tests/procurement tests/products tests/verification tests/blockchain tests/admin tests/notifications tests/documents",
     "test:auth": "node --test tests/auth/",
     "test:batches": "node --test tests/batches/",
     "test:identification": "node --test tests/identification/",
