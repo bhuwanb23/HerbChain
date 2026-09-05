@@ -25,7 +25,7 @@ history → audit → blockchain-ready event — all inside one transaction.
 | `qr_tokens` row (token, version=1, ACTIVE) | **Stateless nonce QR** (locked decision §5b.2) | QR stores only a signed token embedding `{ batch code, qr_nonce }`; no token material in the DB; `GET /batches/:id/qr` mints on demand; transfer increments the nonce later (Phase 5/6) |
 | `batch_images` (1–10, with filename/timestamp/GPS/device/uploader metadata) | `Asset` (+ `metadata_json`, `filename`) + `EntityDocument` (`entity_type=batch`, `doc_kind=herb_image`) + `is_primary` | two-step: upload → asset, then attach at batch create |
 | `audit_logs` `BATCH_CREATED` | `AuditLog` row in the same transaction | account/admin stream |
-| `blockchain_event_queue` (PENDING, BATCH_CREATED) | `BlockchainEvent` row `{ status: pending, anchor_code: BATCH_CREATED, entity_type: batch_event }` | off-DB anchoring later; creation never waits on a chain |
+| `blockchain_event_queue` (PENDING, BATCH_CREATED) | `BlockchainEvent` row `{ status: pending, anchor_code: BATCH_CREATED, entity_type: batch_event }` | Phase-12 worker drains the queue off the request path; creation never waits on a chain |
 | One transaction, all-or-nothing | `prisma.$transaction` | batch + events + docs + audit + blockchain row commit together |
 | AI suggestion (accept/change/manual) | **Deferred hook** — species list drives a client-side suggestion; the recognition endpoint (`POST /recognition/identify`) arrives with the AI phase | "AI suggests, farmer confirms" contract preserved; real inference later |
 

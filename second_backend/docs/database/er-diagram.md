@@ -1,6 +1,6 @@
 # HerbChain — ER Diagram (Redesigned Schema)
 
-Source of truth: `prisma/schema/` (20 files, 95 models). This file renders the
+Source of truth: `prisma/schema/` (20 files, 99 models). This file renders the
 same structure as Mermaid diagrams grouped by domain — the phase-1 "ER
 Diagram" deliverable. Full conventions: `docs/database/architecture.md`.
 
@@ -499,5 +499,30 @@ erDiagram
 
 Standalone tables (no relations; polymorphic or event/feed rows):
 `QrScanLog` (every QR scan — custody + consumer views), `WeatherSnapshot`
-(cached provider payloads), `BlockchainEvent` (proof anchors for domain
-events).
+(cached provider payloads). The blockchain tables (§9) are relation-free
+by design — the queue rows reference domain entities via plain FK columns
+(`entity_type` + `entity_id`), never via relations.
+
+## 9. Blockchain trust layer (Phase 12)
+
+```mermaid
+erDiagram
+    BLOCKCHAIN_EVENT ||--o| BLOCKCHAIN_TRANSACTION : "anchored as"
+    BLOCKCHAIN_EVENT ||--o{ BLOCKCHAIN_AUDIT_LOG : "queued/retried/failed/verified"
+    BLOCKCHAIN_TRANSACTION ||--o{ BLOCKCHAIN_AUDIT_LOG : "receipt"
+```
+
+`BlockchainEvent` is the **event queue** — every domain milestone
+(BATCH_CREATED, TRANSFERRED, RECEIVED, CERTIFIED, PRODUCT_CREATED, LINKED,
+MATERIAL_RECEIVED, …) is written `pending` inside the domain transaction;
+the worker never blocks the API. Rows flow `pending → processing →
+completed | failed` with attempts, exponential backoff (`next_attempt_at`)
+and `performed_by_user_id`. `BlockchainTransaction` is the hash-linked
+ledger block (`prev_hash`, `payload_hash` = SHA-256 of the canonical live
+facts, monotonic `block_number`, `confirmed_at`) — the database stays the
+system of record and the chain is recomputable for tamper detection
+(VALID | TAMPERED). `BlockchainNode` seeds the permissioned network
+(AYUSH governance, regional authority, labs, manufacturer, orderer),
+`SmartContractVersion` ships contract functions + security rules 1–5 that
+the worker enforces as a defense-in-depth gate, and `BlockchainAuditLog`
+records every queue/txn action for the AYUSH audit trail.

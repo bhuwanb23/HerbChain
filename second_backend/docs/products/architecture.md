@@ -95,7 +95,8 @@ affected products), `User` (product/manufacturing/lot ownership sides) and
 
 ## 5. Verification
 
-- `npx prisma validate --schema prisma/schema` → valid ✅ (92 models).
+- `npx prisma validate --schema prisma/schema` → valid ✅ (99 models — 92
+  at Phase 10, +3 Phase 11 verification, +4 Phase 12 blockchain).
 - Migration `20260904150000_phase10_products` applied; template DB rebuilt
   from all 12 migrations; Prisma client regenerated.
 - `npm test` → **124/124** across all nine suites (9 new products cases:

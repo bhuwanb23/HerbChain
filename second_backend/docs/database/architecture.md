@@ -56,7 +56,7 @@ correct for a demo but has production gaps:
    a model has more than one FK to the same target.
 9. **Email uniqueness** is on the lowercased value — normalize at write time.
 
-## 3. Domain map (20 files, 95 models)
+## 3. Domain map (20 files, 99 models)
 
 | File | Domain | Models |
 |---|---|---|
@@ -79,7 +79,7 @@ correct for a demo but has production gaps:
 | `90_notifications.prisma` | Messaging | `NotificationTemplate`, `Notification`, `DeviceToken` |
 | `95_intel.prisma` | Prices & weather | `PriceQuote`, `WeatherSnapshot` |
 | `96_identification.prisma` | Phase-4 AI/ML recognition | `AiRequest`, `AiIdentification`, `ImageHashCache`, `AiFeedback` |
-| `97_blockchain.prisma` | Blockchain proof anchors | `BlockchainEvent` |
+| `97_blockchain.prisma` | Permissioned blockchain trust layer (Phase 12) | `BlockchainEvent` (queue), `BlockchainTransaction`, `BlockchainNode`, `SmartContractVersion`, `BlockchainAuditLog` |
 
 ## 4. Relationship spine
 
@@ -121,7 +121,8 @@ PurchaseOrder 1─N Invoice 1─N Payment
 Shipment (refs batch | product_lot; requester + transporter = User)
 Shipment 1─N ShipmentTrackingPoint (GPS breadcrumbs)
 QrScanLog (refs batch | product_lot | product; plain actor col) — forensic scan stream
-BlockchainEvent (refs batch_event | product_lot_event | audit_log) — proof anchors
+BlockchainEvent (queue: refs batch_event | product_lot_event | audit_log) 1─0..1 BlockchainTransaction (hash-linked block)
+BlockchainNode (AYUSH/regional/lab/manufacturer/orderer) · SmartContractVersion (functions + rules 1–5) · BlockchainAuditLog (every queue/txn action)
 
 ProductLot 1─1 ProductQrToken 1─N ConsumerScan (anonymous; geo/device facets)
 Product 1─N ConsumerScan / CounterfeitAlert / ProductVerificationCache (1 per token_hash)
@@ -269,7 +270,7 @@ added because it was missing.
 | `manufacturing_batches` | 🔀 | `ManufacturingBatch` (explicit production run, MFG-…) → one `ProductLot` (PRD-…) per completed run (Phase 10) |
 | `products` | ✅ | `Product` (master) |
 | `product_ingredients` | ✅ | `ManufacturingBatchIngredient` (per-run composition edges, `quantity_kg`; inventory-backed) |
-| `blockchain_events` | ➕ | `BlockchainEvent` (proof anchors: tx_hash, block_number, chain, status) |
+| `blockchain_events` | 🔀 | `BlockchainEvent` → the Phase-12 **event queue** (status pending→processing→completed|failed, attempts/max_retries, backoff `next_attempt_at`, `last_error`, `performed_by_user_id`); the worker drains it into `BlockchainTransaction` (hash chain: prev_hash, payload_hash, block_number, confirmed_at) + `BlockchainNode` (permissioned orgs) + `SmartContractVersion` (contract functions + security rules 1–5) + `BlockchainAuditLog` |
 | `notifications` | ✅ | `Notification` (+ `NotificationTemplate`, `DeviceToken`) |
 | `audit_logs` | ✅ | `AuditLog` (admin/system) + domain timelines (`BatchEvent`, `ProductLotEvent`) |
 | `consumer_scans` | 🔀 | `QrScanLog` (`purpose=consumer_view`) until Phase 11, then the dedicated `ConsumerScan` (country/state/city, device_type, ip, outcome) + the forensic `qr_scan_logs` row stays as the tamper signal stream (GPS, failure reasons) |
@@ -331,7 +332,7 @@ Each module = routes + service + serializers + zod schema, colocated.
 
 ## 8. Verification
 
-- `npx prisma validate --schema prisma/schema` → valid ✅ (20 files, 95 models)
+- `npx prisma validate --schema prisma/schema` → valid ✅ (20 files, 99 models)
 - Migrations applied on the scratch DB (`prisma/scratch_new.db`), `migrate
   status` clean; Prisma client regenerated per phase
 - Active test suites green: auth, batches, identification, qr, transfers,
