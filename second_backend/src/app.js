@@ -161,6 +161,12 @@ function _mountRoutes(app) {
   // under /api/v1/notifications.
   const { mountNotificationRoutes } = require("./modules/notifications/notificationRoutes");
   mountNotificationRoutes(app);
+
+  // Phase 15: file storage / document management — the evidence repository
+  // (uploads, versions, shares, integrity verify, retention, admin) under
+  // /api/v1/documents (+ public /shares/:code for consumer passports).
+  const { mountDocumentRoutes } = require("./modules/documents/documentRoutes");
+  mountDocumentRoutes(app);
 }
 
 // ------------------------------------------------------------- error box

@@ -31,6 +31,12 @@ function main() {
     const { startWorker: startNotifWorker } = require("./services/notificationWorker");
     startNotifWorker();
   }
+
+  // Phase 15: document worker — virus-scan + retention/archive storage jobs.
+  if (env.DOCUMENT_WORKER_ENABLED) {
+    const { startWorker: startDocWorker } = require("./services/documentWorker");
+    startDocWorker();
+  }
 }
 
 main();

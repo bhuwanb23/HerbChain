@@ -139,6 +139,11 @@ async function main() {
   const templates = await seedTemplates();
   logger.info(`Notification templates: ${templates} seeded`);
 
+  // Phase 15: document retention rules (docs/phase_15.md "Retention Policies").
+  const { seedRetentionRules } = require("../services/documents");
+  const retention = await seedRetentionRules();
+  logger.info(`Document retention rules: ${retention} seeded`);
+
   for (const def of DEMO_ACCOUNTS) {
     await ensureDemoAccount(def, admin);
   }
