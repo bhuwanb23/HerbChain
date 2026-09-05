@@ -49,18 +49,24 @@ const PERMISSIONS = [
   // phase 14 — notifications & alerts (docs/phase_14.md)
   { key: "notifications.view", module: "notifications", description: "Read own notification inbox + preferences" },
   { key: "notifications.manage", module: "notifications", description: "Send broadcasts, run the queue worker, view delivery analytics" },
+  // phase 15 — document storage (docs/phase_15.md)
+  { key: "documents.upload", module: "documents", description: "Upload / version documents for accessible entities" },
+  { key: "documents.view", module: "documents", description: "Read / download documents they are a party to" },
+  { key: "documents.share", module: "documents", description: "Create PUBLIC shares of safe documents" },
+  { key: "documents.manage", module: "documents", description: "Run retention/archive, purge, view all documents + access logs" },
 ];
 
 const GRANTS = {
-  consumer: ["profile.self", "trace.resolve"],
-  farmer: ["profile.self", "trace.resolve", "identification.detect", "batch.create", "batch.view", "batch.transfer"],
-  transporter: ["profile.self", "trace.resolve", "batch.view", "batch.transfer", "shipment.manage", "shipment.assign"],
-  lab: ["profile.self", "trace.resolve", "batch.view", "batch.request", "batch.receive", "lab.test", "lab.certify", "lab.reject", "procurement.approve", "blockchain.view"],
-  manufacturer: ["profile.self", "trace.resolve", "batch.view", "batch.request", "batch.receive", "product.create", "product.link", "product.qr", "shipment.manage", "procurement.view", "procurement.request", "procurement.receive", "procurement.inventory", "verify.analytics.view", "blockchain.view"],
-  distributor: ["profile.self", "trace.resolve", "product.create", "product.link", "product.qr", "product.sell", "shipment.manage"],
-  retailer: ["profile.self", "trace.resolve", "product.sell", "shipment.manage"],
-  admin: ["admin.users.manage", "admin.users.view", "admin.audit.view", "admin.trace.view", "admin.analytics.view", "verify.analytics.view", "blockchain.view", "blockchain.manage", "labs.audit", "manufacturers.audit", "shipments.view", "certificates.review", "compliance.manage", "reports.export", "admin.search", "notifications.view", "notifications.manage"],
+  consumer: ["profile.self", "trace.resolve", "documents.view"],
+  farmer: ["profile.self", "trace.resolve", "identification.detect", "batch.create", "batch.view", "batch.transfer", "documents.upload", "documents.view", "documents.share"],
+  transporter: ["profile.self", "trace.resolve", "batch.view", "batch.transfer", "shipment.manage", "shipment.assign", "documents.upload", "documents.view"],
+  lab: ["profile.self", "trace.resolve", "batch.view", "batch.request", "batch.receive", "lab.test", "lab.certify", "lab.reject", "procurement.approve", "blockchain.view", "documents.upload", "documents.view", "documents.share"],
+  manufacturer: ["profile.self", "trace.resolve", "batch.view", "batch.request", "batch.receive", "product.create", "product.link", "product.qr", "shipment.manage", "procurement.view", "procurement.request", "procurement.receive", "procurement.inventory", "verify.analytics.view", "blockchain.view", "documents.upload", "documents.view", "documents.share"],
+  distributor: ["profile.self", "trace.resolve", "product.create", "product.link", "product.qr", "product.sell", "shipment.manage", "documents.upload", "documents.view"],
+  retailer: ["profile.self", "trace.resolve", "product.sell", "shipment.manage", "documents.upload", "documents.view"],
+  admin: ["admin.users.manage", "admin.users.view", "admin.audit.view", "admin.trace.view", "admin.analytics.view", "verify.analytics.view", "blockchain.view", "blockchain.manage", "labs.audit", "manufacturers.audit", "shipments.view", "certificates.review", "compliance.manage", "reports.export", "admin.search", "notifications.view", "notifications.manage", "documents.upload", "documents.view", "documents.share", "documents.manage"],
 };
+
 
 // Every authenticated user can manage their own inbox (phase 14) — the
 // notifications.view grant is granted to all roles via SELF grants below.

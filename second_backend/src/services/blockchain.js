@@ -151,6 +151,13 @@ async function hashMaterialFor({ anchor_code, entity_type, entity_id }) {
     if (!audit) throw new ApiError("anchor_source_missing", `Audit row ${entity_id} not found`, 404);
     return [audit.action, audit.target_type, audit.target_id, audit.actor_user_id, audit.created_at, audit.meta_json || null];
   }
+  if (entity_type === "document") {
+    // Phase 15: document hash anchoring — the sha256 of the file bytes plus
+    // the registry facts. Tampering the file flips the checksum -> TAMPERED.
+    const doc = await prisma.document.findUnique({ where: { id: entity_id } });
+    if (!doc) throw new ApiError("anchor_source_missing", `Document ${entity_id} not found`, 404);
+    return [doc.document_no, doc.checksum_sha256, doc.category, doc.entity_type, doc.entity_id || null, doc.file_name, doc.file_size, doc.uploaded_at];
+  }
   throw new ApiError("anchor_source_missing", `Unsupported entity_type '${entity_type}'`, 400);
 }
 

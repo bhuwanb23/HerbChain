@@ -117,6 +117,12 @@ const env = {
   SMS_PROVIDER: (process.env.SMS_PROVIDER || "stub").trim().toLowerCase(), // stub | twilio | msg91
   PUSH_PROVIDER: (process.env.PUSH_PROVIDER || "stub").trim().toLowerCase(), // stub | fcm | apns
   EMAIL_PROVIDER: (process.env.EMAIL_PROVIDER || "stub").trim().toLowerCase(), // stub | smtp | ses
+  // phase 15 — document storage (docs/phase_15.md)
+  DOCUMENT_WORKER_ENABLED: String(process.env.DOCUMENT_WORKER_ENABLED ?? "true").toLowerCase() !== "false",
+  DOCUMENT_WORKER_INTERVAL_MS: intOr(process.env.DOCUMENT_WORKER_INTERVAL_MS, 5000),
+  STORAGE_PROVIDER: (process.env.STORAGE_PROVIDER || "local").trim().toLowerCase(), // local | s3 | azure (same driver interface)
+  VIRUS_SCAN_ENABLED: String(process.env.VIRUS_SCAN_ENABLED ?? "false").toLowerCase() !== "false",
+  DOCUMENT_PROCESS_LIMIT: intOr(process.env.DOCUMENT_PROCESS_LIMIT, 25), // storage jobs per tick
 };
 
 function corsOriginList() {
