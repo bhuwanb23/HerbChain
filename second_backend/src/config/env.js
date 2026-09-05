@@ -108,6 +108,15 @@ const env = {
   BLOCKCHAIN_MAX_RETRIES: intOr(process.env.BLOCKCHAIN_MAX_RETRIES, 5), // spec: 1m/5m/15m/30m/1h then FAILED
   BLOCKCHAIN_RETRY_BASE_MS: intOr(process.env.BLOCKCHAIN_RETRY_BASE_MS, 60000), // 1st backoff = 1 minute
   BLOCKCHAIN_PROCESS_LIMIT: intOr(process.env.BLOCKCHAIN_PROCESS_LIMIT, 25), // rows per worker tick
+  // phase 14 — notifications (docs/phase_14.md)
+  NOTIFICATION_WORKER_ENABLED: String(process.env.NOTIFICATION_WORKER_ENABLED ?? "true").toLowerCase() !== "false",
+  NOTIFICATION_WORKER_INTERVAL_MS: intOr(process.env.NOTIFICATION_WORKER_INTERVAL_MS, 5000), // server boot interval
+  NOTIFICATION_MAX_RETRIES: intOr(process.env.NOTIFICATION_MAX_RETRIES, 5),
+  NOTIFICATION_RETRY_BASE_MS: intOr(process.env.NOTIFICATION_RETRY_BASE_MS, 60000), // 1m/5m/15m/30m/1h then FAILED
+  NOTIFICATION_PROCESS_LIMIT: intOr(process.env.NOTIFICATION_PROCESS_LIMIT, 50), // queue rows per worker tick
+  SMS_PROVIDER: (process.env.SMS_PROVIDER || "stub").trim().toLowerCase(), // stub | twilio | msg91
+  PUSH_PROVIDER: (process.env.PUSH_PROVIDER || "stub").trim().toLowerCase(), // stub | fcm | apns
+  EMAIL_PROVIDER: (process.env.EMAIL_PROVIDER || "stub").trim().toLowerCase(), // stub | smtp | ses
 };
 
 function corsOriginList() {

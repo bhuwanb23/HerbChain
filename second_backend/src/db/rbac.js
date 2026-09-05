@@ -46,6 +46,9 @@ const PERMISSIONS = [
   { key: "compliance.manage", module: "admin", description: "Manage compliance alerts, recalls, investigations & scores" },
   { key: "reports.export", module: "admin", description: "Generate / export regulatory reports" },
   { key: "admin.search", module: "admin", description: "Universal cross-entity search (batches, products, users, shipments, certificates)" },
+  // phase 14 — notifications & alerts (docs/phase_14.md)
+  { key: "notifications.view", module: "notifications", description: "Read own notification inbox + preferences" },
+  { key: "notifications.manage", module: "notifications", description: "Send broadcasts, run the queue worker, view delivery analytics" },
 ];
 
 const GRANTS = {
@@ -56,8 +59,12 @@ const GRANTS = {
   manufacturer: ["profile.self", "trace.resolve", "batch.view", "batch.request", "batch.receive", "product.create", "product.link", "product.qr", "shipment.manage", "procurement.view", "procurement.request", "procurement.receive", "procurement.inventory", "verify.analytics.view", "blockchain.view"],
   distributor: ["profile.self", "trace.resolve", "product.create", "product.link", "product.qr", "product.sell", "shipment.manage"],
   retailer: ["profile.self", "trace.resolve", "product.sell", "shipment.manage"],
-  admin: ["admin.users.manage", "admin.users.view", "admin.audit.view", "admin.trace.view", "admin.analytics.view", "verify.analytics.view", "blockchain.view", "blockchain.manage", "labs.audit", "manufacturers.audit", "shipments.view", "certificates.review", "compliance.manage", "reports.export", "admin.search"],
+  admin: ["admin.users.manage", "admin.users.view", "admin.audit.view", "admin.trace.view", "admin.analytics.view", "verify.analytics.view", "blockchain.view", "blockchain.manage", "labs.audit", "manufacturers.audit", "shipments.view", "certificates.review", "compliance.manage", "reports.export", "admin.search", "notifications.view", "notifications.manage"],
 };
+
+// Every authenticated user can manage their own inbox (phase 14) — the
+// notifications.view grant is granted to all roles via SELF grants below.
+const SELF_GRANTS = ["notifications.view"];
 
 /** Idempotent: upserts the catalog and grants (called by seed/bootstrap). */
 async function seedRbac(tx = prisma) {
@@ -81,7 +88,20 @@ async function seedRbac(tx = prisma) {
       created += 1;
     }
   }
+  // Phase 14: every authenticated role gets its own inbox (notifications.view).
+  for (const role of Object.keys(GRANTS)) {
+    for (const key of SELF_GRANTS) {
+      const permission = await tx.permission.findUnique({ where: { key } });
+      if (!permission) continue;
+      await tx.rolePermission.upsert({
+        where: { role_permission_id: { role, permission_id: permission.id } },
+        update: {},
+        create: { role, permission_id: permission.id },
+      });
+      created += 1;
+    }
+  }
   return { permissions: PERMISSIONS.length, grants: created };
 }
 
-module.exports = { PERMISSIONS, GRANTS, seedRbac };
+module.exports = { PERMISSIONS, GRANTS, SELF_GRANTS, seedRbac };
