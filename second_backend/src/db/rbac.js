@@ -38,6 +38,14 @@ const PERMISSIONS = [
   { key: "verify.analytics.view", module: "verify", description: "Read consumer scan analytics & counterfeit alerts" },
   { key: "blockchain.view", module: "blockchain", description: "Read permissioned-chain receipts & verify anchors" },
   { key: "blockchain.manage", module: "blockchain", description: "Run the worker, requeue failures, manage nodes/contracts" },
+  // phase 13 — AYUSH regulatory monitoring portal
+  { key: "labs.audit", module: "admin", description: "Read lab monitoring metrics, failure rates & audit history" },
+  { key: "manufacturers.audit", module: "admin", description: "Read manufacturer monitoring (products, intake, recalls)" },
+  { key: "shipments.view", module: "admin", description: "Read all shipments + risk alerts (AYUSH oversight)" },
+  { key: "certificates.review", module: "admin", description: "Read failed certifications & certificate reviews" },
+  { key: "compliance.manage", module: "admin", description: "Manage compliance alerts, recalls, investigations & scores" },
+  { key: "reports.export", module: "admin", description: "Generate / export regulatory reports" },
+  { key: "admin.search", module: "admin", description: "Universal cross-entity search (batches, products, users, shipments, certificates)" },
 ];
 
 const GRANTS = {
@@ -48,7 +56,7 @@ const GRANTS = {
   manufacturer: ["profile.self", "trace.resolve", "batch.view", "batch.request", "batch.receive", "product.create", "product.link", "product.qr", "shipment.manage", "procurement.view", "procurement.request", "procurement.receive", "procurement.inventory", "verify.analytics.view", "blockchain.view"],
   distributor: ["profile.self", "trace.resolve", "product.create", "product.link", "product.qr", "product.sell", "shipment.manage"],
   retailer: ["profile.self", "trace.resolve", "product.sell", "shipment.manage"],
-  admin: ["admin.users.manage", "admin.users.view", "admin.audit.view", "admin.trace.view", "admin.analytics.view", "verify.analytics.view", "blockchain.view", "blockchain.manage"],
+  admin: ["admin.users.manage", "admin.users.view", "admin.audit.view", "admin.trace.view", "admin.analytics.view", "verify.analytics.view", "blockchain.view", "blockchain.manage", "labs.audit", "manufacturers.audit", "shipments.view", "certificates.review", "compliance.manage", "reports.export", "admin.search"],
 };
 
 /** Idempotent: upserts the catalog and grants (called by seed/bootstrap). */
