@@ -119,5 +119,12 @@ affected products), `User` (product/manufacturing/lot ownership sides) and
   rotation rules (docs/qr) are unchanged. Product lots carry the permanent
   `ProductQrToken` described above.
 - `ProductLot` custody phases beyond `with_manufacturer`
-  (distributor/retailer/sold) remain Phase 11 — schema-ready
-  (`LOT_PHASES`), enforced by the Phase-11 distribution module.
+  (distributor/retailer/sold) remain a later phase — schema-ready
+  (`LOT_PHASES`), enforced by the distribution module.
+- **Phase 11 (docs/verification/architecture.md) superseded the auth-gated
+  consumer surface**: the permanent `ProductQrToken` now feeds the PUBLIC
+  digital passport (`POST /verify/scan` + `GET /verify/product/:token`)
+  with zero login. The Phase-10 `/api/v1/products/qr/verify` endpoint stays
+  for authenticated internal checks; the public portal is the consumer
+  entry point. `Product.verification_status` (new in Phase 11) is the
+  persisted engine verdict written on every public scan and on recall.

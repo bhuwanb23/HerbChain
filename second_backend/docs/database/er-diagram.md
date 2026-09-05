@@ -1,6 +1,6 @@
 # HerbChain — ER Diagram (Redesigned Schema)
 
-Source of truth: `prisma/schema/` (19 files, 92 models). This file renders the
+Source of truth: `prisma/schema/` (20 files, 95 models). This file renders the
 same structure as Mermaid diagrams grouped by domain — the phase-1 "ER
 Diagram" deliverable. Full conventions: `docs/database/architecture.md`.
 
@@ -371,6 +371,7 @@ erDiagram
         string code UK
         string manufacturer_user_id FK
         string status
+        string verification_status
         int expiry_months
     }
     MANUFACTURING_BATCH {
@@ -428,7 +429,58 @@ erDiagram
     }
 ```
 
-## 7. Compliance, notifications & intel
+## 7. Consumer verification portal (Phase 11)
+
+```mermaid
+erDiagram
+    PRODUCT ||--o{ CONSUMER_SCAN : "anonymous scans"
+    PRODUCT_LOT ||--o{ CONSUMER_SCAN : ""
+    PRODUCT ||--o{ COUNTERFEIT_ALERT : "anomaly stream"
+    PRODUCT_LOT ||--o{ COUNTERFEIT_ALERT : ""
+    PRODUCT ||--o{ PRODUCT_VERIFICATION_CACHE : "passport fast path"
+
+    CONSUMER_SCAN {
+        string id PK
+        string token_hash
+        string product_id FK
+        string lot_id FK
+        string outcome
+        string country
+        string state
+        string city
+        string device_type
+        string ip_address
+        datetime scanned_at
+    }
+    COUNTERFEIT_ALERT {
+        string id PK
+        string token_hash
+        string product_id FK
+        string lot_id FK
+        string reason
+        string severity
+        string status
+        json detail_json
+        datetime detected_at
+    }
+    PRODUCT_VERIFICATION_CACHE {
+        string id PK
+        string token_hash UK
+        string product_id FK
+        string lot_id FK
+        string verification_status
+        json passport_json
+        datetime expires_at
+    }
+```
+
+Privacy + security controls (docs/verification/architecture.md): the passport
+never exposes internal ids, emails, phones, addresses or financial data; raw
+QR tokens are never stored (hash lookup); `ConsumerScan` keeps only coarse geo
++ device facets; public endpoints are rate-limited per IP and the passport
+cache is purged on recall.
+
+## 8. Compliance, notifications & intel
 
 ```mermaid
 erDiagram

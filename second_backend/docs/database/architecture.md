@@ -1,15 +1,16 @@
 # HerbChain Database Architecture (Redesign)
 
-Status: **LIVE** — `package.json` points at `prisma/schema/` (19 files, 92
+Status: **LIVE** — `package.json` points at `prisma/schema/` (20 files, 95
 models). Migrations are applied on the scratch DB and the backend is built
 phase by phase against these models: Phase 2 auth → Phase 3 batches →
 Phase 4 identification → Phase 5 dynamic QR → Phase 6 governed transfers →
 Phase 7 logistics/shipments → Phase 8 lab certification →
-Phase 9 manufacturer procurement → Phase 10 products & lineage
+Phase 9 manufacturer procurement → Phase 10 products & lineage →
+Phase 11 consumer verification portal
 are live (see docs/auth, docs/batch, docs/identification, docs/qr,
 docs/transfers, docs/logistics, docs/lab, docs/procurement,
-docs/products). The legacy `schema.legacy.prisma` + `migrations.legacy/` + old
-routes/tests are kept as the porting reference.
+docs/products, docs/verification). The legacy `schema.legacy.prisma` +
+`migrations.legacy/` + old routes/tests are kept as the porting reference.
 
 ## 1. Why a redesign
 
@@ -55,7 +56,7 @@ correct for a demo but has production gaps:
    a model has more than one FK to the same target.
 9. **Email uniqueness** is on the lowercased value — normalize at write time.
 
-## 3. Domain map (19 files, 92 models)
+## 3. Domain map (20 files, 95 models)
 
 | File | Domain | Models |
 |---|---|---|
@@ -71,7 +72,8 @@ correct for a demo but has production gaps:
 | `51_qr.prisma` | Phase-5 dynamic QR custody tokens | `QrToken`, `QrReplacementLog` |
 | `52_transfer.prisma` | Phase-6 governed two-party transfers | `TransferRequest`, `TransferProof` |
 | `53_procurement.prisma` | Phase-9 manufacturer raw-material procurement | `BatchRequest`, `BatchInventory`, `InventoryAllocation`, `GoodsReceipt`, `InventoryItem`, `InventoryTransaction`, `QualityHold` |
-| `60_products.prisma` | Products, manufacturing runs & lineage (Phase 10) | `Product`, `ProductFormula`, `ManufacturingBatch`, `ManufacturingBatchIngredient`, `ProductLot`, `ProductQrToken`, `ProductLotEvent`, `ProductLineageSnapshot`, `AffectedProduct` |
+| `60_products.prisma` | Products, manufacturing runs & lineage (Phase 10) | `Product` (+persisted `verification_status`), `ProductFormula`, `ManufacturingBatch`, `ManufacturingBatchIngredient`, `ProductLot`, `ProductQrToken`, `ProductLotEvent`, `ProductLineageSnapshot`, `AffectedProduct` |
+| `65_verification.prisma` | Consumer verification portal (Phase 11) | `ConsumerScan`, `CounterfeitAlert`, `ProductVerificationCache` |
 | `70_commerce.prisma` | Orders & money | `PurchaseOrder`, `OrderItem`, `Invoice`, `Payment`, `Wallet`, `WalletTransaction` |
 | `80_compliance.prisma` | Licenses/recalls/support | `LicenseCert`, `Inspection`, `Recall`, `RecallScope`, `SupportTicket` |
 | `90_notifications.prisma` | Messaging | `NotificationTemplate`, `Notification`, `DeviceToken` |
@@ -118,8 +120,14 @@ PurchaseOrder 1─N Invoice 1─N Payment
 
 Shipment (refs batch | product_lot; requester + transporter = User)
 Shipment 1─N ShipmentTrackingPoint (GPS breadcrumbs)
-QrScanLog (refs batch | product_lot | product; plain actor col) — one scan stream
+QrScanLog (refs batch | product_lot | product; plain actor col) — forensic scan stream
 BlockchainEvent (refs batch_event | product_lot_event | audit_log) — proof anchors
+
+ProductLot 1─1 ProductQrToken 1─N ConsumerScan (anonymous; geo/device facets)
+Product 1─N ConsumerScan / CounterfeitAlert / ProductVerificationCache (1 per token_hash)
+ConsumerScan (token_hash, product?, lot?, outcome, country/state/city, device) — demand + counterfeit stream
+CounterfeitAlert (token_hash, product?, reason, severity, status; detail_json evidence)
+ProductVerificationCache (token_hash UK, passport_json, expires_at) — passport fast path, purged on recall
 
 Batch 1─N BatchRequest (manufacturer asks the holder/lab for qty)
 BatchRequest N─1 User ("manufacturer")
@@ -174,6 +182,14 @@ Batch 1─N QualityHold     (quarantine: active blocks production ops)
 5. **Stock has a current-state view.** `StockPosition` (per warehouse/ref) is
    updated transactionally with each `StockMovement`; movements carry no
    balances. `LicenseCert.license_no` is unique.
+6. **Consumer verification (Phase 11) is public but privacy-scoped.**
+   `ConsumerScan` stores only coarse geo + device facets (never emails, phones,
+   addresses, government ids or financial data); the passport exposes public
+   codes (PRD-…, BAT-…, CERT-…) not internal ids. `verification_status` on
+   `products` is the persisted engine verdict (VERIFIED | EXPIRED | RECALLED |
+   UNDER_INVESTIGATION | INVALID | unverified) — written on every scan and on
+   recall, so AYUSH can filter recalled products without re-scanning. See
+   docs/verification/architecture.md.
 
 ## 5c. Product-lot custody rules (locked before build)
 
@@ -256,13 +272,10 @@ added because it was missing.
 | `blockchain_events` | ➕ | `BlockchainEvent` (proof anchors: tx_hash, block_number, chain, status) |
 | `notifications` | ✅ | `Notification` (+ `NotificationTemplate`, `DeviceToken`) |
 | `audit_logs` | ✅ | `AuditLog` (admin/system) + domain timelines (`BatchEvent`, `ProductLotEvent`) |
-| `consumer_scans` | 🔀 | merged into `QrScanLog` (`purpose=consumer_view`, anonymous actor) — one tamper signal stream |
+| `consumer_scans` | 🔀 | `QrScanLog` (`purpose=consumer_view`) until Phase 11, then the dedicated `ConsumerScan` (country/state/city, device_type, ip, outcome) + the forensic `qr_scan_logs` row stays as the tamper signal stream (GPS, failure reasons) |
 
 Design notes:
-- `qr_scan_logs` + `consumer_scans` are one table on purpose: failed/
-  unauthorized/replay custody scans and post-sale consumer views are the same
-  **anomaly stream** an AYUSH monitor needs for diversion/counterfeit signal
-  detection, and a single stream is filterable by `target_type`/`purpose`.
+- Phase 1 merged consumer views into `qr_scan_logs` (`purpose=consumer_view`) so one queryable stream covered custody + consumer scans. **Phase 11 splits the analytics side out**: `ConsumerScan` is the high-volume demand/market table (geo + device dimensions, engine verdict per scan) feeding AYUSH dashboards, while `qr_scan_logs` keeps the forensic row per scan (GPS, failure reason) for tamper/counterfeit forensics — one scan writes both. `CounterfeitAlert` records the anomaly verdicts (geo velocity, bursts, post-revoke scans, unknown-token floods) and `ProductVerificationCache` is the passport fast path (TTL + purge-on-recall).
 - Batch-status values from phase-1 (CREATED…ARCHIVED) map onto `phase` +
   `test_status` + `qr` minting rules; `ARCHIVED` will be a soft terminal state
   at the service layer.
@@ -318,8 +331,8 @@ Each module = routes + service + serializers + zod schema, colocated.
 
 ## 8. Verification
 
-- `npx prisma validate --schema prisma/schema` → valid ✅ (19 files, 92 models)
+- `npx prisma validate --schema prisma/schema` → valid ✅ (20 files, 95 models)
 - Migrations applied on the scratch DB (`prisma/scratch_new.db`), `migrate
   status` clean; Prisma client regenerated per phase
 - Active test suites green: auth, batches, identification, qr, transfers,
-  shipments, lab, procurement, products (124 cases)
+  shipments, lab, procurement, products, verification (135 cases)
