@@ -16,7 +16,7 @@
     "migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
     "generate": "prisma generate",
-    "test": "node --test tests/auth tests/batches tests/identification tests/qr tests/transfers tests/shipments tests/lab tests/procurement tests/products tests/verification tests/blockchain",
+    "test": "node --test tests/auth tests/batches tests/identification tests/qr tests/transfers tests/shipments tests/lab tests/procurement tests/products tests/verification tests/blockchain tests/admin",
     "test:auth": "node --test tests/auth/",
     "test:batches": "node --test tests/batches/",
     "test:identification": "node --test tests/identification/",
@@ -27,7 +27,8 @@
     "test:procurement": "node --test tests/procurement/",
     "test:products": "node --test tests/products/",
     "test:verification": "node --test tests/verification/",
-    "test:blockchain": "node --test tests/blockchain/"
+    "test:blockchain": "node --test tests/blockchain/",
+    "test:admin": "node --test tests/admin/"
   },
   "dependencies": {
     "@prisma/client": "^6.16.0",
