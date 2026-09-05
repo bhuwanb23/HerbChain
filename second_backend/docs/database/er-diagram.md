@@ -1,6 +1,6 @@
 # HerbChain — ER Diagram (Redesigned Schema)
 
-Source of truth: `prisma/schema/` (21 files, 105 models). This file renders the
+Source of truth: `prisma/schema/` (21 files, 110 models). This file renders the
 same structure as Mermaid diagrams grouped by domain — the phase-1 "ER
 Diagram" deliverable. Full conventions: `docs/database/architecture.md`.
 
@@ -493,6 +493,10 @@ erDiagram
     USER ||--o{ NOTIFICATION : "recipient"
     NOTIFICATION_TEMPLATE ||--o{ NOTIFICATION : ""
     USER ||--o{ DEVICE_TOKEN : "push targets"
+    USER ||--o{ NOTIFICATION_QUEUE : "recipient (phase 14 queue)"
+    NOTIFICATION ||--o{ NOTIFICATION_DELIVERY : "per-channel receipts"
+    USER ||o--|| NOTIFICATION_PREFERENCE : "channel toggles"
+    USER ||--o{ SCHEDULED_NOTIFICATION : "reminders / escalations"
 
     SPECIES ||--o{ PRICE_QUOTE : ""
     USER ||--o{ PRICE_QUOTE : "creator"

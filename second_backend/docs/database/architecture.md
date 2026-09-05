@@ -56,7 +56,7 @@ correct for a demo but has production gaps:
    a model has more than one FK to the same target.
 9. **Email uniqueness** is on the lowercased value — normalize at write time.
 
-## 3. Domain map (21 files, 105 models)
+## 3. Domain map (21 files, 110 models)
 
 | File | Domain | Models |
 |---|---|---|
@@ -77,7 +77,7 @@ correct for a demo but has production gaps:
 | `70_commerce.prisma` | Orders & money | `PurchaseOrder`, `OrderItem`, `Invoice`, `Payment`, `Wallet`, `WalletTransaction` |
 | `74_regulatory.prisma` | AYUSH regulatory monitoring (Phase 13) | `ComplianceAlert`, `InvestigationCase`, `InvestigationEntity`, `ComplianceScore`, `AdminNotification`, `ReportExport` |
 | `80_compliance.prisma` | Licenses/recalls/support | `LicenseCert`, `Inspection`, `Recall` (+Phase-13 statuses), `RecallScope`, `SupportTicket` |
-| `90_notifications.prisma` | Messaging | `NotificationTemplate`, `Notification`, `DeviceToken` |
+| `90_notifications.prisma` | Phase 14 messaging | `NotificationTemplate`, `Notification`, `NotificationQueue`, `NotificationDelivery`, `NotificationPreference`, `DeviceToken`, `ScheduledNotification`, `NotificationMetric` |
 | `95_intel.prisma` | Prices & weather | `PriceQuote`, `WeatherSnapshot` |
 | `96_identification.prisma` | Phase-4 AI/ML recognition | `AiRequest`, `AiIdentification`, `ImageHashCache`, `AiFeedback` |
 | `97_blockchain.prisma` | Permissioned blockchain trust layer (Phase 12) | `BlockchainEvent` (queue), `BlockchainTransaction`, `BlockchainNode`, `SmartContractVersion`, `BlockchainAuditLog` |
@@ -277,7 +277,7 @@ added because it was missing.
 | `compliance_scores` | ➕ | `ComplianceScore` (0–100 + grade, per farmer/lab/manufacturer/transporter, factors JSON) |
 | `admin_notifications` | ➕ | `AdminNotification` — AYUSH feed (broadcast or per-admin, recall/alert/lab-registration events) |
 | `report_exports` | ➕ | `ReportExport` — CSV live exports + pdf/excel job slots (Phase 13 reporting) |
-| `notifications` | ✅ | `Notification` (+ `NotificationTemplate`, `DeviceToken`) |
+| `notifications` | ✅ | `Notification` (inbox) + `NotificationTemplate`, `DeviceToken`; Phase 14 adds `NotificationQueue`, `NotificationDelivery`, `NotificationPreference`, `ScheduledNotification`, `NotificationMetric` |
 | `audit_logs` | ✅ | `AuditLog` (admin/system) + domain timelines (`BatchEvent`, `ProductLotEvent`) |
 | `consumer_scans` | 🔀 | `QrScanLog` (`purpose=consumer_view`) until Phase 11, then the dedicated `ConsumerScan` (country/state/city, device_type, ip, outcome) + the forensic `qr_scan_logs` row stays as the tamper signal stream (GPS, failure reasons) |
 
@@ -338,7 +338,7 @@ Each module = routes + service + serializers + zod schema, colocated.
 
 ## 8. Verification
 
-- `npx prisma validate --schema prisma/schema` → valid ✅ (21 files, 105 models)
+- `npx prisma validate --schema prisma/schema` → valid ✅ (21 files, 110 models)
 - Migrations applied on the scratch DB (`prisma/scratch_new.db`), `migrate
   status` clean; Prisma client regenerated per phase
 - Active test suites green: auth, batches, identification, qr, transfers,

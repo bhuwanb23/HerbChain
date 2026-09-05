@@ -5,7 +5,7 @@ Status: **LIVE** — the control tower is mounted at `/api/v1/admin/portal`;
 `InvestigationCase`, `InvestigationEntity`, `ComplianceScore`,
 `AdminNotification`, `ReportExport`) + `User.admin_role` + the extended
 `Recall` statuses; migration `20260904180000_phase13_admin_portal`, schema
-**99 → 105 models**. Tests: `tests/admin/` (15 scenarios over real HTTP),
+**99 → 105 models** (Phase 14 later takes the schema to 110). Tests: `tests/admin/` (15 scenarios over real HTTP),
 part of `npm test` (157 cases total). A live smoke (94 checks) walked the
 spec's end-to-end example: complaint → product search → traceability →
 batch → lab results → ownership chain → blockchain verify → recall with
