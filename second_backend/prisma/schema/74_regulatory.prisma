@@ -1,0 +1,152 @@
+// ============================================================================
+// PHASE 13 — AYUSH REGULATORY MONITORING (docs/phase_13.md)
+// ----------------------------------------------------------------------------
+// The control tower tables. Everything here is AYUSH-side: alerts, cases,
+// scores, notifications and report jobs. Entities are referenced by plain
+// polymorphic FK columns (entity_type + entity_id) exactly like the
+// blockchain + verification tables — no relations, so no cycles and no
+// cascade surprises. Recalls live in 80_compliance.prisma (extended with
+// the phase-13 statuses) and are FIRST written here via the recall center.
+
+// Centralized risk stream. Rows are produced by the rules engine
+// (src/services/adminPortal.js runAlertRules) AND by admin actions
+// (createAlert). alert_type codes:
+//   repeated_batch_failures | species_fraud | invalid_transfer |
+//   duplicate_registration | suspicious_qr_scan | recall_event |
+//   certificate_expiry | high_lab_pass_rate | blacklisted_entity
+// severity: LOW | MEDIUM | HIGH | CRITICAL
+// status: open | acknowledged | resolved
+model ComplianceAlert {
+  id           String   @id @default(cuid())
+  alert_no     String   @unique // e.g. "ALT-2026-000001"
+  alert_type   String
+  severity     String   @default("MEDIUM") // code list above
+  title        String
+  description  String?
+  entity_type  String? // user | batch | product | lab | shipment | certificate
+  entity_id    String?
+  status       String   @default("open") // open | acknowledged | resolved
+  detail_json  Json? // rule evidence: counts, timestamps, GPS, involved ids
+  created_by_user_id String? // null = auto-raised by the rules engine
+  resolved_by_user_id String?
+  resolved_at  DateTime?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@index([status])
+  @@index([severity])
+  @@index([alert_type])
+  @@index([entity_type, entity_id])
+  @@index([created_at])
+  @@map("compliance_alerts")
+}
+
+// Regulatory investigation — a case with an ordered list of involved
+// entities (batch/product/user/shipment/certificate). Phase 13 "Investigation
+// Module": complaints, fraud, recalls, audits.
+// case_type: complaint | fraud | recall | audit | other
+// status: open | under_review | closed
+model InvestigationCase {
+  id             String    @id @default(cuid())
+  case_no        String    @unique // e.g. "INV-2026-000001"
+  title          String
+  case_type      String    @default("complaint")
+  severity       String    @default("MEDIUM") // code list above
+  status         String    @default("open") // open | under_review | closed
+  summary        String?
+  assigned_to_user_id String? // plain FK — the AYUSH officer handling it
+  created_by_user_id String // plain FK — the admin who opened it
+  opened_at      DateTime  @default(now())
+  closed_at      DateTime?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  entities InvestigationEntity[]
+
+  @@index([status])
+  @@index([case_type])
+  @@index([assigned_to_user_id])
+  @@map("investigation_cases")
+}
+
+// One involved entity in an investigation (subject | witness | affected).
+model InvestigationEntity {
+  id           String   @id @default(cuid())
+  case_id      String
+  entity_type  String // user | batch | product | product_lot | shipment | certificate | lab | manufacturer
+  entity_id    String
+  role         String   @default("subject") // subject | witness | affected
+  note         String?
+  created_at   DateTime @default(now())
+
+  case InvestigationCase @relation(fields: [case_id], references: [id], onDelete: Cascade)
+
+  @@unique([case_id, entity_type, entity_id])
+  @@index([entity_type, entity_id])
+  @@map("investigation_entities")
+}
+
+// Persisted compliance score per entity (0-100). Computed by the score
+// engine from certification success, timeliness, audit results, violations.
+// entity_type: farmer | lab | manufacturer | transporter
+model ComplianceScore {
+  id           String   @id @default(cuid())
+  entity_type  String
+  entity_id    String // the user id of the farmer/lab/manufacturer/transporter
+  score        Int // 0-100
+  grade        String   @default("B") // A (>=90) | B (75-89) | C (60-74) | D (<60)
+  factors_json Json // { cert_success, rejected_count, mismatches, violations, delays, ... }
+  computed_at  DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@unique([entity_type, entity_id])
+  @@index([entity_type, score])
+  @@map("compliance_scores")
+}
+
+// AYUSH notification center feed. recipient_user_id = null broadcasts to all
+// admins. notification_type: new_lab_registration | high_severity_alert |
+// recall_event | audit_failure | suspicious_transfer | certificate_expiry |
+// system
+model AdminNotification {
+  id             String   @id @default(cuid())
+  notification_type String
+  severity       String   @default("INFO") // INFO | LOW | MEDIUM | HIGH | CRITICAL
+  title          String
+  body           String?
+  entity_type    String?
+  entity_id      String?
+  recipient_user_id String? // null = broadcast to all AYUSH admins
+  is_read        Boolean  @default(false)
+  created_at     DateTime @default(now())
+
+  @@index([recipient_user_id])
+  @@index([is_read])
+  @@index([created_at])
+  @@map("admin_notifications")
+}
+
+// Regulatory report export jobs (Analytics & Reporting).
+// report_type: farmer_registrations | certification_trends | failed_tests |
+//              popular_herbs | manufacturing_trends | shipment_performance
+// format: csv (native) | pdf | excel (recorded as jobs; csv rows are live)
+// status: queued | ready | failed
+model ReportExport {
+  id             String    @id @default(cuid())
+  report_type    String
+  format         String    @default("csv")
+  title          String
+  params_json    Json?
+  status         String    @default("queued") // queued | ready | failed
+  file_url       String? // served CSV path once ready
+  row_count      Int       @default(0)
+  error_message  String?
+  requested_by_user_id String
+  created_at     DateTime  @default(now())
+  completed_at   DateTime?
+
+  @@index([status])
+  @@index([report_type])
+  @@index([requested_by_user_id])
+  @@map("report_exports")
+}

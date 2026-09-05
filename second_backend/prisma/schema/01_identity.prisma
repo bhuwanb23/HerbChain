@@ -19,6 +19,9 @@ model User {
   role           String // code list above
   lab_role       String? // analyst | supervisor — phase 8 role separation
                           // inside lab accounts (spec §8 two-level review)
+  admin_role     String? // phase 13 — AYUSH portal tier for admin accounts:
+                          // super_admin | regulatory_officer | state_officer |
+                          // auditor (null = legacy super admin, full access)
   locale         String    @default("en")
   avatar_asset_id String?  @unique // -> Asset.id (set via optional relation below)
 

@@ -63,7 +63,10 @@ model Recall {
   ref_id     String
   severity   String    @default("warning") // code list above
   reason     String
-  status     String    @default("draft") // draft | issued | closed
+  // phase 13 recall center: draft | issued -> active -> resolved | closed
+  // (active = regulatory action in force, resolved = impact cleared,
+  //  closed = fully archived). Phase 8-10 code (draft|issued|closed) is kept.
+  status     String    @default("draft") // draft | issued | active | resolved | closed
   issued_at  DateTime?
   resolved_at DateTime?
   created_by_user_id String?
