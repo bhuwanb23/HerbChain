@@ -11,6 +11,7 @@ const { toKg, DUP_WINDOW_HOURS, DUP_WEIGHT_TOLERANCE_KG } = require("../constant
 const { nextBatchCode } = require("./batchCodes");
 const { assertOwnedAssets } = require("./uploads");
 const { mintInitialQr } = require("./qrEngine"); // phase 5: v1 ownership QR born with the batch
+const { publish } = require("./notifications"); // phase 14: publish, never send
 
 const BATCH_INCLUDE = {
   species: { select: { id: true, code: true, common_name: true, scientific_name: true } },
@@ -169,6 +170,14 @@ async function createBatch(user, input) {
         // Blockchain-ready anchor: pending — the ledger service picks it up later.
         await tx.blockchainEvent.create({
           data: { anchor_code: "BATCH_CREATED", entity_type: "batch_event", entity_id: event.id, status: "pending" },
+        });
+
+        // Phase 14: publish (queue-only — the worker delivers) the registration
+        // notice to the farmer inside the same transaction.
+        await publish(tx, {
+          code: "batch_created",
+          recipientUserId: user.id,
+          data: { code, species: species.common_name || species.code, entity: { type: "batch", id: batch.id } },
         });
 
         return batch.id;

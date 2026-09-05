@@ -1082,6 +1082,37 @@ async function issueRecall(user, { ref_type, ref_id, reason, severity = "warning
       entity_type: ref_type,
       entity_id: ref_id,
     });
+
+    // Phase 14: CRITICAL recall notices — every affected manufacturer + the
+    // labs who certified the recalled batches + AYUSH admins.
+    const { publish } = require("./notifications");
+    const affectedProductIds = affected.map((a) => a.product_id).filter(Boolean);
+    // Product recalls target the recalled product itself (plus any scope rows).
+    if (ref_type === "product") affectedProductIds.push(ref_id);
+    const affectedManufacturers = new Set();
+    if (affectedProductIds.length > 0) {
+      const products = await tx.product.findMany({ where: { id: { in: affectedProductIds } }, select: { manufacturer_user_id: true } });
+      for (const p of products) if (p.manufacturer_user_id) affectedManufacturers.add(p.manufacturer_user_id);
+    }
+    const affectedLabs = new Set();
+    if (ref_type === "batch") {
+      const certs = await tx.certification.findMany({ where: { batch_id: ref_id }, select: { lab_user_id: true } });
+      for (const c of certs) if (c.lab_user_id) affectedLabs.add(c.lab_user_id);
+    }
+    const admins = await tx.user.findMany({ where: { role: "admin" }, select: { id: true } });
+    const recallTargets = new Set([...affectedManufacturers, ...affectedLabs, ...admins.map((a) => a.id)]);
+    for (const uid of recallTargets) {
+      await publish(tx, {
+        code: "recall_issued",
+        recipientUserId: uid,
+        data: {
+          reference: ref_type === "product" ? (await tx.product.findUnique({ where: { id: ref_id }, select: { code: true } }))?.code || ref_id : ref_id,
+          reason,
+          recallNumber: recall.recall_no,
+          entity: { type: ref_type, id: ref_id },
+        },
+      });
+    }
     await tx.auditLog.create({
       data: { actor_user_id: user.id, action: "RECALL_ISSUED", target_type: "recall", target_id: recall.id, meta_json: { ref_type, ref_id, reason, affected_products: affected.length, severity } },
     });

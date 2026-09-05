@@ -34,6 +34,7 @@ const {
 } = require("../constants/shipment");
 const { executeTransfer, requestTransfer } = require("./transfers");
 const { assertOwnedAssets } = require("./uploads");
+const { publish } = require("./notifications"); // phase 14: publish, never send
 
 const SHIPMENT_INCLUDE = {
   requested_by: { select: { id: true, name: true, role: true } },
@@ -255,6 +256,18 @@ async function assignTransporter(user, { shipment_id, transporter_user_id }) {
     await tx.shipment.update({ where: { id: shipment_id }, data: { status: "assigned", assigned_transporter_user_id: transporter_user_id } });
     await writeTimeline(tx, shipment_id, "ASSIGNED", { actorUserId: user.id, data: { transporter_user_id } });
     await writeAudit(tx, { actorUserId: user.id, action: "SHIPMENT_ASSIGNED", shipmentId: shipment_id, meta: { transporter_user_id } });
+
+    // Phase 14: tell the transporter a pickup is assigned to them.
+    const sh = await tx.shipment.findUnique({ where: { id: shipment_id }, select: { shipment_no: true, scheduled_pickup_at: true } });
+    await publish(tx, {
+      code: "shipment_assigned",
+      recipientUserId: transporter_user_id,
+      data: {
+        code: sh.shipment_no,
+        pickupDate: sh.scheduled_pickup_at ? sh.scheduled_pickup_at.toISOString().slice(0, 10) : "as scheduled",
+        entity: { type: "shipment", id: shipment_id },
+      },
+    });
   });
   return getShipmentRow(shipment_id);
 }
@@ -546,6 +559,25 @@ async function deliverShipment(user, { shipment_id, token, gps_lat, gps_lng, acc
     });
     await writeTimeline(tx, shipment_id, "DELIVERED", { actorUserId: user.id, data: { qr_version: out.new_version, gps_lat, gps_lng } });
     await writeAudit(tx, { actorUserId: user.id, action: "SHIPMENT_DELIVERED", shipmentId: shipment_id, meta: { batch_id: batch.id, qr_version: out.new_version } });
+
+    // Phase 14: notify the destination party the goods arrived.
+    const sh = await tx.shipment.findUnique({
+      where: { id: shipment_id },
+      select: { shipment_no: true, to_user_id: true, requested_by_user_id: true },
+    });
+    const dest = sh.to_user_id || sh.requested_by_user_id;
+    if (dest) {
+      await publish(tx, {
+        code: "shipment_received",
+        recipientUserId: dest,
+        data: {
+          code: sh.shipment_no,
+          quantity: shipment.quantity_kg ? `${shipment.quantity_kg}kg` : "",
+          location: shipment.destination_location || "destination",
+          entity: { type: "shipment", id: shipment_id },
+        },
+      });
+    }
   });
   return completeShipment(user, { shipment_id });
 }

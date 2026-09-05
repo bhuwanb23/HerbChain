@@ -23,6 +23,7 @@
 const { prisma } = require("../db/client");
 const { ApiError } = require("../utils/errors");
 const { legCodeFor, TRANSFER_TYPES } = require("../constants/transfer");
+const { publish } = require("./notifications"); // phase 14: publish, never send
 const { TERMINAL_PHASES } = require("../constants/qr");
 const { transferByToken, hashToken, assertReceiverEligible } = require("./qrEngine");
 const { assertOwnedAssets } = require("./uploads");
@@ -153,6 +154,13 @@ async function requestTransfer(user, { batch_id, type, reason = null }) {
       requestId: row.id,
       meta: { code: batch.code, type: expected, from_user_id: holder.id, to_user_id: user.id },
     });
+
+    // Phase 14: tell the receiver a transfer has been requested for them.
+    await publish(tx, {
+      code: "transfer_requested",
+      recipientUserId: user.id,
+      data: { code: batch.code, from: holder.name || holder.id, entity: { type: "transfer_request", id: row.id } },
+    });
     return row;
   });
 
@@ -222,6 +230,19 @@ async function rejectRequest(user, { request_id, reason = null }) {
       requestId: request.id,
       meta: { code: request.batch?.code || null, type: request.type, reason },
     });
+
+    // Phase 14: notify the requestor (and the holder) the transfer was rejected.
+    for (const uid of new Set([request.from_user_id, request.to_user_id].filter(Boolean))) {
+      await publish(tx, {
+        code: "transfer_rejected",
+        recipientUserId: uid,
+        data: {
+          code: request.batch?.code || null,
+          reason: reason ? `: ${reason}` : "",
+          entity: { type: "transfer_request", id: request.id },
+        },
+      });
+    }
   });
   return getRequestRow(request.id);
 }

@@ -23,6 +23,7 @@ const { prisma } = require("../db/client");
 const { ApiError } = require("../utils/errors");
 const { VERIFY_GATED_ROLES } = require("../constants/roles");
 const { nextPhaseFor, TERMINAL_PHASES, REPLACEMENT_REASONS } = require("../constants/qr");
+const { publish } = require("./notifications"); // phase 14: publish, never send
 
 // ------------------------------------------------------------- token core
 
@@ -452,6 +453,23 @@ async function transferByToken({ token = null, receiver, meta = {}, request = nu
         where: { id: request.id },
         data: { status: "completed", completed_at: new Date(), batch_event_id: event.id },
       });
+    }
+
+    // Phase 14: ownership moved — publish to the previous holder AND the new
+    // holder (queue-only; the notification worker delivers).
+    if (!isRecovery && fromUserId !== receiver.id) {
+      for (const uid of [fromUserId, receiver.id]) {
+        await publish(tx, {
+          code: "ownership_transferred",
+          recipientUserId: uid,
+          data: {
+            code: batch.code,
+            from: fromUserId,
+            to: receiver.id,
+            entity: { type: "batch", id: batch.id },
+          },
+        });
+      }
     }
 
     return { next, raw };

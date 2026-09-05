@@ -26,6 +26,7 @@ const { ApiError } = require("../utils/errors");
 const { env } = require("../config/env");
 const { REQUEST_STATUSES, ALLOCATION_STATUSES, TX_TYPES, HOLD_STATUSES, inventoryState } = require("../constants/procurement");
 const { createShipment } = require("./shipments");
+const { publish } = require("./notifications"); // phase 14: publish, never send
 
 // ------------------------------------------------------------ code gen
 
@@ -250,6 +251,21 @@ async function requestBatch(user, { batch_id, requested_quantity_kg, notes = nul
       targetId: row.id,
       meta: { request_no: code, batch_id: batch.id, batch_code: batch.code, qty },
     });
+
+    // Phase 14: notify the current holder (lab) a manufacturer wants stock.
+    const holder = await tx.user.findUnique({ where: { id: batch.current_holder_user_id }, select: { id: true, name: true } });
+    if (holder && holder.id !== user.id) {
+      await publish(tx, {
+        code: "request_submitted",
+        recipientUserId: holder.id,
+        data: {
+          manufacturer: user.name,
+          quantity: `${qty} kg`,
+          code: batch.code,
+          entity: { type: "batch_request", id: row.id },
+        },
+      });
+    }
     return row;
   });
   return getRequestRow(request.id);
@@ -357,6 +373,17 @@ async function approveRequest(user, { request_id, approved_quantity_kg = null, n
       action: "REQUEST_APPROVED",
       targetId: request.id,
       meta: { request_no: request.request_no, batch_code: batch.code, requested: request.requested_quantity_kg, approved: approvedQty, status, shipment_no: shipment.shipment_no, cert: cert.certificate_number },
+    });
+
+    // Phase 14: notify the manufacturer their request was approved.
+    await publish(tx, {
+      code: "request_approved",
+      recipientUserId: request.manufacturer_user_id,
+      data: {
+        code: batch.code,
+        quantity: `${approvedQty} kg`,
+        entity: { type: "batch_request", id: request.id },
+      },
     });
   });
   return getRequestRow(request.id);

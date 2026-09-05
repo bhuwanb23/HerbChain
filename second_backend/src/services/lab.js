@@ -16,6 +16,7 @@
 const crypto = require("node:crypto");
 const { prisma } = require("../db/client");
 const { ApiError } = require("../utils/errors");
+const { publish } = require("./notifications"); // phase 14: publish, never send
 const {
   RECEIPT_CONDITIONS,
   TEST_CATEGORIES,
@@ -710,6 +711,35 @@ async function certifyBatch(user, { batch_id, expiry_days = 365, certificate_url
 
         await writeAudit(tx, { actorUserId: user.id, action: "BATCH_CERTIFIED", batchId: batch.id, meta: { certificate_number } });
         await anchor(tx, "CERTIFIED", certEvent.id);
+
+        // Phase 14: certificate issued — farmer + manufacturer (the batch
+        // holder chain) + every AYUSH admin (in-app alert).
+        const admins = await tx.user.findMany({ where: { role: "admin" }, select: { id: true } });
+        const targets = new Set([batch.farmer_id, batch.current_holder_user_id].filter(Boolean));
+        for (const uid of targets) {
+          await publish(tx, {
+            code: "certificate_issued",
+            recipientUserId: uid,
+            data: {
+              code: batch.code,
+              certificateNumber: certificate_number,
+              lab: labProfile?.lab_name || user.name,
+              entity: { type: "certificate", id: row.id },
+            },
+          });
+        }
+        for (const a of admins) {
+          await publish(tx, {
+            code: "certificate_issued",
+            recipientUserId: a.id,
+            data: {
+              code: batch.code,
+              certificateNumber: certificate_number,
+              lab: labProfile?.lab_name || user.name,
+              entity: { type: "certificate", id: row.id },
+            },
+          });
+        }
         return row;
       });
       break;
@@ -780,6 +810,25 @@ async function rejectBatch(user, { batch_id, reason, description = null, action 
     const ev = await writeEvent(tx, batch.id, "LAB_REJECTED", user.id, { reason, action, description });
     await writeAudit(tx, { actorUserId: user.id, action: "BATCH_REJECTED", batchId: batch.id, meta: { reason, action } });
     await anchor(tx, "REJECTED", ev.id);
+
+    // Phase 14: batch rejected — farmer + AYUSH admins (critical-ish notice).
+    const reasonLabel = String(reason || "other").replace(/_/g, " ");
+    const admins = await tx.user.findMany({ where: { role: "admin" }, select: { id: true } });
+    const targets = new Set([batch.farmer_id, batch.current_holder_user_id].filter(Boolean));
+    for (const uid of targets) {
+      await publish(tx, {
+        code: "batch_rejected",
+        recipientUserId: uid,
+        data: { code: batch.code, reason: reasonLabel, entity: { type: "batch", id: batch.id } },
+      });
+    }
+    for (const a of admins) {
+      await publish(tx, {
+        code: "batch_rejected",
+        recipientUserId: a.id,
+        data: { code: batch.code, reason: reasonLabel, entity: { type: "batch", id: batch.id } },
+      });
+    }
   });
   return prisma.rejectionRecord.findUnique({
     where: { batch_id: batch.id },

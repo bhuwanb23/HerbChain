@@ -23,6 +23,7 @@
 const crypto = require("crypto");
 const { prisma } = require("../db/client");
 const { ApiError } = require("../utils/errors");
+const { publish } = require("./notifications"); // phase 14: publish, never send
 const { env } = require("../config/env");
 const {
   PRODUCT_STATUSES,
@@ -510,6 +511,21 @@ async function completeRun(user, runId, { produced_units = null } = {}) {
     await tx.blockchainEvent.create({
       data: { anchor_code: "PRODUCT_CREATED", entity_type: "product_lot_event", entity_id: lotEvent.id, status: "pending" },
     });
+
+    // Phase 14: product/lot created — manufacturer + AYUSH admins.
+    await publish(tx, {
+      code: "product_created",
+      recipientUserId: user.id,
+      data: { code: lotCode, name: run.product.name, lots: 1, entity: { type: "product_lot", id: lot.id } },
+    });
+    const admins = await tx.user.findMany({ where: { role: "admin" }, select: { id: true } });
+    for (const a of admins) {
+      await publish(tx, {
+        code: "product_created",
+        recipientUserId: a.id,
+        data: { code: lotCode, name: run.product.name, lots: 1, entity: { type: "product_lot", id: lot.id } },
+      });
+    }
 
     // 5) Per-ingredient BATCH_LINKED_TO_PRODUCT events + LINKED anchors; the
     //    herb batch's own timeline records which product consumed it.

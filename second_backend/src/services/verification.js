@@ -5,6 +5,7 @@
 const { prisma } = require("../db/client");
 const { ApiError } = require("../utils/errors");
 const { ADMIN_ROLE, ORG_ROLES, VERIFY_GATED_ROLES } = require("../constants/roles");
+const { publish, publishDirect } = require("./notifications"); // phase 14: publish, never send
 const { writeAudit } = require("./audit");
 const {
   PROFILE_MODEL,
@@ -76,6 +77,13 @@ async function approveUser(actor, targetId, { orgCode = null, notes = null } = {
     targetType: "user",
     targetId: user.id,
     meta: { role: user.role, org_code: code, notes },
+  });
+
+  // Phase 14: tell the user their account was approved.
+  await publishDirect({
+    code: "account_approved",
+    recipientUserId: user.id,
+    data: { role: user.role, entity: { type: "user", id: user.id } },
   });
   return { user: await prisma.user.findUnique({ where: { id: user.id } }), org_code: code };
 }
