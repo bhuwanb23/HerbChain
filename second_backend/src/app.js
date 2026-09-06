@@ -167,6 +167,14 @@ function _mountRoutes(app) {
   // /api/v1/documents (+ public /shares/:code for consumer passports).
   const { mountDocumentRoutes } = require("./modules/documents/documentRoutes");
   mountDocumentRoutes(app);
+
+  // Phase 16: reporting & analytics — the BI layer. Warehouse dashboards
+  // (executive, herbs, certifications, failures, regions, logistics,
+  // manufacturers, consumers, traceability, compliance, blockchain) under
+  // /api/v1/analytics, report generation + schedules under /api/v1/reports
+  // (docs/phase_16.md).
+  const { mountAnalyticsRoutes } = require("./modules/analytics/analyticsRoutes");
+  mountAnalyticsRoutes(app);
 }
 
 // ------------------------------------------------------------- error box

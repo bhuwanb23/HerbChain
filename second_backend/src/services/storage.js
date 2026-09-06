@@ -38,6 +38,11 @@ async function put(key, buffer) {
   return key;
 }
 
+/** Read a stored object back (report downloads, integrity checks). */
+async function get(key) {
+  return fs.promises.readFile(path.join(localDir(), key));
+}
+
 async function remove(key) {
   if (!key) return;
   await fs.promises.unlink(path.join(localDir(), key)).catch(() => {});
@@ -48,4 +53,4 @@ function urlFor(key) {
   return `/uploads/${encodeURIComponent(key)}`;
 }
 
-module.exports = { put, remove, urlFor, generateKey, localDir };
+module.exports = { put, get, remove, urlFor, generateKey, localDir };
