@@ -1,6 +1,6 @@
 # HerbChain — ER Diagram (Redesigned Schema)
 
-Source of truth: `prisma/schema/` (21 files, 117 models). This file renders the
+Source of truth: `prisma/schema/` (23 files, 129 models). This file renders the
 same structure as Mermaid diagrams grouped by domain — the phase-1 "ER
 Diagram" deliverable. Full conventions: `docs/database/architecture.md`.
 
@@ -555,3 +555,28 @@ exported live through the storage driver, pdf/excel are pipeline slots.
 Recalls use the extended `Recall.status` code list (draft | issued |
 active | resolved | closed) and the recall center auto-scopes
 `RecallScope` rows + `AffectedProduct` impacts.
+
+## 11. Analytics warehouse (Phase 16)
+
+```mermaid
+erDiagram
+    SCHEDULED_REPORT ||--o{ REPORT_EXPORT : "fires"
+    ANALYTICS_JOB_RUN }o--|| "ETL worker" : "observed by"
+```
+
+The 10 warehouse tables (`herb_production_analytics`,
+`certification_analytics`, `failure_reason_analytics`,
+`regional_supply_analytics`, `logistics_analytics`,
+`manufacturer_consumption_analytics`, `consumer_analytics`,
+`traceability_analytics`, `compliance_analytics`, `blockchain_analytics`)
+are relation-free by design — each row is a pre-aggregated fact keyed by
+`(period_type, period_start, period_end)` plus its domain dimensions
+(herb, lab, state, transporter, manufacturer, product, event_type,
+actor_type). The Phase 16 ETL (`src/services/analytics.js`) is their only
+writer: every job rebuilds its period buckets (current daily/weekly/
+monthly/yearly + previous monthly for MoM trends + lifetime `all` rollup)
+with delete+recreate in one transaction, observed in `AnalyticsJobRun`.
+Dashboards read ONLY these tables. `ScheduledReport` stores the recurring
+report definitions (audience-scoped, `next_run_at` driven); each fire
+generates a `ReportExport` CSV artifact and queues `report_ready`
+notifications (Phase 14).

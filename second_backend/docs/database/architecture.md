@@ -56,7 +56,7 @@ correct for a demo but has production gaps:
    a model has more than one FK to the same target.
 9. **Email uniqueness** is on the lowercased value — normalize at write time.
 
-## 3. Domain map (21 files, 117 models)
+## 3. Domain map (23 files, 129 models)
 
 | File | Domain | Models |
 |---|---|---|
@@ -82,6 +82,7 @@ correct for a demo but has production gaps:
 | `96_identification.prisma` | Phase-4 AI/ML recognition | `AiRequest`, `AiIdentification`, `ImageHashCache`, `AiFeedback` |
 | `97_blockchain.prisma` | Permissioned blockchain trust layer (Phase 12) | `BlockchainEvent` (queue), `BlockchainTransaction`, `BlockchainNode`, `SmartContractVersion`, `BlockchainAuditLog` |
 | `98_documents.prisma` | Phase 15 document management | `Document`, `DocumentVersion`, `DocumentAccessLog`, `DocumentShare`, `DocumentRetentionRule`, `CertificateDocument`, `StorageJob` |
+| `99_analytics.prisma` | Phase 16 BI warehouse — 10 pre-aggregated analytics tables + report schedules + ETL run log | `HerbProductionAnalytics`, `CertificationAnalytics`, `FailureReasonAnalytics`, `RegionalSupplyAnalytics`, `LogisticsAnalytics`, `ManufacturerConsumptionAnalytics`, `ConsumerAnalytics`, `TraceabilityAnalytics`, `ComplianceAnalytics`, `BlockchainAnalytics`, `ScheduledReport`, `AnalyticsJobRun` |
 
 ## 4. Relationship spine
 
@@ -339,7 +340,7 @@ Each module = routes + service + serializers + zod schema, colocated.
 
 ## 8. Verification
 
-- `npx prisma validate --schema prisma/schema` → valid ✅ (21 files, 117 models)
+- `npx prisma validate --schema prisma/schema` → valid ✅ (23 files, 129 models)
 - Migrations applied on the scratch DB (`prisma/scratch_new.db`), `migrate
   status` clean; Prisma client regenerated per phase
 - Active test suites green: auth, batches, identification, qr, transfers,
