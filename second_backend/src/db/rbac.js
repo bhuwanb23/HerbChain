@@ -45,6 +45,10 @@ const PERMISSIONS = [
   { key: "certificates.review", module: "admin", description: "Read failed certifications & certificate reviews" },
   { key: "compliance.manage", module: "admin", description: "Manage compliance alerts, recalls, investigations & scores" },
   { key: "reports.export", module: "admin", description: "Generate / export regulatory reports" },
+  // phase 16 — analytics / BI (docs/phase_16.md)
+  { key: "analytics.view", module: "analytics", description: "Read BI dashboards & warehouse KPIs for own scope" },
+  { key: "analytics.manage", module: "analytics", description: "Run ETL jobs, manage scheduled reports & warehouse ops" },
+  { key: "reports.generate", module: "analytics", description: "Generate & schedule business reports (farmer/lab/manufacturer/traceability/compliance)" },
   { key: "admin.search", module: "admin", description: "Universal cross-entity search (batches, products, users, shipments, certificates)" },
   // phase 14 — notifications & alerts (docs/phase_14.md)
   { key: "notifications.view", module: "notifications", description: "Read own notification inbox + preferences" },
@@ -58,13 +62,13 @@ const PERMISSIONS = [
 
 const GRANTS = {
   consumer: ["profile.self", "trace.resolve", "documents.view"],
-  farmer: ["profile.self", "trace.resolve", "identification.detect", "batch.create", "batch.view", "batch.transfer", "documents.upload", "documents.view", "documents.share"],
+  farmer: ["profile.self", "trace.resolve", "identification.detect", "batch.create", "batch.view", "batch.transfer", "documents.upload", "documents.view", "documents.share", "analytics.view", "reports.generate"],
   transporter: ["profile.self", "trace.resolve", "batch.view", "batch.transfer", "shipment.manage", "shipment.assign", "documents.upload", "documents.view"],
-  lab: ["profile.self", "trace.resolve", "batch.view", "batch.request", "batch.receive", "lab.test", "lab.certify", "lab.reject", "procurement.approve", "blockchain.view", "documents.upload", "documents.view", "documents.share"],
-  manufacturer: ["profile.self", "trace.resolve", "batch.view", "batch.request", "batch.receive", "product.create", "product.link", "product.qr", "shipment.manage", "procurement.view", "procurement.request", "procurement.receive", "procurement.inventory", "verify.analytics.view", "blockchain.view", "documents.upload", "documents.view", "documents.share"],
+  lab: ["profile.self", "trace.resolve", "batch.view", "batch.request", "batch.receive", "lab.test", "lab.certify", "lab.reject", "procurement.approve", "blockchain.view", "documents.upload", "documents.view", "documents.share", "analytics.view", "reports.generate"],
+  manufacturer: ["profile.self", "trace.resolve", "batch.view", "batch.request", "batch.receive", "product.create", "product.link", "product.qr", "shipment.manage", "procurement.view", "procurement.request", "procurement.receive", "procurement.inventory", "verify.analytics.view", "blockchain.view", "documents.upload", "documents.view", "documents.share", "analytics.view", "reports.generate"],
   distributor: ["profile.self", "trace.resolve", "product.create", "product.link", "product.qr", "product.sell", "shipment.manage", "documents.upload", "documents.view"],
   retailer: ["profile.self", "trace.resolve", "product.sell", "shipment.manage", "documents.upload", "documents.view"],
-  admin: ["admin.users.manage", "admin.users.view", "admin.audit.view", "admin.trace.view", "admin.analytics.view", "verify.analytics.view", "blockchain.view", "blockchain.manage", "labs.audit", "manufacturers.audit", "shipments.view", "certificates.review", "compliance.manage", "reports.export", "admin.search", "notifications.view", "notifications.manage", "documents.upload", "documents.view", "documents.share", "documents.manage"],
+  admin: ["admin.users.manage", "admin.users.view", "admin.audit.view", "admin.trace.view", "admin.analytics.view", "verify.analytics.view", "blockchain.view", "blockchain.manage", "labs.audit", "manufacturers.audit", "shipments.view", "certificates.review", "compliance.manage", "reports.export", "reports.generate", "admin.search", "notifications.view", "notifications.manage", "documents.upload", "documents.view", "documents.share", "documents.manage", "analytics.view", "analytics.manage"],
 };
 
 

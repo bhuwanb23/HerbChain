@@ -123,6 +123,11 @@ const EVENT_CATALOG = [
     title: "Compliance alert: {title}",
     body: "{description}",
   },
+  // ------------------------------------------------ report / analytics events
+  { code: "report_ready", name: "Report ready", channels: "in_app,email", category: "reports", priority: PRIORITIES.MEDIUM,
+    title: "{scheduleName} is ready",
+    body: "Your scheduled report '{scheduleName}' has been generated and is ready to download.",
+  },
 ];
 
 // Reminder engine offsets (docs/phase_14.md "Reminder Engine").
@@ -143,7 +148,7 @@ const ESCALATION = {
   CHECK_INTERVAL_MINUTES: 15,
 };
 
-// Default retry/backoff for queue delivery.
+  // Default retry/backoff for queue delivery.
 const RETRY = {
   MAX_ATTEMPTS: 5,
   BASE_MS: 60_000, // 1m / 5m / 15m / 30m / 1h -> failed
