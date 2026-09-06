@@ -37,6 +37,13 @@ function main() {
     const { startWorker: startDocWorker } = require("./services/documentWorker");
     startDocWorker();
   }
+
+  // Phase 16: analytics worker — ETL rebuild + due scheduled reports +
+  // threshold alerts (docs/phase_16.md "KPI Calculation Jobs").
+  if (env.ANALYTICS_WORKER_ENABLED) {
+    const { startWorker: startAnalyticsWorker } = require("./services/analyticsWorker");
+    startAnalyticsWorker();
+  }
 }
 
 main();
