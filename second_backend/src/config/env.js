@@ -123,6 +123,10 @@ const env = {
   STORAGE_PROVIDER: (process.env.STORAGE_PROVIDER || "local").trim().toLowerCase(), // local | s3 | azure (same driver interface)
   VIRUS_SCAN_ENABLED: String(process.env.VIRUS_SCAN_ENABLED ?? "false").toLowerCase() !== "false",
   DOCUMENT_PROCESS_LIMIT: intOr(process.env.DOCUMENT_PROCESS_LIMIT, 25), // storage jobs per tick
+  // phase 16 — analytics / BI (docs/phase_16.md)
+  ANALYTICS_WORKER_ENABLED: String(process.env.ANALYTICS_WORKER_ENABLED ?? "true").toLowerCase() !== "false",
+  ANALYTICS_WORKER_INTERVAL_MS: intOr(process.env.ANALYTICS_WORKER_INTERVAL_MS, 30000), // ETL tick
+  ANALYTICS_PROCESS_LIMIT: intOr(process.env.ANALYTICS_PROCESS_LIMIT, 2000), // safety cap per aggregation query
 };
 
 function corsOriginList() {
