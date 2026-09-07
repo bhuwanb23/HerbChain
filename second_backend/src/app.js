@@ -175,6 +175,12 @@ function _mountRoutes(app) {
   // (docs/phase_16.md).
   const { mountAnalyticsRoutes } = require("./modules/analytics/analyticsRoutes");
   mountAnalyticsRoutes(app);
+
+  // Phase 17: offline sync — the rural connectivity layer. Field clients
+  // replay their offline queue (POST /sync/upload), pull incremental changes,
+  // resolve conflicts and register devices (docs/phase_17.md).
+  const { mountSyncRoutes } = require("./modules/sync/syncRoutes");
+  mountSyncRoutes(app);
 }
 
 // ------------------------------------------------------------- error box
