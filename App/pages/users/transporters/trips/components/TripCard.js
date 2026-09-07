@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
 
-export const TripCard = ({ mode, item, onScan, showQR = true }) => {
+export const TripCard = ({ mode, item, onScan, onPress, showQR = true }) => {
   const { t } = useGlobalTranslation();
   const isPending = mode === 'pending';
   const leftColor = isPending ? '#F59E0B' : '#10B981';
@@ -11,7 +11,7 @@ export const TripCard = ({ mode, item, onScan, showQR = true }) => {
   const bubbleBg = `${leftColor}1A`;
   const bubbleBd = `${leftColor}33`;
   return (
-    <View style={[styles.card, { borderLeftColor: leftColor }]}> 
+    <TouchableOpacity style={[styles.card, { borderLeftColor: leftColor }]} onPress={() => onPress && onPress(item)} activeOpacity={0.7}>
       <View style={styles.topRow}>
         <View style={[styles.iconChip, { backgroundColor: bubbleBg, borderColor: bubbleBd }]}> 
           <Icon name={iconName} size={18} color={leftColor} />
@@ -53,7 +53,7 @@ export const TripCard = ({ mode, item, onScan, showQR = true }) => {
           )}
         </View>
       )}
-    </View>
+    </TouchableOpacity>
   );
 };
 

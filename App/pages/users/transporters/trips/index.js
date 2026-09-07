@@ -21,8 +21,15 @@ const TripsPage = ({ navigation }) => {
     onStartScan,
     onCloseScanner,
     onBarcodeScanned,
-    scanMode, // Destructure scanMode from useTrips
+    scanMode,
   } = useTrips();
+
+  const handleTripPress = (item) => {
+    const shipmentId = item.id || item.shipment_id;
+    if (shipmentId && navigation?.navigate) {
+      navigation.navigate('ShipmentDetail', { shipmentId });
+    }
+  };
 
   const handleStartScanForPickup = (herb) => onStartScan(herb, 'pickup');
   const handleStartScanForDelivery = (herb) => onStartScan(herb, 'deliver_to_manufacturer');
@@ -84,9 +91,9 @@ const TripsPage = ({ navigation }) => {
             <View style={styles.tripsOverview}>
               <SectionHeader colors={["#059669", "#10B981"]} title={t.transporterTrips?.pendingPickup || 'Pending Pickup'} subtitle={t.transporterTrips?.pendingPickupSubtitle || 'Scan farmer QR to start trip'} />
               <View style={styles.tripCards}>
-                {pendingHerbs.map((herb) => (
-                  <TripCard key={herb.batch_id} mode="pending" item={herb} onScan={handleStartScanForPickup} />
-                ))}
+              {pendingHerbs.map((herb) => (
+                <TripCard key={herb.id || herb.batch_id || herb.shipment_id} mode="pending" item={herb} onScan={handleStartScanForPickup} onPress={handleTripPress} />
+              ))}
               </View>
             </View>
           )}
@@ -94,9 +101,9 @@ const TripsPage = ({ navigation }) => {
             <View style={styles.tripsOverview}>
               <SectionHeader colors={["#0EA5E9", "#38BDF8"]} title={t.transporterTrips?.activeTrips || 'Active Trips'} subtitle={t.transporterTrips?.inTransit || 'In Transit'} />
               <View style={styles.tripCards}>
-                {activeTrips.map((trip) => (
-                  <TripCard key={trip.batch_id} mode="active" item={trip} onScan={handleStartScanForDelivery} />
-                ))}
+              {activeTrips.map((trip) => (
+                <TripCard key={trip.id || trip.batch_id || trip.shipment_id} mode="active" item={trip} onScan={handleStartScanForDelivery} onPress={handleTripPress} />
+              ))}
               </View>
             </View>
           )}
@@ -116,7 +123,7 @@ const TripsPage = ({ navigation }) => {
                   </View>
                 ) : (
                   completedTrips.map((trip) => (
-                    <TripCard key={trip.batch_id} mode="active" item={trip} showQR={false} />
+                    <TripCard key={trip.id || trip.batch_id || trip.shipment_id} mode="active" item={trip} showQR={false} onPress={handleTripPress} />
                   ))
                 )}
               </View>

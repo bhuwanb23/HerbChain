@@ -55,6 +55,10 @@ import TripsPage from '../pages/users/transporters/trips/index';
 import TransporterPayments from '../pages/users/transporters/payments/payments';
 import TransporterProfile from '../pages/users/transporters/profile/profile';
 import TransporterReports from '../pages/users/transporters/reports/reports';
+import ShipmentDetail from '../pages/users/transporters/shipment/ShipmentDetail';
+import PickupCapture from '../pages/users/transporters/shipment/PickupCapture';
+import DeliveryConfirm from '../pages/users/transporters/shipment/DeliveryConfirm';
+import DeliveryFailure from '../pages/users/transporters/shipment/DeliveryFailure';
 
 // ─── Lab screens ────────────────────────────────────────────────────────────
 import LabHome from '../pages/users/labs/LabHome';
@@ -178,7 +182,17 @@ function TransporterTabs() {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="Dashboard" component={TransporterHome} options={makeTabOptions('Dashboard')} />
-      <Tab.Screen name="Trips" component={TripsPage} options={makeTabOptions('Trips')} />
+      <Tab.Screen name="Trips" options={makeTabOptions('Trips')}>
+        {() => (
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="TripsList" component={TripsPage} />
+            <Stack.Screen name="ShipmentDetail" component={ShipmentDetail} />
+            <Stack.Screen name="PickupCapture" component={PickupCapture} />
+            <Stack.Screen name="DeliveryConfirm" component={DeliveryConfirm} />
+            <Stack.Screen name="DeliveryFailure" component={DeliveryFailure} />
+          </Stack.Navigator>
+        )}
+      </Tab.Screen>
       <Tab.Screen name="Scanner" options={makeTabOptions('Scanner')}>
         {() => <ComingSoonScreen featureName="QR Scanner" />}
       </Tab.Screen>
