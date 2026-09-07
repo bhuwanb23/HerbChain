@@ -1,0 +1,108 @@
+// ============================================================================
+// PHASE 17 — OFFLINE SYNC (docs/phase_17.md, rural connectivity support).
+// ----------------------------------------------------------------------------
+// The server-side half of the offline architecture. Mobile clients keep their
+// own SQLite queue (offline_batches / offline_scans / offline_shipments /
+// offline_transfers / sync_queue) and replay it through POST /sync/upload.
+// The server never trusts the offline state: every queued operation is
+// re-validated through the regular domain services, applied operations are
+// journalled in SyncEvent, refused operations become SyncConflict rows for
+// the client's conflict UI, and each upload session is summarized in
+// SyncLog. DeviceRegistration ties uploads to a known, revocable device.
+// ============================================================================
+
+// A field device (phone/tablet) allowed to sync for one user. One active
+// registration per (user, device_id) — re-registering refreshes it; admins
+// or the owner revoke it when the device is lost (phase 17 security).
+model DeviceRegistration {
+  id           String    @id @default(cuid())
+  user_id      String
+  device_id    String // client-generated fingerprint (stable per install)
+  platform     String // android | ios | web
+  device_name  String?
+  app_version  String?
+  last_sync_at DateTime? // last successful upload/pull from this device
+  revoked_at   DateTime?
+  created_at   DateTime  @default(now())
+
+  user User @relation("SyncDevices", fields: [user_id], references: [id], onDelete: Cascade)
+  sync_logs SyncLog[] @relation("SyncLogDevice")
+
+  @@unique([user_id, device_id])
+  @@index([user_id])
+  @@map("device_registrations")
+}
+
+// One upload session = one POST /sync/upload (or a worker-driven retry).
+// Summary row: totals + outcome. `partial` = some items applied, some
+// conflicted — the normal case when reality changed while offline.
+model SyncLog {
+  id               String    @id @default(cuid())
+  user_id          String
+  device_id        String?   // DeviceRegistration.id (null = unknown client)
+  items_total      Int       @default(0)
+  items_applied    Int       @default(0)
+  items_conflicted Int       @default(0)
+  status           String    @default("in_progress") // in_progress | completed | partial | failed
+  started_at       DateTime  @default(now())
+  completed_at     DateTime?
+  duration_ms      Int?
+
+  user   User         @relation("SyncLogs", fields: [user_id], references: [id], onDelete: Cascade)
+  device DeviceRegistration? @relation("SyncLogDevice", fields: [device_id], references: [id], onDelete: SetNull)
+  events SyncEvent[]
+  conflicts SyncConflict[]
+
+  @@index([user_id, started_at])
+  @@map("sync_logs")
+}
+
+// Per-queue-item journal row. Applied items get server_entity_id (the client
+// reconciles local_id → server id from these receipts); conflicted items
+// carry conflict_id. This is the sync analytics stream (offline usage %,
+// conflict rate, avg sync time).
+model SyncEvent {
+  id              String   @id @default(cuid())
+  sync_log_id     String
+  queue_ref       String? // client's local_id for the queued item
+  entity_type     String // batch_create | transfer_request | shipment_event | gps_points | media_upload | transfer_execute
+  operation       String // CREATE | UPDATE | TRANSFER | UPLOAD | DELETE
+  status          String   @default("PENDING") // PENDING | SYNCING | SYNCED | FAILED | CONFLICT
+  server_entity_id String?
+  conflict_id     String?
+  priority        Int      @default(9) // 1 batches, 2 shipments, 3 transfers, 4 gps, 5 media
+  created_at      DateTime @default(now())
+
+  syncLog SyncLog @relation(fields: [sync_log_id], references: [id], onDelete: Cascade)
+
+  @@index([sync_log_id])
+  @@index([entity_type, status])
+  @@index([created_at])
+  @@map("sync_events")
+}
+
+// A queued operation the server refused — the phase's "offline action ≠
+// final action" safety net made visible. `payload_json` preserves the exact
+// offline payload so the client (or an admin) can requeue a corrected copy.
+model SyncConflict {
+  id            String    @id @default(cuid())
+  sync_log_id   String?
+  queue_ref     String? // client local_id
+  user_id       String
+  device_id     String?
+  entity_type   String
+  conflict_type String // OWNERSHIP_CHANGED | QR_EXPIRED | DUPLICATE_BATCH | SHIPMENT_CANCELLED | VALIDATION_ERROR
+  description   String
+  payload_json  Json?
+  resolution    String? // discard | requeue | applied
+  resolution_note String?
+  resolved_by_user_id String?
+  resolved_at   DateTime?
+  created_at    DateTime  @default(now())
+
+  syncLog SyncLog? @relation(fields: [sync_log_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id, resolved_at])
+  @@index([conflict_type])
+  @@map("sync_conflicts")
+}

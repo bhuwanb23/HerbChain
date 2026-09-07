@@ -50,6 +50,8 @@ model User {
   api_keys            ApiKey[]
   audit_actions       AuditLog[]    @relation("AuditActor")
   device_tokens       DeviceToken[]
+  sync_devices        DeviceRegistration[] @relation("SyncDevices")
+  sync_logs           SyncLog[]            @relation("SyncLogs")
   notifications       Notification[]
   notification_queue  NotificationQueue[] @relation("NotificationQueueRecipient")
   notification_preference NotificationPreference?
