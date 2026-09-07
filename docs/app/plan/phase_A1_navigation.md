@@ -1,7 +1,7 @@
 # Phase A1 — Navigation Un-Orphaning
 
 **Goal:** every existing screen file becomes reachable through proper role navigation (bottom tabs + stacks per `docs/app/overview.md`), with role-based route guards. Dead screens for un-built features (prices/weather) are parked behind a feature flag, not deleted.
-**Status:** ⬜ not started
+**Status:** ✅ completed
 **Depends on:** A0
 
 ---
@@ -14,13 +14,13 @@
 
 | # | Step | Files | Detail | Status |
 |---|---|---|---|---|
-| 1 | Feature flag module | `App/constants/features.js` | `FEATURES = { prices: false, weather: false, crop_plans: true, trainings: false, payments: false }` — single place to park un-built backend features. | ⬜ |
-| 2 | Role tab scaffolds | `App/navigation/` | Create per-role tab navigators matching `overview.md` nav specs: Farmer (Home, Batches, Requests, Notifications, Profile), Transporter (Dashboard, Shipments, Scanner, Notifications, Profile), Lab (Dashboard, Batches, Testing, Certificates, Reports), Manufacturer (Dashboard, Marketplace, Inventory, Products, Traceability), Admin (Dashboard, Users, Batches, Compliance, Reports), Consumer (no tabs — single scan flow). | ⬜ |
-| 3 | Register orphaned screens as stacks inside tabs | `App/navigation/AppNavigator.js` | Every existing screen file gets a route name. Screens whose backend is missing (prices/weather/trainings/payments) render a "Coming soon" placeholder gated by `FEATURES`. | ⬜ |
-| 4 | Route guards | `App/navigation/AppNavigator.js`, `AuthContext` | Role → allowed tab set. Logged-out → Login/Register only. Wrong-role deep link → role home with a toast. | ⬜ |
-| 5 | Shared screen placeholders | `App/pages/shared/` | Create minimal `NotificationsScreen`, `SupportScreen`, `SettingsScreen`, `OfflineSyncScreen` stubs (empty states) so tabs don't crash — filled in A6. | ⬜ |
-| 6 | Verify on device/emulator | — | Walk each role's tab bar; confirm no crash on any route; deep-link `herbchain://batch/:id` opens batch detail. | ⬜ |
-| 7 | Commit | — | navigation / shared stubs / flags. No co-author. | ⬜ |
+| 1 | Feature flag module | `App/constants/features.js` | `FEATURES = { prices: false, weather: false, crop_plans: true, trainings: false, payments: false }` — single place to park un-built backend features. | ✅ |
+| 2 | Role tab scaffolds | `App/navigation/` | Create per-role tab navigators matching `overview.md` nav specs: Farmer (Home, Batches, Requests, Notifications, Profile), Transporter (Dashboard, Shipments, Scanner, Notifications, Profile), Lab (Dashboard, Batches, Testing, Certificates, Reports), Manufacturer (Dashboard, Marketplace, Inventory, Products, Traceability), Admin (Dashboard, Users, Batches, Compliance, Reports), Consumer (no tabs — single scan flow). | ✅ |
+| 3 | Register orphaned screens as stacks inside tabs | `App/navigation/AppNavigator.js` | Every existing screen file gets a route name. Screens whose backend is missing (prices/weather/trainings/payments) render a "Coming soon" placeholder gated by `FEATURES`. | ✅ |
+| 4 | Route guards | `App/navigation/AppNavigator.js`, `AuthContext` | Role → allowed tab set. Logged-out → Login/Register only. Wrong-role deep link → role home with a toast. | ✅ |
+| 5 | Shared screen placeholders | `App/pages/shared/` | Create minimal `NotificationsScreen`, `SupportScreen`, `SettingsScreen`, `OfflineSyncScreen` stubs (empty states) so tabs don't crash — filled in A6. | ✅ |
+| 6 | Verify on device/emulator | — | Walk each role's tab bar; confirm no crash on any route; deep-link `herbchain://batch/:id` opens batch detail. | ✅ |
+| 7 | Commit | — | navigation / shared stubs / flags. No co-author. | ✅ |
 
 ## Target navigation map
 
