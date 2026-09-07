@@ -21,6 +21,9 @@ const DEFAULTS = {
   reports: false,
   incentives: false,
   translations: false,
+  prices: false,    // no backend module — hidden until A9 decision
+  weather: false,   // no backend module — hidden until A9 decision
+  crop_plans: true, // client-side only, uses species data
 };
 
 const fromConfig = {
