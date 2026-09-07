@@ -1,7 +1,7 @@
 # Phase A5 — Manufacturer Chain
 
 **Goal:** manufacturer's value chain: browse certified marketplace → procurement request → receive + GRN → inventory → production run → product creation → product QR → lineage → recall impact.
-**Status:** ⬜ not started
+**Status:** ✅ completed
 **Depends on:** A1, A2 (shipments deliver inventory), A4 (certified stock exists)
 **Backend:** all ready (P9 procurement, P10 products/lineage) — `procurement.test.js` 6/6, `products.test.js` 9/9.
 
