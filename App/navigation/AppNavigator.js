@@ -72,6 +72,13 @@ import LabTesting from '../pages/users/labs/testing/testing';
 import LabReports from '../pages/users/labs/reports/reports';
 import LabProfile from '../pages/users/labs/profile/profile';
 import LabsPage from '../pages/users/labs/labs';
+import LabQueue from '../pages/users/labs/lab_flow/LabQueue';
+import LabBatchDetail from '../pages/users/labs/lab_flow/LabBatchDetail';
+import LabSampleCreate from '../pages/users/labs/lab_flow/LabSampleCreate';
+import LabTestCreate from '../pages/users/labs/lab_flow/LabTestCreate';
+import LabTestEntry from '../pages/users/labs/lab_flow/LabTestEntry';
+import LabCertificate from '../pages/users/labs/lab_flow/LabCertificate';
+import LabReject from '../pages/users/labs/lab_flow/LabReject';
 
 // ─── Manufacturer screens ───────────────────────────────────────────────────
 import ManufacturerHome from '../pages/users/manufacturers/ManufacturerHome';
@@ -228,7 +235,19 @@ function LabTabs() {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="Dashboard" component={LabHome} options={makeTabOptions('Dashboard')} />
-      <Tab.Screen name="Batches" component={LabBatches} options={makeTabOptions('Batches')} />
+      <Tab.Screen name="Batches" options={makeTabOptions('Batches')}>
+        {() => (
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="LabQueue" component={LabQueue} />
+            <Stack.Screen name="LabBatchDetail" component={LabBatchDetail} />
+            <Stack.Screen name="LabSampleCreate" component={LabSampleCreate} />
+            <Stack.Screen name="LabTestCreate" component={LabTestCreate} />
+            <Stack.Screen name="LabTestEntry" component={LabTestEntry} />
+            <Stack.Screen name="LabCertificate" component={LabCertificate} />
+            <Stack.Screen name="LabReject" component={LabReject} />
+          </Stack.Navigator>
+        )}
+      </Tab.Screen>
       <Tab.Screen name="Testing" component={LabTesting} options={makeTabOptions('Testing')} />
       <Tab.Screen name="Certificates" options={makeTabOptions('Certificates')}>
         {() => <ComingSoonScreen featureName="Certificates" />}
