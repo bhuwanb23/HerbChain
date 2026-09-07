@@ -6,4 +6,4 @@ node_modules/
 logs/
 *.log
 /uploads/
-.tmp/
+.tmp/p17_prep.json
