@@ -305,7 +305,27 @@ export const ManufacturingAPI = {
   start: (token, id) => api.post(`/api/v1/manufacturing/batches/${id}/start`, { token, body: {} }),
   complete: (token, id, payload) => api.post(`/api/v1/manufacturing/batches/${id}/complete`, { token, body: payload }),
   lotQr: (token, lotId) => api.get(`/api/v1/manufacturing/lots/${lotId}/qr`, { token }),
+  listLots: (token, opts = {}) => {
+    const params = new URLSearchParams();
+    if (opts.product_id) params.set('product_id', opts.product_id);
+    const qs = params.toString();
+    return api.get(`/api/v1/manufacturing/lots${qs ? `?${qs}` : ''}`, { token });
+  },
+  getLot: (token, lotId) => api.get(`/api/v1/manufacturing/lots/${lotId}`, { token }),
+  cancel: (token, id, payload) => api.post(`/api/v1/manufacturing/batches/${id}/cancel`, { token, body: payload || {} }),
   dashboard: (token) => api.get('/api/v1/manufacturing/dashboard', { token }),
+  impacts: (token, opts = {}) => {
+    const params = new URLSearchParams();
+    if (opts.status) params.set('status', opts.status);
+    const qs = params.toString();
+    return api.get(`/api/v1/manufacturing/impacts${qs ? `?${qs}` : ''}`, { token });
+  },
+  createImpact: (token, payload) => api.post('/api/v1/manufacturing/impacts', { token, body: payload }),
+  resolveImpact: (token, impactId, payload) => api.post(`/api/v1/manufacturing/impacts/${impactId}/resolve`, { token, body: payload || {} }),
+};
+
+export const RecallAPI = {
+  batchRecall: (token, batchId) => api.get(`/api/v1/manufacturer/recall/${batchId}`, { token }),
 };
 
 export const ProductsAPI = {

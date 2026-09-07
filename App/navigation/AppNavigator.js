@@ -88,6 +88,18 @@ import QRScannerScreen from '../pages/users/manufacturers/raw_herb_management/QR
 import ProductionPage from '../pages/users/manufacturers/production/production';
 import ManufacturerReports from '../pages/users/manufacturers/reports/reports';
 import ManufacturerProfile from '../pages/users/manufacturers/profile/profile';
+import MarketplaceScreen from '../pages/users/manufacturers/marketplace/MarketplaceScreen';
+import BatchDossierScreen from '../pages/users/manufacturers/marketplace/BatchDossierScreen';
+import ProcurementTrackerScreen from '../pages/users/manufacturers/marketplace/ProcurementTrackerScreen';
+import GRNReceiveScreen from '../pages/users/manufacturers/marketplace/GRNReceiveScreen';
+import InventoryScreen from '../pages/users/manufacturers/inventory/InventoryScreen';
+import ProductListScreen from '../pages/users/manufacturers/products/ProductListScreen';
+import ProductDetailScreen from '../pages/users/manufacturers/products/ProductDetailScreen';
+import ProductCreateScreen from '../pages/users/manufacturers/products/ProductCreateScreen';
+import RunListScreen from '../pages/users/manufacturers/production_runs/RunListScreen';
+import RunDetailScreen from '../pages/users/manufacturers/production_runs/RunDetailScreen';
+import RecallImpactScreen from '../pages/users/manufacturers/lineage/RecallImpactScreen';
+import ProductLineageScreen from '../pages/users/manufacturers/lineage/ProductLineageScreen';
 
 // ─── Admin screens ──────────────────────────────────────────────────────────
 import AdminHome from '../pages/users/admins/AdminHome';
@@ -261,11 +273,36 @@ function ManufacturerTabs() {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
       <Tab.Screen name="Dashboard" component={ManufacturerHome} options={makeTabOptions('Dashboard')} />
-      <Tab.Screen name="Marketplace" component={RawHerbManagement} options={makeTabOptions('Marketplace')} />
-      <Tab.Screen name="Inventory" options={makeTabOptions('Inventory')}>
-        {() => <ComingSoonScreen featureName="Inventory" />}
+      <Tab.Screen name="Marketplace" options={makeTabOptions('Marketplace')}>
+        {() => (
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="MarketplaceList" component={MarketplaceScreen} />
+            <Stack.Screen name="BatchDossier" component={BatchDossierScreen} />
+            <Stack.Screen name="GRNReceive" component={GRNReceiveScreen} />
+          </Stack.Navigator>
+        )}
       </Tab.Screen>
-      <Tab.Screen name="Products" component={ProductionPage} options={makeTabOptions('Products')} />
+      <Tab.Screen name="Inventory" options={makeTabOptions('Inventory')}>
+        {() => (
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="InventoryList" component={InventoryScreen} />
+          </Stack.Navigator>
+        )}
+      </Tab.Screen>
+      <Tab.Screen name="Products" options={makeTabOptions('Products')}>
+        {() => (
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="ProductList" component={ProductListScreen} />
+            <Stack.Screen name="ProductCreate" component={ProductCreateScreen} />
+            <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+            <Stack.Screen name="ProductLineage" component={ProductLineageScreen} />
+            <Stack.Screen name="ProcurementTracker" component={ProcurementTrackerScreen} />
+            <Stack.Screen name="RunList" component={RunListScreen} />
+            <Stack.Screen name="RunDetail" component={RunDetailScreen} />
+            <Stack.Screen name="RecallImpact" component={RecallImpactScreen} />
+          </Stack.Navigator>
+        )}
+      </Tab.Screen>
       <Tab.Screen name="Reports" component={ManufacturerReports} options={makeTabOptions('Reports')} />
     </Tab.Navigator>
   );
