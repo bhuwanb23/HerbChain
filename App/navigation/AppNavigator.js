@@ -31,6 +31,10 @@ import ComingSoonScreen from '../pages/shared/ComingSoonScreen';
 
 // ─── Farmer screens ─────────────────────────────────────────────────────────
 import FarmerHome from '../pages/users/farmers/FarmerHome';
+import BatchList from '../pages/users/farmers/batches/BatchList';
+import BatchDetail from '../pages/users/farmers/batches/BatchDetail';
+import TransferRequests from '../pages/users/farmers/batches/TransferRequests';
+import FarmerQR from '../pages/users/farmers/batches/FarmerQR';
 import FarmProfileScreen from '../pages/users/farmers/farm_profile/FarmProfileScreen';
 import CatalogueScreen from '../pages/users/farmers/catalogue/CatalogueScreen';
 import CatalogueDetailScreen from '../pages/users/farmers/catalogue/CatalogueDetailScreen';
@@ -144,6 +148,9 @@ function FarmerTabs() {
       <Tab.Screen name="Batches" options={makeTabOptions('Batches')}>
         {() => (
           <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="BatchList" component={BatchList} />
+            <Stack.Screen name="BatchDetail" component={BatchDetail} />
+            <Stack.Screen name="FarmerQR" component={FarmerQR} />
             <Stack.Screen name="HerbList" component={HerbListScreen} />
             <Stack.Screen name="HerbRegister" component={HerbRegisterScreen} />
             <Stack.Screen name="HerbDetails" component={HerbDetailsScreen} />
@@ -155,7 +162,11 @@ function FarmerTabs() {
         )}
       </Tab.Screen>
       <Tab.Screen name="Requests" options={makeTabOptions('Requests')}>
-        {() => <ComingSoonScreen featureName="Transfer Requests" />}
+        {() => (
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="TransferRequests" component={TransferRequests} />
+          </Stack.Navigator>
+        )}
       </Tab.Screen>
       <Tab.Screen name="Notifications" component={FarmerNotifications} options={makeTabOptions('Notifications')} />
       <Tab.Screen name="Profile" options={makeTabOptions('Profile')}>
