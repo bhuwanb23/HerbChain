@@ -1,111 +1,97 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { API_BASE_URL } from '../../../../../constants/api'; // Import API_BASE_URL
+import { ManufacturerAPI, LabsAPI } from '../../../../../services/apiClient';
 
-const useRawHerbData = () => {
+/**
+ * Manufacturer raw herb management — rewritten for the backend P9/P10 contract.
+ *
+ * Old flow: GET /herbs/approved_for_manufacturer → GET /herbs/:id/lab_report → POST receive_by_manufacturer
+ * New flow: ManufacturerAPI.marketplace → LabsAPI.listCertificates → ManufacturerAPI.receive
+ */
+const useRawHerbData = (token) => {
   const navigation = useNavigation();
   const route = useRoute();
 
   const [activeSection, setActiveSection] = useState('available_herbs');
-  const [approvedHerbs, setApprovedHerbs] = useState([]); // New state for approved herbs
-  const [availableHerbs, setAvailableHerbs] = useState([]); // Will be derived from approvedHerbs
-  const [orderedHerbs, setOrderedHerbs] = useState([]); // This will also likely come from a backend call in a real app
+  const [approvedHerbs, setApprovedHerbs] = useState([]);
+  const [availableHerbs, setAvailableHerbs] = useState([]);
+  const [orderedHerbs, setOrderedHerbs] = useState([]);
   const [scannedHerbDetails, setScannedHerbDetails] = useState(null);
   const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
   const [selectedHerbForDetails, setSelectedHerbForDetails] = useState(null);
-  const [scannerVisible, setScannerVisible] = useState(false); // State for scanner visibility
-  const [scanMode, setScanMode] = useState(null); // 'receive_by_manufacturer' or 'general_scan'
-  const [herbToReceive, setHerbToReceive] = useState(null); // Stores the herb that is about to be received
+  const [scannerVisible, setScannerVisible] = useState(false);
+  const [scanMode, setScanMode] = useState(null);
+  const [herbToReceive, setHerbToReceive] = useState(null);
 
-  // Function to fetch approved herbs from the backend
   const fetchApprovedHerbs = useCallback(async () => {
+    if (!token) return;
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/herbs/approved_for_manufacturer`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      console.log('API Response data:', data); // Log the raw API response
-      const herbs = data.herbs || [];
+      const data = await ManufacturerAPI.marketplace(token);
+      const herbs = Array.isArray(data) ? data : data?.batches || [];
       setApprovedHerbs(herbs);
-      
+
       const herbsWithReports = await Promise.all(herbs.map(async (herb) => {
+        const batchId = herb.code || herb.id;
         try {
-          const reportsResponse = await fetch(`${API_BASE_URL}/api/v1/herbs/${herb.batch_id}/lab_report`);
-          if (!reportsResponse.ok) {
-            console.warn(`Failed to fetch lab reports for batch ${herb.batch_id}: ${reportsResponse.status}`);
-            return { ...herb, labReports: [] };
-          }
-          const reportsData = await reportsResponse.json();
-          return { ...herb, labReports: reportsData.reports || [] };
-        } catch (reportError) {
-          console.error(`Error fetching lab reports for batch ${herb.batch_id}:`, reportError);
+          const certs = await LabsAPI.listCertificates(token, batchId);
+          return { ...herb, labReports: Array.isArray(certs) ? certs : certs?.certificates || [] };
+        } catch {
           return { ...herb, labReports: [] };
         }
       }));
 
-      const processedHerbs = herbsWithReports
-        .filter(herb => herb.labReports && herb.labReports.length > 0) // Filter for herbs with lab reports
-        .map(herb => ({
-          id: herb.batch_id, // Ensure id is batch_id
-          name: herb.species_name,
-          ...herb, // Keep all herb data
-          status: herb.quality_status // Ensure status is quality_status
+      const processed = herbsWithReports
+        .filter(h => h.labReports && h.labReports.length > 0)
+        .map(h => ({
+          id: h.code || h.id,
+          name: h.species_name || h.species?.name,
+          ...h,
+          status: h.quality_status || h.phase,
         }));
-      console.log('Processed availableHerbs:', processedHerbs); // Log the processed herbs
-      setAvailableHerbs(processedHerbs);
+      setAvailableHerbs(processed);
     } catch (error) {
       console.error("Failed to fetch approved herbs:", error);
       Alert.alert("Error", "Failed to load available herbs. Please try again later.");
     }
-  }, []);
+  }, [token]);
 
-  // Function to fetch ordered herbs for a specific manufacturer
   const fetchOrderedHerbs = useCallback(async () => {
+    if (!token) return;
     try {
-      // Assuming manufacturer_001 for now
-      const manufacturerId = 'manufacturer_001';
-      const response = await fetch(`${API_BASE_URL}/api/v1/herbs/manufacturer/${manufacturerId}/ordered`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setOrderedHerbs(data.herbs || []);
+      const data = await ManufacturerAPI.listRequests(token);
+      setOrderedHerbs(Array.isArray(data) ? data : data?.requests || []);
     } catch (error) {
       console.error("Failed to fetch ordered herbs:", error);
-      Alert.alert("Error", "Failed to load ordered herbs. Please try again later.");
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     fetchApprovedHerbs();
-    fetchOrderedHerbs(); // Fetch ordered herbs on mount/reload
+    fetchOrderedHerbs();
   }, [fetchApprovedHerbs, fetchOrderedHerbs]);
 
   useEffect(() => {
     if (route.params?.scannedData) {
       const { scannedData } = route.params;
-      // In a real app, you would fetch details for scannedData from an API
-      // For now, let's try to find it in our approved/ordered lists
-      const foundHerb = approvedHerbs.find(herb => herb.id === scannedData) || orderedHerbs.find(herb => herb.id === scannedData);
+      const foundHerb = approvedHerbs.find(h => (h.code || h.id) === scannedData)
+        || orderedHerbs.find(h => (h.code || h.id) === scannedData);
 
       if (foundHerb) {
         setScannedHerbDetails(foundHerb);
         setActiveSection('scanned_details');
         openDetailsModal(foundHerb);
-        Alert.alert('Scan Successful', `Details for ${foundHerb.name} (${foundHerb.id}) loaded.`);
+        Alert.alert('Scan Successful', `Details for ${foundHerb.species_name || foundHerb.id} loaded.`);
       } else {
-        // Fallback for not found or mock data
-        const mockScannedHerb = { id: scannedData, name: `Unknown Herb (${scannedData})`, status: 'Unknown', description: 'No details found for this scanned herb.' };
-        setScannedHerbDetails(mockScannedHerb);
+        const mock = { id: scannedData, name: `Unknown Herb (${scannedData})`, status: 'Unknown', description: 'No details found for this scanned herb.' };
+        setScannedHerbDetails(mock);
         setActiveSection('scanned_details');
-        openDetailsModal(mockScannedHerb);
+        openDetailsModal(mock);
         Alert.alert('Scan Successful', `No matching herb found. Displaying mock details for ${scannedData}.`);
       }
       navigation.setParams({ scannedData: undefined });
     }
-  }, [route.params?.scannedData, approvedHerbs, orderedHerbs, openDetailsModal, navigation]);
+  }, [route.params?.scannedData, approvedHerbs, orderedHerbs, navigation]);
 
   const openDetailsModal = useCallback((herb) => {
     setSelectedHerbForDetails(herb);
@@ -118,128 +104,72 @@ const useRawHerbData = () => {
   }, []);
 
   const handleReceiveHerb = useCallback(async (herb, scannedQrText) => {
-    if (!herb || !scannedQrText) {
-      Alert.alert("Error", "Herb details or scanned QR text missing.");
+    if (!herb || !scannedQrText || !token) {
+      Alert.alert("Error", "Herb details, scanned QR text, or authentication missing.");
       return;
     }
-
     try {
-      // Assuming manufacturer_001 for now, similar to ordering
-      const manufacturerId = 'manufacturer_001';
-      // For transporterId, we assume the current owner of the herb is the transporter
-      const transporterId = herb.current_owner; 
-      const response = await fetch(`${API_BASE_URL}/api/v1/herbs/${herb.id}/receive_by_manufacturer`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          manufacturer_id: manufacturerId,
-          transporter_id: transporterId,
-          scanned_qr_text: scannedQrText,
-          receiving_location: 'Manufacturer Facility', // Hardcoded for now
-        }),
+      const batchId = herb.code || herb.id;
+      await ManufacturerAPI.receive(token, {
+        batch_id: batchId,
+        scanned_qr: scannedQrText,
+        receiving_location: 'Manufacturer Facility',
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log('Receive Herb API response:', result);
-
-      // Update local state:
-      // Remove from orderedHerbs
-      setOrderedHerbs(prev => prev.filter(h => h.id !== herb.id));
-
-      // Add to scannedHerbDetails for display on scanned_details page
-      const receivedHerb = { 
-        ...herb, 
-        status: 'in_stock', // Update status
-        active_qr: result.new_qr_code, // New QR code from backend
-        current_owner: manufacturerId, // Update current owner
-        labReports: herb.labReports, // Persist lab reports
-      };
+      setOrderedHerbs(prev => prev.filter(h => (h.code || h.id) !== batchId));
+      const receivedHerb = { ...herb, status: 'in_stock', current_owner: 'manufacturer' };
       setScannedHerbDetails(receivedHerb);
       setActiveSection('scanned_details');
-      openDetailsModal(receivedHerb); // Show details modal
-
-      Alert.alert('Receipt Successful', `${receivedHerb.name} has been received and is now in stock.`);
-
-      // Optionally refresh available herbs to ensure consistency
+      openDetailsModal(receivedHerb);
+      Alert.alert('Receipt Successful', `${herb.species_name || herb.name} has been received and is now in stock.`);
       fetchApprovedHerbs();
-
     } catch (error) {
       console.error("Failed to receive herb:", error);
       Alert.alert("Error", `Failed to receive herb: ${error.message || 'Please try again later.'}`);
     }
-  }, [orderedHerbs, openDetailsModal, fetchApprovedHerbs]);
+  }, [token, openDetailsModal, fetchApprovedHerbs]);
 
   const handleOrderHerb = useCallback(async (herbId) => {
-    const herbToOrder = availableHerbs.find(herb => herb.id === herbId);
-    if (herbToOrder) {
-      console.log('Attempting to order herb:', herbToOrder);
-      try {
-        // Assuming a manufacturer_id is available, e.g., from context or props
-        // For now, using a placeholder. In a real app, this would come from authentication context.
-        const manufacturerId = 'manufacturer_001'; 
-        const response = await fetch(`${API_BASE_URL}/api/v1/herbs/${herbId}/order_by_manufacturer`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({'manufacturer_id': manufacturerId}),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        console.log('Order API response:', result);
-
-        // Update local state after successful API call
-        setOrderedHerbs(prev => [...prev, { ...herbToOrder, orderDate: new Date().toISOString(), status: 'manufacturer_ordered_pending_pickup' }]);
-        setAvailableHerbs(prev => prev.filter(herb => herb.id !== herbId));
-        openDetailsModal({ ...herbToOrder, orderDate: new Date().toISOString(), status: 'manufacturer_ordered_pending_pickup' });
-        Alert.alert('Order Placed', `${herbToOrder.name} has been added to your ordered list. Reference: ${result.ownership_transfer.transfer_id || 'N/A'}`);
-
-        // Refresh both lists after successful order
-        fetchApprovedHerbs();
-        fetchOrderedHerbs();
-
-      } catch (error) {
-        console.error("Failed to order herb:", error);
-        Alert.alert("Error", `Failed to place order for ${herbToOrder.name}. ${error.message || 'Please try again later.'}`);
-      }
+    if (!token) return;
+    const herbToOrder = availableHerbs.find(h => (h.code || h.id) === herbId);
+    if (!herbToOrder) return;
+    try {
+      await ManufacturerAPI.requestBatch(token, {
+        batch_id: herbId,
+        quantity: herbToOrder.weight_kg || 1,
+        unit: 'kg',
+        priority: 'normal',
+        notes: 'Ordered from marketplace',
+      });
+      setOrderedHerbs(prev => [...prev, { ...herbToOrder, orderDate: new Date().toISOString(), status: 'requested' }]);
+      setAvailableHerbs(prev => prev.filter(h => (h.code || h.id) !== herbId));
+      openDetailsModal({ ...herbToOrder, orderDate: new Date().toISOString(), status: 'requested' });
+      Alert.alert('Order Placed', `${herbToOrder.species_name || herbToOrder.name} has been added to your ordered list.`);
+      fetchApprovedHerbs();
+      fetchOrderedHerbs();
+    } catch (error) {
+      console.error("Failed to order herb:", error);
+      Alert.alert("Error", `Failed to place order. ${error.message || 'Please try again later.'}`);
     }
-  }, [availableHerbs, openDetailsModal, fetchApprovedHerbs, fetchOrderedHerbs]);
+  }, [token, availableHerbs, openDetailsModal, fetchApprovedHerbs, fetchOrderedHerbs]);
 
   const handleScanQRCode = useCallback((herb = null, mode = 'general_scan') => {
-    setHerbToReceive(herb); // Store the herb if it's a receive operation
+    setHerbToReceive(herb);
     setScanMode(mode);
     setScannerVisible(true);
-    // navigation.navigate('QRScannerScreen'); // We will use a modal for the scanner
   }, []);
 
   const clearScannedDetails = useCallback(() => {
     setScannedHerbDetails(null);
-    setActiveSection('available_herbs'); // Go back to available herbs after clearing
+    setActiveSection('available_herbs');
     closeDetailsModal();
     Alert.alert('Cleared', 'Scanned herb details have been cleared.');
   }, [closeDetailsModal]);
 
   const getStatusStyle = useCallback((status) => {
     switch (status) {
-      case 'approved':
-      case 'Certified': // API might return 'approved', mock data might use 'Certified'
+      case 'approved': case 'Certified': case 'in_stock':
         return { backgroundColor: '#D4EDDA', color: '#155724' };
-      case 'pending':
-      case 'pending_pickup':
-      case 'testing':
-      case 'manufacturer_ordered_pending_pickup': // Added new status
+      case 'pending': case 'pending_pickup': case 'testing': case 'requested':
         return { backgroundColor: '#FFF3CD', color: '#856404' };
       case 'rejected':
         return { backgroundColor: '#F8D7DA', color: '#721C24' };
@@ -249,25 +179,16 @@ const useRawHerbData = () => {
   }, []);
 
   return {
-    activeSection,
-    setActiveSection,
-    availableHerbs,
-    orderedHerbs,
+    activeSection, setActiveSection,
+    availableHerbs, orderedHerbs,
     scannedHerbDetails,
-    handleOrderHerb,
-    handleScanQRCode,
-    clearScannedDetails,
+    handleOrderHerb, handleScanQRCode, clearScannedDetails,
     getStatusStyle,
-    isDetailsModalVisible,
-    selectedHerbForDetails,
-    openDetailsModal,
-    closeDetailsModal,
-    approvedHerbs, // Expose approvedHerbs
-    handleReceiveHerb, // Expose handleReceiveHerb
-    scannerVisible, // Expose scannerVisible
-    scanMode, // Expose scanMode
-    herbToReceive, // Expose herbToReceive
-    setScannerVisible, // Expose setScannerVisible for closing the scanner
+    isDetailsModalVisible, selectedHerbForDetails,
+    openDetailsModal, closeDetailsModal,
+    approvedHerbs, handleReceiveHerb,
+    scannerVisible, scanMode, herbToReceive,
+    setScannerVisible,
   };
 };
 

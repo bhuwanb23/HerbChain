@@ -2,7 +2,7 @@
 
 Status: **LIVE** — implemented, tested (75/75 across auth/batches/
 identification/qr), live-smoked (18/18). Reconciles `docs/phase_5.md` against
-the redesigned schema. Code lives in `second_backend` on the modular layout.
+the redesigned schema. Code lives in `backend` on the modular layout.
 
 ## 1. The core rule (spec)
 

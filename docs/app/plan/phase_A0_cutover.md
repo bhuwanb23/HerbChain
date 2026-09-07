@@ -1,23 +1,23 @@
-# Phase A0 — Backend Cutover (both front-ends → `second_backend`)
+# Phase A0 — Backend Cutover (both front-ends → `backend`)
 
-**Goal:** every HTTP call from `App/` and `website/` hits `second_backend`. No new screens. After this phase, login/register/session works end-to-end on both front-ends against the new backend.
+**Goal:** every HTTP call from `App/` and `website/` hits `backend`. No new screens. After this phase, login/register/session works end-to-end on both front-ends against the new backend.
 **Status:** ⬜ not started
 
 ---
 
 ## Why first
 
-Everything else is blocked on the contract. `App/services/apiClient.js` exposes 13 API namespaces — 8 speak dead Flask routes. `website/src/services/apiClient.js` points `AdminAPI` at `/admin/api/*` (Flask) and defaults to port 5000 which happens to match `second_backend`'s default `PORT=5000`, so **only route rewrites are needed, not host changes**.
+Everything else is blocked on the contract. `App/services/apiClient.js` exposes 13 API namespaces — 8 speak dead Flask routes. `website/src/services/apiClient.js` points `AdminAPI` at `/admin/api/*` (Flask) and defaults to port 5000 which happens to match `backend`'s default `PORT=5000`, so **only route rewrites are needed, not host changes**.
 
 ## Steps
 
 | # | Step | Files | Detail | Status |
 |---|---|---|---|---|
 | 1 | Inventory dead endpoints | `App/services/apiClient.js` | Map every method in the 13 namespaces to its new-backend replacement (table below). Produce the rewrite list. | ⬜ |
-| 2 | Rewrite `App/services/apiClient.js` | same | Replace dead routes with new contract (see mapping table). Keep the `{data,error}` envelope handling — `second_backend` uses the same envelope. | ⬜ |
+| 2 | Rewrite `App/services/apiClient.js` | same | Replace dead routes with new contract (see mapping table). Keep the `{data,error}` envelope handling — `backend` uses the same envelope. | ⬜ |
 | 3 | Rewrite `website/src/services/apiClient.js` | same | `AdminAPI` → `/api/v1/admin/portal/*` + `/api/v1/admin/users*`; add missing namespaces (analytics, notifications, documents) for later phases. | ⬜ |
 | 4 | Auth parity check | `App/contexts/AuthContext.js`, `website/src/contexts/*` | New backend returns `access_token` + `refresh_token`; confirm both stores/refreshes correctly. Verify `/auth/me` shape (`user` object with `role`). | ⬜ |
-| 5 | CORS + env | `second_backend/.env`, `website/.env*` | `CORS_ORIGIN` must include the web dev host; `VITE_API_BASE_URL` set for website; `API_BASE_URL` via `app.json` extra for app. | ⬜ |
+| 5 | CORS + env | `backend/.env`, `website/.env*` | `CORS_ORIGIN` must include the web dev host; `VITE_API_BASE_URL` set for website; `API_BASE_URL` via `app.json` extra for app. | ⬜ |
 | 6 | Smoke: web login → dashboard data | `website/` | Run backend (PORT=5000) + website dev server; login with a seeded admin; dashboard page renders real data. | ⬜ |
 | 7 | Smoke: app login → auth/me | `App/` | Expo app login with seeded farmer; `AuthContext` holds tokens; `/auth/me` refresh works. | ⬜ |
 | 8 | Grep-gate: zero dead prefixes | both | `grep -r "/api/v1/herbs\|/api/v1/crop\|/api/v1/catalogue\|/admin/api\|/api/v1/traceability\|/api/v1/farm\|/api/v1/prices\|/api/v1/weather\|/api/v1/recognition" App/ website/src/` → 0 hits (excluding documented exceptions). | ⬜ |
@@ -25,7 +25,7 @@ Everything else is blocked on the contract. `App/services/apiClient.js` exposes 
 
 ## Endpoint mapping table (the rewrite list)
 
-| Old (dead) | New (`second_backend`) | Notes |
+| Old (dead) | New (`backend`) | Notes |
 |---|---|---|
 | `POST /api/v1/herbs` (register batch) | `POST /api/v1/batches` | payload: `species_id, quantity, unit, harvest_date, cultivation_type, asset_ids[]` |
 | `GET /api/v1/herbs/mine` | `GET /api/v1/batches/mine` | |
@@ -52,13 +52,13 @@ Everything else is blocked on the contract. `App/services/apiClient.js` exposes 
 
 ## Acceptance criteria
 
-- [ ] Both front-ends log in against `second_backend` and render one real data screen each.
+- [ ] Both front-ends log in against `backend` and render one real data screen each.
 - [ ] Grep-gate (step 8) passes.
 - [ ] Backend untouched (no schema/code changes in this phase).
 - [ ] `master_plan.md` index updated: A0 ✅.
 
 ## Risks / notes
 
-- `website` defaults to port 5000 = `second_backend` default → zero host friction.
+- `website` defaults to port 5000 = `backend` default → zero host friction.
 - Old Flask `backend/` stays in repo untouched until A9 (reference for contract quirks).
 - If any admin endpoint shape differs from what web pages expect, adapt the **client**, not the backend.

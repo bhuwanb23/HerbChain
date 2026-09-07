@@ -1,9 +1,0 @@
-node_modules/
-.env
-.testdb/
-*.db
-*.db-journal
-logs/
-*.log
-/uploads/
-.tmp/p17_prep.json

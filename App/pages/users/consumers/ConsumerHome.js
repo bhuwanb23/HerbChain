@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 
 import { RoleHomeShell, ScanQrSheet } from '../../../components';
-import { ApiError, TraceabilityAPI } from '../../../services/apiClient';
+import { ApiError, VerifyAPI } from '../../../services/apiClient';
 
 const PHASE_LABEL = {
   with_farmer: 'With farmer',
@@ -40,12 +40,13 @@ export default function ConsumerHome() {
   const handleScan = async (token) => {
     setBusy(true);
     try {
-      const resp = await TraceabilityAPI.resolve(token);
-      setJourney(resp);
+      // P12 public passport — POST /verify/scan (no login required).
+      const passport = await VerifyAPI.scan(token);
+      setJourney({ kind: 'passport', passport });
       setScanOpen(false);
     } catch (err) {
       Alert.alert(
-        'Could not resolve QR',
+        'Could not verify QR',
         err instanceof ApiError ? err.message : err?.message || 'Failed',
       );
     } finally {
@@ -62,11 +63,11 @@ export default function ConsumerHome() {
     setBusy(true);
     try {
       if (id.startsWith('PROD-')) {
-        const data = await TraceabilityAPI.product(id);
-        setJourney({ kind: 'product', journey: data });
+        const data = await VerifyAPI.passport(id);
+        setJourney({ kind: 'passport', passport: data });
       } else {
-        const data = await TraceabilityAPI.batch(id);
-        setJourney({ kind: 'batch', journey: data });
+        const data = await VerifyAPI.passport(id);
+        setJourney({ kind: 'passport', passport: data });
       }
       setManualId('');
     } catch (err) {
@@ -122,53 +123,55 @@ export default function ConsumerHome() {
 }
 
 function JourneyView({ data, onClose }) {
-  if (data.kind === 'product') {
-    const j = data.journey;
-    return (
-      <ScrollView style={styles.journeyContainer}>
-        <View style={styles.journeyHeader}>
-          <Text style={styles.journeyTitle}>{j.product.name}</Text>
-          <Text style={styles.journeySub}>{j.product.product_id}</Text>
-        </View>
-        <SummaryCard
-          chips={[
-            `${j.summary.total_source_batches} source batches`,
-            j.summary.all_certified ? '✓ All certified' : '⚠ Not all certified',
-          ]}
-        />
-        {(j.source_batches || []).map((src) => (
-          <View key={src.batch_id} style={styles.sectionBox}>
-            <Text style={styles.sectionTitle2}>Source batch — {src.batch_id}</Text>
-            <Text style={styles.sectionMeta}>
-              {src.quantity_kg} kg · {src.journey.herb.species_name}
-            </Text>
-            <Timeline events={src.journey.journey} />
-          </View>
-        ))}
-        <TouchableOpacity style={styles.primary} onPress={onClose}>
-          <Text style={styles.primaryText}>Close</Text>
-        </TouchableOpacity>
-        <View style={{ height: 60 }} />
-      </ScrollView>
-    );
-  }
-
-  const j = data.journey;
+  // P12 passport shape: { verified, badge, product, manufacturer, ingredients,
+  // origin, certificates, journey: stages[], sustainability, trust_score }
+  const p = data.passport || {};
+  const productLine = p.product ? `${p.product.name || ''}${p.product.lot_code ? ` · ${p.product.lot_code}` : ''}` : 'HerbChain product';
   return (
     <ScrollView style={styles.journeyContainer}>
       <View style={styles.journeyHeader}>
-        <Text style={styles.journeyTitle}>{j.herb.species_name}</Text>
-        <Text style={styles.journeySub}>{j.batch_id}</Text>
+        <Text style={styles.journeyTitle}>{productLine}</Text>
+        <Text style={styles.journeySub}>
+          {p.verification_status || (p.verified ? 'VERIFIED' : 'CHECK')} ·
+          trust {p.trust_score?.score ?? '—'}
+        </Text>
       </View>
       <SummaryCard
         chips={[
-          `${j.summary.total_steps} steps`,
-          `${j.summary.total_days} days`,
-          j.summary.quality_certified ? '✓ Lab-approved' : 'No lab approval',
-          `Phase: ${PHASE_LABEL[j.summary.current_phase] || j.summary.current_phase}`,
+          p.badge?.label || (p.verified ? '✓ Verified' : 'Verification needed'),
+          `${(p.ingredients || []).length} ingredient species`,
+          `${(p.journey || []).length} journey stages`,
+          (p.certificates || []).some((c) => c.active) ? '✓ Lab certified' : 'No active certificate',
         ]}
       />
-      <Timeline events={j.journey} />
+      {p.manufacturer?.name ? (
+        <View style={styles.sectionBox}>
+          <Text style={styles.sectionTitle2}>Manufacturer</Text>
+          <Text style={styles.sectionMeta}>{p.manufacturer.name}</Text>
+        </View>
+      ) : null}
+      {p.origin ? (
+        <View style={styles.sectionBox}>
+          <Text style={styles.sectionTitle2}>Origin</Text>
+          <Text style={styles.sectionMeta}>
+            {p.origin.farms?.map((f) => f.state || f.location).filter(Boolean).join(', ') || 'Farm details unavailable'}
+          </Text>
+        </View>
+      ) : null}
+      {(p.journey || []).map((stage, i) => (
+        <View key={i} style={styles.sectionBox}>
+          <Text style={styles.sectionTitle2}>{stage.label || stage.stage}</Text>
+          <Text style={styles.sectionMeta}>
+            {stage.date ? new Date(stage.date).toLocaleDateString() : '—'} · {stage.location || '—'}
+          </Text>
+        </View>
+      ))}
+      {(p.notices || []).length > 0 &&
+        p.notices.map((n, i) => (
+          <Alert key={i} severity="warning">
+            <Text>{n}</Text>
+          </Alert>
+        ))}
       <TouchableOpacity style={styles.primary} onPress={onClose}>
         <Text style={styles.primaryText}>Close</Text>
       </TouchableOpacity>

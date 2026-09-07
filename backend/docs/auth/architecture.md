@@ -1,8 +1,8 @@
 # Auth Architecture — Phase 2 Implementation Plan (new backend)
 
-Status: **PLAN** for `second_backend` (Express + Prisma against the redesigned
+Status: **PLAN** for `backend` (Express + Prisma against the redesigned
 53-model schema). Product spec: `docs/phase_2.md` (untracked, user-authored).
-Schema conventions + module layout: `second_backend/docs/database/architecture.md`.
+Schema conventions + module layout: `backend/docs/database/architecture.md`.
 
 This document reconciles the product spec with the new schema and the locked
 decisions, lists the small schema deltas Phase 2 needs, and gives the build
@@ -181,7 +181,7 @@ model VerificationRequest { id, user_id -> User, req_type,   // S3
   notes?, created_at, updated_at }  // docs attach later via EntityDocument
 ```
 
-## 9. Codebase layout (`second_backend/src`)
+## 9. Codebase layout (`backend/src`)
 
 ```
 src/config/env.js             # JWT 15m/30d, lock thresholds, rate limits, mailer stub flag

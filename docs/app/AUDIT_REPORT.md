@@ -1,7 +1,7 @@
 # HerbChain App — UI Audit Report
 
 **Date:** 2026-09-07
-**Scope:** `App/` (React Native mobile app) and `website/` (admin web portal) audited against the product specs in `docs/app/*.md` (overview + 6 role docs, ~60 documented screens), with backend (`second_backend/`, Phases 1–17, 202/202 tests green) as the capability reference.
+**Scope:** `App/` (React Native mobile app) and `website/` (admin web portal) audited against the product specs in `docs/app/*.md` (overview + 6 role docs, ~60 documented screens), with backend (`backend/`, Phases 1–17, 202/202 tests green) as the capability reference.
 
 ---
 
@@ -53,7 +53,7 @@
 ## 3. Gap analysis by role (docs module → status)
 
 Legend: ✅ exists · 🟡 orphaned/built but not wired · 🔶 partially covers spec · ❌ missing.
-"Backend" column = API already available in `second_backend` (✅ = ready to wire today).
+"Backend" column = API already available in `backend` (✅ = ready to wire today).
 
 ### 3.1 Farmer (docs: `farmers.md`, 16 modules)
 
@@ -225,7 +225,7 @@ Legend: ✅ exists · 🟡 orphaned/built but not wired · 🔶 partially covers
 
 ## 5. API drift — mobile app vs new backend (must-fix contract rewrite)
 
-The RN app still calls the **old Flask-era contract**. None of these prefixes exist on `second_backend`:
+The RN app still calls the **old Flask-era contract**. None of these prefixes exist on `backend`:
 
 | App calls (dead) | Count | New backend replacement |
 |---|---|---|

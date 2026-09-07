@@ -72,7 +72,7 @@ export default function UsersPage() {
     return users.filter(
       (u) =>
         (u.name || '').toLowerCase().includes(q) ||
-        (u.user_id || '').toLowerCase().includes(q) ||
+        (u.id || '').toLowerCase().includes(q) ||
         (u.email || '').toLowerCase().includes(q),
     );
   }, [users, search]);
@@ -137,7 +137,7 @@ export default function UsersPage() {
       {!loading && !error && (
         <Grid container spacing={2}>
           {filtered.map((u) => (
-            <Grid item xs={12} sm={6} md={4} key={u.user_id}>
+            <Grid item xs={12} sm={6} md={4} key={u.id}>
               <Card variant="outlined">
                 <CardContent>
                   <Box
@@ -148,9 +148,9 @@ export default function UsersPage() {
                     }}
                   >
                     <Box>
-                      <Typography fontWeight={700}>{u.name || u.user_id}</Typography>
+                      <Typography fontWeight={700}>{u.name || u.id}</Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {u.user_id}
+                        {u.id}
                       </Typography>
                     </Box>
                     <Chip
@@ -169,16 +169,19 @@ export default function UsersPage() {
                       {u.phone}
                     </Typography>
                   )}
-                  {u.location && (
+                  {u.org_code && (
                     <Typography variant="body2" color="text.secondary">
-                      {u.location}
+                      {u.org_code}
                     </Typography>
                   )}
                   <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                    {u.account_status && u.account_status !== 'active' && (
+                      <Chip label={u.account_status} size="small" color="warning" />
+                    )}
                     {u.is_active === false && (
                       <Chip label="Disabled" size="small" color="error" />
                     )}
-                    {u.kyc_verified && (
+                    {u.kyc_status === 'verified' && (
                       <Chip label="KYC verified" size="small" color="success" />
                     )}
                   </Box>

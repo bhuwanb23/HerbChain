@@ -1,45 +1,9 @@
-# Python caches
-__pycache__/
-*.py[cod]
-*.so
-
-# Virtual environments
-env/
-.env/
-.venv/
-venv/
-
-# Environment & secrets
+node_modules/
 .env
-.env.*
-
-# OS/editor
-.DS_Store
-.idea/
-.vscode/
-
-# Test/coverage
-.pytest_cache/
-.coverage
-coverage.xml
-
-# Databases & state
-*.sqlite
-*.sqlite3
+.testdb/
 *.db
-instance/
-
-# Logs & backups
+*.db-journal
 logs/
 *.log
-backups/
-
-# Build outputs
-dist/
-build/
-
-# Node (if any scripts here use it)
-node_modules/
-
-# (Optional) Uncomment if you don't want to track migrations
-# migrations/
+/uploads/
+.tmp/p17_prep.json

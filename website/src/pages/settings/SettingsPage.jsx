@@ -116,22 +116,16 @@ export default function SettingsPage() {
                   <Typography variant="body2">
                     <b>Status:</b>{' '}
                     <Chip
-                      label={health.status || 'unknown'}
-                      color={health.status === 'healthy' ? 'success' : 'warning'}
+                      label={health.message === 'pong' ? 'healthy' : 'unknown'}
+                      color={health.message === 'pong' ? 'success' : 'warning'}
                       size="small"
                     />
                   </Typography>
                   <Typography variant="body2">
-                    <b>DB:</b> {health.db}
-                  </Typography>
-                  <Typography variant="body2">
-                    <b>Users:</b> {health.users}
-                  </Typography>
-                  <Typography variant="body2">
-                    <b>Batches:</b> {health.batches}
+                    <b>API base:</b> {API_BASE_URL}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {health.timestamp}
+                    Responded {new Date().toLocaleTimeString()}
                   </Typography>
                 </Stack>
               )}

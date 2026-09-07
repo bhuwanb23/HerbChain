@@ -1,5 +1,6 @@
-// Real-backend dashboard — fetches /admin/api/stats + /admin/api/batches and renders KPI cards
-// with a filterable list. The mock data file is gone; all numbers come from SQLite.
+// Real-backend dashboard — fetches /api/v1/admin/portal/dashboard (P13 KPIs)
+// and lists recent batches via /api/v1/admin/portal/search. All numbers come
+// from the live second_backend.
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
@@ -8,12 +9,8 @@ import {
   Card,
   CardContent,
   CircularProgress,
-  FormControl,
   Grid,
-  InputLabel,
   Link,
-  MenuItem,
-  Select,
   TextField,
   Typography,
   Chip,
@@ -56,7 +53,6 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [phaseFilter, setPhaseFilter] = useState('All');
 
   useEffect(() => {
     let cancelled = false;
@@ -64,13 +60,17 @@ export default function Dashboard() {
       try {
         setLoading(true);
         setError(null);
-        const [statsRes, batchesRes] = await Promise.all([
-          AdminAPI.stats(accessToken),
-          AdminAPI.batches(accessToken),
-        ]);
+        const dash = await AdminAPI.stats(accessToken);
         if (cancelled) return;
-        setStats(statsRes);
-        setBatches(batchesRes.batches || []);
+        setStats(dash);
+        // Recent batches for the list — universal search with an empty query
+        // returns nothing, so pull by wildcard: search 'HERB' matches batch codes.
+        try {
+          const found = await AdminAPI.search(accessToken, 'HERB', { limit: 24 });
+          if (!cancelled) setBatches(found.results || []);
+        } catch (_e) {
+          if (!cancelled) setBatches([]);
+        }
       } catch (err) {
         if (!cancelled) setError(err?.message || 'Could not load dashboard');
       } finally {
@@ -83,27 +83,32 @@ export default function Dashboard() {
   }, [accessToken]);
 
   const kpis = useMemo(() => {
-    if (!stats) return null;
-    const total = stats.batches?.total ?? 0;
-    const phases = stats.batches?.by_phase || {};
-    const inTransit =
-      (phases.in_transit_to_lab || 0) + (phases.in_transit_to_manufacturer || 0);
-    const completed = phases.consumed || 0;
-    const rejected = stats.batches?.by_test_result?.rejected || 0;
-    return { totalBatches: total, inTransit, delivered: completed, withAlerts: rejected };
+    if (!stats?.kpis) return null;
+    const k = stats.kpis;
+    return {
+      totalBatches: k.active_batches ?? 0,
+      inTransit: k.active_shipments ?? 0,
+      certified: k.certified_batches ?? 0,
+      rejected: k.rejected_batches ?? 0,
+      alerts: k.compliance_alerts ?? 0,
+    };
   }, [stats]);
 
+  const batchRows = useMemo(
+    () => batches.filter((r) => r.type === 'batch'),
+    [batches],
+  );
+
   const filtered = useMemo(() => {
-    return batches.filter((b) => {
-      const matchesPhase = phaseFilter === 'All' || b.state.phase === phaseFilter;
-      const search = searchTerm.toLowerCase();
-      const matchesSearch =
-        !search ||
-        b.herb.batch_id.toLowerCase().includes(search) ||
-        (b.herb.species_name || '').toLowerCase().includes(search);
-      return matchesPhase && matchesSearch;
-    });
-  }, [batches, searchTerm, phaseFilter]);
+    const needle = searchTerm.trim().toLowerCase();
+    if (!needle) return batchRows;
+    return batchRows.filter(
+      (r) =>
+        (r.label || '').toLowerCase().includes(needle) ||
+        (r.id || '').toLowerCase().includes(needle) ||
+        (r.sublabel || '').toLowerCase().includes(needle),
+    );
+  }, [batchRows, searchTerm]);
 
   if (role !== 'admin') {
     return (
@@ -131,68 +136,47 @@ export default function Dashboard() {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <KpiCard
-            title="Total Batches"
+            title="Active Batches"
             value={kpis?.totalBatches ?? 0}
             icon={<AllInbox sx={{ fontSize: 40 }} />}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <KpiCard
-            title="In Transit"
+            title="Active Shipments"
             value={kpis?.inTransit ?? 0}
             icon={<LocalShipping sx={{ fontSize: 40 }} />}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <KpiCard
-            title="Used in Products"
-            value={kpis?.delivered ?? 0}
+            title="Certified Batches"
+            value={kpis?.certified ?? 0}
             icon={<CheckCircle sx={{ fontSize: 40 }} />}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <KpiCard
-            title="Rejected by Lab"
-            value={kpis?.withAlerts ?? 0}
+            title="Open Compliance Alerts"
+            value={kpis?.alerts ?? 0}
             icon={<Warning sx={{ fontSize: 40 }} />}
           />
         </Grid>
       </Grid>
 
       <Card variant="outlined" sx={{ p: 2, mb: 4 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={8}>
-            <TextField
-              fullWidth
-              label="Search by Batch ID or species…"
-              variant="outlined"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <FormControl fullWidth>
-              <InputLabel>Phase</InputLabel>
-              <Select
-                value={phaseFilter}
-                label="Phase"
-                onChange={(e) => setPhaseFilter(e.target.value)}
-              >
-                <MenuItem value="All">All</MenuItem>
-                {Object.entries(PHASE_LABEL).map(([k, v]) => (
-                  <MenuItem key={k} value={k}>
-                    {v}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
+        <TextField
+          fullWidth
+          label="Search recent batches…"
+          variant="outlined"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </Card>
 
       <Grid container spacing={2}>
-        {filtered.map((b) => (
-          <Grid item xs={12} md={6} key={b.herb.batch_id}>
+        {filtered.map((r) => (
+          <Grid item xs={12} md={6} key={r.id}>
             <Card variant="outlined">
               <CardContent>
                 <Stack
@@ -202,20 +186,14 @@ export default function Dashboard() {
                   spacing={1}
                   flexWrap="wrap"
                 >
-                  <Typography fontWeight={700}>{b.herb.species_name}</Typography>
-                  <Chip
-                    label={PHASE_LABEL[b.state.phase] || b.state.phase}
-                    size="small"
-                  />
+                  <Typography fontWeight={700}>{r.label || r.id}</Typography>
+                  {r.sublabel && <Chip label={r.sublabel} size="small" />}
                 </Stack>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  {b.herb.batch_id} · {b.herb.weight_kg} kg · {b.herb.location}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Holder: {b.state.current_holder_id} · Test: {b.state.test_result}
+                  {r.id}
                 </Typography>
                 <Box sx={{ mt: 1 }}>
-                  <Link component={RouterLink} to={`/trace/${b.herb.batch_id}`}>
+                  <Link component={RouterLink} to={`/trace/${r.id}`}>
                     View full journey →
                   </Link>
                 </Box>

@@ -21,7 +21,7 @@ import {
 
 import { QrTokenDisplay, RoleHomeShell, ScanQrSheet } from '../../../components';
 import { useAuth } from '../../../contexts/AuthContext';
-import { ApiError, BatchesAPI, ProductsAPI, TraceabilityAPI } from '../../../services/apiClient';
+import { ApiError, BatchesAPI, ManufacturingAPI, ProductsAPI, QrAPI } from '../../../services/apiClient';
 
 export default function ManufacturerHome() {
   const { accessToken, user } = useAuth();
@@ -46,9 +46,9 @@ export default function ManufacturerHome() {
     try {
       const [mine, prods] = await Promise.all([
         BatchesAPI.listMine(accessToken),
-        ProductsAPI.listMine(accessToken).catch(() => ({ products: [] })),
+        ProductsAPI.list(accessToken).catch(() => ({ products: [] })),
       ]);
-      setHeld((mine.batches || []).filter((b) => b.state.phase === 'with_manufacturer'));
+      setHeld((mine.batches || []).filter((b) => b.phase === 'with_manufacturer'));
       setProducts(prods.products || []);
     } catch (err) {
       Alert.alert('Could not load data', err?.message || 'Network error');
@@ -65,19 +65,16 @@ export default function ManufacturerHome() {
   const handleScan = async (token) => {
     setScanning(true);
     try {
-      const resolved = await TraceabilityAPI.resolve(token);
-      if (resolved.kind !== 'batch') {
-        Alert.alert('Wrong QR', 'This is a product QR, not a batch.');
+      const validated = await QrAPI.validate(accessToken, token);
+      if (!validated.valid) {
+        Alert.alert('Invalid QR', validated.message || 'This QR is not active.');
         return;
       }
-      const batchId = resolved.journey.batch_id;
-      const result = await BatchesAPI.transfer(accessToken, batchId, {
-        scanned_qr_token: token,
-        location: user?.location || undefined,
-      });
+      const batchId = validated.batch.id;
+      const result = await QrAPI.transfer(accessToken, token);
       setScanOpen(false);
       await load();
-      Alert.alert('Received', `${result.transfer.batch_id} is now in your warehouse.`);
+      Alert.alert('Received', `${result.batch?.code || batchId} is now in your warehouse.`);
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : err?.message || 'Failed';
       Alert.alert('Could not receive', msg);
@@ -103,24 +100,32 @@ export default function ManufacturerHome() {
     }
     setCreating(true);
     try {
-      const sourceBatches = selectedBatchIds.map((id) => {
-        const b = held.find((x) => x.herb.batch_id === id);
-        return { batch_id: id, quantity_kg: Number(b?.herb?.weight_kg || 0) };
-      });
-      const result = await ProductsAPI.create(accessToken, {
+      // P10 flow: create the product, then run a manufacturing batch over the
+      // selected source batches; completing the run mints the consumer QR.
+      const product = await ProductsAPI.create(accessToken, {
         name: productName.trim(),
         sku: productSku.trim() || undefined,
-        source_batches: sourceBatches,
+        category: 'other',
       });
+      const ingredients = selectedBatchIds.map((id) => {
+        const b = held.find((x) => x.id === id);
+        return { batch_id: id, quantity_kg: Number(b?.weight_kg || 0) };
+      });
+      const run = await ManufacturingAPI.createBatch(accessToken, {
+        product_id: product.product.id,
+        planned_units: 1,
+        ingredients,
+      });
+      const completed = await ManufacturingAPI.complete(accessToken, run.run.id, {});
       setCreateOpen(false);
       setSelectedBatchIds([]);
       setProductName('');
       setProductSku('');
       setProductQrModal({
-        product_id: result.product.product_id,
-        name: result.product.name,
-        qr_token: result.qr_token,
-        qr_png: result.qr_png,
+        product_id: product.product.id,
+        name: product.product.name,
+        qr_token: completed.qr?.url || null,
+        qr_png: completed.qr?.png || null,
       });
       await load();
     } catch (err) {
@@ -155,10 +160,10 @@ export default function ManufacturerHome() {
         </View>
       ) : (
         held.map((b) => (
-          <View key={b.herb.batch_id} style={styles.card}>
-            <Text style={styles.cardTitle}>{b.herb.species_name}</Text>
+          <View key={b.id} style={styles.card}>
+            <Text style={styles.cardTitle}>{b.species?.common_name || b.species?.code || 'Unknown'}</Text>
             <Text style={styles.cardMeta}>
-              {b.herb.batch_id} · {b.herb.weight_kg} kg
+              {b.code} · {b.weight_kg} kg
             </Text>
           </View>
         ))
@@ -180,25 +185,26 @@ export default function ManufacturerHome() {
       ) : (
         products.map((p) => (
           <TouchableOpacity
-            key={p.product_id}
+            key={p.id}
             style={styles.card}
             onPress={async () => {
               try {
-                const data = await ProductsAPI.getQr(accessToken, p.product_id);
+                const data = await ProductsAPI.get(accessToken, p.id);
                 setProductQrModal({
-                  product_id: p.product_id,
+                  product_id: p.id,
                   name: p.name,
-                  qr_token: data.qr_token,
-                  qr_png: data.qr_png,
+                  qr_token: null,
+                  qr_png: null,
                 });
+                console.log('[Manufacturer] product detail', data.product?.code);
               } catch (err) {
-                Alert.alert('Could not load QR', err?.message);
+                Alert.alert('Could not load product', err?.message);
               }
             }}
           >
             <Text style={styles.cardTitle}>{p.name}</Text>
             <Text style={styles.cardMeta}>
-              {p.product_id} · {p.source_batches?.length || 0} source batches
+              {p.code || p.id} · {p.category || 'other'}
             </Text>
           </TouchableOpacity>
         ))
@@ -237,18 +243,18 @@ export default function ManufacturerHome() {
 
           <Text style={[styles.label, { marginTop: 16 }]}>Source batches</Text>
           {held.map((b) => {
-            const selected = selectedBatchIds.includes(b.herb.batch_id);
+            const selected = selectedBatchIds.includes(b.id);
             return (
               <TouchableOpacity
-                key={b.herb.batch_id}
-                onPress={() => toggleSelect(b.herb.batch_id)}
+                key={b.id}
+                onPress={() => toggleSelect(b.id)}
                 style={[styles.batchSelect, selected && styles.batchSelectActive]}
               >
                 <Text style={styles.batchSelectTitle}>
-                  {selected ? '☑ ' : '☐ '} {b.herb.species_name}
+                  {selected ? '☑ ' : '☐ '} {b.species?.common_name || b.species?.code || 'Unknown'}
                 </Text>
                 <Text style={styles.batchSelectMeta}>
-                  {b.herb.batch_id} · {b.herb.weight_kg} kg
+                  {b.code} · {b.weight_kg} kg
                 </Text>
               </TouchableOpacity>
             );

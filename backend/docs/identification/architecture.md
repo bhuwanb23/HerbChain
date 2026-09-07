@@ -2,7 +2,7 @@
 
 Status: **LIVE** — implemented, tested (68/68 active suites), live-smoked (15/15).
 Reconciles `docs/phase_4.md` against the redesigned schema. All code lives in
-`second_backend` on the new modular layout.
+`backend` on the new modular layout.
 
 ## 1. Product rule (unchanged from spec)
 

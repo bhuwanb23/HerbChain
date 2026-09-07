@@ -7,11 +7,11 @@
 
 ## 1. Situation (one paragraph)
 
-The **backend is done**: `second_backend/` covers Phases 1–17 (auth/RBAC, batches+QR, transfers, shipments, lab, procurement, products/lineage, consumer verify, admin portal, documents, notifications, blockchain, analytics, offline sync) with 202/202 tests green and live smoke passing. The **front-end is not**: the mobile app (`App/`) has ~60 screen files but only 16 wired routes and a client layer (`services/apiClient.js`) still speaking the dead Flask contract; the web portal (`website/`) has 12 pages wired but calls old `/admin/api/*` endpoints that no longer exist. **The plan: cut over both front-ends to `second_backend`, wire everything that already exists, then build the missing screens in dependency order.**
+The **backend is done**: `backend/` covers Phases 1–17 (auth/RBAC, batches+QR, transfers, shipments, lab, procurement, products/lineage, consumer verify, admin portal, documents, notifications, blockchain, analytics, offline sync) with 202/202 tests green and live smoke passing. The **front-end is not**: the mobile app (`App/`) has ~60 screen files but only 16 wired routes and a client layer (`services/apiClient.js`) still speaking the dead Flask contract; the web portal (`website/`) has 12 pages wired but calls old `/admin/api/*` endpoints that no longer exist. **The plan: cut over both front-ends to `backend`, wire everything that already exists, then build the missing screens in dependency order.**
 
 ## 2. Strategy (agreed direction)
 
-1. **Cutover first** — point `App/` and `website/` at `second_backend` (port 5000, same as before; only the routes change).
+1. **Cutover first** — point `App/` and `website/` at `backend` (port 5000, same as before; only the routes change).
 2. **Wire existing before building new** — most orphaned screens need routing + contract rewrite, not a rewrite from scratch.
 3. **Dependency order for new screens** — Transporter loop gates everything (custody chain), then Farmer lifecycle, Lab pipeline, Manufacturer chain, shared screens, Admin web upgrade, Consumer portal.
 4. **One phase = one file = one PR-sized chunk** — each phase has its own plan file with steps, endpoints, screens, acceptance criteria, and a status table we update as we go.
@@ -21,7 +21,7 @@ The **backend is done**: `second_backend/` covers Phases 1–17 (auth/RBAC, batc
 
 | Phase | File | Scope | New screens | Depends on | Status |
 |---|---|---|---|---|---|
-| **A0** | [`plan/phase_A0_cutover.md`](./plan/phase_A0_cutover.md) | Backend cutover: both front-ends → `second_backend`; rewrite `apiClient.js` (both); auth context parity; smoke login end-to-end | 0 | — | ⬜ not started |
+| **A0** | [`plan/phase_A0_cutover.md`](./plan/phase_A0_cutover.md) | Backend cutover: both front-ends → `backend`; rewrite `apiClient.js` (both); auth context parity; smoke login end-to-end | 0 | — | ⬜ not started |
 | **A1** | [`plan/phase_A1_navigation.md`](./plan/phase_A1_navigation.md) | Navigation un-orphaning: wire all 60 existing screens into role navigators (tabs/stacks per `overview.md`), route guards per role | 0 | A0 | ⬜ not started |
 | **A2** | [`plan/phase_A2_transporter.md`](./plan/phase_A2_transporter.md) | Transporter core loop: shipments list/detail/accept → QR scan → pickup → transfer confirm → transit+GPS → delivery+POD → history | ~8 | A1 | ⬜ not started |
 | **A3** | [`plan/phase_A3_farmer.md`](./plan/phase_A3_farmer.md) | Farmer lifecycle: dashboard, my batches, batch details, timeline, QR view, transfer requests, certifications, notifications, profile | ~6 | A1 | ⬜ not started |
@@ -36,7 +36,7 @@ The **backend is done**: `second_backend/` covers Phases 1–17 (auth/RBAC, batc
 
 ## 4. What "done" means (global acceptance criteria)
 
-- Every screen in `docs/app/overview.md` exists, is routed, and talks to `second_backend` over the real contract.
+- Every screen in `docs/app/overview.md` exists, is routed, and talks to `backend` over the real contract.
 - Both front-ends have **zero** calls to dead prefixes (`/herbs/*`, `/crop*`, `/catalogue`, `/admin/api/*`, `/traceability/*`, `/farm/me`, `/prices`, `/weather`, `/recognition/herbs`).
 - Each role's full documented journey works end-to-end over HTTP against a running backend (smoke scripts per phase).
 - Full backend regression stays green (202/202) throughout — no backend changes except the 3 small additions called out in A8/A9.

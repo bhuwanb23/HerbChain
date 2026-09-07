@@ -21,7 +21,7 @@ import {
 
 import { RoleHomeShell, ScanQrSheet } from '../../../components';
 import { useAuth } from '../../../contexts/AuthContext';
-import { ApiError, BatchesAPI, LabReportsAPI, TraceabilityAPI } from '../../../services/apiClient';
+import { ApiError, BatchesAPI, LabsAPI, QrAPI } from '../../../services/apiClient';
 
 const PHASE_LABEL = {
   in_transit_to_lab: 'Coming in',
@@ -50,12 +50,12 @@ export default function LabHome() {
 
   const load = useCallback(async () => {
     try {
-      const [mineRes, inboxRes] = await Promise.all([
+      const [mineRes, queueRes] = await Promise.all([
         BatchesAPI.listMine(accessToken),
-        BatchesAPI.availableForLab(accessToken).catch(() => ({ batches: [] })),
+        LabsAPI.queue(accessToken).catch(() => ({ batches: [] })),
       ]);
       setMine(mineRes.batches || []);
-      setInbox((inboxRes.batches || []).filter((b) => b.state.phase === 'in_transit_to_lab'));
+      setInbox((queueRes.batches || []).filter((b) => b.phase === 'in_transit_to_lab'));
     } catch (err) {
       Alert.alert('Could not load lab data', err?.message || 'Network error');
     } finally {
@@ -71,19 +71,19 @@ export default function LabHome() {
   const handleScan = async (token) => {
     setScanning(true);
     try {
-      const resolved = await TraceabilityAPI.resolve(token);
-      if (resolved.kind !== 'batch') {
-        Alert.alert('Wrong QR', 'This is not a batch QR.');
+      const validated = await QrAPI.validate(accessToken, token);
+      if (!validated.valid) {
+        Alert.alert('Invalid QR', validated.message || 'This QR is not active.');
         return;
       }
-      const batchId = resolved.journey.batch_id;
-      const result = await BatchesAPI.transfer(accessToken, batchId, {
-        scanned_qr_token: token,
-        location: user?.location || undefined,
+      const batchId = validated.batch.id;
+      const result = await LabsAPI.receive(accessToken, {
+        batch_id: batchId,
+        condition_status: 'good',
       });
       setScanOpen(false);
       await load();
-      Alert.alert('Batch received', `${result.transfer.batch_id} is now at your lab.`);
+      Alert.alert('Batch received', `${result.receipt?.batch_id || batchId} is now at your lab.`);
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : err?.message || 'Failed';
       Alert.alert('Could not receive', msg);
@@ -100,15 +100,10 @@ export default function LabHome() {
     }
     setSubmittingReport(true);
     try {
-      await LabReportsAPI.create(accessToken, {
-        batch_id: reportingBatch.herb.batch_id,
-        test_type: reportForm.test_type,
-        test_date: reportForm.test_date,
-        results_summary: reportForm.results_summary,
-        outcome: reportForm.outcome,
-        purity_percentage: reportForm.purity_percentage
-          ? Number(reportForm.purity_percentage)
-          : undefined,
+      await LabsAPI.issueCertificate(accessToken, {
+        batch_id: reportingBatch.id,
+        notes: reportForm.results_summary,
+        ...(reportForm.outcome === 'approved' ? {} : {}),
       });
       setReportingBatch(null);
       setReportForm({
@@ -148,12 +143,12 @@ export default function LabHome() {
         </View>
       ) : (
         inbox.map((b) => (
-          <View key={b.herb.batch_id} style={styles.card}>
-            <Text style={styles.cardTitle}>{b.herb.species_name}</Text>
+          <View key={b.id} style={styles.card}>
+            <Text style={styles.cardTitle}>{b.species?.common_name || b.species?.code || 'Unknown'}</Text>
             <Text style={styles.cardMeta}>
-              {b.herb.batch_id} · {b.herb.weight_kg} kg
+              {b.code} · {b.weight_kg} kg
             </Text>
-            <Text style={styles.phase}>{PHASE_LABEL[b.state.phase] || b.state.phase}</Text>
+            <Text style={styles.phase}>{PHASE_LABEL[b.phase] || b.phase}</Text>
           </View>
         ))
       )}
@@ -169,15 +164,15 @@ export default function LabHome() {
         </View>
       ) : (
         mine.map((b) => (
-          <View key={b.herb.batch_id} style={styles.card}>
+          <View key={b.id} style={styles.card}>
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.cardTitle}>{b.herb.species_name}</Text>
+                <Text style={styles.cardTitle}>{b.species?.common_name || b.species?.code || 'Unknown'}</Text>
                 <Text style={styles.cardMeta}>
-                  {b.herb.batch_id} · current test: {b.state.test_result}
+                  {b.code} · current test: {b.test_status || 'pending'}
                 </Text>
               </View>
-              {b.state.phase === 'at_lab' && b.state.test_result === 'pending' ? (
+              {b.phase === 'at_lab' && (b.test_status || 'pending') === 'pending' ? (
                 <TouchableOpacity
                   style={styles.fileReport}
                   onPress={() => setReportingBatch(b)}

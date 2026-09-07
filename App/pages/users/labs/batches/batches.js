@@ -7,7 +7,7 @@ import { LabBatchList } from './components';
 import { useEffect } from 'react';
 import { Alert } from 'react-native';
 import { useRoute } from '@react-navigation/native';
-import { API_BASE_URL } from '../../../../constants/api';
+import { ShipmentsAPI } from '../../../../services/apiClient';
 
 const BatchesPage = ({ navigation }) => {
   const { t } = useGlobalTranslation();
@@ -28,20 +28,12 @@ const BatchesPage = ({ navigation }) => {
     const handleDelivery = async () => {
       if (scannedData && batchId) {
         try {
-          const res = await fetch(`${API_BASE_URL}/api/v1/herbs/${batchId}/deliver`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              lab_id: 'lab_001',
-              scanned_qr_text: scannedData,
-              delivery_location: 'Lab Facility'
-            })
+          // Use the new shipments contract for lab delivery
+          const shipmentId = batchId; // batchId may actually be shipmentId from scanner
+          await ShipmentsAPI.deliver(shipmentId, {
+            scanned_qr: scannedData,
+            location: 'Lab Facility',
           });
-          const json = await res.json();
-          if (!res.ok) {
-            Alert.alert(t.labBatches?.deliveryFailed || 'Delivery Failed', json.error || (t.labBatches?.unableToValidateQR || 'Unable to validate QR'));
-            return;
-          }
           Alert.alert(t.labBatches?.deliverySuccess || 'Delivery Success', t.labBatches?.ownershipTransferred || 'Ownership transferred to lab.');
           refresh(); // Refresh the list after successful delivery
         } catch (e) {

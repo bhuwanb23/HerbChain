@@ -1,215 +1,75 @@
-import { API_BASE_URL } from '../../../../constants/api';
-
 /**
- * Consumer API Service
- * Handles all API calls related to consumer functionality
+ * Consumer API Service — rewritten for the backend contract.
+ *
+ * Consumer verification is PUBLIC (no auth) via VerifyAPI.
+ * Batch detail, ownership, QR require auth via BatchesAPI/TransfersAPI.
  */
+import { BatchesAPI, VerifyAPI, TransfersAPI } from '../../../services/apiClient';
+
 class ConsumerAPI {
   /**
-   * Fetch herb details by batch ID
-   * @param {string} batchId - The herb batch ID
-   * @returns {Promise<Object|null>} Herb data or null if error
+   * Fetch herb details by batch ID (requires auth).
    */
-  async fetchHerbDetails(batchId) {
-    if (!batchId) {
-      throw new Error('Batch ID is required');
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/herbs/${batchId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Herb batch not found. Please check the QR code and try again.');
-        } else if (response.status >= 500) {
-          throw new Error('Server error. Please try again later.');
-        } else {
-          throw new Error('Failed to fetch herb details. Please try again.');
-        }
-      }
-
-      const data = await response.json();
-      
-      // Validate response structure
-      if (!data.herb) {
-        throw new Error('Invalid response format from server.');
-      }
-
-      return {
-        herb: data.herb,
-        ownershipHistory: data.ownership_history || [],
-        currentOwner: data.current_owner || null,
-      };
-    } catch (error) {
-      console.error('ConsumerAPI.fetchHerbDetails error:', error);
-      throw error;
-    }
+  async fetchHerbDetails(batchId, token) {
+    if (!batchId) throw new Error('Batch ID is required');
+    const data = await BatchesAPI.get(token, batchId);
+    if (!data) throw new Error('Batch not found. Please check the QR code and try again.');
+    return {
+      herb: data.batch || data,
+      ownershipHistory: data.ownership_history || [],
+      currentOwner: data.current_holder || null,
+    };
   }
 
-  /**
-   * Validate batch ID format
-   * @param {string} batchId - The batch ID to validate
-   * @returns {boolean} True if valid format
-   */
   validateBatchId(batchId) {
-    if (!batchId || typeof batchId !== 'string') {
-      return false;
-    }
-
-    // Basic validation for herb batch ID format
-    // Expected format: HERB-XXXXXXXX or similar
-    const batchIdPattern = /^[A-Z0-9-_]+$/i;
-    return batchIdPattern.test(batchId.trim());
+    if (!batchId || typeof batchId !== 'string') return false;
+    return /^[A-Z0-9-_]+$/i.test(batchId.trim());
   }
 
-  /**
-   * Parse QR code data to extract batch ID
-   * @param {string} qrData - Raw QR code data
-   * @returns {string} Extracted batch ID
-   */
   parseQRData(qrData) {
-    try {
-      console.log('🔍 Parsing QR data:', qrData);
-      
-      // Handle different QR code formats
-      if (typeof qrData === 'string') {
-        // Try to parse as JSON first
-        if (qrData.startsWith('{') && qrData.endsWith('}')) {
-          try {
-            const parsed = JSON.parse(qrData);
-            console.log('✅ Parsed as JSON:', parsed);
-            return parsed.batch_id || qrData;
-          } catch (jsonError) {
-            console.log('❌ JSON parse failed, trying Python dict format');
-            
-            // Try to handle Python dictionary format
-            // Convert Python dict format to JSON-like format
-            let cleanData = qrData
-              .replace(/'/g, '"')  // Replace single quotes with double quotes
-              .replace(/True/g, 'true')  // Replace Python True with JSON true
-              .replace(/False/g, 'false')  // Replace Python False with JSON false
-              .replace(/None/g, 'null');  // Replace Python None with JSON null
-            
-            try {
-              const parsed = JSON.parse(cleanData);
-              console.log('✅ Parsed as Python dict:', parsed);
-              return parsed.batch_id || qrData;
-            } catch (dictError) {
-              console.log('❌ Python dict parse also failed');
-            }
-          }
-        }
-        
-        // Check if it's already a batch_id format
-        if (qrData.match(/^HERB-[A-Z0-9]+$/i) || qrData.match(/^HERB_[A-Z0-9_]+$/i)) {
-          console.log('✅ Direct batch_id format:', qrData);
-          return qrData.trim();
-        }
-        
-        // Try to extract batch_id from string using regex
-        const batchIdMatch = qrData.match(/['"]?batch_id['"]?\s*:\s*['"]?([^'",\s}]+)['"]?/i);
-        if (batchIdMatch) {
-          console.log('✅ Extracted batch_id:', batchIdMatch[1]);
-          return batchIdMatch[1];
-        }
+    if (typeof qrData === 'string') {
+      if (qrData.startsWith('{') && qrData.endsWith('}')) {
+        try {
+          const parsed = JSON.parse(qrData);
+          return parsed.token || parsed.batch_id || qrData;
+        } catch (_) { /* fall through */ }
       }
-      
-      // If all parsing fails, return original data
-      console.log('⚠️ Using original QR data as batch_id:', qrData);
-      return qrData.toString().trim();
-      
-    } catch (error) {
-      console.log('❌ Error parsing QR data:', error);
-      // Return original data if parsing fails
-      return qrData.toString().trim();
     }
+    return qrData.toString().trim();
   }
 
   /**
-   * Get herb ownership history
-   * @param {string} batchId - The herb batch ID
-   * @returns {Promise<Array>} Ownership history array
+   * Get ownership history (requires auth).
    */
-  async getOwnershipHistory(batchId) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/herbs/${batchId}/ownership`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch ownership history');
-      }
-
-      const data = await response.json();
-      return data.ownership_history || [];
-    } catch (error) {
-      console.error('ConsumerAPI.getOwnershipHistory error:', error);
-      throw error;
-    }
+  async getOwnershipHistory(batchId, token) {
+    const data = await TransfersAPI.ownershipHistory(token, batchId);
+    return Array.isArray(data) ? data : data?.history || [];
   }
 
   /**
-   * Get current QR code for a batch
-   * @param {string} batchId - The herb batch ID
-   * @returns {Promise<Object>} QR code information
+   * Get current QR code for a batch (requires auth).
    */
-  async getCurrentQR(batchId) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/herbs/${batchId}/qr`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch QR code');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('ConsumerAPI.getCurrentQR error:', error);
-      throw error;
-    }
+  async getCurrentQR(batchId, token) {
+    return BatchesAPI.getQr(token, batchId);
   }
 
   /**
-   * Check if herb batch exists
-   * @param {string} batchId - The herb batch ID
-   * @returns {Promise<boolean>} True if batch exists
+   * Check if herb batch exists (requires auth).
    */
-  async checkBatchExists(batchId) {
+  async checkBatchExists(batchId, token) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/herbs/${batchId}`, {
-        method: 'HEAD', // Use HEAD to check existence without downloading data
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      return response.ok;
-    } catch (error) {
-      console.error('ConsumerAPI.checkBatchExists error:', error);
+      await BatchesAPI.get(token, batchId);
+      return true;
+    } catch {
       return false;
     }
   }
 
   /**
-   * Format herb data for display
-   * @param {Object} herbData - Raw herb data from API
-   * @returns {Object} Formatted herb data
+   * Format herb data for display.
    */
   formatHerbData(herbData) {
     if (!herbData) return null;
-
     return {
       ...herbData,
       formattedHarvestDate: this.formatDate(herbData.harvest_date),
@@ -221,129 +81,61 @@ class ConsumerAPI {
     };
   }
 
-  /**
-   * Format date string for display
-   * @param {string} dateString - ISO date string
-   * @returns {string} Formatted date
-   */
   formatDate(dateString) {
     if (!dateString) return 'N/A';
     try {
       return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
+        year: 'numeric', month: 'short', day: 'numeric',
       });
-    } catch {
-      return dateString;
-    }
+    } catch { return dateString; }
   }
 
-  /**
-   * Get status color for quality status
-   * @param {string} status - Quality status
-   * @returns {string} Color hex code
-   */
   getStatusColor(status) {
     switch (status) {
       case 'approved': return '#10B981';
       case 'testing': return '#F59E0B';
       case 'rejected': return '#EF4444';
-      case 'pending': return '#6B7280';
       default: return '#6B7280';
     }
   }
 
-  /**
-   * Get status icon for quality status
-   * @param {string} status - Quality status
-   * @returns {string} Icon name
-   */
   getStatusIcon(status) {
     switch (status) {
       case 'approved': return 'checkmark-circle';
       case 'testing': return 'time';
       case 'rejected': return 'close-circle';
-      case 'pending': return 'hourglass';
       default: return 'help-circle';
     }
   }
 
   /**
-   * Get complete traceability history for a herb batch
-   * @param {string} batchId - The herb batch ID
-   * @returns {Promise<Object>} Complete traceability data with journey timeline
+   * Get traceability data via batch history (requires auth).
    */
-  async fetchTraceabilityData(batchId) {
-    if (!batchId) {
-      throw new Error('Batch ID is required');
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/herbs/${batchId}/traceability`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Herb batch not found or no traceability data available.');
-        } else if (response.status >= 500) {
-          throw new Error('Server error. Please try again later.');
-        } else {
-          throw new Error('Failed to fetch traceability data. Please try again.');
-        }
-      }
-
-      const data = await response.json();
-      
-      // Validate response structure
-      if (!data.herb_details || !data.journey_timeline) {
-        throw new Error('Invalid traceability data format from server.');
-      }
-
-      return {
-        batchId: data.batch_id,
-        herbDetails: data.herb_details,
-        farmerDetails: data.farmer_details,
-        journeyTimeline: data.journey_timeline,
-        currentOwner: data.current_owner,
-        totalTransfers: data.total_transfers,
-        journeySummary: data.journey_summary
-      };
-    } catch (error) {
-      console.error('ConsumerAPI.fetchTraceabilityData error:', error);
-      throw error;
-    }
+  async fetchTraceabilityData(batchId, token) {
+    if (!batchId) throw new Error('Batch ID is required');
+    const data = await BatchesAPI.history(token, batchId);
+    return {
+      batchId,
+      herbDetails: data?.batch || data,
+      farmerDetails: data?.farmer || null,
+      journeyTimeline: data?.events || data?.timeline || [],
+      currentOwner: data?.current_holder || null,
+      totalTransfers: data?.total_transfers || 0,
+      journeySummary: data?.journey_summary || null,
+    };
   }
 
-  /**
-   * Format journey timeline for display
-   * @param {Array} timeline - Raw timeline data
-   * @returns {Array} Formatted timeline data
-   */
   formatJourneyTimeline(timeline) {
     if (!timeline || !Array.isArray(timeline)) return [];
-
     return timeline.map(step => ({
       ...step,
-      formattedDate: this.formatDate(step.transfer_date),
-      userIcon: this.getUserIcon(step.to_user?.role),
-      statusColor: this.getTransferStatusColor(step.transfer_reason),
-      displayLocation: step.location || 'Location not specified',
-      transportDuration: step.transport_details?.actual_duration 
-        ? `${Math.round(step.transport_details.actual_duration / 60)} hours`
-        : null
+      formattedDate: this.formatDate(step.created_at || step.transfer_date),
+      userIcon: this.getUserIcon(step.actor_role || step.to_user?.role),
+      statusColor: this.getTransferStatusColor(step.event_type || step.transfer_reason),
+      displayLocation: step.gps_location || step.location || 'Location not specified',
     }));
   }
 
-  /**
-   * Get user icon based on role
-   * @param {string} role - User role
-   * @returns {string} Icon name
-   */
   getUserIcon(role) {
     switch (role) {
       case 'farmer': return 'leaf';
@@ -354,43 +146,30 @@ class ConsumerAPI {
     }
   }
 
-  /**
-   * Get transfer status color
-   * @param {string} reason - Transfer reason
-   * @returns {string} Color hex code
-   */
-  getTransferStatusColor(reason) {
-    switch (reason) {
-      case 'Initial Creation': return '#10B981';
-      case 'Lab Testing Request': return '#F59E0B';
-      case 'Pickup': return '#3B82F6';
-      case 'Delivery to Lab': return '#8B5CF6';
-      case 'Lab Testing Approved': return '#10B981';
-      case 'Lab Testing Rejected': return '#EF4444';
-      case 'Manufacturer Order': return '#F97316';
-      case 'Delivery to Manufacturer': return '#06B6D4';
+  getTransferStatusColor(eventType) {
+    switch (eventType) {
+      case 'CREATED': return '#10B981';
+      case 'LAB_REQUESTED': return '#F59E0B';
+      case 'PICKUP': return '#3B82F6';
+      case 'DELIVERED': return '#8B5CF6';
+      case 'LAB_APPROVED': return '#10B981';
+      case 'LAB_REJECTED': return '#EF4444';
+      case 'MANUFACTURER_ORDER': return '#F97316';
+      case 'DELIVERY_COMPLETED': return '#06B6D4';
       default: return '#6B7280';
     }
   }
 
-  /**
-   * Get journey summary statistics
-   * @param {Object} journeySummary - Journey summary data
-   * @returns {Object} Formatted summary statistics
-   */
   formatJourneySummary(journeySummary) {
     if (!journeySummary) return null;
-
     return {
       totalDays: journeySummary.total_days || 0,
       currentLocation: journeySummary.current_location || 'Unknown',
       qualityCertified: journeySummary.quality_certified || false,
-      totalDistance: journeySummary.total_distance_km 
-        ? `${Math.round(journeySummary.total_distance_km)} km`
-        : 'N/A'
+      totalDistance: journeySummary.total_distance_km
+        ? `${Math.round(journeySummary.total_distance_km)} km` : 'N/A',
     };
   }
 }
 
-// Export singleton instance
 export default new ConsumerAPI();

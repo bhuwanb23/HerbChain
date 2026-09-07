@@ -26,20 +26,36 @@ export function AuthProvider({ children }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
+  // Re-validate the persisted session against /auth/me on mount — the token
+  // may have been revoked server-side since the last visit.
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed.accessToken && parsed.user) {
-          setSession(parsed);
+    let cancelled = false;
+    (async () => {
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.accessToken && parsed.user) {
+            setSession(parsed);
+            if (!cancelled) {
+              try {
+                const me = await AuthAPI.me(parsed.accessToken);
+                setSession((s) => ({ ...s, user: me.user }));
+              } catch (_e) {
+                // Token no longer valid — clear the stale session.
+                setSession({ user: null, accessToken: null, refreshToken: null });
+                window.localStorage.removeItem(STORAGE_KEY);
+              }
+            }
+          }
         }
+      } catch (err) {
+        console.warn('AuthContext: failed to load session', err);
+      } finally {
+        if (!cancelled) setReady(true);
       }
-    } catch (err) {
-      console.warn('AuthContext: failed to load session', err);
-    } finally {
-      setReady(true);
-    }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   const persist = useCallback((next) => {

@@ -2,18 +2,18 @@ import React from 'react';
 import { View } from 'react-native';
 import HerbList from './components/HerbList';
 import { useHerbList } from './hooks/useHerbList';
+import { useAuth } from '../../../../contexts/AuthContext';
 
 const HerbListScreen = ({ navigation, onAdd, onOpenDetails }) => {
-  // Default farmer ID for development
-  const farmerId = 'farmer_001';
-  const { items, loading, refresh } = useHerbList(farmerId);
+  const { accessToken } = useAuth();
+  const { items, loading, refetch } = useHerbList(accessToken);
 
   return (
     <View style={{ flex: 1 }}>
       <HerbList 
         data={items} 
         loading={loading} 
-        onRefresh={refresh} 
+        onRefresh={refetch} 
         onAdd={onAdd || (() => {})}
         onItemPress={onOpenDetails || (() => {})}
       />

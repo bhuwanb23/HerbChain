@@ -18,7 +18,7 @@ import {
 
 import { QrTokenDisplay, RoleHomeShell, ScanQrSheet } from '../../../components';
 import { useAuth } from '../../../contexts/AuthContext';
-import { ApiError, BatchesAPI, TraceabilityAPI } from '../../../services/apiClient';
+import { ApiError, BatchesAPI, QrAPI, ShipmentsAPI } from '../../../services/apiClient';
 
 const PHASE_LABEL = {
   in_transit_to_lab: 'In transit to lab',
@@ -29,6 +29,7 @@ export default function TransporterHome() {
   const { accessToken, user } = useAuth();
 
   const [batches, setBatches] = useState([]);
+  const [shipments, setShipments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -38,10 +39,16 @@ export default function TransporterHome() {
 
   const load = useCallback(async () => {
     try {
-      const data = await BatchesAPI.listMine(accessToken);
-      setBatches(data.batches || []);
+      // A transporter's custody view = batches currently held by them (from a
+      // scan-to-receive) plus their assigned shipments (P7).
+      const [mine, shipments] = await Promise.all([
+        BatchesAPI.listMine(accessToken),
+        ShipmentsAPI.list(accessToken, { role: 'transporter' }).catch(() => ({ shipments: [] })),
+      ]);
+      setBatches(mine.batches || []);
+      setShipments(shipments.shipments || []);
     } catch (err) {
-      Alert.alert('Could not load batches', err?.message || 'Network error');
+      Alert.alert('Could not load trips', err?.message || 'Network error');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -55,24 +62,22 @@ export default function TransporterHome() {
   const handleScan = async (token) => {
     setScanning(true);
     try {
-      // Resolve the token first so we know which batch it's for, then transfer.
-      const resolved = await TraceabilityAPI.resolve(token);
-      if (resolved.kind !== 'batch') {
-        Alert.alert('Wrong QR', 'This is not a batch QR.');
+      // P5/P6 two-party transfer: validate the token, then execute the
+      // custody transfer against it (moves batch + rotates QR atomically).
+      const validated = await QrAPI.validate(accessToken, token);
+      if (!validated.valid) {
+        Alert.alert('Invalid QR', validated.message || 'This QR is not active.');
         return;
       }
-      const batchId = resolved.journey.batch_id;
-      const result = await BatchesAPI.transfer(accessToken, batchId, {
-        scanned_qr_token: token,
-        location: user?.location || undefined,
-      });
+      const result = await QrAPI.transfer(accessToken, token);
       setScanOpen(false);
       setResultModal({
-        batch_id: result.transfer.batch_id,
-        from_phase: result.transfer.from_phase,
-        to_phase: result.transfer.to_phase,
-        new_qr_token: result.new_qr_token,
-        new_qr_png: result.new_qr_png,
+        batch_id: result.batch_id,
+        code: result.code,
+        from_phase: result.phase_before,
+        to_phase: result.phase_after,
+        new_qr_url: result.url,
+        new_qr_png: result.png,
       });
       await load();
     } catch (err) {
@@ -109,16 +114,16 @@ export default function TransporterHome() {
         </View>
       ) : (
         batches.map((b) => (
-          <View key={b.herb.batch_id} style={styles.card}>
+          <View key={b.id} style={styles.card}>
             <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>{b.herb.species_name}</Text>
-              <Text style={styles.cardId}>{b.herb.batch_id}</Text>
+              <Text style={styles.cardTitle}>{b.species?.common_name || b.species?.code || 'Unknown'}</Text>
+              <Text style={styles.cardId}>{b.code}</Text>
             </View>
             <Text style={styles.cardMeta}>
-              {b.herb.weight_kg} kg · {b.herb.location}
+              {b.weight_kg} kg · {b.location || '—'}
             </Text>
             <Text style={styles.phase}>
-              {PHASE_LABEL[b.state.phase] || b.state.phase}
+              {PHASE_LABEL[b.phase] || b.phase}
             </Text>
           </View>
         ))
@@ -145,12 +150,12 @@ export default function TransporterHome() {
             {resultModal ? (
               <>
                 <Text style={styles.title}>Transfer succeeded</Text>
-                <Text style={styles.subtitle}>{resultModal.batch_id}</Text>
+                <Text style={styles.subtitle}>{resultModal.code || resultModal.batch_id}</Text>
                 <Text style={styles.statusLine}>
                   {resultModal.from_phase} → {resultModal.to_phase}
                 </Text>
                 <QrTokenDisplay
-                  token={resultModal.new_qr_token}
+                  token={resultModal.new_qr_url}
                   png={resultModal.new_qr_png}
                   label="Show this QR to the next handler"
                   size={220}

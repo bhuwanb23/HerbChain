@@ -57,7 +57,7 @@ export default function FarmerHome() {
   const [refreshing, setRefreshing] = useState(false);
 
   const [showRegister, setShowRegister] = useState(false);
-  const [qrModal, setQrModal] = useState(null); // { batch_id, qr_token, qr_png }
+  const [qrModal, setQrModal] = useState(null); // { batch_id, code, qr: { png, url, ... } }
 
   // Register form state
   const [species, setSpecies] = useState('');
@@ -96,22 +96,24 @@ export default function FarmerHome() {
     setSubmitting(true);
     try {
       const created = await BatchesAPI.create(accessToken, {
-        species_name: species.trim(),
-        harvest_date: harvestDate,
+        species_code: species.trim().toLowerCase(),
+        quantity: weightNum,
+        unit: 'kg',
+        harvest_date: new Date(`${harvestDate}T00:00:00.000Z`).toISOString(),
+        cultivation_type: 'organic',
+        gps_lat: 0,
+        gps_lng: 0,
         location: location.trim(),
-        weight_kg: weightNum,
-        notes: notes.trim() || undefined,
+        asset_ids: [],
       });
       setShowRegister(false);
       setSpecies('');
       setLocation('');
       setWeight('');
       setNotes('');
-      setNotes('');
       setQrModal({
-        batch_id: created.herb.batch_id,
-        qr_token: created.qr_token,
-        qr_png: created.qr_png,
+        batch_id: created.batch.id,
+        code: created.batch.code,
       });
       await load();
     } catch (err) {
@@ -123,11 +125,11 @@ export default function FarmerHome() {
 
   const showQrFor = async (batch) => {
     try {
-      const data = await BatchesAPI.getQr(accessToken, batch.herb.batch_id);
+      const data = await BatchesAPI.getQr(accessToken, batch.id);
       setQrModal({
-        batch_id: batch.herb.batch_id,
-        qr_token: data.qr_token,
-        qr_png: data.qr_png,
+        batch_id: batch.id,
+        code: data.code,
+        qr: data.qr, // { url, png, version, status, ... }
       });
     } catch (err) {
       Alert.alert('No active QR', err?.message || 'This batch has no active QR.');
@@ -188,18 +190,18 @@ export default function FarmerHome() {
         </View>
       ) : (
         batches.map((b) => (
-          <View key={b.herb.batch_id} style={styles.card}>
+          <View key={b.id} style={styles.card}>
             <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>{b.herb.species_name}</Text>
-              <Text style={styles.cardId}>{b.herb.batch_id}</Text>
+              <Text style={styles.cardTitle}>{b.species?.common_name || b.species?.code || 'Unknown'}</Text>
+              <Text style={styles.cardId}>{b.code}</Text>
             </View>
             <Text style={styles.cardMeta}>
-              {b.herb.weight_kg} kg · harvested {b.herb.harvest_date} · {b.herb.location}
+              {b.weight_kg} kg · harvested {new Date(b.harvest_date).toLocaleDateString()} · {b.location || '—'}
             </Text>
             <View style={styles.row}>
-              <Text style={styles.phaseChip}>{PHASE_LABEL[b.state.phase] || b.state.phase}</Text>
+              <Text style={styles.phaseChip}>{PHASE_LABEL[b.phase] || b.phase}</Text>
               <Text style={styles.testChip}>
-                Test: {b.state.test_result}
+                Test: {b.test_status || 'pending'}
               </Text>
             </View>
             <View style={styles.actions}>
@@ -297,10 +299,10 @@ export default function FarmerHome() {
             {qrModal ? (
               <>
                 <Text style={styles.qrTitle}>Active QR</Text>
-                <Text style={styles.qrSubtitle}>{qrModal.batch_id}</Text>
+                <Text style={styles.qrSubtitle}>{qrModal.code || qrModal.batch_id}</Text>
                 <QrTokenDisplay
-                  token={qrModal.qr_token}
-                  png={qrModal.qr_png}
+                  token={qrModal.qr?.url || null}
+                  png={qrModal.qr?.png || null}
                   size={240}
                 />
                 <Text style={styles.qrFootnote}>

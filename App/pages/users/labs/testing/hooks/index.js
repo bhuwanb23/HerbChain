@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { API_BASE_URL } from '../../../../../constants/api';
+import { LabsAPI } from '../../../../../services/apiClient';
 
-export const useTesting = () => {
+/**
+ * Lab testing hook — rewritten for the backend P8 lab contract.
+ *
+ * Old flow: GET /herbs/lab/lab_001/archived → GET /herbs/:id/lab_report → POST lab_report
+ * New flow: LabsAPI.queue(status=received) → LabsAPI.listTests → LabsAPI.saveResults → submitTest
+ */
+export const useTesting = (token) => {
   const [currentTab, setCurrentTab] = useState('list');
   const [archived, setArchived] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState(null);
@@ -10,58 +16,65 @@ export const useTesting = () => {
   const [uploadedFiles, setUploadedFiles] = useState({});
   const [offlineData, setOfflineData] = useState([]);
   const [reportsByBatch, setReportsByBatch] = useState({});
-  const [currentMode, setCurrentMode] = useState('list'); // 'list', 'upload', 'view'
+  const [currentMode, setCurrentMode] = useState('list');
   const [selectedReport, setSelectedReport] = useState(null);
   const [herbs_not_uploaded, setHerbsNotUploaded] = useState([]);
   const [herbs_with_reports, setHerbsWithReports] = useState([]);
 
   const fetchArchived = useCallback(async () => {
+    if (!token) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/herbs/lab/lab_001/archived`);
-      const json = await res.json();
-      const allHerbs = Array.isArray(json.herbs) ? json.herbs : [];
+      const data = await LabsAPI.queue(token, { status: 'received' });
+      const allHerbs = Array.isArray(data) ? data : data?.batches || [];
       setArchived(allHerbs);
 
-      const herbsWithReportsData = [];
-      const herbsWithoutReportsData = [];
+      const withReports = [];
+      const withoutReports = [];
 
       for (const herb of allHerbs) {
-        const reportsRes = await fetch(`${API_BASE_URL}/api/v1/herbs/${herb.batch_id}/lab_report`);
-        const reportsJson = await reportsRes.json();
-        const reports = Array.isArray(reportsJson.reports) ? reportsJson.reports : [];
-        setReportsByBatch(prev => ({ ...prev, [herb.batch_id]: reports }));
-
-        if (reports.length > 0) {
-          herbsWithReportsData.push({ ...herb, reports });
-        } else {
-          herbsWithoutReportsData.push(herb);
+        const batchId = herb.code || herb.id;
+        try {
+          const certs = await LabsAPI.listCertificates(token, batchId);
+          const reports = Array.isArray(certs) ? certs : certs?.certificates || [];
+          setReportsByBatch(prev => ({ ...prev, [batchId]: reports }));
+          if (reports.length > 0) {
+            withReports.push({ ...herb, reports });
+          } else {
+            withoutReports.push(herb);
+          }
+        } catch {
+          withoutReports.push(herb);
         }
       }
-      setHerbsWithReports(herbsWithReportsData);
-      setHerbsNotUploaded(herbsWithoutReportsData);
+      setHerbsWithReports(withReports);
+      setHerbsNotUploaded(withoutReports);
 
       if (!selectedBatch && allHerbs.length > 0) {
-        setSelectedBatch(allHerbs[0].batch_id);
+        setSelectedBatch(allHerbs[0].code || allHerbs[0].id);
       }
     } catch (e) {
       console.log('Failed to fetch archived for testing', e);
     }
-  }, [selectedBatch]);
+  }, [token, selectedBatch]);
 
   const fetchReports = useCallback(async (batchId) => {
+    if (!token) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/herbs/${batchId}/lab_report`);
-      const json = await res.json();
-      setReportsByBatch(prev => ({ ...prev, [batchId]: Array.isArray(json.reports) ? json.reports : [] }));
+      const certs = await LabsAPI.listCertificates(token, batchId);
+      setReportsByBatch(prev => ({
+        ...prev,
+        [batchId]: Array.isArray(certs) ? certs : certs?.certificates || [],
+      }));
     } catch (e) {
       console.log('Failed to fetch reports', e);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => { fetchArchived(); }, [fetchArchived]);
   useEffect(() => { if (selectedBatch) fetchReports(selectedBatch); }, [selectedBatch, fetchReports]);
 
   const handleTabChange = (tab) => setCurrentTab(tab);
+
   const handleBatchSelect = (batchId, mode) => {
     setSelectedBatch(batchId);
     setCurrentMode(mode);
@@ -79,7 +92,7 @@ export const useTesting = () => {
     setSelectedReport(null);
     setTestResults({});
     setUploadedFiles({});
-    fetchArchived(); // Refresh the lists
+    fetchArchived();
   };
 
   const toggleOfflineMode = () => setIsOffline(v => !v);
@@ -89,35 +102,32 @@ export const useTesting = () => {
   const handleSaveOffline = () => setOfflineData(prev => ([...prev, { batchId: selectedBatch, data: testResults, files: uploadedFiles }]));
 
   const handleSubmitResults = async () => {
-    if (!selectedBatch) {
-      console.error("No batch selected for submitting results.");
-      return;
-    }
+    if (!selectedBatch || !token) return;
 
-    // Determine final quality status based on test results
     const isCertified = testResults.certification === true;
     const hasHeavyMetals = testResults.heavy_metals_present === true;
     const hasPesticides = testResults.pesticides_detected === true;
 
-    let finalQualityStatus = 'testing'; // Default
+    let finalQualityStatus = 'testing';
     if (isCertified && !hasHeavyMetals && !hasPesticides) {
-      finalQualityStatus = 'approved'; // Maps to 'certified'
-    } else if (hasHeavyMetals || hasPesticides) {
-      finalQualityStatus = 'rejected';
-    } else if (testResults.certification === false) {
+      finalQualityStatus = 'approved';
+    } else if (hasHeavyMetals || hasPesticides || testResults.certification === false) {
       finalQualityStatus = 'rejected';
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/herbs/${selectedBatch}/lab_report`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lab_id: 'lab_001',
-          test_type: 'general',
-          results_summary: testResults.results_summary || '',
-          certification: isCertified,
-          certification_level: testResults.certification_level || null,
+      // Step 1: create a test record
+      const test = await LabsAPI.createTest(token, {
+        batch_id: selectedBatch,
+        test_type: testResults.test_type || 'general',
+        sample_id: testResults.sample_id || undefined,
+      });
+
+      const testId = test?.id || test?.test?.id;
+
+      // Step 2: save results
+      if (testId) {
+        await LabsAPI.saveResults(token, testId, {
           purity_percentage: parseFloat(testResults.purity_percentage) || null,
           moisture_content: parseFloat(testResults.moisture) || null,
           ash_content: parseFloat(testResults.ash_content) || null,
@@ -127,17 +137,15 @@ export const useTesting = () => {
           potency_rating: testResults.potency_rating || null,
           notes: testResults.notes || '',
           recommendations: testResults.recommendations || '',
-          quality_status: finalQualityStatus,
-        })
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        console.log('Failed to submit results', json);
-        return;
+        });
+
+        // Step 3: submit
+        await LabsAPI.submitTest(token, testId);
       }
+
       setTestResults({});
       setUploadedFiles({});
-      resetSelection(); // Reset selection after submission
+      resetSelection();
     } catch (e) {
       console.log('Submit error', e);
     }
@@ -151,8 +159,8 @@ export const useTesting = () => {
   return {
     currentTab,
     archived,
-    withoutReports: archived.filter(h => !reportsByBatch[h.batch_id] || reportsByBatch[h.batch_id].length === 0),
-    withReports: archived.filter(h => reportsByBatch[h.batch_id] && reportsByBatch[h.batch_id].length > 0),
+    withoutReports: archived.filter(h => !reportsByBatch[h.code || h.id] || reportsByBatch[h.code || h.id].length === 0),
+    withReports: archived.filter(h => reportsByBatch[h.code || h.id] && reportsByBatch[h.code || h.id].length > 0),
     selectedBatch,
     isOffline,
     testResults,
@@ -177,5 +185,4 @@ export const useTesting = () => {
     selectedReport,
     resetSelection,
   };
-}
-
+};

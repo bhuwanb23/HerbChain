@@ -10,7 +10,7 @@ behavior. **Express + Prisma + SQLite** (Prisma makes Postgres a drop-in via
 ## Quick start
 
 ```bash
-cd second_backend
+cd backend
 cp .env.example .env          # defaults are fine for local dev
 npm install                   # installs deps + runs prisma generate
 npx prisma migrate dev --name init   # create SQLite schema + migration
@@ -31,7 +31,7 @@ npm run dev                   # http://localhost:5000
 ## Layout
 
 ```
-second_backend/
+backend/
 ├── prisma/
 │   ├── schema.prisma         # 12 tables, 1:1 with the Flask models
 │   └── migrations/

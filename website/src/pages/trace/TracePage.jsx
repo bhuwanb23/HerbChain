@@ -15,7 +15,8 @@ import {
   Typography,
 } from '@mui/material';
 
-import { TraceabilityAPI } from '../../services/apiClient';
+import { AdminAPI } from '../../services/apiClient';
+import { useAuth } from '../../contexts/AuthContext';
 
 const PHASE_LABEL = {
   with_farmer: 'With farmer',
@@ -27,6 +28,24 @@ const PHASE_LABEL = {
   consumed: 'Used in product',
 };
 
+const EVENT_LABEL = {
+  BATCH_CREATED: 'Batch created',
+  TRANSFER: 'Custody transfer',
+  QR_ROTATED: 'QR rotated',
+  SHIPMENT_CREATED: 'Shipment raised',
+  PICKUP: 'Picked up',
+  IN_TRANSIT: 'In transit',
+  DELIVERED: 'Delivered',
+  LAB_RECEIVED: 'Received at lab',
+  SAMPLE_CREATED: 'Sample taken',
+  TEST_COMPLETED: 'Test completed',
+  CERTIFIED: 'Certified',
+  REJECTED: 'Rejected',
+  GRN: 'Goods receipt',
+  MANUFACTURING_STARTED: 'Manufacturing started',
+  MANUFACTURING_COMPLETED: 'Manufacturing completed',
+};
+
 function fmt(dt) {
   if (!dt) return '—';
   try {
@@ -36,8 +55,8 @@ function fmt(dt) {
   }
 }
 
-function StepCard({ step }) {
-  const actorRole = step.actor?.role || 'system';
+function StepCard({ ev }) {
+  const actorRole = ev.actor?.role || 'system';
   return (
     <Card variant="outlined" sx={{ mb: 2 }}>
       <CardContent>
@@ -50,58 +69,43 @@ function StepCard({ step }) {
         >
           <Stack direction="row" spacing={1} alignItems="center">
             <Chip
-              label={`Step ${step.step}`}
+              label={EVENT_LABEL[ev.event_type] || ev.event_type}
               color="primary"
               size="small"
               sx={{ fontWeight: 700 }}
             />
-            <Typography fontWeight={600}>{step.label}</Typography>
           </Stack>
           <Typography variant="caption" color="text.secondary">
-            {fmt(step.occurred_at)}
+            {fmt(ev.created_at)}
           </Typography>
         </Stack>
 
         <Box sx={{ mt: 1.5 }}>
           <Typography variant="body2">
-            <b>Actor:</b> {step.actor?.name || step.actor?.user_id || '—'}{' '}
+            <b>Actor:</b> {ev.actor?.name || '—'}{' '}
             <span style={{ color: '#888' }}>({actorRole})</span>
           </Typography>
-          {step.from_party && (
+          {ev.from && (
             <Typography variant="body2">
-              <b>From:</b> {step.from_party.name} ({step.from_party.role})
+              <b>From:</b> {ev.from.name} ({ev.from.role})
             </Typography>
           )}
-          {step.to_party && (
+          {ev.to && (
             <Typography variant="body2">
-              <b>To:</b> {step.to_party.name} ({step.to_party.role})
+              <b>To:</b> {ev.to.name} ({ev.to.role})
             </Typography>
           )}
-          {step.location && (
+          {ev.location && (
             <Typography variant="body2">
-              <b>Location:</b> {step.location}
+              <b>Location:</b> {ev.location}
             </Typography>
           )}
-          {step.phase_before && (
+          {(ev.phase_before || ev.phase_after) && (
             <Typography variant="caption" color="text.secondary">
-              {step.phase_before} → {step.phase_after}
+              {ev.phase_before || '—'} → {ev.phase_after || '—'}
             </Typography>
           )}
         </Box>
-
-        {step.lab_report && (
-          <Box sx={{ mt: 1.5, p: 1.5, bgcolor: '#f8fafc', borderRadius: 1 }}>
-            <Typography variant="caption" color="text.secondary">
-              Lab report
-            </Typography>
-            <Typography variant="body2">
-              Result: <b>{step.lab_report.test_result}</b>
-            </Typography>
-            {step.lab_report.notes && (
-              <Typography variant="body2">{step.lab_report.notes}</Typography>
-            )}
-          </Box>
-        )}
       </CardContent>
     </Card>
   );
@@ -110,6 +114,7 @@ function StepCard({ step }) {
 export default function TracePage() {
   const { batchId } = useParams();
   const navigate = useNavigate();
+  const { accessToken } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -125,8 +130,8 @@ export default function TracePage() {
       try {
         setLoading(true);
         setError(null);
-        const res = await TraceabilityAPI.batch(batchId);
-        if (!cancelled) setData(res);
+        const res = await AdminAPI.batch(accessToken, batchId);
+        if (!cancelled) setData(res.batch_trace || res);
       } catch (err) {
         if (!cancelled) {
           setError(err?.message || `Could not load ${batchId}`);
@@ -139,7 +144,7 @@ export default function TracePage() {
     return () => {
       cancelled = true;
     };
-  }, [batchId]);
+  }, [batchId, accessToken]);
 
   const onSearch = (e) => {
     e.preventDefault();
@@ -147,24 +152,22 @@ export default function TracePage() {
     navigate(`/trace/${search.trim()}`);
   };
 
-  return (
-    <Box>
-      <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
-        <Typography variant="h5" fontWeight={700} sx={{ flex: 1 }}>
-          Batch Traceability
-        </Typography>
-      </Stack>
+  const b = data?.batch;
+  const events = data?.ownership_history || [];
 
+  return (
+    <Box sx={{ maxWidth: 900, mx: 'auto', p: 2 }}>
       <Card variant="outlined" sx={{ mb: 3 }}>
-        <CardContent component="form" onSubmit={onSearch}>
-          <Stack direction="row" spacing={2}>
+        <CardContent>
+          <Stack direction="row" spacing={2} component="form" onSubmit={onSearch}>
             <TextField
               fullWidth
-              label="Batch ID (e.g. BATCH123456)"
+              label="Search by batch code or id…"
+              variant="outlined"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <Button type="submit" variant="contained">
+            <Button variant="contained" type="submit">
               Trace
             </Button>
           </Stack>
@@ -179,104 +182,115 @@ export default function TracePage() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {data && !loading && (
+      {data && b && (
         <>
           <Card variant="outlined" sx={{ mb: 3 }}>
             <CardContent>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="h6">{data.herb.species_name}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {data.herb.batch_id}
-                  </Typography>
-                  <Typography variant="body2" sx={{ mt: 1 }}>
-                    Harvest: {data.herb.harvest_date} · {data.herb.weight_kg} kg
-                  </Typography>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap">
+                <Typography variant="h6">{b.species?.common_name || b.code}</Typography>
+                <Chip
+                  label={PHASE_LABEL[b.phase] || b.phase || '—'}
+                  color="primary"
+                  size="small"
+                />
+              </Stack>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                {b.code} · {b.weight_kg} kg · harvested {fmt(b.harvest_date)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {b.gps?.lat != null ? `GPS ${b.gps.lat.toFixed(4)}, ${b.gps.lng.toFixed(4)}` : ''} ·{' '}
+                {b.cultivation_type || ''}
+              </Typography>
+              <Divider sx={{ my: 1.5 }} />
+              <Grid container spacing={1}>
+                <Grid item xs={12} sm={6}>
                   <Typography variant="body2">
-                    Origin: {data.herb.location || '—'}
+                    <b>Farmer:</b> {b.farmer?.name || '—'}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <Stack direction="row" spacing={1} flexWrap="wrap">
-                    <Chip
-                      label={`Phase: ${
-                        PHASE_LABEL[data.state?.phase] || data.state?.phase || '—'
-                      }`}
-                      color="primary"
-                    />
-                    <Chip
-                      label={`Test: ${data.state?.test_result || 'pending'}`}
-                      color={
-                        data.state?.test_result === 'approved'
-                          ? 'success'
-                          : data.state?.test_result === 'rejected'
-                          ? 'error'
-                          : 'default'
-                      }
-                    />
-                    {data.summary?.quality_certified && (
-                      <Chip label="Quality Certified" color="success" />
-                    )}
-                  </Stack>
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="body2">
-                      <b>Farmer:</b> {data.farmer?.name || '—'}
-                    </Typography>
-                    <Typography variant="body2">
-                      <b>Current holder:</b>{' '}
-                      {data.current_holder?.name || data.state?.current_holder_id || '—'}{' '}
-                      ({data.current_holder?.role || '—'})
-                    </Typography>
-                    <Typography variant="body2">
-                      <b>Total steps:</b> {data.summary?.total_steps ?? 0}
-                    </Typography>
-                  </Box>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2">
+                    <b>Current holder:</b> {b.current_holder?.name || '—'} ({b.current_holder?.role || '—'})
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2">
+                    <b>Test status:</b> {b.test_status || 'pending'}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2">
+                    <b>Farmer trust score:</b>{' '}
+                    {b.farmer_compliance_score ? `${b.farmer_compliance_score.score_value}/100` : '—'}
+                  </Typography>
                 </Grid>
               </Grid>
             </CardContent>
           </Card>
 
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Journey timeline
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-
-          {data.journey.length === 0 ? (
-            <Alert severity="info">No events recorded yet for this batch.</Alert>
-          ) : (
-            data.journey.map((step) => <StepCard key={step.event_id} step={step} />)
+          {data.certificates?.length > 0 && (
+            <Card variant="outlined" sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography fontWeight={700} sx={{ mb: 1 }}>
+                  Certificates
+                </Typography>
+                {data.certificates.map((c) => (
+                  <Stack key={c.certificate_number} direction="row" spacing={2} alignItems="center" sx={{ mb: 0.5 }}>
+                    <Chip
+                      label={c.active ? 'Active' : 'Expired'}
+                      color={c.active ? 'success' : 'default'}
+                      size="small"
+                    />
+                    <Typography variant="body2">
+                      {c.certificate_number} · {c.lab_code} · {fmt(c.issued_at)} · {c.issued_by || '—'}
+                    </Typography>
+                  </Stack>
+                ))}
+              </CardContent>
+            </Card>
           )}
 
-          {data.products && data.products.length > 0 && (
-            <>
-              <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
-                Used in products
-              </Typography>
-              <Stack spacing={1}>
-                {data.products.map((p) => (
-                  <Card key={p.product_id} variant="outlined">
-                    <CardContent>
-                      <Typography fontWeight={600}>{p.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {p.product_id} {p.sku ? `· SKU ${p.sku}` : ''}
-                      </Typography>
-                    </CardContent>
-                  </Card>
+          {data.rejection && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              <b>Rejected:</b> {data.rejection.reason} — {data.rejection.description}
+            </Alert>
+          )}
+
+          <Typography fontWeight={700} sx={{ mb: 1 }}>
+            Ownership & custody history ({events.length})
+          </Typography>
+          {events.length === 0 ? (
+            <Alert severity="info">No custody events recorded for this batch.</Alert>
+          ) : (
+            events.map((ev, i) => <StepCard key={ev.event_id || i} ev={ev} />)
+          )}
+
+          {data.products_using_batch?.length > 0 && (
+            <Card variant="outlined" sx={{ mt: 3 }}>
+              <CardContent>
+                <Typography fontWeight={700} sx={{ mb: 1 }}>
+                  Used in products (forward trace)
+                </Typography>
+                {data.products_using_batch.map((p, i) => (
+                  <Typography key={i} variant="body2">
+                    {p.run} → <b>{p.product?.name || p.product?.code || '—'}</b> ({p.quantity_kg} kg)
+                  </Typography>
                 ))}
-              </Stack>
-            </>
+              </CardContent>
+            </Card>
+          )}
+
+          {data.recall_impacts?.length > 0 && (
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              <b>Recall impacts:</b>{' '}
+              {data.recall_impacts.map((r) => `${r.product?.name || r.product?.code} (${r.status})`).join(', ')}
+            </Alert>
           )}
         </>
       )}
 
-      {!loading && !data && !error && batchId && (
-        <Alert severity="info">No data for &quot;{batchId}&quot;.</Alert>
-      )}
-
-      {!batchId && !loading && !error && (
-        <Alert severity="info">
-          Enter a batch ID above to see its full traceability journey.
-        </Alert>
+      {!loading && !error && !data && batchId == null && (
+        <Alert severity="info">Enter a batch code above to trace its full journey.</Alert>
       )}
     </Box>
   );
