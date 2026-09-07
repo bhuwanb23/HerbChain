@@ -56,7 +56,7 @@ correct for a demo but has production gaps:
    a model has more than one FK to the same target.
 9. **Email uniqueness** is on the lowercased value — normalize at write time.
 
-## 3. Domain map (23 files, 129 models)
+## 3. Domain map (24 files, 133 models)
 
 | File | Domain | Models |
 |---|---|---|
@@ -340,7 +340,7 @@ Each module = routes + service + serializers + zod schema, colocated.
 
 ## 8. Verification
 
-- `npx prisma validate --schema prisma/schema` → valid ✅ (23 files, 129 models)
+- `npx prisma validate --schema prisma/schema` → valid ✅ (24 files, 133 models)
 - Migrations applied on the scratch DB (`prisma/scratch_new.db`), `migrate
   status` clean; Prisma client regenerated per phase
 - Active test suites green: auth, batches, identification, qr, transfers,

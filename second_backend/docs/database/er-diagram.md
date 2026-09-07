@@ -580,3 +580,22 @@ Dashboards read ONLY these tables. `ScheduledReport` stores the recurring
 report definitions (audience-scoped, `next_run_at` driven); each fire
 generates a `ReportExport` CSV artifact and queues `report_ready`
 notifications (Phase 14).
+
+## Phase 17 — Offline Sync (prisma/schema/100_sync.prisma)
+
+Rural connectivity support. Four models behind the upload/pull engine:
+
+- `SyncDevice` (user) — registered field device; `device_id` unique per user,
+  `revoked_at` kills future uploads from that device.
+- `SyncLog` (user, device) — one row per upload session with
+  applied/conflicted/failed counts and `duration_ms`.
+- `SyncEvent` (sync_log) — per-item outcome: `local_id` → `entity_type` /
+  `operation` / status (`APPLIED` | `CONFLICT` | `FAILED`) + receipt JSON.
+- `SyncConflict` (user, sync_event) — captured server_state vs client_item
+  snapshots; `resolved_at` / `resolution` close the loop.
+
+The handlers reuse the online domain services (`createBatch`,
+`requestTransfer`, shipment events, tracking points, assets), so offline work
+lands with identical validation, custody rules and audit trails. Active QR
+tokens are pulled down with their raw (decrypted) token so offline scans can
+validate without connectivity.
