@@ -1,7 +1,7 @@
 # Phase A0 — Backend Cutover (both front-ends → `backend`)
 
 **Goal:** every HTTP call from `App/` and `website/` hits `backend`. No new screens. After this phase, login/register/session works end-to-end on both front-ends against the new backend.
-**Status:** ⬜ not started
+**Status:** ✅ completed
 
 ---
 
@@ -13,15 +13,15 @@ Everything else is blocked on the contract. `App/services/apiClient.js` exposes 
 
 | # | Step | Files | Detail | Status |
 |---|---|---|---|---|
-| 1 | Inventory dead endpoints | `App/services/apiClient.js` | Map every method in the 13 namespaces to its new-backend replacement (table below). Produce the rewrite list. | ⬜ |
-| 2 | Rewrite `App/services/apiClient.js` | same | Replace dead routes with new contract (see mapping table). Keep the `{data,error}` envelope handling — `backend` uses the same envelope. | ⬜ |
-| 3 | Rewrite `website/src/services/apiClient.js` | same | `AdminAPI` → `/api/v1/admin/portal/*` + `/api/v1/admin/users*`; add missing namespaces (analytics, notifications, documents) for later phases. | ⬜ |
-| 4 | Auth parity check | `App/contexts/AuthContext.js`, `website/src/contexts/*` | New backend returns `access_token` + `refresh_token`; confirm both stores/refreshes correctly. Verify `/auth/me` shape (`user` object with `role`). | ⬜ |
-| 5 | CORS + env | `backend/.env`, `website/.env*` | `CORS_ORIGIN` must include the web dev host; `VITE_API_BASE_URL` set for website; `API_BASE_URL` via `app.json` extra for app. | ⬜ |
-| 6 | Smoke: web login → dashboard data | `website/` | Run backend (PORT=5000) + website dev server; login with a seeded admin; dashboard page renders real data. | ⬜ |
-| 7 | Smoke: app login → auth/me | `App/` | Expo app login with seeded farmer; `AuthContext` holds tokens; `/auth/me` refresh works. | ⬜ |
-| 8 | Grep-gate: zero dead prefixes | both | `grep -r "/api/v1/herbs\|/api/v1/crop\|/api/v1/catalogue\|/admin/api\|/api/v1/traceability\|/api/v1/farm\|/api/v1/prices\|/api/v1/weather\|/api/v1/recognition" App/ website/src/` → 0 hits (excluding documented exceptions). | ⬜ |
-| 9 | Commit in similarity groups | — | apiClient rewrites / auth context / env / docs. No co-author. | ⬜ |
+| 1 | Inventory dead endpoints | `App/services/apiClient.js` | Map every method in the 13 namespaces to its new-backend replacement (table below). Produce the rewrite list. | ✅ |
+| 2 | Rewrite `App/services/apiClient.js` | same | Replace dead routes with new contract (see mapping table). Keep the `{data,error}` envelope handling — `backend` uses the same envelope. | ✅ |
+| 3 | Rewrite `website/src/services/apiClient.js` | same | `AdminAPI` → `/api/v1/admin/portal/*` + `/api/v1/admin/users*`; add missing namespaces (analytics, notifications, documents) for later phases. | ✅ |
+| 4 | Auth parity check | `App/contexts/AuthContext.js`, `website/src/contexts/*` | New backend returns `access_token` + `refresh_token`; confirm both stores/refreshes correctly. Verify `/auth/me` shape (`user` object with `role`). | ✅ |
+| 5 | CORS + env | `backend/.env`, `website/.env*` | `CORS_ORIGIN` must include the web dev host; `VITE_API_BASE_URL` set for website; `API_BASE_URL` via `app.json` extra for app. | ✅ |
+| 6 | Smoke: web login → dashboard data | `website/` | Run backend (PORT=5000) + website dev server; login with a seeded admin; dashboard page renders real data. | ✅ |
+| 7 | Smoke: app login → auth/me | `App/` | Expo app login with seeded farmer; `AuthContext` holds tokens; `/auth/me` refresh works. | ✅ |
+| 8 | Grep-gate: zero dead prefixes | both | `grep -r "/api/v1/herbs\|/api/v1/crop\|/api/v1/catalogue\|/admin/api\|/api/v1/traceability\|/api/v1/farm\|/api/v1/prices\|/api/v1/weather\|/api/v1/recognition" App/ website/src/` → 0 hits (excluding documented exceptions). | ✅ |
+| 9 | Commit in similarity groups | — | apiClient rewrites / auth context / env / docs. No co-author. | ✅ |
 
 ## Endpoint mapping table (the rewrite list)
 
