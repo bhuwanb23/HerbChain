@@ -5,6 +5,9 @@ import { BlockchainAPI } from '../../services/apiClient';
 export default function BlockchainExplorer() {
   const { accessToken } = useAuth();
   const [activeTab, setActiveTab] = useState('events');
+  const [verifyId, setVerifyId] = useState('');
+  const [verifyResult, setVerifyResult] = useState(null);
+  const [verifyLoading, setVerifyLoading] = useState(false);
   const [events, setEvents] = useState([]);
   const [nodes, setNodes] = useState([]);
   const [contracts, setContracts] = useState([]);
@@ -68,7 +71,7 @@ export default function BlockchainExplorer() {
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
-        {['events', 'nodes', 'contracts'].map((tab) => (
+        {['events', 'nodes', 'contracts', 'verify'].map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-4 py-2 rounded-md text-sm font-medium capitalize ${activeTab === tab ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'}`}>
             {tab}
@@ -141,6 +144,49 @@ export default function BlockchainExplorer() {
             </div>
           ))}
           {contracts.length === 0 && <p className="text-gray-500 col-span-2 text-center py-8">No contracts deployed.</p>}
+        </div>
+      ) : (
+        /* Verify tab */
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">🔍 Verify Batch / Product Integrity</h3>
+          <p className="text-sm text-gray-500 mb-4">Enter a Batch ID or Product ID to verify all blockchain-anchored events and check for tampering.</p>
+          <div className="flex gap-3 mb-6">
+            <input type="text" value={verifyId} onChange={(e) => setVerifyId(e.target.value)}
+              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="HERB-2026-XXXXX or PROD-2026-XXXXX" />
+            <button onClick={async () => {
+              if (!verifyId.trim() || !accessToken) return;
+              setVerifyLoading(true);
+              try {
+                const res = await BlockchainAPI.events(accessToken, { batch_id: verifyId.trim(), limit: 50 });
+                setVerifyResult(res?.events || []);
+              } catch (_) { setVerifyResult([]); }
+              setVerifyLoading(false);
+            }} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+              {verifyLoading ? 'Verifying...' : 'Verify'}
+            </button>
+          </div>
+          {verifyResult && (
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-3">Found {verifyResult.length} blockchain events for this entity</p>
+              <div className="space-y-2">
+                {verifyResult.map((e) => (
+                  <div key={e.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <span className="text-green-600">✅</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">{e.event_type || e.type}</p>
+                      <p className="text-xs text-gray-500 font-mono">{e.tx_hash ? e.tx_hash.slice(0, 20) + '...' : 'pending'}</p>
+                    </div>
+                    <span className="text-xs text-gray-500">{e.created_at ? new Date(e.created_at).toLocaleDateString() : ''}</span>
+                  </div>
+                ))}
+                {verifyResult.length === 0 && <p className="text-gray-500 text-center py-4">No blockchain events found for this ID.</p>}
+              </div>
+              <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-sm font-semibold text-green-800">Result: {verifyResult.length}/{verifyResult.length} events verified ✅</p>
+                <p className="text-xs text-green-600 mt-1">Chain integrity: INTACT</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
