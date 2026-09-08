@@ -181,6 +181,10 @@ function _mountRoutes(app) {
   // resolve conflicts and register devices (docs/phase_17.md).
   const { mountSyncRoutes } = require("./modules/sync/syncRoutes");
   mountSyncRoutes(app);
+
+  // Phase A6: support tickets — user help desk under /api/v1/support.
+  const { mountSupportRoutes } = require("./modules/support/supportRoutes");
+  mountSupportRoutes(app);
 }
 
 // ------------------------------------------------------------- error box
