@@ -47,3 +47,5 @@ _archive/blockchain/*.tgz
 logs/
 *.out
 *.trace
+
+opencode.json
