@@ -1,7 +1,7 @@
 # Phase A9 — Scope Decisions, Retirement & Regression Harness
 
 **Goal:** close out the plan: decide build-or-cut for the three backend-less features, retire the old Flask `backend/`, and leave behind a repeatable E2E verification harness so future changes can't silently break the app↔backend contract.
-**Status:** ⬜ not started
+**Status:** ✅ completed
 **Depends on:** A2–A8 complete
 
 ---

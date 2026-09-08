@@ -170,6 +170,17 @@ export const AdminAPI = {
 };
 
 // P16 analytics — the BI warehouse reads
+export const PricesAPI = {
+  list: (token, opts = {}) => {
+    const params = new URLSearchParams();
+    if (opts.species_id) params.set('species_id', opts.species_id);
+    if (opts.market) params.set('market', opts.market);
+    const qs = params.toString();
+    return api.get(`/api/v1/prices${qs ? `?${qs}` : ''}`, { token });
+  },
+  create: (token, payload) => api.post('/api/v1/prices', { token, body: payload }),
+};
+
 export const AnalyticsAPI = {
   dashboard: (token, opts = {}) =>
     api.get(`/api/v1/analytics/dashboard${opts.state ? `?state=${encodeURIComponent(opts.state)}` : ''}`, { token }),

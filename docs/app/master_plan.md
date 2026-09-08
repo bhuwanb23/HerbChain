@@ -30,7 +30,7 @@ The **backend is done**: `backend/` covers Phases 1–17 (auth/RBAC, batches+QR,
 | **A6** | [`plan/phase_A6_shared.md`](./plan/phase_A6_shared.md) | Shared screens (all roles): notifications center, help & support, settings, documents center, **offline sync center** | 5 | A1 | ✅ completed |
 | **A7** | [`plan/phase_A7_admin_web.md`](./plan/phase_A7_admin_web.md) | Admin web portal upgrade: consume P16 analytics, admin portal endpoints, blockchain explorer, monitors, investigation, recall | ~8 (web) | A0 | ✅ completed |
 | **A8** | [`plan/phase_A8_consumer.md`](./plan/phase_A8_consumer.md) | Consumer portal: product passport, traceability, authenticity score, recall alerts, counterfeit, share; + small backend addition (feedback/report-fake) | ~6 | A0 | ✅ completed |
-| **A9** | [`plan/phase_A9_cleanup.md`](./plan/phase_A9_cleanup.md) | Scope decisions & cleanup: prices/weather/crop modules (build-or-cut), old `backend/` Flask retirement, E2E regression harness | 0 | A2–A8 | ⬜ not started |
+| **A9** | [`plan/phase_A9_cleanup.md`](./plan/phase_A9_cleanup.md) | Scope decisions & cleanup: prices/weather/crop modules (build-or-cut), old `backend/` Flask retirement, E2E regression harness | 0 | A2–A8 | ✅ completed |
 
 **Suggested execution order:** A0 → A1 → A2 → A3 → A4 → A5 → A6 → A7 → A8 → A9 (A6 can run parallel to A3–A5; A7 parallel after A0).
 

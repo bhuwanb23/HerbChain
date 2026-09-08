@@ -17,6 +17,7 @@
     "db:push": "prisma db push",
     "generate": "prisma generate",
     "test": "node --test tests/auth tests/batches tests/identification tests/qr tests/transfers tests/shipments tests/lab tests/procurement tests/products tests/verification tests/blockchain tests/admin tests/notifications tests/documents tests/analytics tests/sync",
+    "e2e": "node scripts/e2e_journey.js",
     "test:auth": "node --test tests/auth/",
     "test:batches": "node --test tests/batches/",
     "test:identification": "node --test tests/identification/",

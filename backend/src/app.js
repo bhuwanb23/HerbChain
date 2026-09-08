@@ -185,6 +185,10 @@ function _mountRoutes(app) {
   // Phase A6: support tickets — user help desk under /api/v1/support.
   const { mountSupportRoutes } = require("./modules/support/supportRoutes");
   mountSupportRoutes(app);
+
+  // Phase A9: prices — admin-entered reference prices per species.
+  const { mountPricesRoutes } = require("./modules/prices/pricesRoutes");
+  mountPricesRoutes(app);
 }
 
 // ------------------------------------------------------------- error box

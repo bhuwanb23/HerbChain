@@ -453,6 +453,17 @@ export const SyncAPI = {
   analytics: (token) => api.get('/api/v1/sync/analytics', { token }),
 };
 
+export const PricesAPI = {
+  list: (opts = {}) => {
+    const params = new URLSearchParams();
+    if (opts.species_id) params.set('species_id', opts.species_id);
+    if (opts.market) params.set('market', opts.market);
+    const qs = params.toString();
+    return api.get(`/api/v1/prices${qs ? `?${qs}` : ''}`);
+  },
+  create: (token, payload) => api.post('/api/v1/prices', { token, body: payload }),
+};
+
 export const AnalyticsAPI = {
   dashboard: (token, opts = {}) =>
     api.get(`/api/v1/analytics/dashboard${opts.state ? `?state=${encodeURIComponent(opts.state)}` : ''}`, { token }),

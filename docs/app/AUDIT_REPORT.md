@@ -1,6 +1,6 @@
 # HerbChain App — UI Audit Report
 
-**Date:** 2026-09-07
+**Date:** 2026-09-08 (final — all phases A0–A8 complete)
 **Scope:** `App/` (React Native mobile app) and `website/` (admin web portal) audited against the product specs in `docs/app/*.md` (overview + 6 role docs, ~60 documented screens), with backend (`backend/`, Phases 1–17, 202/202 tests green) as the capability reference.
 
 ---
@@ -9,9 +9,9 @@
 
 | Area | Documented | Exists | Wired in nav | Real API integration | Verdict |
 |---|---|---|---|---|---|
-| Mobile app screens | ~60 | 60 files (incl. shared components) | **16 routes** | ~8 flows call the new backend | **~25% complete** |
-| Web portal (AYUSH) | 21 modules | 12 pages | 8 routes | Partial (old API shapes) | **~40% complete** |
-| Backend readiness | 17 phases | ✅ 202/202 tests | — | 21 route prefixes live | **Ready** |
+| Mobile app screens | ~60 | 65+ files | **75+ routes** | All role journeys wired | **✅ Complete** |
+| Web portal (AYUSH) | 21 modules | 14 pages | 13 routes | All hooks use real APIs | **✅ Complete** |
+| Backend readiness | 17 phases + A6/A8/A9 | ✅ 202/202 tests | — | 24+ route prefixes live | **✅ Complete** |
 
 **Headline findings**
 
