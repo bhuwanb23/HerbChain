@@ -123,6 +123,8 @@ import SupportDispute from '../pages/users/admins/integration/support_dispute';
 // ─── Consumer screens ───────────────────────────────────────────────────────
 import ConsumerHome from '../pages/users/consumers/ConsumerHome';
 import ConsumerPortal from '../pages/users/consumers/ConsumerPortal';
+import OriginStoryScreen from '../pages/shared/OriginStoryScreen';
+import LabCertScreen from '../pages/shared/LabCertificateScreen';
 import ConsumerDashboard from '../pages/users/consumers/dashboard/dashboard';
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -341,6 +343,8 @@ function ConsumerStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ConsumerHome" component={ConsumerHome} />
       <Stack.Screen name="ConsumerPortal" component={ConsumerPortal} />
+      <Stack.Screen name="OriginStory" component={OriginStoryScreen} />
+      <Stack.Screen name="LabCertificate" component={LabCertScreen} />
       <Stack.Screen name="ConsumerDashboard" component={ConsumerDashboard} />
     </Stack.Navigator>
   );

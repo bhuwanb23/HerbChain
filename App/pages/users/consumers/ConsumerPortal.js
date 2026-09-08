@@ -1,17 +1,21 @@
+/**
+ * ConsumerPortal — the complete consumer trust experience.
+ *
+ * Integrates: AuthenticityBadge, JourneyTimeline, RecallAlertOverlay,
+ * ShareJourneySheet, OriginStory navigation, LabCertificate navigation.
+ *
+ * Flow: Scan → Passport (badge + timeline + actions) → Origin / Lab / Share
+ */
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Alert, ActivityIndicator, Share, Linking,
+  TextInput, Alert, ActivityIndicator, Share,
 } from 'react-native';
 import { VerifyAPI } from '../../../services/apiClient';
-
-const STATUS_CONFIG = {
-  verified: { bg: '#D1FAE5', text: '#065F46', icon: '✅', label: 'Verified Authentic' },
-  pending: { bg: '#FEF3C7', text: '#92400E', icon: '⏳', label: 'Verification Pending' },
-  counterfeit: { bg: '#FEE2E2', text: '#991B1B', icon: '🚨', label: 'Suspected Counterfeit' },
-  recall: { bg: '#FEE2E2', text: '#991B1B', icon: '⚠️', label: 'UNDER RECALL' },
-  invalid: { bg: '#FEE2E2', text: '#991B1B', icon: '❌', label: 'Invalid QR Code' },
-};
+import AuthenticityBadge from '../../../components/AuthenticityBadge';
+import JourneyTimeline from '../../../components/JourneyTimeline';
+import RecallAlertOverlay from '../../../components/RecallAlertOverlay';
+import ShareJourneySheet from '../../../components/ShareJourneySheet';
 
 export default function ConsumerPortal({ navigation }) {
   const [view, setView] = useState('scan'); // scan | passport | alerts | feedback | report
@@ -19,8 +23,12 @@ export default function ConsumerPortal({ navigation }) {
   const [passport, setPassport] = useState(null);
   const [journey, setJourney] = useState(null);
   const [certificate, setCertificate] = useState(null);
+  const [verification, setVerification] = useState(null);
+  const [recall, setRecall] = useState(null);
+  const [recallAcknowledged, setRecallAcknowledged] = useState(false);
   const [scanOutcome, setScanOutcome] = useState(null);
   const [manualToken, setManualToken] = useState('');
+  const [showShare, setShowShare] = useState(false);
 
   // Feedback form
   const [fbRating, setFbRating] = useState(0);
@@ -40,10 +48,17 @@ export default function ConsumerPortal({ navigation }) {
     try {
       const res = await VerifyAPI.scan(token.trim());
       const scan = res?.scan || res;
-      setScanOutcome(scan.outcome || 'verified');
+      setScanOutcome(scan.outcome || scan.verification?.outcome || 'verified');
       setPassport(scan.passport || scan.product || scan);
-      setJourney(scan.journey || null);
+      setJourney(scan.journey || scan.timeline || null);
       setCertificate(scan.certificate || null);
+      setVerification(scan.verification || scan.verification_result || null);
+
+      // Check recall status
+      if (scan.recall || scan.recall_status === 'active' || scan.product?.recall_status === 'active') {
+        setRecall(scan.recall || { reason: scan.recall_reason || 'Product under recall', product_name: scan.product?.product_name });
+      }
+
       setView('passport');
     } catch (err) {
       Alert.alert('Scan Failed', err?.message || 'Could not verify this QR code.');
@@ -54,10 +69,7 @@ export default function ConsumerPortal({ navigation }) {
   };
 
   const submitFeedback = async () => {
-    if (!fbMessage.trim()) {
-      Alert.alert('Required', 'Please enter your feedback.');
-      return;
-    }
+    if (!fbMessage.trim()) { Alert.alert('Required', 'Please enter your feedback.'); return; }
     setFbSubmitting(true);
     try {
       await VerifyAPI.feedback({
@@ -69,21 +81,14 @@ export default function ConsumerPortal({ navigation }) {
         contact_email: fbEmail.trim() || undefined,
       });
       Alert.alert('Thank you!', 'Your feedback has been submitted.');
-      setFbMessage('');
-      setFbRating(0);
-      setFbEmail('');
+      setFbMessage(''); setFbRating(0); setFbEmail('');
       setView('passport');
-    } catch (_) {
-      Alert.alert('Error', 'Failed to submit feedback.');
-    }
+    } catch (_) { Alert.alert('Error', 'Failed to submit feedback.'); }
     setFbSubmitting(false);
   };
 
   const submitReport = async () => {
-    if (!rfMessage.trim()) {
-      Alert.alert('Required', 'Please describe the suspected counterfeit.');
-      return;
-    }
+    if (!rfMessage.trim()) { Alert.alert('Required', 'Please describe the suspected counterfeit.'); return; }
     setRfSubmitting(true);
     try {
       await VerifyAPI.reportFake({
@@ -94,26 +99,17 @@ export default function ConsumerPortal({ navigation }) {
         contact_email: rfEmail.trim() || undefined,
         contact_phone: rfPhone.trim() || undefined,
       });
-      Alert.alert('Report Submitted', 'Thank you for helping keep the supply chain safe. Our team will review this report.');
-      setRfMessage('');
-      setRfEmail('');
-      setRfPhone('');
+      Alert.alert('Report Submitted', 'Thank you for helping keep the supply chain safe.');
+      setRfMessage(''); setRfEmail(''); setRfPhone('');
       setView('passport');
-    } catch (_) {
-      Alert.alert('Error', 'Failed to submit report.');
-    }
+    } catch (_) { Alert.alert('Error', 'Failed to submit report.'); }
     setRfSubmitting(false);
   };
 
-  const sharePassport = async () => {
-    const name = passport?.product_name || passport?.name || passport?.batch_code || 'Product';
-    const qr = passport?.qr_token || passport?.batch_code || '';
-    try {
-      await Share.share({
-        message: `HerbChain Verification: ${name}\nQR: ${qr}\n\nVerified authentic product from India's Ayurvedic supply chain.`,
-        title: `Verify: ${name}`,
-      });
-    } catch (_) {}
+  const resetScanner = () => {
+    setView('scan'); setPassport(null); setJourney(null); setCertificate(null);
+    setVerification(null); setRecall(null); setRecallAcknowledged(false);
+    setScanOutcome(null); setManualToken('');
   };
 
   // ─── Scan view ───
@@ -122,30 +118,20 @@ export default function ConsumerPortal({ navigation }) {
       <View style={styles.container}>
         <View style={styles.scanHeader}>
           <Text style={styles.scanIcon}>📱</Text>
-          <Text style={styles.scanTitle}>Scan Product QR</Text>
-          <Text style={styles.scanSub}>Point your camera at the QR code on any HerbChain product</Text>
+          <Text style={styles.scanTitle}>Verify Product</Text>
+          <Text style={styles.scanSub}>Scan the QR code on any HerbChain product to see its full verified journey</Text>
         </View>
-
         <View style={styles.manualSection}>
           <Text style={styles.manualLabel}>Or enter code manually</Text>
           <View style={styles.manualRow}>
-            <TextInput
-              style={styles.manualInput}
-              value={manualToken}
-              onChangeText={setManualToken}
-              placeholder="Enter QR token or batch code"
-              autoCapitalize="characters"
-            />
-            <TouchableOpacity
-              style={[styles.manualBtn, loading && styles.btnDisabled]}
-              onPress={() => doScan(manualToken)}
-              disabled={loading}
-            >
+            <TextInput style={styles.manualInput} value={manualToken} onChangeText={setManualToken}
+              placeholder="QR token or batch code" autoCapitalize="characters" />
+            <TouchableOpacity style={[styles.manualBtn, loading && styles.btnDisabled]}
+              onPress={() => doScan(manualToken)} disabled={loading}>
               {loading ? <ActivityIndicator color="#FFF" size="small" /> : <Text style={styles.manualBtnText}>Verify</Text>}
             </TouchableOpacity>
           </View>
         </View>
-
         <TouchableOpacity style={styles.alertLink} onPress={() => setView('alerts')}>
           <Text style={styles.alertLinkText}>📢 View Safety Alerts</Text>
         </TouchableOpacity>
@@ -155,123 +141,104 @@ export default function ConsumerPortal({ navigation }) {
 
   // ─── Passport view ───
   if (view === 'passport') {
-    const status = STATUS_CONFIG[scanOutcome] || STATUS_CONFIG.verified;
     const p = passport || {};
 
     return (
-      <ScrollView style={styles.container}>
-        {/* Status banner */}
-        <View style={[styles.statusBanner, { backgroundColor: status.bg }]}>
-          <Text style={styles.statusIcon}>{status.icon}</Text>
-          <Text style={[styles.statusLabel, { color: status.text }]}>{status.label}</Text>
-        </View>
+      <View style={{ flex: 1 }}>
+        {/* Recall overlay */}
+        {recall && !recallAcknowledged && (
+          <RecallAlertOverlay
+            recall={recall}
+            onAcknowledge={() => setRecallAcknowledged(true)}
+            onGoBack={resetScanner}
+          />
+        )}
 
-        {/* Product info */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>{p.product_name || p.name || p.batch_code || 'Product'}</Text>
-          {p.species && <Text style={styles.cardSub}>Species: {p.species}</Text>}
-          {p.batch_code && <Text style={styles.cardCode}>Batch: {p.batch_code}</Text>}
-          {p.qr_token && <Text style={styles.cardCode}>QR: {p.qr_token}</Text>}
-        </View>
+        {/* Share sheet */}
+        <ShareJourneySheet visible={showShare} product={p} onClose={() => setShowShare(false)} />
 
-        {/* Authenticity score */}
-        {p.authenticity_score != null && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Authenticity Score</Text>
-            <View style={styles.scoreRow}>
-              <Text style={[styles.scoreValue, { color: p.authenticity_score >= 80 ? '#059669' : p.authenticity_score >= 50 ? '#D97706' : '#DC2626' }]}>
-                {p.authenticity_score}
-              </Text>
-              <Text style={styles.scoreMax}>/100</Text>
+        <ScrollView style={styles.container}>
+          {/* Recall banner (if acknowledged) */}
+          {recall && recallAcknowledged && (
+            <View style={styles.recallBanner}>
+              <Text style={styles.recallBannerText}>⚠️ This product is under recall. See details below.</Text>
             </View>
-          </View>
-        )}
+          )}
 
-        {/* Manufacturer */}
-        {p.manufacturer && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Manufacturer</Text>
-            <Text style={styles.cardText}>{typeof p.manufacturer === 'string' ? p.manufacturer : p.manufacturer.name || '-'}</Text>
-            {p.manufacturer?.location && <Text style={styles.cardSub}>{p.manufacturer.location}</Text>}
-          </View>
-        )}
+          {/* Authenticity Badge */}
+          <AuthenticityBadge verification={verification} />
 
-        {/* Ingredients / lineage */}
-        {p.ingredients?.length > 0 && (
+          {/* Product header */}
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Ingredients</Text>
-            {p.ingredients.map((ing, i) => (
-              <Text key={i} style={styles.cardText}>• {typeof ing === 'string' ? ing : ing.species || ing.name}</Text>
-            ))}
-          </View>
-        )}
-
-        {/* Origin */}
-        {p.origin && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Origin</Text>
-            <Text style={styles.cardText}>{typeof p.origin === 'string' ? p.origin : `${p.origin.state || ''}, ${p.origin.country || 'India'}`}</Text>
-          </View>
-        )}
-
-        {/* Lab certification */}
-        {(certificate || p.certificate) && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Lab Certification</Text>
-            {const C = certificate || p.certificate; (
-              <>
-                <Text style={styles.cardText}>Level: {C.level || C.certification_level || '-'}</Text>
-                <Text style={styles.cardSub}>Status: {C.status || 'certified'}</Text>
-                {C.issued_at && <Text style={styles.cardSub}>Issued: {new Date(C.issued_at).toLocaleDateString()}</Text>}
-              </>
+            <Text style={styles.productName}>{p.product_name || p.name || p.batch_code || 'Product'}</Text>
+            {p.manufacturer && (
+              <Text style={styles.productManufacturer}>
+                by {typeof p.manufacturer === 'string' ? p.manufacturer : p.manufacturer.name || 'Manufacturer'}
+              </Text>
             )}
+            {p.manufacturer?.license && <Text style={styles.productLicense}>AYUSH: {p.manufacturer.license}</Text>}
+            {p.batch_code && <Text style={styles.productCode}>Batch: {p.batch_code}</Text>}
+            {p.species && <Text style={styles.productCode}>Species: {p.species}</Text>}
           </View>
-        )}
 
-        {/* Journey timeline */}
-        {journey?.length > 0 && (
+          {/* Journey Timeline */}
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Supply Chain Journey</Text>
-            {journey.map((step, i) => (
-              <View key={i} style={styles.journeyStep}>
-                <View style={[styles.journeyDot, { backgroundColor: i === 0 ? '#059669' : '#3B82F6' }]} />
-                <View style={styles.journeyContent}>
-                  <Text style={styles.journeyTitle}>{step.title || step.event_type || step.action}</Text>
-                  <Text style={styles.journeyDate}>{step.date || step.created_at ? new Date(step.created_at || step.date).toLocaleDateString() : ''}</Text>
-                  {step.description && <Text style={styles.journeyDesc}>{step.description}</Text>}
-                </View>
-              </View>
-            ))}
+            <JourneyTimeline journey={journey} />
           </View>
-        )}
 
-        {/* Sustainability */}
-        {p.sustainability && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Sustainability</Text>
-            <Text style={styles.cardText}>{typeof p.sustainability === 'string' ? p.sustainability : JSON.stringify(p.sustainability)}</Text>
+          {/* Origin shortcut */}
+          <TouchableOpacity
+            style={styles.navCard}
+            onPress={() => navigation.navigate('OriginStory', { origin: p.origin || journey?.[0]?.data, batch: p })}
+          >
+            <Text style={styles.navCardIcon}>🌱</Text>
+            <View style={styles.navCardContent}>
+              <Text style={styles.navCardTitle}>View Origin Story</Text>
+              <Text style={styles.navCardSub}>Where these herbs were grown</Text>
+            </View>
+            <Text style={styles.navCardArrow}>›</Text>
+          </TouchableOpacity>
+
+          {/* Lab certificate shortcut */}
+          <TouchableOpacity
+            style={styles.navCard}
+            onPress={() => navigation.navigate('LabCertificate', { certificate: certificate || p.certificate, batch: p })}
+          >
+            <Text style={styles.navCardIcon}>🔬</Text>
+            <View style={styles.navCardContent}>
+              <Text style={styles.navCardTitle}>Lab Certificate</Text>
+              <Text style={styles.navCardSub}>Test results and certification</Text>
+            </View>
+            <Text style={styles.navCardArrow}>›</Text>
+          </TouchableOpacity>
+
+          {/* Blockchain proof */}
+          {p.blockchain_hash && (
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>🔗 Blockchain Verified</Text>
+              <Text style={styles.blockchainHash}>{p.blockchain_hash}</Text>
+            </View>
+          )}
+
+          {/* Actions */}
+          <View style={styles.actionRow}>
+            <TouchableOpacity style={styles.actionBtn} onPress={() => setShowShare(true)}>
+              <Text style={styles.actionBtnText}>📤 Share</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionBtn} onPress={() => setView('feedback')}>
+              <Text style={styles.actionBtnText}>💬 Feedback</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.actionBtn, styles.reportBtn]} onPress={() => setView('report')}>
+              <Text style={[styles.actionBtnText, { color: '#DC2626' }]}>🚨 Report Fake</Text>
+            </TouchableOpacity>
           </View>
-        )}
 
-        {/* Actions */}
-        <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.actionBtn} onPress={sharePassport}>
-            <Text style={styles.actionBtnText}>📤 Share</Text>
+          <TouchableOpacity style={styles.backLink} onPress={resetScanner}>
+            <Text style={styles.backLinkText}>← Scan Another Product</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => setView('feedback')}>
-            <Text style={styles.actionBtnText}>💬 Feedback</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, styles.reportBtn]} onPress={() => setView('report')}>
-            <Text style={[styles.actionBtnText, { color: '#DC2626' }]}>🚨 Report Fake</Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity style={styles.backLink} onPress={() => { setView('scan'); setPassport(null); setJourney(null); setCertificate(null); setScanOutcome(null); }}>
-          <Text style={styles.backLinkText}>← Scan Another</Text>
-        </TouchableOpacity>
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </View>
     );
   }
 
@@ -280,16 +247,14 @@ export default function ConsumerPortal({ navigation }) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => setView('scan')}>
-            <Text style={styles.backBtn}>← Back</Text>
-          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setView('scan')}><Text style={styles.backBtn}>← Back</Text></TouchableOpacity>
           <Text style={styles.headerTitle}>Safety Alerts</Text>
           <View style={{ width: 60 }} />
         </View>
         <View style={styles.center}>
           <Text style={styles.icon}>📢</Text>
           <Text style={styles.title}>Safety & Recall Alerts</Text>
-          <Text style={styles.subtitle}>Active safety notices and product recalls will appear here.</Text>
+          <Text style={styles.subtitle}>Active safety notices and product recalls.</Text>
           <Text style={[styles.cardSub, { marginTop: 16 }]}>No active alerts at this time.</Text>
         </View>
       </View>
@@ -301,46 +266,27 @@ export default function ConsumerPortal({ navigation }) {
     return (
       <ScrollView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => setView('passport')}>
-            <Text style={styles.backBtn}>← Back</Text>
-          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setView('passport')}><Text style={styles.backBtn}>← Back</Text></TouchableOpacity>
           <Text style={styles.headerTitle}>Feedback</Text>
           <View style={{ width: 60 }} />
         </View>
         <View style={styles.form}>
           <Text style={styles.formLabel}>Rating</Text>
           <View style={styles.ratingRow}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => setFbRating(star)}>
-                <Text style={[styles.star, fbRating >= star && styles.starActive]}>{fbRating >= star ? '★' : '☆'}</Text>
+            {[1, 2, 3, 4, 5].map((s) => (
+              <TouchableOpacity key={s} onPress={() => setFbRating(s)}>
+                <Text style={[styles.star, fbRating >= s && styles.starActive]}>{fbRating >= s ? '★' : '☆'}</Text>
               </TouchableOpacity>
             ))}
           </View>
-
           <Text style={styles.formLabel}>Your Feedback</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={fbMessage}
-            onChangeText={setFbMessage}
-            placeholder="Share your experience with this product..."
-            multiline
-            numberOfLines={4}
-          />
-
+          <TextInput style={[styles.input, styles.textArea]} value={fbMessage} onChangeText={setFbMessage}
+            placeholder="Share your experience..." multiline numberOfLines={4} />
           <Text style={styles.formLabel}>Email (optional)</Text>
-          <TextInput
-            style={styles.input}
-            value={fbEmail}
-            onChangeText={setFbEmail}
-            placeholder="your@email.com"
-            keyboardType="email-address"
-          />
-
-          <TouchableOpacity
-            style={[styles.submitBtn, fbSubmitting && styles.btnDisabled]}
-            onPress={submitFeedback}
-            disabled={fbSubmitting}
-          >
+          <TextInput style={styles.input} value={fbEmail} onChangeText={setFbEmail}
+            placeholder="your@email.com" keyboardType="email-address" />
+          <TouchableOpacity style={[styles.submitBtn, fbSubmitting && styles.btnDisabled]}
+            onPress={submitFeedback} disabled={fbSubmitting}>
             {fbSubmitting ? <ActivityIndicator color="#FFF" /> : <Text style={styles.submitBtnText}>Submit Feedback</Text>}
           </TouchableOpacity>
         </View>
@@ -353,50 +299,25 @@ export default function ConsumerPortal({ navigation }) {
     return (
       <ScrollView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => setView('passport')}>
-            <Text style={styles.backBtn}>← Back</Text>
-          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setView('passport')}><Text style={styles.backBtn}>← Back</Text></TouchableOpacity>
           <Text style={styles.headerTitle}>Report Counterfeit</Text>
           <View style={{ width: 60 }} />
         </View>
         <View style={styles.form}>
           <View style={styles.warningBanner}>
-            <Text style={styles.warningText}>⚠️ If you believe this product is counterfeit or tampered with, please describe the issue below. Your report will be reviewed by our compliance team.</Text>
+            <Text style={styles.warningText}>⚠️ If you believe this product is counterfeit, please describe the issue below. Our compliance team will review this report.</Text>
           </View>
-
           <Text style={styles.formLabel}>Description *</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={rfMessage}
-            onChangeText={setRfMessage}
-            placeholder="Describe why you suspect this product is counterfeit (min 5 characters)..."
-            multiline
-            numberOfLines={5}
-          />
-
-          <Text style={styles.formLabel}>Your Email (optional)</Text>
-          <TextInput
-            style={styles.input}
-            value={rfEmail}
-            onChangeText={setRfEmail}
-            placeholder="your@email.com"
-            keyboardType="email-address"
-          />
-
+          <TextInput style={[styles.input, styles.textArea]} value={rfMessage} onChangeText={setRfMessage}
+            placeholder="Describe why you suspect this product is counterfeit..." multiline numberOfLines={5} />
+          <Text style={styles.formLabel}>Email (optional)</Text>
+          <TextInput style={styles.input} value={rfEmail} onChangeText={setRfEmail}
+            placeholder="your@email.com" keyboardType="email-address" />
           <Text style={styles.formLabel}>Phone (optional)</Text>
-          <TextInput
-            style={styles.input}
-            value={rfPhone}
-            onChangeText={setRfPhone}
-            placeholder="+91 XXXXX XXXXX"
-            keyboardType="phone-pad"
-          />
-
-          <TouchableOpacity
-            style={[styles.submitBtn, styles.reportSubmitBtn, rfSubmitting && styles.btnDisabled]}
-            onPress={submitReport}
-            disabled={rfSubmitting}
-          >
+          <TextInput style={styles.input} value={rfPhone} onChangeText={setRfPhone}
+            placeholder="+91 XXXXX XXXXX" keyboardType="phone-pad" />
+          <TouchableOpacity style={[styles.submitBtn, styles.reportSubmitBtn, rfSubmitting && styles.btnDisabled]}
+            onPress={submitReport} disabled={rfSubmitting}>
             {rfSubmitting ? <ActivityIndicator color="#FFF" /> : <Text style={styles.submitBtnText}>Submit Report</Text>}
           </TouchableOpacity>
         </View>
@@ -413,10 +334,8 @@ const styles = StyleSheet.create({
   icon: { fontSize: 48, marginBottom: 12 },
   title: { fontSize: 18, fontWeight: '700', color: '#111827' },
   subtitle: { fontSize: 14, color: '#6B7280', marginTop: 4, textAlign: 'center' },
-  header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 16, borderBottomWidth: 1, borderBottomColor: '#E5E7EB', backgroundColor: '#FFF',
-  },
+  cardSub: { fontSize: 13, color: '#6B7280' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#E5E7EB', backgroundColor: '#FFF' },
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#111827' },
   backBtn: { fontSize: 16, color: '#3B82F6', fontWeight: '600' },
   // Scan
@@ -427,36 +346,28 @@ const styles = StyleSheet.create({
   manualSection: { paddingHorizontal: 20, marginTop: 20 },
   manualLabel: { fontSize: 14, color: '#6B7280', marginBottom: 8 },
   manualRow: { flexDirection: 'row', gap: 10 },
-  manualInput: {
-    flex: 1, backgroundColor: '#FFF', borderWidth: 1, borderColor: '#D1D5DB', borderRadius: 10,
-    padding: 12, fontSize: 15,
-  },
+  manualInput: { flex: 1, backgroundColor: '#FFF', borderWidth: 1, borderColor: '#D1D5DB', borderRadius: 10, padding: 12, fontSize: 15 },
   manualBtn: { backgroundColor: '#3B82F6', borderRadius: 10, paddingHorizontal: 20, justifyContent: 'center' },
   manualBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
+  btnDisabled: { opacity: 0.6 },
   alertLink: { marginTop: 24, alignItems: 'center' },
   alertLinkText: { fontSize: 15, color: '#3B82F6', fontWeight: '600' },
-  // Status
-  statusBanner: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 10 },
-  statusIcon: { fontSize: 24 },
-  statusLabel: { fontSize: 16, fontWeight: '800' },
-  // Cards
+  // Passport
+  recallBanner: { backgroundColor: '#FEE2E2', padding: 12, borderBottomWidth: 1, borderBottomColor: '#FECACA' },
+  recallBannerText: { fontSize: 14, fontWeight: '700', color: '#991B1B', textAlign: 'center' },
   card: { backgroundColor: '#FFF', marginHorizontal: 12, marginTop: 10, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB' },
-  cardTitle: { fontSize: 18, fontWeight: '700', color: '#111827' },
-  cardSub: { fontSize: 13, color: '#6B7280', marginTop: 4 },
-  cardCode: { fontSize: 12, color: '#9CA3AF', fontFamily: 'monospace', marginTop: 2 },
-  cardText: { fontSize: 14, color: '#374151', marginTop: 2 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#111827', marginBottom: 8 },
-  // Score
-  scoreRow: { flexDirection: 'row', alignItems: 'baseline' },
-  scoreValue: { fontSize: 36, fontWeight: '800' },
-  scoreMax: { fontSize: 16, color: '#9CA3AF', marginLeft: 4 },
-  // Journey
-  journeyStep: { flexDirection: 'row', marginBottom: 12 },
-  journeyDot: { width: 10, height: 10, borderRadius: 5, marginTop: 4, marginRight: 10 },
-  journeyContent: { flex: 1 },
-  journeyTitle: { fontSize: 14, fontWeight: '600', color: '#111827' },
-  journeyDate: { fontSize: 12, color: '#9CA3AF' },
-  journeyDesc: { fontSize: 13, color: '#6B7280', marginTop: 2 },
+  productName: { fontSize: 18, fontWeight: '700', color: '#111827' },
+  productManufacturer: { fontSize: 14, color: '#6B7280', marginTop: 4 },
+  productLicense: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
+  productCode: { fontSize: 12, color: '#9CA3AF', fontFamily: 'monospace', marginTop: 2 },
+  navCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', marginHorizontal: 12, marginTop: 10, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB' },
+  navCardIcon: { fontSize: 24, marginRight: 12 },
+  navCardContent: { flex: 1 },
+  navCardTitle: { fontSize: 15, fontWeight: '700', color: '#111827' },
+  navCardSub: { fontSize: 13, color: '#6B7280', marginTop: 2 },
+  navCardArrow: { fontSize: 18, color: '#D1D5DB' },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#111827', marginBottom: 6 },
+  blockchainHash: { fontSize: 12, fontFamily: 'monospace', color: '#6B7280', marginTop: 4 },
   // Actions
   actionRow: { flexDirection: 'row', gap: 10, marginHorizontal: 12, marginTop: 16 },
   actionBtn: { flex: 1, backgroundColor: '#EFF6FF', borderRadius: 10, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: '#BFDBFE' },
@@ -474,7 +385,6 @@ const styles = StyleSheet.create({
   starActive: { color: '#F59E0B' },
   submitBtn: { backgroundColor: '#3B82F6', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 20 },
   reportSubmitBtn: { backgroundColor: '#DC2626' },
-  btnDisabled: { opacity: 0.6 },
   submitBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
   warningBanner: { backgroundColor: '#FEF3C7', borderRadius: 10, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#FDE68A' },
   warningText: { fontSize: 13, color: '#92400E', lineHeight: 20 },
