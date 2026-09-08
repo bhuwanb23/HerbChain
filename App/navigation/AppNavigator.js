@@ -64,6 +64,8 @@ import TransporterProfile from '../pages/users/transporters/profile/profile';
 import TransporterReports from '../pages/users/transporters/reports/reports';
 import TransporterScanner from '../pages/users/transporters/scanner/TransporterScanner';
 import ShipmentDetail from '../pages/users/transporters/shipment/ShipmentDetail';
+import ShipmentMapScreen from '../pages/users/transporters/shipment/ShipmentMapScreen';
+import RouteHistoryScreen from '../pages/users/transporters/shipment/RouteHistoryScreen';
 import PickupCapture from '../pages/users/transporters/shipment/PickupCapture';
 import DeliveryConfirm from '../pages/users/transporters/shipment/DeliveryConfirm';
 import DeliveryFailure from '../pages/users/transporters/shipment/DeliveryFailure';
@@ -225,6 +227,8 @@ function TransporterTabs() {
           <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="TripsList" component={TripsPage} />
             <Stack.Screen name="ShipmentDetail" component={ShipmentDetail} />
+            <Stack.Screen name="ShipmentMap" component={ShipmentMapScreen} />
+            <Stack.Screen name="RouteHistory" component={RouteHistoryScreen} />
             <Stack.Screen name="PickupCapture" component={PickupCapture} />
             <Stack.Screen name="DeliveryConfirm" component={DeliveryConfirm} />
             <Stack.Screen name="DeliveryFailure" component={DeliveryFailure} />
