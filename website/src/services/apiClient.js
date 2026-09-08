@@ -274,3 +274,16 @@ export const SupportAPI = {
   create: (token, payload) => api.post('/api/v1/support', { token, body: payload }),
   update: (token, id, payload) => api.put(`/api/v1/support/${id}`, { token, body: payload }),
 };
+
+// Consumer feedback (admin view)
+export const ConsumerFeedbackAPI = {
+  list: (token, opts = {}) => {
+    const params = new URLSearchParams();
+    if (opts.type) params.set('type', opts.type);
+    if (opts.status) params.set('status', opts.status);
+    if (opts.limit) params.set('limit', String(opts.limit));
+    const qs = params.toString();
+    return api.get(`/api/v1/verify/feedback${qs ? `?${qs}` : ''}`, { token });
+  },
+  update: (token, id, payload) => api.put(`/api/v1/verify/feedback/${id}`, { token, body: payload }),
+};

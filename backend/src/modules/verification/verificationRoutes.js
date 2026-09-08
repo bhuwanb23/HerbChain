@@ -149,6 +149,71 @@ function mountVerificationRoutes(app) {
     })
   );
 
+  // ─── Consumer feedback (public, no auth) ──────────────────────────
+  const feedback = require("../../services/consumerFeedback");
+
+  pub.post(
+    "/feedback",
+    rateLimit({ windowMs: 60000, max: 20 }),
+    wrap(async (req, res) => {
+      const { message, rating, contact_email, contact_phone, product_id, batch_id, qr_token, scan_id } = req.body || {};
+      if (!message || String(message).trim().length < 3) {
+        return error(res, "bad_request", "Message is required (min 3 chars)", 400);
+      }
+      const row = await feedback.submitFeedback({
+        scan_id, product_id, batch_id, qr_token,
+        type: "feedback",
+        rating: rating ? Math.min(5, Math.max(1, Number(rating))) : null,
+        message: String(message).trim(),
+        contact_email, contact_phone,
+      });
+      return ok(res, { feedback: row }, 201);
+    })
+  );
+
+  pub.post(
+    "/report-fake",
+    rateLimit({ windowMs: 60000, max: 10 }),
+    wrap(async (req, res) => {
+      const { message, contact_email, contact_phone, product_id, batch_id, qr_token, scan_id } = req.body || {};
+      if (!message || String(message).trim().length < 5) {
+        return error(res, "bad_request", "Description is required (min 5 chars)", 400);
+      }
+      const row = await feedback.submitFeedback({
+        scan_id, product_id, batch_id, qr_token,
+        type: "fake_report",
+        message: String(message).trim(),
+        contact_email, contact_phone,
+      });
+      return ok(res, { report: row }, 201);
+    })
+  );
+
+  // Admin: list feedback reports
+  api.get(
+    "/feedback",
+    requirePermission("verify.analytics.view"),
+    wrap(async (req, res) => {
+      const data = await feedback.listFeedback({
+        type: req.query.type || null,
+        status: req.query.status || null,
+        limit: req.query.limit ? parseInt(req.query.limit, 10) : 50,
+        offset: req.query.offset ? parseInt(req.query.offset, 10) : 0,
+      });
+      return ok(res, data);
+    })
+  );
+
+  api.put(
+    "/feedback/:id",
+    requirePermission("verify.analytics.view"),
+    wrap(async (req, res) => {
+      const { status, admin_note } = req.body || {};
+      const row = await feedback.updateFeedback(req.params.id, { status, admin_note });
+      return ok(res, { feedback: row });
+    })
+  );
+
   app.use("/verify", pub);
   app.use("/api/v1/verify", api);
 }

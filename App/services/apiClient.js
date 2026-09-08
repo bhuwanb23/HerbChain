@@ -363,6 +363,9 @@ export const VerifyAPI = {
     api.get(`/api/v1/verify/alerts?status=${opts.status || 'open'}`, { token }),
   resolveAlert: (token, alertId, payload) =>
     api.post(`/api/v1/verify/alerts/${alertId}/resolve`, { token, body: payload }),
+  // public (no login) — consumer feedback & report-fake
+  feedback: (payload) => api.post('/verify/feedback', { body: payload }),
+  reportFake: (payload) => api.post('/verify/report-fake', { body: payload }),
 };
 
 export const UploadsAPI = {

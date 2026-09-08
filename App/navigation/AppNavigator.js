@@ -119,6 +119,7 @@ import SupportDispute from '../pages/users/admins/integration/support_dispute';
 
 // ─── Consumer screens ───────────────────────────────────────────────────────
 import ConsumerHome from '../pages/users/consumers/ConsumerHome';
+import ConsumerPortal from '../pages/users/consumers/ConsumerPortal';
 import ConsumerDashboard from '../pages/users/consumers/dashboard/dashboard';
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -338,6 +339,7 @@ function ConsumerStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ConsumerHome" component={ConsumerHome} />
+      <Stack.Screen name="ConsumerPortal" component={ConsumerPortal} />
       <Stack.Screen name="ConsumerDashboard" component={ConsumerDashboard} />
     </Stack.Navigator>
   );

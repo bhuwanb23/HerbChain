@@ -1,7 +1,7 @@
 # Phase A8 — Consumer Portal
 
 **Goal:** the public, no-login QR journey: scan → verification → digital product passport → origin/certs/journey → authenticity score → recall alerts → counterfeit detection → report a fake → share. Plus the **only real backend addition** in this plan (feedback / report-fake).
-**Status:** ⬜ not started
+**Status:** ✅ completed
 **Depends on:** A0
 **Backend:** P12/P13 ready (`verification.test.js` 11/11) except feedback/report-fake.
 
