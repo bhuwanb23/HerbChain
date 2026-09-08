@@ -15,6 +15,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import { GlobalTranslationProvider } from '../language/GlobalTranslationContext';
+import { NetworkProvider } from '../contexts/NetworkContext';
+import SyncStatusBar from '../components/SyncStatusBar';
 import { useAuth } from '../contexts/AuthContext';
 import { isEnabled } from '../constants/featureFlags';
 
@@ -60,6 +62,7 @@ import TripsPage from '../pages/users/transporters/trips/index';
 import TransporterPayments from '../pages/users/transporters/payments/payments';
 import TransporterProfile from '../pages/users/transporters/profile/profile';
 import TransporterReports from '../pages/users/transporters/reports/reports';
+import TransporterScanner from '../pages/users/transporters/scanner/TransporterScanner';
 import ShipmentDetail from '../pages/users/transporters/shipment/ShipmentDetail';
 import PickupCapture from '../pages/users/transporters/shipment/PickupCapture';
 import DeliveryConfirm from '../pages/users/transporters/shipment/DeliveryConfirm';
@@ -226,9 +229,7 @@ function TransporterTabs() {
           </Stack.Navigator>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Scanner" options={makeTabOptions('Scanner')}>
-        {() => <ComingSoonScreen featureName="QR Scanner" />}
-      </Tab.Screen>
+      <Tab.Screen name="Scanner" component={TransporterScanner} options={makeTabOptions('Scanner')} />
       <Tab.Screen name="Notifications" component={NotificationsScreen} options={makeTabOptions('Notifications')} />
       <Tab.Screen name="Profile" options={makeTabOptions('Profile')}>
         {() => (
@@ -403,11 +404,14 @@ function AuthGate() {
 
 const AppNavigator = () => {
   return (
-    <GlobalTranslationProvider>
-      <NavigationContainer>
-        <AuthGate />
-      </NavigationContainer>
-    </GlobalTranslationProvider>
+    <NetworkProvider>
+      <GlobalTranslationProvider>
+        <SyncStatusBar />
+        <NavigationContainer>
+          <AuthGate />
+        </NavigationContainer>
+      </GlobalTranslationProvider>
+    </NetworkProvider>
   );
 };
 
