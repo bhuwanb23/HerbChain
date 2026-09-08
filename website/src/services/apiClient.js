@@ -259,3 +259,18 @@ export const NotificationsAPI = {
   preferences: (token) => api.get('/api/v1/notifications/preferences', { token }),
   updatePreferences: (token, payload) => api.put('/api/v1/notifications/preferences', { token, body: payload }),
 };
+
+// Support tickets
+export const SupportAPI = {
+  list: (token, opts = {}) => {
+    const params = new URLSearchParams();
+    if (opts.status) params.set('status', opts.status);
+    if (opts.category) params.set('category', opts.category);
+    if (opts.limit) params.set('limit', String(opts.limit));
+    const qs = params.toString();
+    return api.get(`/api/v1/support${qs ? `?${qs}` : ''}`, { token });
+  },
+  get: (token, id) => api.get(`/api/v1/support/${id}`, { token }),
+  create: (token, payload) => api.post('/api/v1/support', { token, body: payload }),
+  update: (token, id, payload) => api.put(`/api/v1/support/${id}`, { token, body: payload }),
+};

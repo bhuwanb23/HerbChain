@@ -41,7 +41,12 @@ export default function Header() {
               <NavLink to="/compliance">Compliance</NavLink>
               <NavLink to="/recall">Alerts & Recall</NavLink>
               <NavLink to="/reports">Reports</NavLink>
+              <NavLink to="/incentives">Incentives</NavLink>
+              <NavLink to="/support">Support</NavLink>
               {user?.role === 'admin' && <NavLink to="/users">Users</NavLink>}
+              {user?.role === 'admin' && <NavLink to="/blockchain">Blockchain</NavLink>}
+              {user?.role === 'admin' && <NavLink to="/investigations">Investigations</NavLink>}
+              {user?.role === 'admin' && <NavLink to="/integrations">Integrations</NavLink>}
               <NavLink to="/settings">Settings</NavLink>
 
               <div className="relative ml-2">

@@ -1,65 +1,81 @@
-import React, { useMemo, useState } from 'react'
-import { complianceBatches, complianceAlerts } from '../constants'
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
+import { AdminAPI, AnalyticsAPI } from '../../../services/apiClient';
 
 export function useComplianceMetrics() {
-  const [selectedMetric, setSelectedMetric] = useState(null)
+  const { accessToken } = useAuth();
+  const [selectedMetric, setSelectedMetric] = useState(null);
+  const [alerts, setAlerts] = useState([]);
+  const [complianceData, setComplianceData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const metrics = useMemo(() => {
-    const totalBatches = complianceBatches.length
-    const compliantBatches = complianceBatches.filter(b => b.compliance === '100% Compliant').length
-    const activeViolations = complianceAlerts.length
+  useEffect(() => {
+    if (!accessToken) return;
+    setLoading(true);
+    Promise.all([
+      AdminAPI.complianceAlerts(accessToken, { status: 'open' }),
+      AnalyticsAPI.compliance(accessToken, 'monthly'),
+    ])
+      .then(([alertRes, compRes]) => {
+        setAlerts(alertRes?.alerts || []);
+        setComplianceData(compRes);
+      })
+      .catch(() => setError('Failed to load compliance data'))
+      .finally(() => setLoading(false));
+  }, [accessToken]);
 
-    return {
-      complianceRate: {
-        key: 'complianceRate',
-        value: totalBatches > 0 ? Number(((compliantBatches / totalBatches) * 100).toFixed(1)) : 0,
-        label: 'Compliance Rate',
-        suffix: '%',
-        details: (
-          <div>
-            <p><strong>Total Compliant Batches:</strong> {compliantBatches}</p>
-            <p><strong>Total Batches:</strong> {totalBatches}</p>
-            <p>This metric shows the percentage of all batches that currently meet all compliance standards.</p>
-          </div>
-        ),
-      },
-      activeViolations: {
-        key: 'activeViolations',
-        value: activeViolations,
-        label: 'Active Violations',
-        details: (
-          <div>
-            <p><strong>Total Active Alerts:</strong> {activeViolations}</p>
-            <p>These are batches flagged for issues like contamination or unauthorized distribution.</p>
-          </div>
-        ),
-      },
-      geoFenceZones: {
-        key: 'geoFenceZones',
-        value: 156,
-        label: 'Geo-fence Zones',
-        details: (
-          <div>
-            <p><strong>Total Monitored Zones:</strong> 156</p>
-            <p>Number of geographical locations under active monitoring.</p>
-          </div>
-        ),
-      },
-      autoChecksToday: {
-        key: 'autoChecksToday',
-        value: 1248,
-        label: 'Auto Checks Today',
-        details: (
-          <div>
-            <p><strong>Total Automated Scans:</strong> 1248</p>
-            <p>Automated checks performed on the supply chain today.</p>
-          </div>
-        ),
-      },
-    }
-  }, [])
+  const runRules = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      await AdminAPI.runComplianceRules(accessToken);
+      // Re-fetch alerts after running rules
+      const res = await AdminAPI.complianceAlerts(accessToken, { status: 'open' });
+      setAlerts(res?.alerts || []);
+    } catch (_) {}
+  }, [accessToken]);
 
-  return { metrics, selectedMetric, setSelectedMetric }
+  const resolveAlert = useCallback(async (alertId, status) => {
+    if (!accessToken) return;
+    try {
+      await AdminAPI.updateComplianceAlert(accessToken, alertId, { status });
+      setAlerts((prev) => prev.filter((a) => a.id !== alertId));
+    } catch (_) {}
+  }, [accessToken]);
+
+  const stats = complianceData || {};
+  const metrics = {
+    complianceRate: {
+      key: 'complianceRate',
+      value: stats.compliance_rate || stats.complianceRate || 0,
+      label: 'Compliance Rate',
+      suffix: '%',
+    },
+    activeViolations: {
+      key: 'activeViolations',
+      value: alerts.length,
+      label: 'Active Violations',
+    },
+    totalBatches: {
+      key: 'totalBatches',
+      value: stats.total_batches || stats.totalBatches || 0,
+      label: 'Total Batches',
+    },
+    certifiedBatches: {
+      key: 'certifiedBatches',
+      value: stats.certified_batches || stats.certifiedBatches || 0,
+      label: 'Certified Batches',
+    },
+  };
+
+  return {
+    metrics,
+    alerts,
+    selectedMetric,
+    setSelectedMetric,
+    loading,
+    error,
+    runRules,
+    resolveAlert,
+  };
 }
-
-

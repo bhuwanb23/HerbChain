@@ -1,7 +1,7 @@
 # Phase A7 — Admin Web Portal Upgrade
 
 **Goal:** the AYUSH web portal (`website/`) becomes the real control tower: consume the P13 admin-portal endpoints (21 routes) and P16 analytics (10 domains + alert engine), fix the dead `/admin/api/*` calls, and add the missing monitor/explorer screens.
-**Status:** ⬜ not started
+**Status:** ✅ completed
 **Depends on:** A0 (can run parallel to A2–A5)
 **Backend:** all ready — `admin.test.js` 15/15, `analytics.test.js` 12/12.
 
