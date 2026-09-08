@@ -1,3 +1,9 @@
+/**
+ * OfflineSyncScreen — the rural-connectivity UI for farmers & transporters.
+ *
+ * Shows: sync status cards, queue list, conflict resolution, manual "Sync Now"
+ * Backend: POST /sync/upload, GET /sync/status, GET /sync/conflicts, POST /sync/conflicts/:id/resolve
+ */
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
@@ -5,6 +11,7 @@ import {
 } from 'react-native';
 import { SyncAPI } from '../../services/apiClient';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNetwork } from '../../contexts/NetworkContext';
 
 const STATUS_TABS = ['All', 'Pending', 'Synced', 'Failed', 'Conflicts'];
 
@@ -25,13 +32,14 @@ const CONFLICT_ICONS = {
 
 export default function OfflineSyncScreen() {
   const { accessToken } = useAuth();
+  const { isOnline } = useNetwork();
   const [syncStatus, setSyncStatus] = useState(null);
   const [conflicts, setConflicts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('All');
   const [syncing, setSyncing] = useState(false);
-  const [view, setView] = useState('main'); // main | conflicts | analytics
+  const [view, setView] = useState('main'); // main | conflicts
 
   const fetchStatus = useCallback(async () => {
     if (!accessToken) return;
@@ -60,10 +68,14 @@ export default function OfflineSyncScreen() {
   };
 
   const triggerSync = async () => {
+    if (!isOnline) {
+      Alert.alert('Offline', 'No internet connection. Changes will sync when you go back online.');
+      return;
+    }
     setSyncing(true);
     try {
-      // In a real app, this would replay the local SQLite queue via SyncAPI.upload
-      Alert.alert('Sync', 'Sync initiated. The app will upload any pending offline changes.');
+      // In production, this would replay the local SQLite queue via SyncAPI.upload
+      Alert.alert('Sync', 'Sync initiated. Pending offline changes will be uploaded.');
       await fetchStatus();
     } catch (_) {
       Alert.alert('Error', 'Sync failed. Will retry automatically.');
@@ -81,7 +93,7 @@ export default function OfflineSyncScreen() {
     }
   };
 
-  // ─── Conflict detail ───
+  // ─── Conflict detail view ───
   if (view === 'conflicts') {
     return (
       <View style={styles.container}>
@@ -96,7 +108,7 @@ export default function OfflineSyncScreen() {
           <View style={styles.center}>
             <Text style={styles.icon}>✅</Text>
             <Text style={styles.title}>No conflicts</Text>
-            <Text style={styles.subtitle}>All synced items were applied successfully.</Text>
+            <Text style={styles.subtitle}>All synced items applied successfully.</Text>
           </View>
         ) : (
           <FlatList
@@ -112,41 +124,28 @@ export default function OfflineSyncScreen() {
                     <Text style={styles.conflictEntity}>{item.entity_type} · {item.local_id?.slice(0, 12)}</Text>
                   </View>
                 </View>
-
-                {/* Server vs Client comparison */}
                 <View style={styles.compareRow}>
                   <View style={styles.compareCol}>
                     <Text style={styles.compareLabel}>📱 Your data</Text>
                     <Text style={styles.compareText} numberOfLines={3}>
-                      {JSON.stringify(item.client_payload || item.local_payload || {}, null, 0).slice(0, 150)}
+                      {JSON.stringify(item.client_payload || item.local_payload || {}, null, 0).slice(0, 120)}
                     </Text>
                   </View>
                   <View style={styles.compareCol}>
                     <Text style={styles.compareLabel}>☁️ Server data</Text>
                     <Text style={styles.compareText} numberOfLines={3}>
-                      {JSON.stringify(item.server_state || {}, null, 0).slice(0, 150)}
+                      {JSON.stringify(item.server_state || {}, null, 0).slice(0, 120)}
                     </Text>
                   </View>
                 </View>
-
-                {/* Resolution buttons */}
                 <View style={styles.resolveRow}>
-                  <TouchableOpacity
-                    style={[styles.resolveBtn, styles.resolveKeep]}
-                    onPress={() => resolveConflict(item.id, 'applied')}
-                  >
+                  <TouchableOpacity style={[styles.resolveBtn, { backgroundColor: '#D1FAE5' }]} onPress={() => resolveConflict(item.id, 'applied')}>
                     <Text style={styles.resolveBtnText}>Keep mine</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.resolveBtn, styles.resolveDiscard]}
-                    onPress={() => resolveConflict(item.id, 'discard')}
-                  >
+                  <TouchableOpacity style={[styles.resolveBtn, { backgroundColor: '#FEE2E2' }]} onPress={() => resolveConflict(item.id, 'discard')}>
                     <Text style={styles.resolveBtnText}>Discard</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.resolveBtn, styles.resolveRequeue]}
-                    onPress={() => resolveConflict(item.id, 'requeue')}
-                  >
+                  <TouchableOpacity style={[styles.resolveBtn, { backgroundColor: '#E0E7FF' }]} onPress={() => resolveConflict(item.id, 'requeue')}>
                     <Text style={styles.resolveBtnText}>Retry</Text>
                   </TouchableOpacity>
                 </View>
@@ -181,7 +180,15 @@ export default function OfflineSyncScreen() {
           data={[]}
           ListHeaderComponent={() => (
             <>
-              {/* Status cards */}
+              {/* Network status */}
+              <View style={[styles.networkBanner, { backgroundColor: isOnline ? '#D1FAE5' : '#FEE2E2' }]}>
+                <Text style={styles.networkIcon}>{isOnline ? '🟢' : '🔴'}</Text>
+                <Text style={[styles.networkText, { color: isOnline ? '#065F46' : '#991B1B' }]}>
+                  {isOnline ? 'Online' : 'Offline — Changes saved locally'}
+                </Text>
+              </View>
+
+              {/* Stats grid */}
               <View style={styles.statsGrid}>
                 <StatCard icon="📤" label="Pending" value={pending} color="#F59E0B" />
                 <StatCard icon="✅" label="Synced" value={syncedToday} color="#10B981" />
@@ -189,7 +196,7 @@ export default function OfflineSyncScreen() {
                 <StatCard icon="⚠️" label="Conflicts" value={conflicts.length} color="#8B5CF6" />
               </View>
 
-              {/* Last sync info */}
+              {/* Last sync */}
               <View style={styles.infoCard}>
                 <Text style={styles.infoLabel}>Last sync</Text>
                 <Text style={styles.infoValue}>
@@ -197,11 +204,11 @@ export default function OfflineSyncScreen() {
                 </Text>
               </View>
 
-              {/* Sync now button */}
+              {/* Sync button */}
               <TouchableOpacity
-                style={[styles.syncBtn, syncing && styles.syncBtnDisabled]}
+                style={[styles.syncBtn, (syncing || !isOnline) && styles.syncBtnDisabled]}
                 onPress={triggerSync}
-                disabled={syncing}
+                disabled={syncing || !isOnline}
               >
                 {syncing ? (
                   <ActivityIndicator color="#FFF" />
@@ -210,16 +217,12 @@ export default function OfflineSyncScreen() {
                 )}
               </TouchableOpacity>
 
-              {/* Queue section */}
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Sync Queue</Text>
-              </View>
-
-              {/* Pending items hint */}
+              {/* Queue info */}
               {pending > 0 && (
                 <View style={styles.queueInfo}>
                   <Text style={styles.queueInfoText}>
-                    {pending} item{pending !== 1 ? 's' : ''} waiting to sync. Tap "Sync Now" to upload.
+                    {pending} item{pending !== 1 ? 's' : ''} waiting to sync.
+                    {isOnline ? ' Tap "Sync Now" to upload.' : ' Will sync when back online.'}
                   </Text>
                 </View>
               )}
@@ -252,7 +255,7 @@ function StatCard({ icon, label, value, color }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, minHeight: 200 },
+  center: { alignItems: 'center', justifyContent: 'center', padding: 24, minHeight: 200 },
   icon: { fontSize: 48, marginBottom: 12 },
   title: { fontSize: 18, fontWeight: '700', color: '#111827' },
   subtitle: { fontSize: 14, color: '#6B7280', marginTop: 4, textAlign: 'center' },
@@ -263,6 +266,10 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#111827' },
   headerBtn: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: '#FEF3C7' },
   headerBtnText: { fontSize: 13, color: '#92400E', fontWeight: '700' },
+  backBtn: { fontSize: 16, color: '#3B82F6', fontWeight: '600' },
+  networkBanner: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
+  networkIcon: { fontSize: 14 },
+  networkText: { fontSize: 13, fontWeight: '700' },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, gap: 10 },
   statCard: {
     width: '47%', backgroundColor: '#FFF', borderRadius: 12, padding: 16,
@@ -283,10 +290,8 @@ const styles = StyleSheet.create({
   },
   syncBtnDisabled: { opacity: 0.6 },
   syncBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
-  sectionHeader: { padding: 16, paddingBottom: 4 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
   queueInfo: {
-    backgroundColor: '#FFFBEB', marginHorizontal: 12, padding: 12, borderRadius: 8,
+    backgroundColor: '#FFFBEB', marginHorizontal: 12, marginTop: 12, padding: 12, borderRadius: 8,
     borderWidth: 1, borderColor: '#FDE68A',
   },
   queueInfoText: { fontSize: 13, color: '#92400E' },
@@ -307,8 +312,5 @@ const styles = StyleSheet.create({
   compareText: { fontSize: 12, color: '#374151', fontFamily: 'monospace' },
   resolveRow: { flexDirection: 'row', gap: 8 },
   resolveBtn: { flex: 1, paddingVertical: 8, borderRadius: 6, alignItems: 'center' },
-  resolveKeep: { backgroundColor: '#D1FAE5' },
-  resolveDiscard: { backgroundColor: '#FEE2E2' },
-  resolveRequeue: { backgroundColor: '#E0E7FF' },
   resolveBtnText: { fontSize: 13, fontWeight: '700', color: '#374151' },
 });

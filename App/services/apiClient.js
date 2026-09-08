@@ -363,6 +363,9 @@ export const VerifyAPI = {
     api.get(`/api/v1/verify/alerts?status=${opts.status || 'open'}`, { token }),
   resolveAlert: (token, alertId, payload) =>
     api.post(`/api/v1/verify/alerts/${alertId}/resolve`, { token, body: payload }),
+  // public (no login) — consumer feedback & report-fake
+  feedback: (payload) => api.post('/verify/feedback', { body: payload }),
+  reportFake: (payload) => api.post('/verify/report-fake', { body: payload }),
 };
 
 export const UploadsAPI = {
@@ -448,6 +451,17 @@ export const SyncAPI = {
   resolveConflict: (token, conflictId, payload) =>
     api.post(`/api/v1/sync/conflicts/${conflictId}/resolve`, { token, body: payload }),
   analytics: (token) => api.get('/api/v1/sync/analytics', { token }),
+};
+
+export const PricesAPI = {
+  list: (opts = {}) => {
+    const params = new URLSearchParams();
+    if (opts.species_id) params.set('species_id', opts.species_id);
+    if (opts.market) params.set('market', opts.market);
+    const qs = params.toString();
+    return api.get(`/api/v1/prices${qs ? `?${qs}` : ''}`);
+  },
+  create: (token, payload) => api.post('/api/v1/prices', { token, body: payload }),
 };
 
 export const AnalyticsAPI = {

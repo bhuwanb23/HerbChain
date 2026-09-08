@@ -15,6 +15,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import { GlobalTranslationProvider } from '../language/GlobalTranslationContext';
+import { NetworkProvider } from '../contexts/NetworkContext';
+import SyncStatusBar from '../components/SyncStatusBar';
 import { useAuth } from '../contexts/AuthContext';
 import { isEnabled } from '../constants/featureFlags';
 
@@ -60,7 +62,10 @@ import TripsPage from '../pages/users/transporters/trips/index';
 import TransporterPayments from '../pages/users/transporters/payments/payments';
 import TransporterProfile from '../pages/users/transporters/profile/profile';
 import TransporterReports from '../pages/users/transporters/reports/reports';
+import TransporterScanner from '../pages/users/transporters/scanner/TransporterScanner';
 import ShipmentDetail from '../pages/users/transporters/shipment/ShipmentDetail';
+import ShipmentMapScreen from '../pages/users/transporters/shipment/ShipmentMapScreen';
+import RouteHistoryScreen from '../pages/users/transporters/shipment/RouteHistoryScreen';
 import PickupCapture from '../pages/users/transporters/shipment/PickupCapture';
 import DeliveryConfirm from '../pages/users/transporters/shipment/DeliveryConfirm';
 import DeliveryFailure from '../pages/users/transporters/shipment/DeliveryFailure';
@@ -119,6 +124,9 @@ import SupportDispute from '../pages/users/admins/integration/support_dispute';
 
 // ─── Consumer screens ───────────────────────────────────────────────────────
 import ConsumerHome from '../pages/users/consumers/ConsumerHome';
+import ConsumerPortal from '../pages/users/consumers/ConsumerPortal';
+import OriginStoryScreen from '../pages/shared/OriginStoryScreen';
+import LabCertScreen from '../pages/shared/LabCertificateScreen';
 import ConsumerDashboard from '../pages/users/consumers/dashboard/dashboard';
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -219,15 +227,15 @@ function TransporterTabs() {
           <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="TripsList" component={TripsPage} />
             <Stack.Screen name="ShipmentDetail" component={ShipmentDetail} />
+            <Stack.Screen name="ShipmentMap" component={ShipmentMapScreen} />
+            <Stack.Screen name="RouteHistory" component={RouteHistoryScreen} />
             <Stack.Screen name="PickupCapture" component={PickupCapture} />
             <Stack.Screen name="DeliveryConfirm" component={DeliveryConfirm} />
             <Stack.Screen name="DeliveryFailure" component={DeliveryFailure} />
           </Stack.Navigator>
         )}
       </Tab.Screen>
-      <Tab.Screen name="Scanner" options={makeTabOptions('Scanner')}>
-        {() => <ComingSoonScreen featureName="QR Scanner" />}
-      </Tab.Screen>
+      <Tab.Screen name="Scanner" component={TransporterScanner} options={makeTabOptions('Scanner')} />
       <Tab.Screen name="Notifications" component={NotificationsScreen} options={makeTabOptions('Notifications')} />
       <Tab.Screen name="Profile" options={makeTabOptions('Profile')}>
         {() => (
@@ -338,6 +346,9 @@ function ConsumerStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ConsumerHome" component={ConsumerHome} />
+      <Stack.Screen name="ConsumerPortal" component={ConsumerPortal} />
+      <Stack.Screen name="OriginStory" component={OriginStoryScreen} />
+      <Stack.Screen name="LabCertificate" component={LabCertScreen} />
       <Stack.Screen name="ConsumerDashboard" component={ConsumerDashboard} />
     </Stack.Navigator>
   );
@@ -401,11 +412,14 @@ function AuthGate() {
 
 const AppNavigator = () => {
   return (
-    <GlobalTranslationProvider>
-      <NavigationContainer>
-        <AuthGate />
-      </NavigationContainer>
-    </GlobalTranslationProvider>
+    <NetworkProvider>
+      <GlobalTranslationProvider>
+        <SyncStatusBar />
+        <NavigationContainer>
+          <AuthGate />
+        </NavigationContainer>
+      </GlobalTranslationProvider>
+    </NetworkProvider>
   );
 };
 

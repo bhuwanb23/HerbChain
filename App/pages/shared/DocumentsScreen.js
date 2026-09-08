@@ -157,6 +157,9 @@ export default function DocumentsScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Documents</Text>
+        <TouchableOpacity style={styles.uploadBtn} onPress={() => Alert.alert('Upload', 'Document upload coming soon.')}> 
+          <Text style={styles.uploadBtnText}>+ Upload</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Category tabs */}
@@ -228,6 +231,8 @@ const styles = StyleSheet.create({
     padding: 16, borderBottomWidth: 1, borderBottomColor: '#E5E7EB', backgroundColor: '#FFF',
   },
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#111827', flex: 1 },
+  uploadBtn: { backgroundColor: '#3B82F6', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 8 },
+  uploadBtnText: { color: '#FFF', fontSize: 13, fontWeight: '700' },
   backBtn: { fontSize: 16, color: '#3B82F6', fontWeight: '600' },
   catChip: {
     paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999,

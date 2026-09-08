@@ -21,8 +21,8 @@ const DEFAULTS = {
   reports: false,
   incentives: false,
   translations: false,
-  prices: false,    // no backend module — hidden until A9 decision
-  weather: false,   // no backend module — hidden until A9 decision
+  prices: true,     // A9: lite backend added (admin-entered reference prices)
+  weather: false,   // cut: needs external API key — defer to future phase
   crop_plans: true, // client-side only, uses species data
 };
 

@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useCallback } from 'react';
+/**
+ * NotificationsScreen — shared across all roles with real-time polling.
+ *
+ * Features: tabs (All/Unread/Critical), 30s polling, mark-read,
+ * preferences sub-screen, deep-link to entities, unread badge.
+ */
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, ActivityIndicator,
@@ -7,6 +13,7 @@ import { NotificationsAPI } from '../../services/apiClient';
 import { useAuth } from '../../contexts/AuthContext';
 
 const TABS = ['All', 'Unread', 'Critical'];
+const POLL_INTERVAL = 30000; // 30 seconds
 
 const PRIORITY_COLORS = {
   CRITICAL: '#DC2626',
@@ -36,20 +43,23 @@ export default function NotificationsScreen({ navigation }) {
   const [showPrefs, setShowPrefs] = useState(false);
   const [preferences, setPreferences] = useState(null);
   const [prefsLoading, setPrefsLoading] = useState(false);
+  const pollRef = useRef(null);
 
   const fetchNotifications = useCallback(async () => {
     if (!accessToken) return;
     try {
       const data = await NotificationsAPI.inbox(accessToken, { limit: 100 });
       setItems(Array.isArray(data) ? data : data?.notifications || []);
-    } catch (_) {
-      setItems([]);
-    }
+    } catch (_) {}
   }, [accessToken]);
 
+  // Initial fetch + polling
   useEffect(() => {
     setLoading(true);
     fetchNotifications().finally(() => setLoading(false));
+
+    pollRef.current = setInterval(fetchNotifications, POLL_INTERVAL);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [fetchNotifications]);
 
   const onRefresh = async () => {
@@ -80,9 +90,7 @@ export default function NotificationsScreen({ navigation }) {
     try {
       const data = await NotificationsAPI.preferences(accessToken);
       setPreferences(data);
-    } catch (_) {
-      setPreferences({});
-    }
+    } catch (_) { setPreferences({}); }
     setPrefsLoading(false);
   };
 
@@ -91,7 +99,6 @@ export default function NotificationsScreen({ navigation }) {
     setShowPrefs(!showPrefs);
   };
 
-  // Filter by tab
   const filtered = items.filter((n) => {
     if (activeTab === 'Unread') return !n.is_read;
     if (activeTab === 'Critical') return n.priority === 'CRITICAL' || n.priority === 'HIGH';
@@ -100,17 +107,18 @@ export default function NotificationsScreen({ navigation }) {
 
   const unreadCount = items.filter((n) => !n.is_read).length;
 
-  // Deep-link to entity
   const handlePress = (item) => {
     markSingleRead(item.id);
-    if (item.entity_type && item.entity_id) {
+    if (item.entity_type && item.entity_id && navigation) {
       const entityMap = {
         batch: { screen: 'BatchDetail', paramKey: 'batchId' },
         shipment: { screen: 'ShipmentDetail', paramKey: 'shipmentId' },
         transfer_request: { screen: 'TransferRequests' },
+        certificate: { screen: 'LabCertificate' },
+        product: { screen: 'ProductDetail' },
       };
       const target = entityMap[item.entity_type];
-      if (target && navigation) {
+      if (target) {
         const params = {};
         if (target.paramKey) params[target.paramKey] = item.entity_id;
         navigation.navigate(target.screen, params);
@@ -126,7 +134,7 @@ export default function NotificationsScreen({ navigation }) {
           <TouchableOpacity onPress={toggleShowPrefs}>
             <Text style={styles.backBtn}>← Back</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Notification Preferences</Text>
+          <Text style={styles.headerTitle}>Preferences</Text>
           <View style={{ width: 60 }} />
         </View>
         {prefsLoading ? (
@@ -162,7 +170,6 @@ export default function NotificationsScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Notifications</Text>
         <View style={styles.headerActions}>
@@ -177,7 +184,6 @@ export default function NotificationsScreen({ navigation }) {
         </View>
       </View>
 
-      {/* Tabs */}
       <View style={styles.tabBar}>
         {TABS.map((tab) => {
           const count = tab === 'All' ? items.length : tab === 'Unread' ? unreadCount : items.filter((n) => n.priority === 'CRITICAL' || n.priority === 'HIGH').length;
@@ -195,7 +201,6 @@ export default function NotificationsScreen({ navigation }) {
         })}
       </View>
 
-      {/* List */}
       {filtered.length === 0 ? (
         <View style={styles.center}>
           <Text style={styles.icon}>🔔</Text>
@@ -215,9 +220,7 @@ export default function NotificationsScreen({ navigation }) {
               onPress={() => handlePress(item)}
             >
               <View style={styles.cardRow}>
-                <Text style={styles.cardIcon}>
-                  {CATEGORY_ICONS[item.category] || '📌'}
-                </Text>
+                <Text style={styles.cardIcon}>{CATEGORY_ICONS[item.category] || '📌'}</Text>
                 <View style={styles.cardContent}>
                   <View style={styles.cardTitleRow}>
                     <Text style={styles.cardTitle} numberOfLines={1}>
@@ -273,9 +276,7 @@ const styles = StyleSheet.create({
   headerBtnText: { fontSize: 18 },
   backBtn: { fontSize: 16, color: '#3B82F6', fontWeight: '600' },
   markAll: { fontSize: 14, color: '#3B82F6', fontWeight: '600' },
-  tabBar: {
-    flexDirection: 'row', backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#E5E7EB',
-  },
+  tabBar: { flexDirection: 'row', backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
   tab: { flex: 1, paddingVertical: 12, alignItems: 'center' },
   tabActive: { borderBottomWidth: 2, borderBottomColor: '#3B82F6' },
   tabText: { fontSize: 13, color: '#6B7280', fontWeight: '600' },

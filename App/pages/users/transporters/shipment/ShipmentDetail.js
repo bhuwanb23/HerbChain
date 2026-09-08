@@ -191,6 +191,15 @@ export default function ShipmentDetail({ route, navigation }) {
             <Text style={styles.deliveredText}>✅ Delivery Complete</Text>
           </View>
         )}
+        {/* Map & Route buttons */}
+        <View style={[styles.actionRow, { marginTop: 12 }]}>
+          <TouchableOpacity style={[styles.btn, { backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#BFDBFE' }]} onPress={() => navigation?.navigate?.('ShipmentMap', { shipmentId, shipment })}>
+            <Text style={[styles.btnText, { color: '#3B82F6' }]}>🗺️ Track on Map</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.btn, { backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#D1D5DB' }]} onPress={() => navigation?.navigate?.('RouteHistory', { shipmentId })}>
+            <Text style={[styles.btnText, { color: '#374151' }]}>📍 Route History</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </ScrollView>
   );

@@ -170,6 +170,17 @@ export const AdminAPI = {
 };
 
 // P16 analytics — the BI warehouse reads
+export const PricesAPI = {
+  list: (token, opts = {}) => {
+    const params = new URLSearchParams();
+    if (opts.species_id) params.set('species_id', opts.species_id);
+    if (opts.market) params.set('market', opts.market);
+    const qs = params.toString();
+    return api.get(`/api/v1/prices${qs ? `?${qs}` : ''}`, { token });
+  },
+  create: (token, payload) => api.post('/api/v1/prices', { token, body: payload }),
+};
+
 export const AnalyticsAPI = {
   dashboard: (token, opts = {}) =>
     api.get(`/api/v1/analytics/dashboard${opts.state ? `?state=${encodeURIComponent(opts.state)}` : ''}`, { token }),
@@ -273,4 +284,17 @@ export const SupportAPI = {
   get: (token, id) => api.get(`/api/v1/support/${id}`, { token }),
   create: (token, payload) => api.post('/api/v1/support', { token, body: payload }),
   update: (token, id, payload) => api.put(`/api/v1/support/${id}`, { token, body: payload }),
+};
+
+// Consumer feedback (admin view)
+export const ConsumerFeedbackAPI = {
+  list: (token, opts = {}) => {
+    const params = new URLSearchParams();
+    if (opts.type) params.set('type', opts.type);
+    if (opts.status) params.set('status', opts.status);
+    if (opts.limit) params.set('limit', String(opts.limit));
+    const qs = params.toString();
+    return api.get(`/api/v1/verify/feedback${qs ? `?${qs}` : ''}`, { token });
+  },
+  update: (token, id, payload) => api.put(`/api/v1/verify/feedback/${id}`, { token, body: payload }),
 };

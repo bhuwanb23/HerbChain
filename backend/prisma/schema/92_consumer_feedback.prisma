@@ -1,0 +1,29 @@
+// ============================================================================
+// CONSUMER FEEDBACK & REPORT-FAKE (Phase A8, docs/app/plan/phase_A8_consumer.md)
+// ---------------------------------------------------------------------------
+// Two lightweight public endpoints so consumers can send feedback after a scan
+// and report suspected counterfeit products. Admins see these rows in the
+// portal.
+
+model ConsumerFeedback {
+  id              String   @id @default(cuid())
+  scan_id         String?  // link to VerificationScan if available
+  product_id      String?  // nullable — feedback may be batch-only
+  batch_id        String?
+  qr_token        String?  // raw token from the scan
+  type            String   @default("feedback") // feedback | fake_report
+  rating          Int?     // 1-5 star rating (feedback only)
+  message         String
+  contact_email   String?
+  contact_phone   String?
+  status          String   @default("pending") // pending | reviewed | dismissed
+  admin_note      String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  @@index([type, status])
+  @@index([product_id])
+  @@index([batch_id])
+  @@index([created_at])
+  @@map("consumer_feedback")
+}
