@@ -1,7 +1,7 @@
 # Phase A6 — Shared Screens (all roles)
 
 **Goal:** the five screens every logged-in role shares per `overview.md`: Notifications center, Help & Support, Settings, Documents center, and the **Offline Sync Center** — the UI half of Phase 17 that makes the rural-connectivity promise real.
-**Status:** ⬜ not started
+**Status:** ✅ completed
 **Depends on:** A1 (stubs exist), parallelizable with A3–A5
 **Backend:** all ready (P14 documents, P15 notifications/support/settings, P17 sync) — `notifications.test.js` 14/14, `sync.test.js` 10/10.
 

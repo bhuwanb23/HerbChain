@@ -27,6 +27,7 @@ import NotificationsScreen from '../pages/shared/NotificationsScreen';
 import SupportScreen from '../pages/shared/SupportScreen';
 import SettingsScreen from '../pages/shared/SettingsScreen';
 import OfflineSyncScreen from '../pages/shared/OfflineSyncScreen';
+import DocumentsScreen from '../pages/shared/DocumentsScreen';
 import ComingSoonScreen from '../pages/shared/ComingSoonScreen';
 
 // ─── Farmer screens ─────────────────────────────────────────────────────────
@@ -199,6 +200,7 @@ function FarmerTabs() {
             <Stack.Screen name="Training" component={isEnabled('trainings') ? FarmerTraining : (() => <ComingSoonScreen featureName="Trainings" />)} />
             <Stack.Screen name="Payments" component={isEnabled('payments') ? FarmerPayments : (() => <ComingSoonScreen featureName="Payments" />)} />
             <Stack.Screen name="Support" component={SupportScreen} />
+            <Stack.Screen name="Documents" component={DocumentsScreen} />
             <Stack.Screen name="Settings" component={SettingsScreen} />
             <Stack.Screen name="OfflineSync" component={OfflineSyncScreen} />
           </Stack.Navigator>
@@ -234,6 +236,7 @@ function TransporterTabs() {
             <Stack.Screen name="TransporterReports" component={isEnabled('reports') ? TransporterReports : (() => <ComingSoonScreen featureName="Reports" />)} />
             <Stack.Screen name="TransporterPayments" component={isEnabled('payments') ? TransporterPayments : (() => <ComingSoonScreen featureName="Payments" />)} />
             <Stack.Screen name="Support" component={SupportScreen} />
+            <Stack.Screen name="Documents" component={DocumentsScreen} />
             <Stack.Screen name="Settings" component={SettingsScreen} />
             <Stack.Screen name="OfflineSync" component={OfflineSyncScreen} />
           </Stack.Navigator>
@@ -320,6 +323,7 @@ function AdminTabs() {
           <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="AdminSettingsMain" component={SettingsScreen} />
             <Stack.Screen name="ProfileSettings" component={ProfileSettings} />
+            <Stack.Screen name="Documents" component={DocumentsScreen} />
             <Stack.Screen name="Integration" component={IntegrationAPI} />
             <Stack.Screen name="SupportDispute" component={SupportDispute} />
           </Stack.Navigator>

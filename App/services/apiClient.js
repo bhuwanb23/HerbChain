@@ -381,6 +381,23 @@ export const IdentificationsAPI = {
   get: (token, id) => api.get(`/api/v1/identifications/${id}`, { token }),
 };
 
+export const SupportAPI = {
+  list: (token, opts = {}) => {
+    const params = new URLSearchParams();
+    if (opts.status) params.set('status', opts.status);
+    if (opts.category) params.set('category', opts.category);
+    if (opts.limit) params.set('limit', String(opts.limit));
+    if (opts.offset) params.set('offset', String(opts.offset));
+    const qs = params.toString();
+    return api.get(`/api/v1/support${qs ? `?${qs}` : ''}`, { token });
+  },
+  get: (token, id) => api.get(`/api/v1/support/${id}`, { token }),
+  create: (token, payload) => api.post('/api/v1/support', { token, body: payload }),
+  reply: (token, id, payload) => api.post(`/api/v1/support/${id}/messages`, { token, body: payload }),
+  update: (token, id, payload) => api.put(`/api/v1/support/${id}`, { token, body: payload }),
+  constants: (token) => api.get('/api/v1/support/constants', { token }),
+};
+
 export const NotificationsAPI = {
   inbox: (token, opts = {}) => {
     const params = new URLSearchParams();

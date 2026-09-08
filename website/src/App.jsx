@@ -13,6 +13,11 @@ import LoginPage from './pages/login/LoginPage.jsx';
 import TracePage from './pages/trace/TracePage.jsx';
 import UsersPage from './pages/users/UsersPage.jsx';
 import SettingsPage from './pages/settings/SettingsPage.jsx';
+import IncentivesPage from './pages/incentives/incentives.jsx';
+import IntegrationsPage from './pages/integrations/integrations.jsx';
+import SupportPage from './pages/support/support.jsx';
+import BlockchainExplorer from './pages/blockchain/BlockchainExplorer.jsx';
+import InvestigationsPage from './pages/investigations/InvestigationsPage.jsx';
 import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
 
 function RequireAuth({ children, role }) {
@@ -87,6 +92,46 @@ function MainLayout() {
             element={
               <RequireAuth>
                 <AlertsAndRecallsPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/incentives"
+            element={
+              <RequireAuth>
+                <IncentivesPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/integrations"
+            element={
+              <RequireAuth role="admin">
+                <IntegrationsPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/support"
+            element={
+              <RequireAuth>
+                <SupportPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/blockchain"
+            element={
+              <RequireAuth role="admin">
+                <BlockchainExplorer />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/investigations"
+            element={
+              <RequireAuth role="admin">
+                <InvestigationsPage />
               </RequireAuth>
             }
           />

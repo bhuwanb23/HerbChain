@@ -123,6 +123,7 @@ model User {
   inspections_conducted Inspection[]       @relation("Inspector")
   support_tickets_created SupportTicket[]  @relation("TicketRequester")
   support_tickets_owned SupportTicket[]    @relation("TicketAssignee")
+  support_messages        SupportMessage[]
 
   @@index([role])
   @@index([is_active])

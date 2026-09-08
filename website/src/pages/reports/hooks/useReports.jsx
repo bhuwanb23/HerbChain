@@ -1,61 +1,81 @@
-import React, { useMemo } from 'react'
-import { reportBatches } from '../constants'
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
+import { ReportsAPI, AnalyticsAPI } from '../../../services/apiClient';
 
 export function useReports() {
-  const herbTypeData = useMemo(() => {
-    const counts = reportBatches.reduce((acc, batch) => {
-      acc[batch.herbType] = (acc[batch.herbType] || 0) + 1
-      return acc
-    }, {})
-    const allHerbTypes = {
-      Ashwagandha: 4,
-      Brahmi: 3,
-      Tulsi: 5,
-      Amla: 2,
-      Neem: 3,
-      Guduchi: 1,
-      Haritaki: 2,
-      ...counts,
+  const { accessToken } = useAuth();
+  const [reports, setReports] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  const [analytics, setAnalytics] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+
+  useEffect(() => {
+    if (!accessToken) return;
+    setLoading(true);
+    Promise.all([
+      ReportsAPI.list(accessToken).catch(() => ({ reports: [] })),
+      ReportsAPI.schedules(accessToken).catch(() => ({ schedules: [] })),
+      AnalyticsAPI.dashboard(accessToken).catch(() => ({})),
+    ])
+      .then(([reportRes, schedRes, dashRes]) => {
+        setReports(reportRes?.reports || []);
+        setSchedules(schedRes?.schedules || []);
+        setAnalytics(dashRes || {});
+      })
+      .finally(() => setLoading(false));
+  }, [accessToken]);
+
+  const generateReport = useCallback(async (payload) => {
+    if (!accessToken) return;
+    setGenerating(true);
+    try {
+      const res = await ReportsAPI.generate(accessToken, payload);
+      if (res?.report) setReports((prev) => [res.report, ...prev]);
+      return res?.report;
+    } catch (_) {
+      return null;
+    } finally {
+      setGenerating(false);
     }
-    return {
-      labels: Object.keys(allHerbTypes),
-      datasets: [{
-        data: Object.values(allHerbTypes),
-        backgroundColor: [
-          '#4CAF50', '#8BC34A', '#CDDC39', '#FFC107', '#FF9800',
-          '#00BCD4', '#03A9F4', '#2196F3', '#3F51B5', '#673AB7',
-          '#E91E63', '#9C27B0',
-        ],
-      }],
+  }, [accessToken]);
+
+  const downloadReport = useCallback(async (reportId) => {
+    if (!accessToken) return;
+    try {
+      const res = await ReportsAPI.download(accessToken, reportId);
+      return res;
+    } catch (_) {
+      return null;
     }
-  }, [])
+  }, [accessToken]);
 
-  const complianceHistoryData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
-    datasets: [{ label: 'Average Compliance %', data: [85, 88, 92, 90, 94, 96, 91, 93, 95, 94], backgroundColor: '#4CAF50' }],
-  }
+  const createSchedule = useCallback(async (payload) => {
+    if (!accessToken) return;
+    try {
+      const res = await ReportsAPI.createSchedule(accessToken, payload);
+      if (res?.schedule) setSchedules((prev) => [res.schedule, ...prev]);
+    } catch (_) {}
+  }, [accessToken]);
 
-  const supplyChainHealthData = {
-    labels: ['High Health', 'Medium Health', 'Low Health'],
-    datasets: [{
-      label: 'Supply Chain Health',
-      data: [
-        reportBatches.filter(b => b.supplyChainHealth >= 90).length,
-        reportBatches.filter(b => b.supplyChainHealth >= 75 && b.supplyChainHealth < 90).length,
-        reportBatches.filter(b => b.supplyChainHealth < 75).length,
-      ],
-      backgroundColor: ['#4CAF50', '#FFC107', '#D32F2F'],
-    }],
-  }
+  // Derived chart data from analytics
+  const herbTypeData = analytics.herbs || analytics.herb_types || { labels: [], datasets: [] };
+  const complianceHistoryData = analytics.compliance || { labels: [], datasets: [] };
+  const supplyChainHealthData = analytics.logistics || { labels: [], datasets: [] };
+  const kpis = analytics.kpis || analytics.dashboard || {};
 
-  const kpis = {
-    highHealthPct: Math.round((reportBatches.filter(b => b.supplyChainHealth >= 90).length / reportBatches.length) * 100),
-    atRisk: reportBatches.filter(b => b.supplyChainHealth < 75).length,
-    scans: 1250,
-    trust: '4.8/5',
-  }
-
-  return { herbTypeData, complianceHistoryData, supplyChainHealthData, kpis }
+  return {
+    reports,
+    schedules,
+    analytics,
+    loading,
+    generating,
+    kpis,
+    herbTypeData,
+    complianceHistoryData,
+    supplyChainHealthData,
+    generateReport,
+    downloadReport,
+    createSchedule,
+  };
 }
-
-
