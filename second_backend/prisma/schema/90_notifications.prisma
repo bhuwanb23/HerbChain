@@ -1,0 +1,192 @@
+// ============================================================================
+// PHASE 14 — NOTIFICATIONS & ALERTS (docs/phase_14.md)
+// ----------------------------------------------------------------------------
+// The nervous system of HerbChain. Business modules NEVER send notifications
+// directly — they publish a queue row (publish()) inside their own
+// transaction; the notification worker drains the queue, renders templates,
+// selects channels from user preferences and records per-channel delivery
+// receipts. Everything is decoupled: SMS/email/push providers are seams
+// (stub providers capture outbound messages in memory; a real provider is a
+// swap-in).
+
+// Reusable message templates. channels lists allowed delivery channels, e.g.
+// ["in_app","push","email"]. Body may contain {placeholders}. The seed
+// (src/services/notifications.js seedTemplates) upserts the full event
+// catalog — the app never hardcodes a message.
+model NotificationTemplate {
+  id         String   @id @default(cuid())
+  code       String   @unique // e.g. "batch_transferred", "lab_report_ready"
+  name       String
+  channels   String   @default("in_app") // comma list: in_app,push,email,sms
+  title      String
+  body       String
+  category   String   @default("system") // batch | shipment | ownership | lab | manufacturer | recall | user | security | system
+  priority   String   @default("MEDIUM") // LOW | MEDIUM | HIGH | CRITICAL
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  notifications Notification[]
+
+  @@map("notification_templates")
+}
+
+// One outbound notification per recipient. The in-app inbox row + audit
+// record of pushes/emails/SMS sent. type mirrors the template code when
+// template-driven. channel: in_app | push | email | sms
+model Notification {
+  id                String    @id @default(cuid())
+  recipient_user_id String
+  template_id       String?
+  type              String // e.g. "batch_transferred" | "recall" | "system"
+  channel           String    @default("in_app") // in_app | push | email | sms
+  priority          String    @default("MEDIUM") // LOW | MEDIUM | HIGH | CRITICAL
+  category          String    @default("system")
+  title             String
+  body              String
+  data_json         Json?     // deep links / entity refs for the client
+  entity_type       String? // batch | shipment | certificate | product | transfer_request | user ...
+  entity_id         String?
+  is_read           Boolean   @default(false)
+  read_at           DateTime?
+  sent_at           DateTime? // delivery confirmation for push/email/sms
+  created_at        DateTime  @default(now())
+
+  recipient  User                  @relation(fields: [recipient_user_id], references: [id], onDelete: Cascade)
+  template   NotificationTemplate? @relation(fields: [template_id], references: [id], onDelete: SetNull)
+  deliveries NotificationDelivery[]
+
+  @@index([recipient_user_id, is_read, created_at])
+  @@index([type])
+  @@index([priority])
+  @@index([entity_type, entity_id])
+  @@map("notifications")
+}
+
+// Push-token registry so the notification worker knows where to deliver.
+// platform: android | ios | web — token is the FCM / APNs / web-push token.
+model DeviceToken {
+  id           String    @id @default(cuid())
+  user_id      String
+  device_id    String? // client-generated device fingerprint (dedupe per device)
+  platform     String // android | ios | web
+  token        String    @unique // FCM / APNs / web-push token
+  last_seen_at DateTime?
+  created_at   DateTime  @default(now())
+  revoked_at   DateTime?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("device_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Notification queue — the decoupling boundary. Domain modules publish rows
+// inside their own transaction (never call a provider). The worker claims
+// due rows, renders + delivers, and writes the Notification + deliveries.
+// status: pending | processing | sent | failed
+model NotificationQueue {
+  id                String    @id @default(cuid())
+  template_code     String // the event type / template code
+  recipient_user_id String
+  channel           String    @default("in_app") // the specific channel this row serves
+  payload_json      Json?     // { placeholders..., entity: {type,id}, deep_link, ... }
+  priority          String    @default("MEDIUM")
+  status            String    @default("pending") // pending | processing | sent | failed
+  attempts          Int       @default(0)
+  max_retries       Int       @default(5)
+  next_attempt_at   DateTime  @default(now())
+  last_error        String?
+  processed_at      DateTime?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  recipient User @relation("NotificationQueueRecipient", fields: [recipient_user_id], references: [id], onDelete: Cascade)
+
+  @@index([status, next_attempt_at])
+  @@index([recipient_user_id])
+  @@index([template_code])
+  @@map("notification_queue")
+}
+
+// Per-channel delivery receipt — the audit trail of "who got what, when".
+// status: sent | delivered | failed | read  (in_app rows: delivered at write)
+model NotificationDelivery {
+  id                String    @id @default(cuid())
+  notification_id   String
+  channel           String // in_app | push | email | sms
+  status            String    @default("sent") // sent | delivered | failed | read
+  provider_ref      String? // stub capture id / provider message id
+  sent_at           DateTime?
+  delivered_at      DateTime?
+  read_at           DateTime?
+  failure_reason    String?
+  created_at        DateTime  @default(now())
+
+  notification Notification @relation(fields: [notification_id], references: [id], onDelete: Cascade)
+
+  @@index([notification_id])
+  @@index([status])
+  @@index([channel])
+  @@map("notification_deliveries")
+}
+
+// Per-user channel preferences (docs/phase_14.md "Notification Preferences").
+// Defaults: everything on. The worker checks these before delivering.
+model NotificationPreference {
+  id            String   @id @default(cuid())
+  user_id       String   @unique
+  email_enabled Boolean  @default(true)
+  sms_enabled   Boolean  @default(true)
+  push_enabled  Boolean  @default(true)
+  in_app_enabled Boolean @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+// Scheduled notifications — reminders that fire at a future time regardless
+// of user action: pickup reminders (24h before), certificate expiry (30d
+// before), pending-approval nudges, escalation hops.
+// status: pending | processed | failed | cancelled
+model ScheduledNotification {
+  id                String    @id @default(cuid())
+  notification_type String // e.g. "pickup_reminder" | "certificate_expiry" | "escalation"
+  scheduled_time    DateTime
+  recipient_user_id String
+  payload_json      Json? // template placeholders + entity refs
+  status            String    @default("pending") // pending | processed | failed | cancelled
+  attempts          Int       @default(0)
+  processed_at      DateTime?
+  last_error        String?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  recipient User @relation("ScheduledNotificationRecipient", fields: [recipient_user_id], references: [id], onDelete: Cascade)
+
+  @@index([status, scheduled_time])
+  @@index([recipient_user_id])
+  @@map("scheduled_notifications")
+}
+
+// Daily aggregates for the notification analytics (docs/phase_14.md
+// "Notification Analytics"): sent/delivered/failed/read per type + channel.
+model NotificationMetric {
+  id             String   @id @default(cuid())
+  period         String // "YYYY-MM-DD"
+  notification_type String
+  channel        String
+  sent_count     Int      @default(0)
+  delivered_count Int     @default(0)
+  failed_count   Int      @default(0)
+  read_count     Int      @default(0)
+  generated_at   DateTime @default(now())
+
+  @@unique([period, notification_type, channel])
+  @@index([period])
+  @@map("notification_metrics")
+}

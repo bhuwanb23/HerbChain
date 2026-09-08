@@ -1,0 +1,284 @@
+// ============================================================================
+// PRODUCTS & LINEAGE — product masters, manufacturing runs (Phase 10,
+// docs/phase_10.md) and the finished sellable lots they produce.
+// ----------------------------------------------------------------------------
+// Phase 10 = the batch-to-product lineage engine: multiple certified herb
+// batches converge into ONE finished product and the raw-material identity is
+// preserved forever (parent → child edges are never lost).
+//
+//   Product (master)
+//     └─ ManufacturingBatch (MFG-YYYY-NNNNNN) — an explicit production RUN:
+//        planned → in_progress → completed | cancelled. The run RESERVES
+//        quantities from the Phase-9 manufacturer inventory (reserved tx),
+//        and on COMPLETION consumes them (consumed_for_production tx) and
+//        emits one finished ProductLot (PRD-YYYY-NNNNNN) — the sellable unit.
+//     └─ ProductLot carries the PERMANENT product QR (product_qr_tokens);
+//        it is NOT an ownership QR — it never rotates, only mints once at
+//        run completion (revoked solely via recall/QA).
+//
+// The parent → child heart is ManufacturingBatchIngredient (run × herb
+// batch × quantity_kg). It supersedes the Phase-1 `ProductLotBatchLink`
+// placeholder: forward trace (HERB-001 → products) and backward trace
+// (product → batches → farmers → certificates → transport) both walk the
+// SAME table, so one-to-one, many-to-one, one-to-many and many-to-many
+// graphs all fall out naturally.
+//
+// Product status:  draft | active | discontinued | recalled
+// Run status:      planned | in_progress | completed | cancelled
+// Ingredient state: reserved | consumed | released
+// ============================================================================
+
+// Product master record (spec §2). `code` is the manufacturer-facing product
+// code (e.g. PROD-2026-0001); `sku` is the sellable SKU when published.
+// status: draft | active | discontinued | recalled
+model Product {
+  id                  String   @id @default(cuid())
+  code                String   @unique // e.g. "PROD-2026-0001"
+  manufacturer_user_id String
+  name                String
+  sku                 String?  @unique
+  description         String?
+  category            String   @default("other") // capsule | tablet | churna | powder | oil | syrup | other
+  pack_size           String? // e.g. "60 capsules", "100g tin"
+  expiry_months       Int? // shelf life months — drives lot expiry dates
+  status              String   @default("draft") // code list above
+  // phase 11 — persisted engine verdict (docs/phase_11.md): VERIFIED |
+  // EXPIRED | RECALLED | UNDER_INVESTIGATION | INVALID | unverified
+  // (pre-first-scan default). Updated on every consumer scan; the passport
+  // engine computes it live from status + QR + lineage + certificates.
+  verification_status String   @default("unverified")
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+  deleted_at          DateTime?
+
+  manufacturer User                   @relation("ProductManufacturer", fields: [manufacturer_user_id], references: [id])
+  formulas     ProductFormula[]
+  runs         ManufacturingBatch[]
+  lots         ProductLot[]
+  lineage_snapshots ProductLineageSnapshot[]
+  affected_products AffectedProduct[]
+  consumer_scans ConsumerScan[]         @relation("ConsumerScanProduct")
+  counterfeit_alerts CounterfeitAlert[] @relation("AlertProduct")
+  verification_caches ProductVerificationCache[]
+
+  @@index([manufacturer_user_id])
+  @@index([status])
+  @@map("products")
+}
+
+// Optional standard recipe (spec §6): product × herb species, with the
+// reference quantity per batch. Gives manufacturing consistency — runs may
+// deviate, but the formula is the published composition baseline.
+model ProductFormula {
+  id                String  @id @default(cuid())
+  product_id        String
+  species_id        String
+  standard_quantity Float? // reference quantity (kg per batch, or % of composition)
+  unit              String? // "kg" | "%"
+  position          Int     @default(0) // display order in the recipe
+  created_at        DateTime @default(now())
+
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  species Species @relation(fields: [species_id], references: [id], onDelete: Restrict)
+
+  @@unique([product_id, species_id])
+  @@index([species_id])
+  @@map("product_formulas")
+}
+
+// One manufacturing event / production run of a product (spec §1). A product
+// can have many runs; each run draws its own herb batches and produces its
+// own finished lot. Codes: MFG-YYYY-NNNNNN.
+// status: planned | in_progress | completed | cancelled
+model ManufacturingBatch {
+  id                 String    @id @default(cuid())
+  code               String    @unique // e.g. "MFG-2026-000001"
+  product_id         String
+  manufacturer_user_id String
+  status             String    @default("planned") // code list above
+  planned_units      Int       @default(0) // finished packs/bottles planned
+  production_date    DateTime? // set when the run starts
+  completed_at       DateTime?
+  notes              String?
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+
+  product     Product                      @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  manufacturer User                        @relation("RunManufacturer", fields: [manufacturer_user_id], references: [id])
+  ingredients ManufacturingBatchIngredient[]
+  lots        ProductLot[]
+
+  @@index([code])
+  @@index([product_id])
+  @@index([manufacturer_user_id, status])
+  @@index([status])
+  @@map("manufacturing_batches")
+}
+
+// THE lineage edge (spec §5 product_ingredients): which herb batch went into
+// which run, and how much. state mirrors the inventory lifecycle — reserved
+// when the run is created (qty locked from available), consumed when the run
+// completes (reserved → consumed + consumed_for_production ledger row),
+// released when a planned run is cancelled. Append-only once consumed.
+// state: reserved | consumed | released
+model ManufacturingBatchIngredient {
+  id         String    @id @default(cuid())
+  manufacturing_batch_id String
+  batch_id   String // the herb batch consumed (parent)
+  inventory_item_id String // the manufacturer InventoryItem this qty was reserved from
+  quantity_kg Float
+  unit       String    @default("kg")
+  position   Int       @default(0) // bill-of-materials display order
+  state      String    @default("reserved") // code list above
+  consumed_at DateTime?
+  created_at DateTime  @default(now())
+
+  run   ManufacturingBatch @relation(fields: [manufacturing_batch_id], references: [id], onDelete: Cascade)
+  batch Batch              @relation(fields: [batch_id], references: [id], onDelete: Restrict)
+
+  @@unique([manufacturing_batch_id, batch_id])
+  @@index([batch_id]) // forward trace: HERB-001 → runs → products
+  @@index([state])
+  @@map("manufacturing_batch_ingredients")
+}
+
+// One finished, sellable lot emitted by a completed run (spec §1/§2). This is
+// the traceable unit a consumer/retailer holds — it carries the permanent
+// product QR and, from Phase 11+, its own distribution custody chain
+// (phase machine: with_manufacturer → in_transit_to_distributor →
+// with_distributor → … → sold). codes: PRD-YYYY-NNNNNN.
+model ProductLot {
+  id                     String    @id @default(cuid())
+  code                   String    @unique // e.g. "PRD-2026-000001"
+  product_id             String
+  manufacturing_batch_id String    @unique // one finished lot per completed run
+  quantity_units         Int       @default(0) // packs/bottles in this lot
+  units_remaining        Int       @default(0) // sell-out counter = quantity_units at LOT_CREATED
+  phase                  String    @default("with_manufacturer") // distribution machine (Phase 11+)
+  current_holder_user_id String // manufacturer at creation
+  expiry_date            DateTime? // computed from product.expiry_months at completion
+  notes                  String?
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+
+  product Product                @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  run     ManufacturingBatch     @relation(fields: [manufacturing_batch_id], references: [id], onDelete: Restrict)
+  holder  User                   @relation("LotHolder", fields: [current_holder_user_id], references: [id])
+  events  ProductLotEvent[]
+  qr_token ProductQrToken?
+  consumer_scans ConsumerScan[]
+  counterfeit_alerts CounterfeitAlert[]
+
+  @@index([code])
+  @@index([product_id])
+  @@index([phase])
+  @@index([current_holder_user_id])
+  @@index([manufacturing_batch_id])
+  @@map("product_lots")
+}
+
+// Append-only timeline for a product lot — mirrors BatchEvent. Every custody
+// hop and the terminal consumer sale lands here (Phase 11+), feeding the
+// consumer-facing "farm to shelf" journey.
+// event_type: LOT_CREATED | TRANSFER | SALE
+model ProductLotEvent {
+  id            String    @id @default(cuid())
+  lot_id        String
+  event_type    String // code list above
+  actor_user_id String // who performed the action (manufacturer / seller)
+  from_user_id  String? // custody handoff: previous holder
+  to_user_id    String? // custody handoff: next holder
+  phase_before  String?
+  phase_after   String?
+  location      String?
+  gps_lat       Float?
+  gps_lng       Float?
+  payload_json  Json? // {units_sold?, note, run_code}
+  created_at    DateTime @default(now())
+
+  lot   ProductLot @relation(fields: [lot_id], references: [id], onDelete: Cascade)
+  actor User       @relation("LotEventActor", fields: [actor_user_id], references: [id])
+  from_user User?  @relation("LotEventFrom", fields: [from_user_id], references: [id])
+  to_user   User?  @relation("LotEventTo", fields: [to_user_id], references: [id])
+
+  @@index([lot_id, created_at])
+  @@index([event_type])
+  @@map("product_lot_events")
+}
+
+// Permanent product QR (spec §7). Unlike the batch ownership QR (which
+// rotates on every custody hop) the product QR is immutable identity: minted
+// ONCE when its lot is created, never re-minted, only revoked via recall/QA.
+// Raw token is never stored — lookups use its SHA-256 hash and the row keeps
+// an AES-256-GCM ciphertext so the SAME token can be reprinted for packaging.
+// status: active | revoked
+model ProductQrToken {
+  id               String    @id @default(cuid())
+  product_id       String // convenience denormalization (plain FK, no relation)
+  lot_id           String    @unique
+  token_hash       String    @unique // sha256 of the raw token (lookup key)
+  token_cipher     String // AES-256-GCM ciphertext of the raw token (reprint)
+  token_prefix     String // short display prefix, e.g. "prd_92kDj7…"
+  status           String    @default("active") // active | revoked
+  minted_by_user_id String
+  minted_at        DateTime  @default(now())
+  revoked_at       DateTime?
+  revocation_reason String?
+  created_at       DateTime  @default(now())
+
+  lot    ProductLot @relation(fields: [lot_id], references: [id], onDelete: Cascade)
+  minter User       @relation("ProductQrMinter", fields: [minted_by_user_id], references: [id])
+
+  @@index([product_id])
+  @@index([status])
+  @@map("product_qr_tokens")
+}
+
+// Frozen backward-lineage read model (spec §11). Written at run completion —
+// a JSON snapshot of product → run → ingredient batches → farmers →
+// certificates → transport → origin, so audits/consumer views never depend on
+// mutable rows being intact. Hash optional for integrity checks.
+model ProductLineageSnapshot {
+  id            String   @id @default(cuid())
+  product_id    String
+  manufacturing_batch_id String
+  lot_id        String? // null before the lot exists (write order), usually set
+  snapshot_json Json // full backward lineage payload (see docs/products/architecture.md)
+  generated_by_user_id String? // plain FK
+  generated_at  DateTime @default(now())
+
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@index([product_id, generated_at])
+  @@index([manufacturing_batch_id])
+  @@map("product_lineage_snapshots")
+}
+
+// Recall-management record (spec §10): a herb batch has been flagged
+// (certificate revoked / contamination / quality hold) — this row records the
+// products that consumed it, so AYUSH can see the blast radius instantly.
+// Written by the impact-assessment service when a batch is flagged.
+// impact_type: certificate_revoked | contamination | quality_hold | regulatory
+// status: open | resolved
+model AffectedProduct {
+  id            String    @id @default(cuid())
+  batch_id      String // the flagged herb batch
+  product_id    String
+  manufacturing_batch_id String // the run that consumed it
+  lot_id        String? // the emitted lot, when the run completed
+  impact_type   String // code list above
+  status        String    @default("open") // open | resolved
+  notes         String?
+  detected_by_user_id String? // plain FK — who raised it
+  detected_at   DateTime  @default(now())
+  resolved_at   DateTime?
+  created_at    DateTime  @default(now())
+
+  batch   Batch   @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@index([batch_id])
+  @@index([product_id, status])
+  @@index([status])
+  @@map("affected_products")
+}

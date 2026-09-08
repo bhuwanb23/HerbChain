@@ -1,0 +1,303 @@
+// HerbChain Node backend — Prisma schema (SQLite).
+//
+// 1:1 port of the Flask/SQLAlchemy models in backend/server/models:
+//   users, herbs, batch_states, batch_events, lab_reports, products,
+//   product_batch_links, herb_catalogue, price_quotes, farm_profiles,
+//   crop_plans, weather_snapshots
+//
+// Notes vs the Flask schema:
+//   - Enum columns (role, phase, test_result, event_type, outcome, ...) are
+//     TEXT columns here; allowed values are enforced in code
+//     (src/constants/enums.js + zod schemas), same as the API-level
+//     validation the Flask backend does via marshmallow.
+//   - Date-only columns (harvest_date, test_date, planting_date, ...) are
+//     stored as "YYYY-MM-DD" strings to keep the exact wire format the
+//     Flask API returns (e.g. `"harvest_date": "2026-04-01"`).
+//   - Numeric(10,2) columns are Float (SQLite stores them as REAL anyway;
+//     the Flask to_dict() methods already float() them).
+//   - payload_json / synonyms / certifications are JSON columns.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------- identity
+
+model User {
+  user_id       String   @id
+  role          String // farmer | transporter | lab | manufacturer | consumer | admin
+  name          String
+  email         String   @unique
+  phone         String?
+  password_hash String
+  location      String?
+  gps_lat       Float?
+  gps_lng       Float?
+  language_pref String   @default("en")
+  is_active     Boolean  @default(true)
+  kyc_verified  Boolean  @default(false)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  herbs_created       Herb[]           @relation("HerbFarmer")
+  held_batch_states   BatchState[]     @relation("BatchHolder")
+  events_as_actor     BatchEvent[]     @relation("EventActor")
+  events_as_from      BatchEvent[]     @relation("EventFrom")
+  events_as_to        BatchEvent[]     @relation("EventTo")
+  lab_reports         LabReport[]
+  products            Product[]
+  price_quotes        PriceQuote[]
+  farm_profile        FarmProfile?
+  crop_plans          CropPlan[]
+
+  @@map("users")
+}
+
+// -------------------------------------------------------------- catalogue
+
+model HerbCatalogue {
+  species_id           String  @id
+  common_name          String
+  scientific_name      String
+  ayush_category       String  @default("ayurveda")
+  synonyms             Json
+  description          String?
+  medicinal_uses       String?
+  image_url            String?
+  season_planting      String?
+  season_harvest       String?
+  default_unit_price_inr Float?
+  is_active            Boolean @default(true)
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  herbs        Herb[]
+  price_quotes PriceQuote[]
+  crop_plans   CropPlan[]
+
+  @@index([common_name])
+  @@index([scientific_name])
+  @@map("herb_catalogue")
+}
+
+model PriceQuote {
+  quote_id           String   @id
+  species_id         String
+  price_per_kg_inr   Float
+  currency           String   @default("INR")
+  source             String   @default("admin")
+  effective_at       DateTime @default(now())
+  created_by_admin_id String?
+  notes              String?
+  created_at         DateTime @default(now())
+
+  species HerbCatalogue @relation(fields: [species_id], references: [species_id], onDelete: Cascade)
+  admin   User?         @relation(fields: [created_by_admin_id], references: [user_id])
+
+  @@index([species_id])
+  @@index([effective_at])
+  @@map("price_quotes")
+}
+
+// ------------------------------------------------------------------ herbs
+
+model Herb {
+  batch_id       String   @id
+  farmer_id      String
+  species_id     String?
+  species_name   String
+  image_url      String?
+  harvest_date   String // "YYYY-MM-DD"
+  location       String
+  gps_lat        Float?
+  gps_lng        Float?
+  weight_kg      Float
+  notes          String?
+  parent_batch_id String?
+  created_at     DateTime @default(now())
+
+  farmer  User          @relation("HerbFarmer", fields: [farmer_id], references: [user_id])
+  species HerbCatalogue? @relation(fields: [species_id], references: [species_id], onDelete: SetNull)
+  parent  Herb?         @relation("BatchParent", fields: [parent_batch_id], references: [batch_id], onDelete: SetNull)
+  children Herb[]       @relation("BatchParent")
+
+  state       BatchState?
+  events      BatchEvent[]
+  lab_reports LabReport[]
+  product_links ProductBatchLink[]
+
+  @@index([farmer_id])
+  @@index([species_id])
+  @@index([parent_batch_id])
+  @@map("herbs")
+}
+
+model BatchState {
+  batch_id          String   @id
+  current_holder_id String
+  phase             String // with_farmer | in_transit_to_lab | at_lab | ...
+  test_result       String   @default("pending") // pending | approved | rejected
+  current_qr_token  String   @default("")
+  updated_at        DateTime @updatedAt
+
+  herb          Herb @relation(fields: [batch_id], references: [batch_id], onDelete: Cascade)
+  current_holder User @relation("BatchHolder", fields: [current_holder_id], references: [user_id])
+
+  @@index([current_holder_id])
+  @@index([phase])
+  @@map("batch_states")
+}
+
+model BatchEvent {
+  event_id      String   @id
+  batch_id      String
+  event_type    String // CREATED | TRANSFER | LAB_REPORT | PRODUCT_LINK | BATCH_SPLIT | INTENT_*
+  actor_id      String
+  from_party_id String?
+  to_party_id   String?
+  phase_before  String?
+  phase_after   String?
+  location      String?
+  gps_lat       Float?
+  gps_lng       Float?
+  payload_json  Json?
+  qr_token      String?
+  created_at    DateTime @default(now())
+
+  herb      Herb  @relation(fields: [batch_id], references: [batch_id], onDelete: Cascade)
+  actor     User  @relation("EventActor", fields: [actor_id], references: [user_id])
+  from_party User? @relation("EventFrom", fields: [from_party_id], references: [user_id])
+  to_party   User? @relation("EventTo", fields: [to_party_id], references: [user_id])
+
+  @@index([batch_id])
+  @@index([event_type])
+  @@index([created_at])
+  @@map("batch_events")
+}
+
+model LabReport {
+  report_id          String  @id
+  batch_id           String
+  lab_id             String
+  test_type          String
+  test_date          String // "YYYY-MM-DD"
+  results_summary    String
+  outcome            String // approved | rejected
+  certification_level String?
+  purity_percentage  Float?
+  moisture_content   Float?
+  ash_content        Float?
+  heavy_metals_present Boolean?
+  pesticides_detected  Boolean?
+  active_compounds   String?
+  potency_rating     String?
+  report_url         String?
+  notes              String?
+  recommendations    String?
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  herb Herb @relation(fields: [batch_id], references: [batch_id], onDelete: Cascade)
+  lab  User @relation(fields: [lab_id], references: [user_id])
+
+  @@index([batch_id])
+  @@map("lab_reports")
+}
+
+// --------------------------------------------------------------- products
+
+model Product {
+  product_id      String  @id
+  manufacturer_id String
+  name            String
+  sku             String?
+  description     String?
+  image_url       String?
+  qr_token        String  @default("")
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  manufacturer User               @relation(fields: [manufacturer_id], references: [user_id])
+  batch_links  ProductBatchLink[]
+
+  @@index([manufacturer_id])
+  @@index([sku])
+  @@map("products")
+}
+
+model ProductBatchLink {
+  id         Int     @id @default(autoincrement())
+  product_id String
+  batch_id   String
+  quantity_kg Float
+  created_at DateTime @default(now())
+
+  product Product @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+  herb    Herb    @relation(fields: [batch_id], references: [batch_id], onDelete: Restrict)
+
+  @@unique([product_id, batch_id])
+  @@map("product_batch_links")
+}
+
+// -------------------------------------------------------------- farm tools
+
+model FarmProfile {
+  farm_id          String  @id
+  farmer_id        String  @unique
+  farm_name        String?
+  land_size_acres  Float?
+  soil_type        String?
+  irrigation_type  String?
+  certifications   Json
+  address          String?
+  gps_lat          Float?
+  gps_lng          Float?
+  notes            String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  farmer User @relation(fields: [farmer_id], references: [user_id], onDelete: Cascade)
+
+  @@map("farm_profiles")
+}
+
+model CropPlan {
+  plan_id              String  @id
+  farmer_id            String
+  species_id           String
+  area_acres           Float?
+  planting_date        String // "YYYY-MM-DD"
+  expected_harvest_date String // "YYYY-MM-DD"
+  actual_harvest_date  String?
+  status               String  @default("planned") // planned | sown | growing | harvested | cancelled
+  notes                String?
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  farmer  User         @relation(fields: [farmer_id], references: [user_id], onDelete: Cascade)
+  species HerbCatalogue @relation(fields: [species_id], references: [species_id], onDelete: Restrict)
+
+  @@index([farmer_id])
+  @@index([species_id])
+  @@index([status])
+  @@map("crop_plans")
+}
+
+model WeatherSnapshot {
+  snapshot_id String  @id
+  gps_lat     Float
+  gps_lng     Float
+  provider    String  @default("openweathermap")
+  payload_json Json
+  fetched_at  DateTime @default(now())
+
+  @@index([gps_lat])
+  @@index([gps_lng])
+  @@index([fetched_at])
+  @@map("weather_snapshots")
+}

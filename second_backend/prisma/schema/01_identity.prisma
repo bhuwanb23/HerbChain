@@ -1,0 +1,178 @@
+// ============================================================================
+// IDENTITY — users and addresses
+// ============================================================================
+
+// One row per login account. Role is a code list on the user (hybrid model):
+// the account carries the role; role-specific operational data lives in the
+// per-role profile tables (FarmerProfile, TransporterProfile, LabProfile,
+// ManufacturerProfile). Consumers, retailers, distributors and admins are
+// plain users with no profile row.
+//
+// role: farmer | transporter | lab | manufacturer | consumer | retailer |
+//       distributor | admin
+model User {
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique // stored lowercased at write time
+  phone          String?   @unique
+  password_hash  String
+  role           String // code list above
+  lab_role       String? // analyst | supervisor — phase 8 role separation
+                          // inside lab accounts (spec §8 two-level review)
+  admin_role     String? // phase 13 — AYUSH portal tier for admin accounts:
+                          // super_admin | regulatory_officer | state_officer |
+                          // auditor (null = legacy super admin, full access)
+  locale         String    @default("en")
+  avatar_asset_id String?  @unique // -> Asset.id (set via optional relation below)
+
+  // identity/verification state
+  email_verified_at DateTime?
+  phone_verified_at DateTime?
+  kyc_status      String    @default("none") // none | pending | verified | rejected
+  is_active       Boolean   @default(true)
+  last_login_at   DateTime?
+  failed_login_count Int    @default(0) // consecutive failures; reset on success (fraud lock)
+  locked_until    DateTime? // temporary fraud lock: 5 strikes -> 15m / 1h / 24h
+
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  deleted_at      DateTime? // soft delete (history-safe)
+
+  avatar_asset  Asset?     @relation("UserAvatar", fields: [avatar_asset_id], references: [id], onDelete: SetNull)
+  assets_owned  Asset[]    @relation("AssetOwner")
+  addresses     Address[]
+  verification_requests  VerificationRequest[] @relation("VerificationSubject")
+  verification_reviews  VerificationRequest[] @relation("VerificationReviewer")
+
+  // security / activity (defined across other domain files)
+  sessions            Session[]
+  password_reset_tokens PasswordResetToken[]
+  api_keys            ApiKey[]
+  audit_actions       AuditLog[]    @relation("AuditActor")
+  device_tokens       DeviceToken[]
+  sync_devices        DeviceRegistration[] @relation("SyncDevices")
+  sync_logs           SyncLog[]            @relation("SyncLogs")
+  notifications       Notification[]
+  notification_queue  NotificationQueue[] @relation("NotificationQueueRecipient")
+  notification_preference NotificationPreference?
+  scheduled_notifications ScheduledNotification[] @relation("ScheduledNotificationRecipient")
+
+  // recognition (phase 4 — AI/ML identification, 96_identification.prisma)
+  ai_requests       AiRequest[]        @relation("AiRequester")
+  ai_identifications AiIdentification[] @relation("AiFarmer")
+
+  // per-role profile rows (1:1, domain files own the opposite side)
+  farmer_profile       FarmerProfile?
+  transporter_profile  TransporterProfile?
+  lab_profile          LabProfile?
+  manufacturer_profile ManufacturerProfile?
+  distributor_profile  DistributorProfile?
+  retailer_profile     RetailerProfile?
+
+  // catalogue & farm data
+  species_created    Species[]         @relation("SpeciesCurator")
+  price_quotes       PriceQuote[]      @relation("PriceQuoter")
+  crop_plans         CropPlan[]
+  farm_activities    FarmActivity[]    @relation("FarmActivityActor")
+
+  // supply chain (batches + events)
+  batches_created       Batch[]       @relation("BatchFarmer")
+  batches_held          Batch[]       @relation("BatchHolder")
+  batch_events_actor    BatchEvent[]  @relation("EventActor")
+  batch_events_from     BatchEvent[]  @relation("EventFrom")
+  batch_events_to       BatchEvent[]  @relation("EventTo")
+
+  // phase 5 — dynamic QR tokens (51_qr.prisma)
+  qr_tokens_owned      QrToken[]           @relation("QrOwner")
+  qr_tokens_generated  QrToken[]           @relation("QrGenerator")
+  qr_replacements      QrReplacementLog[]  @relation("QrReplacer")
+
+  // phase 6 — governed transfer requests + proofs (52_transfer.prisma)
+  transfer_requests_from     TransferRequest[] @relation("TransferFrom")
+  transfer_requests_to       TransferRequest[] @relation("TransferTo")
+  transfer_requests_created  TransferRequest[] @relation("TransferRequester")
+  transfer_requests_approved TransferRequest[] @relation("TransferApprover")
+  transfer_proofs            TransferProof[]   @relation("TransferProofAuthor")
+
+  // logistics & stock
+  warehouses_owned Warehouse[]
+  stock_movements  StockMovement[]
+  shipments_requested    Shipment[] @relation("ShipmentRequester")
+  shipments_transported  Shipment[] @relation("ShipmentTransporter")
+  shipments_from         Shipment[] @relation("ShipmentOrigin")
+  shipments_to           Shipment[] @relation("ShipmentDestination")
+
+  // phase 9 — manufacturer procurement (53_procurement.prisma)
+  procurement_requests BatchRequest[] @relation("ProcurementRequester")
+  goods_receipts       GoodsReceipt[] @relation("ProcurementReceiver")
+  inventory_items      InventoryItem[] @relation("InventoryOwner")
+  quality_holds        QualityHold[]  @relation("HoldOwner")
+
+  // products & commerce (phase 10 lineage engine — 60_products.prisma)
+  products_manufactured Product[]          @relation("ProductManufacturer")
+  product_lots_held     ProductLot[]      @relation("LotHolder")
+  lot_events_actor      ProductLotEvent[] @relation("LotEventActor")
+  lot_events_from       ProductLotEvent[] @relation("LotEventFrom")
+  lot_events_to         ProductLotEvent[] @relation("LotEventTo")
+  manufacturing_runs    ManufacturingBatch[] @relation("RunManufacturer")
+  product_qr_minted     ProductQrToken[]   @relation("ProductQrMinter")
+  orders_buyer          PurchaseOrder[]    @relation("OrderBuyer")
+  orders_seller         PurchaseOrder[]    @relation("OrderSeller")
+  wallets               Wallet[]
+  licenses              LicenseCert[]
+  inspections_conducted Inspection[]       @relation("Inspector")
+  support_tickets_created SupportTicket[]  @relation("TicketRequester")
+  support_tickets_owned SupportTicket[]    @relation("TicketAssignee")
+
+  @@index([role])
+  @@index([is_active])
+  @@map("users")
+}
+
+// Postal address records — any user can hold several, typed by use case.
+// Referenced by parties, warehouses, invoices and regulatory documents.
+model Address {
+  id         String   @id @default(cuid())
+  user_id    String
+  kind       String   @default("registered") // registered | billing | shipping | warehouse
+  line1      String
+  line2      String?
+  city       String
+  district   String?
+  state      String
+  postal_code String?
+  country    String   @default("IN")
+  is_default Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("addresses")
+}
+
+// A user/org verification workflow item — auto-created when an org-role
+// account registers (pending) and resolved by an AYUSH admin on approve /
+// reject. Supporting documents attach later via EntityDocument with
+// entity_type = verification_request once the assets phase lands.
+// req_type: org_registration | govt_id | license | address | other
+// status: pending | approved | rejected
+model VerificationRequest {
+  id                   String    @id @default(cuid())
+  user_id              String
+  req_type             String    @default("org_registration") // code list above
+  status               String    @default("pending") // code list above
+  verified_by_user_id  String?
+  verified_at          DateTime?
+  notes                String?
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+
+  user     User  @relation("VerificationSubject", fields: [user_id], references: [id], onDelete: Cascade)
+  reviewer User? @relation("VerificationReviewer", fields: [verified_by_user_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id, status])
+  @@index([status])
+  @@map("verification_requests")
+}

@@ -1,0 +1,56 @@
+// ============================================================================
+// ASSETS — central file/media registry.
+// ----------------------------------------------------------------------------
+// Any uploaded file (species photos, product images, lab report PDFs, license
+// scans, recall notices) lives once in `assets`; EntityDocument links it to
+// any entity without per-entity join tables.
+// ============================================================================
+
+model Asset {
+  id          String   @id @default(cuid())
+  owner_user_id String? // uploader
+  kind        String   @default("image") // image | document | video | other
+  mime_type   String?
+  size_bytes  Int?
+  filename    String? // original client filename (audit metadata)
+  storage_key String?  // object-store key / local path
+  url         String?  // public CDN URL when served
+  alt_text    String?
+  metadata_json Json? // capture metadata: {captured_at, gps_lat, gps_lng, device_id}
+  created_at  DateTime @default(now())
+
+  owner       User?             @relation("AssetOwner", fields: [owner_user_id], references: [id], onDelete: SetNull)
+  avatar_of   User?             @relation("UserAvatar") // set when this asset IS the user's avatar
+  documents   EntityDocument[]
+  ai_requests      AiRequest[]        // phase 4 recognition uploads
+  ai_identifications AiIdentification[]
+  transfer_proofs  TransferProof[]     // phase 6 handover photo evidence
+
+  @@index([owner_user_id])
+  @@map("assets")
+}
+
+// Polymorphic attachment: one Asset can be attached to many entities and one
+// entity can hold many assets (e.g. a species with 3 photos, or a lab report
+// with a PDF + a raw data sheet). entity_type is a code list resolved by the
+// app: species | product | product_lot | batch | lab_report | license |
+// inspection | recall | shipment | support_ticket.
+// Batch photos (phase-1 batch_images) attach as entity_type = batch with
+// doc_kind = herb_image / packaging_image / transport_image.
+model EntityDocument {
+  id         String   @id @default(cuid())
+  asset_id   String
+  entity_type String // code list above
+  entity_id  String // id of the row that owns this document
+  doc_kind   String   @default("attachment") // image | logo | report | certificate | attachment | raw_data |
+                                             // herb_image | packaging_image | transport_image | proof_of_delivery
+  is_primary Boolean  @default(false) // hero image for the entity (e.g. a batch's primary photo)
+  created_by_user_id String?
+  created_at DateTime @default(now())
+
+  asset Asset @relation(fields: [asset_id], references: [id], onDelete: Cascade)
+
+  @@index([entity_type, entity_id])
+  @@index([asset_id])
+  @@map("entity_documents")
+}

@@ -1,0 +1,290 @@
+// ============================================================================
+// ANALYTICS WAREHOUSE — pre-aggregated BI tables (Phase 16,
+// docs/phase_16.md). The operational database stays the system of record;
+// these tables are DENORMALIZED SNAPSHOTS rebuilt by the KPI calculation
+// jobs (src/services/analytics.js). Dashboards read ONLY these tables —
+// never the production ones (spec: "Never calculate huge analytics on page
+// load"). `period_type` buckets every row: daily | weekly | monthly |
+// yearly | all. period_start anchors the bucket (period_end inclusive).
+// ============================================================================
+
+// 1. Herb production — the ecosystem's output per herb per period.
+// Built from Batch (+ species): batch counts, net harvest weight, distinct
+// farmers. `herb_id` = Species.id; `herb_name`/`herb_code` are read-time
+// convenience snapshots so charts need no joins.
+model HerbProductionAnalytics {
+  id             String   @id @default(cuid())
+  period_type    String // daily | weekly | monthly | yearly | all
+  period_start   DateTime
+  period_end     DateTime
+  herb_id        String // Species.id
+  herb_code      String // snapshot: SPC-TULSI
+  herb_name      String // snapshot: Tulsi
+  total_batches  Int      @default(0)
+  total_quantity_kg Float @default(0)
+  active_farmers Int      @default(0)
+  certified_batches Int   @default(0) // batches with an active Certification
+  rejected_batches  Int   @default(0) // batches with a RejectionRecord
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@unique([period_type, period_start, herb_id])
+  @@index([period_type, period_start])
+  @@index([herb_id])
+  @@map("herb_production_analytics")
+}
+
+// 2. Certification quality per lab — pass/fail rates and turnaround.
+// Built from LabTest + Certification. avg_testing_days = mean hours between
+// test start and completion, expressed in days (2 decimals).
+model CertificationAnalytics {
+  id                String   @id @default(cuid())
+  period_type       String
+  period_start      DateTime
+  period_end        DateTime
+  lab_user_id       String? // null = all-labs rollup row
+  lab_name          String? // snapshot from Certification lab snapshot
+  total_tests       Int      @default(0)
+  pass_count        Int      @default(0)
+  fail_count        Int      @default(0)
+  certificates_issued Int    @default(0)
+  rejections        Int      @default(0) // RejectionRecord rows
+  avg_testing_days  Float?   @default(0)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  @@unique([period_type, period_start, lab_user_id])
+  @@index([period_type, period_start])
+  @@index([lab_user_id])
+  @@map("certification_analytics")
+}
+
+// 3. Failure reasons — WHY batches fail (regulator's heat map).
+// Built from RejectionRecord grouped by reason (+ region via the farmer's
+// profile state/district when resolvable).
+model FailureReasonAnalytics {
+  id             String   @id @default(cuid())
+  period_type    String
+  period_start   DateTime
+  period_end     DateTime
+  reason         String // heavy_metal_failure | species_mismatch | microbial_failure | contamination | adulteration | other
+  state          String? // farmer profile state when resolvable (region heat map)
+  district       String?
+  count          Int      @default(0)
+  percentage     Float    @default(0) // share of the period's total failures
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@unique([period_type, period_start, reason, state, district])
+  @@index([period_type, period_start])
+  @@index([reason])
+  @@map("failure_reason_analytics")
+}
+
+// 4. Regional supply — production by state/district per herb.
+// Built from Batch joined to FarmerProfile.state/district (fallback: batch
+// `location` text is not structured, so unresolvable rows land under the
+// "unknown" state).
+model RegionalSupplyAnalytics {
+  id                String   @id @default(cuid())
+  period_type       String
+  period_start      DateTime
+  period_end        DateTime
+  state             String // "unknown" when the farmer profile has no state
+  district          String?
+  herb_id           String
+  herb_name         String
+  production_kg     Float    @default(0)
+  total_batches     Int      @default(0)
+  certified_batches Int      @default(0)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  @@unique([period_type, period_start, state, district, herb_id])
+  @@index([period_type, period_start])
+  @@index([state])
+  @@map("regional_supply_analytics")
+}
+
+// 5. Logistics — transporter performance per period.
+// Built from Shipment (+ ShipmentMetric): totals, on-time deliveries,
+// average transit hours, distance-proxy (origin→destination pair counts).
+model LogisticsAnalytics {
+  id               String   @id @default(cuid())
+  period_type      String
+  period_start     DateTime
+  period_end       DateTime
+  transporter_user_id String? // null = all-transporter rollup
+  total_shipments  Int      @default(0)
+  delivered        Int      @default(0)
+  failed           Int      @default(0)
+  on_time          Int      @default(0) // delay_minutes <= 0
+  delayed          Int      @default(0) // delay_minutes > 0
+  avg_transit_hours Float?  @default(0)
+  avg_delay_minutes Int?    @default(0)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  @@unique([period_type, period_start, transporter_user_id])
+  @@index([period_type, period_start])
+  @@index([transporter_user_id])
+  @@map("logistics_analytics")
+}
+
+// 6. Manufacturer consumption — raw herb usage per manufacturer per period.
+// Built from ManufacturingBatchIngredient (state = consumed) joined to the
+// run + batch species.
+model ManufacturerConsumptionAnalytics {
+  id             String   @id @default(cuid())
+  period_type    String
+  period_start   DateTime
+  period_end     DateTime
+  manufacturer_user_id String
+  herb_id        String
+  herb_name      String
+  consumed_kg    Float    @default(0)
+  runs_count     Int      @default(0) // distinct runs consuming this herb
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@unique([period_type, period_start, manufacturer_user_id, herb_id])
+  @@index([period_type, period_start])
+  @@index([manufacturer_user_id])
+  @@map("manufacturer_consumption_analytics")
+}
+
+// 7. Consumer demand — product scan analytics (Phase 11 stream).
+// Built from ConsumerScan grouped per product/region: scan volume, unique
+// token count, verification rate (VALID share) and counterfeit signals.
+model ConsumerAnalytics {
+  id             String   @id @default(cuid())
+  period_type    String
+  period_start   DateTime
+  period_end     DateTime
+  product_id     String?
+  product_name   String? // snapshot
+  state          String? // consumer scan state (null = unknown)
+  scan_count     Int      @default(0)
+  unique_tokens  Int      @default(0)
+  valid_scans    Int      @default(0)
+  invalid_scans  Int      @default(0)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@unique([period_type, period_start, product_id, state])
+  @@index([period_type, period_start])
+  @@index([product_id])
+  @@map("consumer_analytics")
+}
+
+// 8. Traceability quality — lineage completeness per product.
+// A product scores points for: batch origin (all its runs have certified
+// batches), logistics legs recorded, and consumer verification presence.
+// Built from Product + ManufacturingBatchIngredient + ConsumerScan.
+model TraceabilityAnalytics {
+  id                String   @id @default(cuid())
+  period_type       String
+  period_start      DateTime
+  period_end        DateTime
+  product_id        String
+  product_name      String
+  traceable_products Int     @default(0) // products with full lineage
+  total_products    Int      @default(0)
+  avg_score         Float    @default(0) // 0-100 lineage quality
+  fully_traceable_pct Float  @default(0)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  @@unique([period_type, period_start, product_id])
+  @@index([period_type, period_start])
+  @@map("traceability_analytics")
+}
+
+// 9. Compliance snapshot — risk posture per period (regulator's scorecard).
+// Built from ComplianceAlert + ComplianceScore + CounterfeitAlert +
+// InvestigationCase: alert volumes by severity, open cases, average
+// compliance score per actor type.
+model ComplianceAnalytics {
+  id             String   @id @default(cuid())
+  period_type    String
+  period_start   DateTime
+  period_end     DateTime
+  actor_type     String // all | farmer | lab | manufacturer | transporter
+  avg_score      Float?   @default(0) // mean ComplianceScore for the actor type
+  alerts_total   Int      @default(0)
+  alerts_open    Int      @default(0)
+  alerts_critical Int     @default(0) // severity CRITICAL/HIGH open
+  investigations Int      @default(0)
+  counterfeit_alerts Int  @default(0)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@unique([period_type, period_start, actor_type])
+  @@index([period_type, period_start])
+  @@index([actor_type])
+  @@map("compliance_analytics")
+}
+
+// 10. Blockchain activity — chain usage per period (Phase 12 stream).
+// Built from BlockchainTransaction + BlockchainEvent: anchored events by
+// type, verification passes/tampers, failed syncs (terminal queue rows).
+model BlockchainAnalytics {
+  id             String   @id @default(cuid())
+  period_type    String
+  period_start   DateTime
+  period_end     DateTime
+  event_type     String // BATCH_CREATED | CUSTODY_TRANSFER | CERTIFIED | REJECTED | PRODUCT_CREATED | ... | ALL
+  events_count   Int      @default(0)
+  verified_checks Int     @default(0)
+  tampered_checks Int     @default(0)
+  failed_syncs   Int      @default(0) // terminal-failed queue rows
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@unique([period_type, period_start, event_type])
+  @@index([period_type, period_start])
+  @@map("blockchain_analytics")
+}
+
+// Scheduled report — auto-generate + deliver on a cadence (spec
+// "Scheduled Reports": daily AYUSH summary, weekly compliance, monthly
+// production). frequency: daily | weekly | monthly. next_run drives the
+// worker; the produced artifact lands in ReportExport (Phase 13 table) so
+// downloads are uniform.
+model ScheduledReport {
+  id                String   @id @default(cuid())
+  report_name       String
+  report_type       String // farmer | lab | manufacturer | traceability | compliance | executive_summary
+  frequency         String   @default("daily") // daily | weekly | monthly
+  params_json       Json? // { herb_id, state, lab_user_id, ... } passthrough filters
+  recipients_json   Json? // [user_id, ...] — notified through the Phase 14 engine
+  recipients_role   String? // e.g. "admin" — broadcast fallback
+  is_active         Boolean  @default(true)
+  last_run_at       DateTime?
+  next_run_at       DateTime
+  created_by_user_id String
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  @@index([is_active, next_run_at])
+  @@index([report_type])
+  @@map("scheduled_reports")
+}
+
+// KPI job observability — every ETL run is recorded (duration, row counts,
+// errors) so the ops dashboard can show warehouse freshness. Complements
+// the pattern used by StorageJob / BlockchainAuditLog.
+model AnalyticsJobRun {
+  id           String   @id @default(cuid())
+  job_name     String // production | certification | failures | regional | logistics | consumption | consumer | traceability | compliance | blockchain | all
+  period_type  String // which bucket the run rebuilt: all | daily | ...
+  rows_written Int      @default(0)
+  duration_ms  Int      @default(0)
+  status       String   @default("success") // success | failed
+  error_message String?
+  ran_at       DateTime @default(now())
+
+  @@index([job_name, ran_at])
+  @@index([ran_at])
+  @@map("analytics_job_runs")
+}

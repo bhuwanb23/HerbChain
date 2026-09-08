@@ -1,0 +1,109 @@
+// ============================================================================
+// CONSUMER VERIFICATION — the public Digital Product Passport (Phase 11,
+// docs/phase_11.md). The public face of HerbChain: a consumer scans the
+// permanent product QR and instantly verifies authenticity, origin,
+// certification and traceability WITHOUT an account.
+// ----------------------------------------------------------------------------
+// Privacy + security rules baked in here and in the verification service:
+//  - consumer scans NEVER carry an actor: `actor_user_id` is null in
+//    qr_scan_logs and ConsumerScan stores only device/geo facets (never
+//    emails, phones, addresses, government ids or financial data).
+//  - internal DB ids are never exposed on the public wire — the passport is
+//    keyed by public codes (PRD-…, BAT-…, CERT-…) and token prefixes.
+//  - product_verification_cache is the optional fast-path (spec: Redis or a
+//    table — SQLite stack uses the table, TTL + purge-on-recall). It stores
+//    the frozen passport so thousands of scans don't re-assemble lineage.
+//  - counterfeit_alerts are the anomaly stream: same token scanned from
+//    wildly different places in minutes, scan bursts, post-revoke scans,
+//    unknown-token floods — the signals that expose fake products.
+//
+// verification_status (computed by the engine, persisted on products):
+//   VERIFIED | EXPIRED | RECALLED | UNDER_INVESTIGATION | INVALID
+//   (+ "unverified" default before the first scan)
+// ============================================================================
+
+// One consumer scan event — the demand/counterfeit signal stream (spec
+// "Consumer Scan Tracking"). outcome mirrors the engine verdict the scan
+// produced. product_id/lot_id are set when the token resolved (null on
+// unknown-token scans, which still count as bot/probe signals — those land
+// as INVALID with the not_found reason on the forensic qr_scan_logs row).
+// outcome: VERIFIED | EXPIRED | RECALLED | UNDER_INVESTIGATION | INVALID
+model ConsumerScan {
+  id          String   @id @default(cuid())
+  token_hash  String // sha256 of the presented product QR token (grouping key)
+  product_id  String?
+  lot_id      String?
+  outcome     String   @default("INVALID") // code list above
+  country     String?
+  state       String?
+  city        String?
+  device_type String   @default("unknown") // mobile | tablet | desktop | unknown
+  ip_address  String?
+  user_agent  String?
+  scanned_at  DateTime @default(now())
+
+  product Product?    @relation("ConsumerScanProduct", fields: [product_id], references: [id], onDelete: SetNull)
+  lot     ProductLot? @relation(fields: [lot_id], references: [id], onDelete: SetNull)
+
+  @@index([product_id, scanned_at])
+  @@index([token_hash, scanned_at])
+  @@index([state, scanned_at])
+  @@index([device_type])
+  @@index([outcome, scanned_at])
+  @@map("consumer_scans")
+}
+
+// Suspicious scan-pattern alert for AYUSH (spec "Counterfeit Detection" +
+// "AYUSH Visibility"). reason + severity drive triage; detail_json carries
+// the evidence (scan ids, locations, times). status: open | investigating |
+// resolved.
+// reason: geo_velocity | scan_burst | excessive_volume | revoked_token_scan |
+//         unknown_token_burst
+// severity: low | medium | high | critical
+model CounterfeitAlert {
+  id                String    @id @default(cuid())
+  token_hash        String
+  product_id        String? // resolved when the token is known
+  lot_id            String?
+  reason            String // code list above
+  severity          String    @default("medium") // code list above
+  status            String    @default("open") // open | investigating | resolved
+  detail_json       Json? // evidence snapshot (scan ids, locations, counts)
+  detected_at       DateTime  @default(now())
+  resolved_by_user_id String? // plain FK — admin who closed it
+  resolved_at       DateTime?
+  resolution_note   String?
+  created_at        DateTime  @default(now())
+
+  product Product?    @relation("AlertProduct", fields: [product_id], references: [id], onDelete: SetNull)
+  lot     ProductLot? @relation(fields: [lot_id], references: [id], onDelete: SetNull)
+
+  @@index([product_id, status])
+  @@index([token_hash, status])
+  @@index([status, severity])
+  @@index([reason, detected_at])
+  @@map("counterfeit_alerts")
+}
+
+// Fast-path passport cache (spec "Product Passport Cache" — table form of
+// the Redis option). One row per token_hash holding the frozen passport JSON
+// until expires_at; purged on product recall/status change so a recalled
+// product can never serve a stale VERIFIED passport. Token hash is the key —
+// raw tokens never touch the DB.
+model ProductVerificationCache {
+  id                  String   @id @default(cuid())
+  token_hash          String   @unique
+  product_id          String
+  lot_id              String
+  verification_status String // engine verdict at cache time
+  passport_json       Json
+  expires_at          DateTime
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@index([product_id])
+  @@index([expires_at])
+  @@map("product_verification_cache")
+}

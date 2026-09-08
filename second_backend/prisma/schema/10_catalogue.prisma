@@ -1,0 +1,107 @@
+// ============================================================================
+// CATALOGUE — the AYUSH species taxonomy.
+// ----------------------------------------------------------------------------
+// Normalized master data: species core fields, per-locale content, one row per
+// synonym, and a proper many-to-many to medicinal uses. The old flat
+// herb_catalogue table (JSON synonyms, free-text uses) is split into these.
+// ============================================================================
+
+model Species {
+  id             String   @id @default(cuid())
+  code           String   @unique // stable public key, e.g. "SPC-TULSI"
+  common_name    String   // canonical name (en)
+  scientific_name String
+  family         String? // botanical family
+  genus          String?
+  ayush_category String   @default("ayurveda") // ayurveda | unani | siddha | homeopathy | sowa_rigpa
+  image_asset_id String?
+  season_planting String? // free text: "Jun–Jul (monsoon)"
+  season_harvest  String?
+  default_unit_price_paise Int? // default reference price; market prices live in PriceQuote
+  is_active      Boolean  @default(true)
+  created_by_user_id String? // curator (admin) — SpeciesCurator relation
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  deleted_at     DateTime?
+
+  synonyms        SpeciesSynonym[]
+  content         SpeciesContent[]
+  medicinal_uses  SpeciesMedicinalUse[]
+  formulas        ProductFormula[] // phase 10 — standard product recipes
+  batches         Batch[]
+  crop_plans      CropPlan[]
+  price_quotes    PriceQuote[]
+  certified_batches Certification[] // phase 8 COA species (40_quality.prisma)
+  ai_top_species        AiIdentification[] @relation("AiTopSpecies")
+  ai_selected_species   AiIdentification[] @relation("AiSelectedSpecies")
+  ai_feedback_predicted AiFeedback[]       @relation("FeedbackPredicted")
+  ai_feedback_lab       AiFeedback[]       @relation("FeedbackLab")
+
+  curator User? @relation("SpeciesCurator", fields: [created_by_user_id], references: [id], onDelete: SetNull)
+
+  @@index([common_name])
+  @@index([scientific_name])
+  @@index([ayush_category])
+  @@index([is_active])
+  @@map("species")
+}
+
+// One synonym per row (Hindi, Sanskrit, trade names…). Enables proper search.
+model SpeciesSynonym {
+  id         String   @id @default(cuid())
+  species_id String
+  name       String
+  language   String   @default("hi") // iso code / "sanskrit" / "en"
+  created_at DateTime @default(now())
+
+  species Species @relation(fields: [species_id], references: [id], onDelete: Cascade)
+
+  @@index([name])
+  @@index([species_id])
+  @@map("species_synonyms")
+}
+
+// Localized description/usage content, one row per locale per species.
+model SpeciesContent {
+  id            String   @id @default(cuid())
+  species_id    String
+  locale        String   @default("en")
+  common_name_local String? // localized display name
+  description   String?
+  medicinal_uses_text String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  species Species @relation(fields: [species_id], references: [id], onDelete: Cascade)
+
+  @@unique([species_id, locale])
+  @@map("species_content")
+}
+
+// Controlled vocabulary of medicinal/wellness indications (e.g. "fever",
+// "digestive", "immunity") — shared across species so consumers can browse
+// "herbs for immunity".
+model MedicinalUse {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g. "immunity", "digestion"
+  label       String
+  description String?
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+
+  species SpeciesMedicinalUse[]
+
+  @@map("medicinal_uses")
+}
+
+model SpeciesMedicinalUse {
+  id          String @id @default(cuid())
+  species_id  String
+  use_id      String
+
+  species Species      @relation(fields: [species_id], references: [id], onDelete: Cascade)
+  use     MedicinalUse @relation(fields: [use_id], references: [id], onDelete: Cascade)
+
+  @@unique([species_id, use_id])
+  @@map("species_medicinal_uses")
+}

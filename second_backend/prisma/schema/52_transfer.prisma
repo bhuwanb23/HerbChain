@@ -1,0 +1,78 @@
+// ============================================================================
+// TRANSFERS — governed two-party custody handovers (Phase 6, docs/phase_6.md).
+// ----------------------------------------------------------------------------
+// Phase 5 made QR rotation atomic with custody moves; Phase 6 makes the
+// HANDOVER trusted: no ownership may change without an explicit request from
+// the receiving party that the CURRENT HOLDER approves (or an admin recovery).
+// The actual move still runs through the QR engine (single transaction), and
+// the request row is marked COMPLETED inside that same transaction.
+//
+// Ownership truth stays on Batch (current_holder_user_id + phase) and
+// BatchEvent (immutable history); these tables add the request/proof layer.
+// ============================================================================
+
+// One governed handover workflow item per desired move.
+// type (leg the move represents):
+//   FARMER_TO_TRANSPORTER | TRANSPORTER_TO_LAB | LAB_TO_TRANSPORTER |
+//   TRANSPORTER_TO_MANUFACTURER | FARMER_TO_LAB | LAB_TO_MANUFACTURER |
+//   ADMIN_RECOVERY
+// status: pending | approved | rejected | completed | cancelled
+model TransferRequest {
+  id                String   @id @default(cuid())
+  batch_id          String
+  from_user_id      String // current holder at request time (re-verified at execute)
+  from_role         String // role snapshot for the audit trail
+  to_user_id        String // receiving account (the requester, or admin-recovery target)
+  to_role           String
+  type              String // leg code list above
+  status            String   @default("pending")
+  reason            String? // requester's note (e.g. pickup intent / order ref)
+  rejection_reason  String?
+  created_by_user_id String // who opened the request
+  approved_by_user_id String? // the holder who approved (or admin)
+  decided_at        DateTime?
+  completed_at      DateTime?
+  batch_event_id    String?    @unique // the TRANSFER BatchEvent that completed this request
+  payload_json      Json? // {gps_lat, gps_lng, device_id, …} context of the move
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  batch       Batch     @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  from_user   User      @relation("TransferFrom", fields: [from_user_id], references: [id])
+  to_user     User      @relation("TransferTo", fields: [to_user_id], references: [id])
+  created_by  User      @relation("TransferRequester", fields: [created_by_user_id], references: [id])
+  approved_by User?     @relation("TransferApprover", fields: [approved_by_user_id], references: [id])
+  batch_event BatchEvent? @relation("CompletedByEvent", fields: [batch_event_id], references: [id], onDelete: SetNull)
+
+  proofs TransferProof[]
+
+  @@index([batch_id, status])
+  @@index([from_user_id])
+  @@index([to_user_id])
+  @@index([created_by_user_id])
+  @@map("transfer_requests")
+}
+
+// Proof-of-handover evidence attached after a completed transfer: a photo
+// (uploaded Asset) plus optional sender/receiver signatures and remarks.
+// Ties back to the immutable TRANSFER event (ownership_history row).
+model TransferProof {
+  id                   String   @id @default(cuid())
+  transfer_request_id  String
+  ownership_history_id String? // the BatchEvent (TRANSFER) this proves
+  asset_id             String? // uploaded handover photo
+  photo_url            String? // asset.url snapshot at attach time
+  sender_signature     String? // from-party acknowledgment (text + audit)
+  receiver_signature   String? // to-party acknowledgment
+  remarks              String?
+  created_by_user_id   String
+  created_at           DateTime @default(now())
+
+  request  TransferRequest @relation(fields: [transfer_request_id], references: [id], onDelete: Cascade)
+  history  BatchEvent?     @relation("TransferProofEvent", fields: [ownership_history_id], references: [id], onDelete: SetNull)
+  asset    Asset?          @relation(fields: [asset_id], references: [id], onDelete: SetNull)
+  created_by User          @relation("TransferProofAuthor", fields: [created_by_user_id], references: [id])
+
+  @@index([transfer_request_id])
+  @@map("transfer_proofs")
+}

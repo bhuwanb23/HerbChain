@@ -1,0 +1,281 @@
+// ============================================================================
+// QUALITY — laboratory certification (Phase 8, docs/phase_8.md).
+// ----------------------------------------------------------------------------
+// Phase 8 = the scientific validation layer. The lab NEVER changes farmer
+// data, ownership history or transport history — it only ADDS laboratory
+// records (receipt -> samples -> tests -> results -> reviews -> certificate
+// -> approved/rejected batch). The batch's custody `phase` stays `at_lab`
+// through the whole process; the certification substate lives on
+// `Batch.test_status` (pending -> received_by_lab -> sample_created ->
+// under_testing -> certified | rejected).
+//
+// Role separation (spec §8): ANALYSTS enter results; LAB SUPERVISORS review
+// tests and issue certificates. Two-level review prevents
+// analyst->direct-certification fraud. `User.lab_role` (analyst | supervisor)
+// carries the distinction inside the lab role.
+//
+// The Phase-1 placeholders `LabReport` (header) + `LabTestResult`
+// (one-row-per-parameter) were superseded here by a per-sample/per-test model
+// matching real lab operations: one batch -> several samples -> several
+// tests -> many parameters each (results are NEVER flattened into one
+// column). The `TestParameter` vocabulary survives and now references the
+// richer result rows.
+// ============================================================================
+
+model LabProfile {
+  id            String   @id @default(cuid())
+  lab_id        String   @unique
+  lab_code      String?  @unique // e.g. "LAB-2026-0004"; assigned at onboarding
+  lab_name      String?
+  nabl_accredited Boolean @default(false)
+  accreditation_no String?
+  address_id    String?
+  verification_status String @default("pending") // pending | verified | rejected
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  lab User @relation(fields: [lab_id], references: [id], onDelete: Cascade)
+
+  @@map("lab_profiles")
+}
+
+// Vocabulary of measurable parameters (AYUSH/WHO pharmacopoeia limits).
+// limit_standard is a human-readable spec ("≤ 10 ppm as per AYUSH
+// pharmacopoeia"); precise per-run limits can live on the result row.
+model TestParameter {
+  id            String   @id @default(cuid())
+  code          String   @unique // e.g. "lead", "arsenic", "moisture", "total_ash"
+  name          String
+  category      String // heavy_metal | pesticide | microbial | active | organoleptic | purity | physical | other
+  unit          String? // ppm | ppb | cfu/g | % | — 
+  method        String? // e.g. "AAS", "ICP-MS", "HPLC", "Plate count"
+  limit_standard String?
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+
+  results LabTestResult[]
+
+  @@index([category])
+  @@map("test_parameters")
+}
+
+// Lab receive checklist (spec §3). One receipt per batch: the receiving lab
+// user verifies package integrity / quantity / QR / shipment docs / visible
+// quality and records the physical condition of what arrived.
+// condition_status: good | damaged | partial | rejected
+model LabReceipt {
+  id                String   @id @default(cuid())
+  batch_id          String   @unique // one physical intake per batch
+  lab_user_id       String // plain FK — the receiving lab account
+  receiver_name     String? // person who checked the goods in
+  received_quantity_kg Float? // weighed at intake (may differ from batch weight)
+  condition_status  String   @default("good") // good | damaged | partial | rejected
+  received_at       DateTime @default(now())
+  remarks           String?
+  created_at        DateTime @default(now())
+
+  batch Batch @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+
+  @@index([lab_user_id])
+  @@map("lab_receipts")
+}
+
+// Sample records (spec §4): one batch -> several samples, following real lab
+// operations. sample_code e.g. "SAMP-2026-000001".
+model SampleRecord {
+  id              String   @id @default(cuid())
+  sample_code     String   @unique
+  batch_id        String
+  lab_user_id     String // plain FK — the analyst who collected the sample
+  sample_weight_kg Float? // drawn from the batch (spec sample_weight/unit)
+  collected_at    DateTime @default(now())
+  remarks         String?
+  created_at      DateTime @default(now())
+
+  batch Batch @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  tests LabTest[]
+
+  @@index([batch_id])
+  @@index([lab_user_id])
+  @@map("sample_records")
+}
+
+// One test run on one sample (spec §5). status drives the analyst workflow:
+// pending -> in_progress -> completed -> failed. `outcome` is the
+// results-driven verdict (pass when every parameter passed) once submitted.
+// Category codes (spec §5 testing categories):
+// identity | purity | physical | chemical | safety | microbiological
+model LabTest {
+  id            String   @id @default(cuid())
+  batch_id      String
+  sample_id     String
+  lab_user_id   String // plain FK — the analyst running the test
+  test_name     String // e.g. "Purity — foreign matter", "Heavy metals screen"
+  test_category String // code list above
+  test_method   String? // e.g. "AAS", "HPLC", "Plate count", "Organoleptic"
+  status        String   @default("pending") // pending | in_progress | completed | failed
+  outcome       String? // pass | fail — results-driven, set at submit
+  started_at    DateTime?
+  completed_at  DateTime?
+  notes         String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  batch   Batch        @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  sample  SampleRecord @relation(fields: [sample_id], references: [id], onDelete: Restrict)
+  results LabTestResult[]
+  reviews LabReview[]
+
+  @@index([batch_id, status])
+  @@index([sample_id])
+  @@index([lab_user_id])
+  @@map("lab_tests")
+}
+
+// One measured value per parameter per test (spec §6). A single test may hold
+// 20+ parameter rows — results are never flattened into one column.
+// result: pass | fail | na
+model LabTestResult {
+  id              String   @id @default(cuid())
+  test_id         String
+  parameter_id    String
+  observed_value_numeric Float? // numeric reading when the parameter is numeric
+  observed_text   String? // qualitative reading (color, odor, morphology…)
+  unit            String? // overrides the parameter default (ppm, %, cfu/g…)
+  acceptable_range String? // e.g. "< 10", "0.5 ppm max" — human spec snapshot
+  result          String   @default("na") // pass | fail | na
+  notes           String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  test      LabTest       @relation(fields: [test_id], references: [id], onDelete: Cascade)
+  parameter TestParameter @relation(fields: [parameter_id], references: [id], onDelete: Restrict)
+
+  @@unique([test_id, parameter_id])
+  @@index([parameter_id])
+  @@map("test_results")
+}
+
+// Supervisor review (spec §8 two-level review). Analyst submits a completed
+// test; a lab supervisor approves / rejects / sends it back for rework.
+// review_status: approved | rejected | rework_required
+model LabReview {
+  id            String   @id @default(cuid())
+  test_id       String
+  reviewed_by_user_id String // plain FK — supervisor (lab_role = supervisor)
+  reviewer_role String // role snapshot at review time
+  review_status String // code list above
+  review_notes  String?
+  reviewed_at   DateTime @default(now())
+  created_at    DateTime @default(now())
+
+  test LabTest @relation(fields: [test_id], references: [id], onDelete: Cascade)
+
+  @@index([test_id, reviewed_at])
+  @@index([reviewed_by_user_id])
+  @@map("lab_reviews")
+}
+
+// Batch-level lab documents (spec §13). document_type:
+// test_report | microscopy_image | certificate | analysis_report
+model LabDocument {
+  id            String   @id @default(cuid())
+  batch_id      String
+  test_id       String? // optional — microscope images / per-test reports
+  document_type String // code list above
+  document_url  String?
+  document_asset_id String? // plain FK into assets
+  uploaded_by_user_id String? // plain FK
+  created_at    DateTime @default(now())
+
+  batch Batch @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+
+  @@index([batch_id])
+  @@index([test_id])
+  @@map("lab_documents")
+}
+
+// Three-way species check (spec §12): farmer claim vs AI prediction vs the
+// species the lab actually verified. MATCH keeps the chain trusted; a
+// MISMATCH raises an alert BatchEvent + audit row for AYUSH. Written when a
+// batch is certified/rejected.
+// status: match | mismatch | unverified (AI may be absent on older batches)
+model SpeciesVerificationLog {
+  id              String   @id @default(cuid())
+  batch_id        String
+  farmer_species_id String // Batch.species_id at certification time (snapshot on the row)
+  farmer_species  String // species code snapshot (immutable record)
+  ai_prediction_id  String? // the AiIdentification consulted, if any
+  ai_prediction_code String? // predicted species code snapshot (null = no AI run)
+  lab_species_id    String
+  lab_species     String // species code the lab certified
+  status          String // match | mismatch | unverified
+  verified_at     DateTime @default(now())
+
+  batch Batch @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+
+  @@index([batch_id])
+  @@index([status])
+  @@map("species_verification_logs")
+}
+
+// Certificate of Analysis (spec §9/§10). One COA per certified batch.
+// certificate_hash = sha256 over the canonical certificate payload — stored
+// for tamper detection (the QR trace shows hash + url). Ownership stays with
+// the lab until a governed transfer; certification only adds scientific
+// validation. status: active | revoked
+model Certification {
+  id                 String   @id @default(cuid())
+  certificate_number String   @unique // e.g. "CERT-2026-000001"
+  batch_id           String   @unique
+  lab_user_id        String // plain FK — issuing lab account
+  lab_code           String? // lab snapshot (immutable certificate)
+  lab_name           String? // lab snapshot
+  species_id         String
+  species_code       String // certified species code snapshot
+  sample_count       Int      @default(0)
+  test_count         Int      @default(0)
+  parameter_count    Int      @default(0)
+  pass_count         Int      @default(0)
+  fail_count         Int      @default(0)
+  test_summary_json  Json? // categories + counts for the COA body
+  certificate_url    String? // uploaded PDF (optional)
+  certificate_hash   String // sha256 of the canonical payload (tamper detection)
+  issued_by_user_id  String // plain FK — the supervisor who certified
+  signed_by_user_id  String? // plain FK — responsible chemist/analyst signature
+  digital_signature  String? // human acknowledgment text
+  issued_at          DateTime @default(now())
+  expiry_date        DateTime?
+  status             String   @default("active") // active | revoked
+  notes              String?
+  created_at         DateTime @default(now())
+
+  batch   Batch   @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  species Species @relation(fields: [species_id], references: [id], onDelete: Restrict)
+
+  @@index([lab_user_id])
+  @@index([issued_at])
+  @@map("certifications")
+}
+
+// Why a batch failed certification (spec §11). reason codes:
+// heavy_metal_failure | species_mismatch | microbial_failure |
+// contamination | adulteration | other
+// action (configurable outcome): destroy | return_to_supplier |
+// retest_required | hold_for_investigation
+model RejectionRecord {
+  id             String   @id @default(cuid())
+  batch_id       String   @unique // one open rejection per batch
+  reason         String // code list above
+  description    String?
+  action         String   @default("hold_for_investigation")
+  rejected_by_user_id String // plain FK — the supervisor who rejected
+  rejected_at    DateTime @default(now())
+  created_at     DateTime @default(now())
+
+  batch Batch @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+
+  @@index([reason])
+  @@index([rejected_by_user_id])
+  @@map("rejection_records")
+}

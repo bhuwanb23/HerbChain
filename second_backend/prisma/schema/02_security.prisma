@@ -1,0 +1,125 @@
+// ============================================================================
+// SECURITY — sessions, API keys, and the global (admin) audit log.
+// ----------------------------------------------------------------------------
+// Note: the supply-chain event timeline (BatchEvent) is a separate, domain-
+// specific audit store in 50_trace.prisma. AuditLog here captures admin /
+// system / account-level actions (logins, role changes, config edits, exports).
+// ============================================================================
+
+// Refresh-token sessions with rotation & revocation support. Only the SHA-256
+// hash of the refresh token is stored — the raw token never touches the DB.
+model Session {
+  id                String    @id @default(cuid())
+  user_id           String
+  refresh_token_hash String   @unique
+  previous_token_hash String? // last rotated-out hash — one-step fingerprint so reuse of an
+                              // old token is detectable without keeping history rows
+  user_agent        String?
+  ip_address        String?
+  device_name       String?
+  device_id         String? // stable client-provided device label (for "your devices" + audit correlation)
+  created_at        DateTime  @default(now())
+  last_used_at      DateTime?
+  expires_at        DateTime
+  revoked_at        DateTime? // set when rotated out / logged out
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([expires_at])
+  @@map("sessions")
+}
+
+// Long-lived API credentials for integrations / programmatic access.
+// Only `key_hash` + a short `key_prefix` (e.g. "hk_abc123…") are stored.
+model ApiKey {
+  id           String    @id @default(cuid())
+  user_id      String
+  label        String // e.g. "mobile-app-v1", "website-dashboard"
+  key_hash     String    @unique
+  key_prefix   String
+  scopes       String    @default("read") // read | write | admin (space separated ok)
+  created_at   DateTime  @default(now())
+  last_used_at DateTime?
+  expires_at   DateTime?
+  revoked_at   DateTime?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("api_keys")
+}
+
+// Single-use password-reset tokens (forgot/reset flow). Only the SHA-256
+// hash is stored; the raw token is emailed to the user via the mailer stub
+// until the notifications phase wires a real provider. Reset revokes all
+// sessions, and any use marks the row consumed.
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  user_id    String
+  token_hash String    @unique
+  expires_at DateTime
+  used_at    DateTime?
+  ip_address String?
+  created_at DateTime  @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([expires_at])
+  @@map("password_reset_tokens")
+}
+
+// DB-driven RBAC catalog (see docs/auth/architecture.md §4). Permissions are
+// rows, not code, so a new role (State Inspector, Regional Officer, Consumer
+// Auditor) is a seed change, never a code change. Seeded from the catalog in
+// src/db/rbac.js to mirror docs/phase_2.md §13.
+model Permission {
+  id          String   @id @default(cuid())
+  key         String   @unique // e.g. "batch.create" | "lab.certify" | "admin.users.manage"
+  description String?
+  module      String? // batch | lab | product | shipment | trace | admin | profile | commerce
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+
+  role_grants RolePermission[]
+
+  @@index([module])
+  @@map("permissions")
+}
+
+// Which roles hold which permissions. `role` is the User.role code as a
+// plain string (no FK) — roles are a closed list, grants are open.
+model RolePermission {
+  id            String @id @default(cuid())
+  role          String // farmer | transporter | lab | manufacturer | distributor | retailer | consumer | admin
+  permission_id String
+
+  permission Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+
+  @@unique([role, permission_id])
+  @@index([role])
+  @@map("role_permissions")
+}
+
+// Global audit trail for account/admin/system events (not supply-chain ones).
+// Append-only. target_type/target_id are polymorphic references (e.g.
+// "user"/"user-abc", "price_quote"/"…") resolved by the app layer.
+model AuditLog {
+  id           String   @id @default(cuid())
+  actor_user_id String? // null => system-initiated action
+  action       String // code list grown in src/constants (LOGIN, ROLE_CHANGE, …)
+  target_type  String?
+  target_id    String?
+  ip_address   String?
+  user_agent   String?
+  meta_json    Json? // request ids, before/after snapshots, etc.
+  created_at   DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actor_user_id], references: [id], onDelete: SetNull)
+
+  @@index([actor_user_id])
+  @@index([action])
+  @@index([created_at])
+  @@map("audit_logs")
+}

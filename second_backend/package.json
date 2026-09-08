@@ -1,0 +1,49 @@
+{
+  "name": "herbchain-backend-node",
+  "version": "1.0.0",
+  "description": "HerbChain backend re-implemented in Node.js (Express + Prisma + SQLite)",
+  "private": true,
+  "type": "commonjs",
+  "main": "src/index.js",
+  "prisma": {
+    "schema": "prisma/schema"
+  },
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "seed": "node src/scripts/seed.js",
+    "seed:fresh": "node src/scripts/seed.js --fresh",
+    "migrate": "prisma migrate deploy",
+    "db:push": "prisma db push",
+    "generate": "prisma generate",
+    "test": "node --test tests/auth tests/batches tests/identification tests/qr tests/transfers tests/shipments tests/lab tests/procurement tests/products tests/verification tests/blockchain tests/admin tests/notifications tests/documents tests/analytics tests/sync",
+    "test:auth": "node --test tests/auth/",
+    "test:batches": "node --test tests/batches/",
+    "test:identification": "node --test tests/identification/",
+    "test:qr": "node --test tests/qr/",
+    "test:transfers": "node --test tests/transfers/",
+    "test:shipments": "node --test tests/shipments/",
+    "test:lab": "node --test tests/lab/",
+    "test:procurement": "node --test tests/procurement/",
+    "test:products": "node --test tests/products/",
+    "test:verification": "node --test tests/verification/",
+    "test:blockchain": "node --test tests/blockchain/",
+    "test:admin": "node --test tests/admin/"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.16.0",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.2",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.33.5",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.16.0",
+    "supertest": "^7.1.0"
+  }
+}

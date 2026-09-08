@@ -1,0 +1,153 @@
+// ============================================================================
+// COMMERCE — B2B/B2C orders, invoicing, payments, wallets.
+// ----------------------------------------------------------------------------
+// A PurchaseOrder covers two trade shapes through `type`:
+//   - "batch":   a farmer (seller) sells raw lots to a manufacturer (buyer).
+//   - "product": a manufacturer (seller) sells finished goods to a
+//                retailer/distributor/consumer (buyer).
+// Money is integer paise everywhere (see 00_base.prisma conventions).
+// ============================================================================
+
+// type: batch | product
+// status (batch/product orders share the pipeline):
+//   draft -> confirmed -> shipped -> delivered | cancelled
+//   (per-item status lives on OrderItem for partial fulfilment)
+model PurchaseOrder {
+  id               String   @id @default(cuid())
+  order_no         String   @unique // e.g. "ORD-2026-00042"
+  type             String // batch | product
+  buyer_user_id    String
+  seller_user_id   String
+  status           String   @default("draft") // code list above
+  currency         String   @default("INR")
+  subtotal_paise   Int      @default(0)
+  tax_paise        Int      @default(0)
+  shipping_paise   Int      @default(0)
+  total_paise      Int      @default(0)
+  shipping_address_id String?
+  notes            String?
+  placed_at        DateTime? // when buyer confirmed
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  buyer  User @relation("OrderBuyer", fields: [buyer_user_id], references: [id])
+  seller User @relation("OrderSeller", fields: [seller_user_id], references: [id])
+
+  items    OrderItem[]
+  invoices Invoice[]
+
+  @@index([order_no])
+  @@index([buyer_user_id])
+  @@index([seller_user_id])
+  @@index([status])
+  @@index([created_at])
+  @@map("purchase_orders")
+}
+
+// ref_type/ref_id point at a batch (type=batch orders) or product (type=product
+// orders). Description is a snapshot so history survives catalog edits.
+// status: pending | fulfilled | cancelled
+model OrderItem {
+  id              String   @id @default(cuid())
+  order_id        String
+  ref_type        String // batch | product
+  ref_id          String
+  description     String? // snapshot: species/common name or product name
+  quantity_kg     Float?
+  quantity_units  Int?
+  unit_price_paise Int
+  line_total_paise Int
+  status          String   @default("pending") // pending | fulfilled | cancelled
+  fulfilled_at    DateTime?
+  created_at      DateTime @default(now())
+
+  order PurchaseOrder @relation(fields: [order_id], references: [id], onDelete: Cascade)
+
+  @@index([order_id])
+  @@index([ref_type, ref_id])
+  @@map("order_items")
+}
+
+// status: issued | paid | overdue | voided
+model Invoice {
+  id           String    @id @default(cuid())
+  invoice_no   String    @unique // e.g. "INV-2026-00012"
+  order_id     String
+  buyer_user_id String
+  seller_user_id String
+  currency     String    @default("INR")
+  total_paise  Int
+  tax_paise    Int       @default(0)
+  status       String    @default("issued") // code list above
+  due_at       DateTime?
+  issued_at    DateTime  @default(now())
+  paid_at      DateTime?
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+
+  order    PurchaseOrder @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@index([invoice_no])
+  @@index([buyer_user_id])
+  @@index([seller_user_id])
+  @@index([status])
+  @@map("invoices")
+}
+
+// method: cash | bank_transfer | upi | card | wallet
+// status: pending | succeeded | failed | refunded
+model Payment {
+  id           String    @id @default(cuid())
+  invoice_id   String
+  payer_user_id String
+  method       String
+  reference    String? // bank ref / UPI txn id / card auth
+  amount_paise Int
+  currency     String    @default("INR")
+  status       String    @default("pending") // code list above
+  paid_at      DateTime?
+  created_at   DateTime  @default(now())
+
+  invoice Invoice @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+
+  @@index([invoice_id])
+  @@index([payer_user_id])
+  @@index([status])
+  @@map("payments")
+}
+
+// Simple in-app wallet per user. balance_paise is a cached running total —
+// authoritative history is WalletTransaction.
+model Wallet {
+  id            String   @id @default(cuid())
+  user_id       String   @unique
+  currency      String   @default("INR")
+  balance_paise Int      @default(0)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  user         User              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  @@map("wallets")
+}
+
+// Append-only wallet ledger. kind: credit | debit.
+// ref_type/ref_id link to a Payment/Invoice when applicable.
+model WalletTransaction {
+  id            String   @id @default(cuid())
+  wallet_id     String
+  kind          String // credit | debit
+  amount_paise  Int
+  balance_after_paise Int
+  ref_type      String? // payment | invoice | adjustment
+  ref_id        String?
+  note          String?
+  created_at    DateTime @default(now())
+
+  wallet Wallet @relation(fields: [wallet_id], references: [id], onDelete: Cascade)
+
+  @@index([wallet_id, created_at])
+  @@map("wallet_transactions")
+}

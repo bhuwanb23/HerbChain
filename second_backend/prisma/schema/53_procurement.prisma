@@ -1,0 +1,178 @@
+// ============================================================================
+// PROCUREMENT — manufacturer raw-material procurement (Phase 9,
+// docs/phase_9.md). Certified batches become manufacturing inputs.
+// ----------------------------------------------------------------------------
+// The flow (spec): certified batch -> manufacturer request -> lab (current
+// holder) approves (full or partial) -> InventoryAllocation RESERVED ->
+// shipment auto-created (Phase-7 engine) -> transporter delivers -> governed
+// custody hop (transporter -> manufacturer) -> GoodsReceipt (GRN) ->
+// InventoryItem + transaction ledger -> available for production.
+//
+// Core philosophy (spec): a manufacturer never buys a database record — it
+// acquires CERTIFIED batch + OWNERSHIP + certificate + full history. Only
+// batches with test_status=certified and a valid (non-expired) certificate
+// are procurable; reservation (BatchInventory.available) prevents
+// overselling across manufacturers. Inventory never changes directly — every
+// movement is an append-only InventoryTransaction row.
+// ============================================================================
+
+// Manufacturer's request for a quantity of a certified batch. Status:
+// pending -> approved | partially_approved | rejected | cancelled
+// approved/partially_approved -> fulfilled (once GRN'd).
+// approved_quantity_kg < requested_quantity_kg => partially_approved.
+model BatchRequest {
+  id                    String    @id @default(cuid())
+  request_no            String    @unique // e.g. "REQ-2026-000001"
+  manufacturer_user_id  String
+  batch_id              String
+  requested_quantity_kg Float
+  approved_quantity_kg  Float? // set when the holder decides
+  status                String    @default("pending") // code list above
+  decision_note         String? // holder's note on approve/reject/partial
+  decided_by_user_id    String? // plain FK — holder who decided
+  requested_at          DateTime  @default(now())
+  decided_at            DateTime?
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+
+  manufacturer User    @relation("ProcurementRequester", fields: [manufacturer_user_id], references: [id])
+  batch        Batch  @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  allocation   InventoryAllocation?
+  shipment     Shipment? @relation("ProcurementShipment") // auto-created on approval
+  receipts     GoodsReceipt[]
+
+  @@index([manufacturer_user_id, status])
+  @@index([batch_id, status])
+  @@map("batch_requests")
+}
+
+// Per-batch availability pool at the current holder (the lab). This is the
+// anti-oversell ledger: available is what can still be requested; approval
+// moves qty to reserved; GRN moves accepted qty to consumed (rejected qty
+// returns to available). total = certified quantity at the holder.
+model BatchInventory {
+  id                    String    @id @default(cuid())
+  batch_id              String    @unique // one pool per batch
+  total_quantity_kg     Float
+  available_quantity_kg Float     @default(0)
+  reserved_quantity_kg  Float     @default(0)
+  consumed_quantity_kg  Float     @default(0)
+  updated_at            DateTime  @updatedAt
+  created_at            DateTime  @default(now())
+
+  batch Batch @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+
+  @@map("batch_inventories")
+}
+
+// Quantity locked for one approved request. Status:
+// reserved -> fulfilled (GRN accepted, qty consumed) | cancelled (qty
+// released back to available before delivery).
+model InventoryAllocation {
+  id                    String    @id @default(cuid())
+  batch_id              String
+  request_id            String    @unique
+  allocated_quantity_kg Float
+  status                String    @default("reserved") // reserved | fulfilled | cancelled
+  allocated_at          DateTime  @default(now())
+  resolved_at           DateTime?
+
+  batch   Batch        @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  request BatchRequest @relation(fields: [request_id], references: [id], onDelete: Cascade)
+
+  @@index([batch_id, status])
+  @@map("inventory_allocations")
+}
+
+// Goods Receipt Note (spec §8): the physical intake record when the shipment
+// is delivered. Delivered qty vs accepted vs rejected (+ reason) — e.g.
+// delivered 50 kg, accepted 48, rejected 2 (packaging damage).
+model GoodsReceipt {
+  id                   String    @id @default(cuid())
+  grn_number           String    @unique // e.g. "GRN-2026-000001"
+  manufacturer_user_id String
+  batch_id             String
+  shipment_id          String? // the Phase-7 shipment this receipt closes
+  request_id           String? // the originating procurement request
+  received_quantity_kg Float // qty that arrived (shipment load)
+  accepted_quantity_kg Float // qty accepted into inventory
+  rejected_quantity_kg Float  @default(0) // received - accepted
+  rejection_reason     String? // e.g. "packaging damage"
+  received_at          DateTime  @default(now())
+  created_at           DateTime  @default(now())
+
+  manufacturer User       @relation("ProcurementReceiver", fields: [manufacturer_user_id], references: [id])
+  batch        Batch     @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  shipment     Shipment? @relation(fields: [shipment_id], references: [id], onDelete: SetNull)
+  request      BatchRequest? @relation(fields: [request_id], references: [id], onDelete: SetNull)
+
+  @@index([manufacturer_user_id])
+  @@index([batch_id])
+  @@map("goods_receipts")
+}
+
+// Manufacturer-side stock of a batch. One row per (manufacturer, batch).
+// Quantities: available (ready), reserved (for production), consumed (used),
+// discarded (spoiled/damaged). State on the wire is derived from these.
+model InventoryItem {
+  id                    String    @id @default(cuid())
+  manufacturer_user_id  String
+  batch_id              String
+  available_quantity_kg Float     @default(0)
+  reserved_quantity_kg  Float     @default(0)
+  consumed_quantity_kg  Float     @default(0)
+  discarded_quantity_kg Float     @default(0)
+  unit                  String    @default("kg")
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+
+  manufacturer User              @relation("InventoryOwner", fields: [manufacturer_user_id], references: [id])
+  batch        Batch            @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  transactions InventoryTransaction[]
+
+  @@unique([manufacturer_user_id, batch_id])
+  @@index([manufacturer_user_id])
+  @@map("inventory_items")
+}
+
+// Append-only inventory ledger (spec §10) — inventory is NEVER updated
+// directly; every change is a transaction row. Types:
+// received | reserved | released | consumed | adjusted | discarded
+model InventoryTransaction {
+  id                String    @id @default(cuid())
+  inventory_id      String
+  transaction_type  String // code list above
+  quantity_kg       Float
+  reference_id      String? // grn / request / shipment id
+  notes             String?
+  created_by_user_id String? // plain FK
+  created_at        DateTime  @default(now())
+
+  inventory InventoryItem @relation(fields: [inventory_id], references: [id], onDelete: Cascade)
+
+  @@index([inventory_id, created_at])
+  @@index([transaction_type])
+  @@map("inventory_transactions")
+}
+
+// Quality hold (spec §12): manufacturer quarantines a batch (packaging
+// issue, unexpected smell, visual difference). While ACTIVE the batch cannot
+// be reserved/consumed for production. status: active | resolved.
+model QualityHold {
+  id                  String    @id @default(cuid())
+  batch_id            String
+  manufacturer_user_id String
+  reason              String
+  status              String    @default("active") // active | resolved
+  created_by_user_id  String? // plain FK
+  created_at          DateTime  @default(now())
+  resolved_at         DateTime?
+  resolution_note     String?
+
+  batch Batch @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  manufacturer User  @relation("HoldOwner", fields: [manufacturer_user_id], references: [id])
+
+  @@index([manufacturer_user_id, status])
+  @@index([batch_id])
+  @@map("quality_holds")
+}

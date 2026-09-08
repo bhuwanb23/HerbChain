@@ -1,0 +1,165 @@
+// ============================================================================
+// TRACE — batches (traceable lots) and their custody timeline.
+// ----------------------------------------------------------------------------
+// `Batch` is the core supply-chain entity: a harvest lot. The old design kept
+// batch data and mutable state in two tables; here the phase/holder/test
+// status live directly on the row (single source of truth), and every change
+// is appended to BatchEvent — the immutable, signed audit timeline that powers
+// consumer traceability.
+//
+// phase state machine (src/constants will own the transitions):
+//   with_farmer -> in_transit_to_lab -> at_lab -> in_transit_to_manufacturer
+//               -> with_manufacturer -> consumed
+// plus split/bookkeeping phases as needed.
+// ============================================================================
+
+model Batch {
+  id             String   @id @default(cuid())
+  code           String   @unique // e.g. "BAT-2026-0001" (was HERB-…)
+
+  // provenance
+  farmer_id      String
+  species_id     String
+  plot_id        String?  // FarmPlot.id when grown on a registered plot
+  crop_plan_id   String?  // CropPlan.id when tied to a planting cycle
+  parent_batch_id String? // set when this batch was created by a split
+
+  // harvest facts
+  harvest_date      DateTime?
+  location          String? // readable address / village text
+  gps_lat           Float?
+  gps_lng           Float?
+  gps_accuracy_m    Float? // raw GPS accuracy reported by the device
+  weight_kg         Float // net weight in kg at creation; splits book weight on children
+  cultivation_type  String? // organic | conventional | wild_collection (farmer's claim)
+  attributes_json   Json? // optional organoleptic facts: {color, odor, moisture, notes}
+  notes             String?
+
+  // current custody/state (single-row source of truth)
+  phase               String @default("with_farmer") // code list above
+  current_holder_user_id String // last party in custody
+  // certification substate (phase 8 — docs/phase_8.md): the custody phase
+  // stays `at_lab` while the lab validates; this column tracks the lab
+  // workflow: pending -> received_by_lab -> sample_created -> under_testing
+  // -> certified | rejected
+  test_status         String @default("pending")
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // relations
+  farmer      User      @relation("BatchFarmer", fields: [farmer_id], references: [id])
+  species     Species   @relation(fields: [species_id], references: [id], onDelete: Restrict)
+  plot        FarmPlot? @relation(fields: [plot_id], references: [id], onDelete: SetNull)
+  crop_plan   CropPlan? @relation(fields: [crop_plan_id], references: [id], onDelete: SetNull)
+  parent      Batch?    @relation("BatchSplit", fields: [parent_batch_id], references: [id], onDelete: SetNull)
+  children    Batch[]   @relation("BatchSplit")
+  current_holder User   @relation("BatchHolder", fields: [current_holder_user_id], references: [id])
+
+  events      BatchEvent[]
+  run_ingredients ManufacturingBatchIngredient[] // phase 10 — consumed by manufacturing runs
+  affected_products AffectedProduct[] // phase 10 — recall blast-radius rows
+  identifications AiIdentification[] // recognition that produced this batch
+  ai_feedback     AiFeedback[]
+  qr_tokens   QrToken[] // versioned custody tokens (phase 5 — one ACTIVE per batch)
+  qr_replacements QrReplacementLog[]
+  transfer_requests TransferRequest[] // governed handovers (phase 6)
+
+  // phase 8 — laboratory certification (40_quality.prisma)
+  lab_receipts         LabReceipt[]
+  samples              SampleRecord[]
+  lab_tests            LabTest[]
+  lab_documents        LabDocument[]
+  certifications       Certification[]
+  rejection_records    RejectionRecord[]
+  species_verifications SpeciesVerificationLog[]
+
+  // phase 9 — manufacturer procurement (53_procurement.prisma)
+  procurement_requests BatchRequest[]
+  inventory            BatchInventory?
+  allocations          InventoryAllocation[]
+  receipts             GoodsReceipt[]
+  inventory_items      InventoryItem[]
+  quality_holds        QualityHold[]
+
+  @@index([code])
+  @@index([farmer_id])
+  @@index([species_id])
+  @@index([phase])
+  @@index([current_holder_user_id])
+  @@index([parent_batch_id])
+  @@index([created_at])
+  @@map("batches")
+}
+
+// Append-only custody/activity timeline. One row per immutable fact — created,
+// transfer, lab report, product link, split, intent. Never updated or hard
+// deleted; payload_json carries typed extras (distances, qty, report refs).
+// event_type codes: CREATED | TRANSFER | PRODUCT_LINK | BATCH_SPLIT |
+//                   INTENT_LAB_REQUEST | INTENT_MANUFACTURER_ORDER |
+//                   LAB_RECEIVED | SAMPLE_CREATED | LAB_TEST | TEST_SUBMITTED |
+//                   TEST_REVIEWED | LAB_CERTIFIED | LAB_REJECTED |
+//                   SPECIES_MISMATCH
+// qr_token_hash is optional forensics only — replay protection is the nonce.
+model BatchEvent {
+  id            String   @id @default(cuid())
+  batch_id      String
+  event_type    String // code list above
+  actor_user_id String // who performed the action
+  from_user_id  String? // custody handoff: previous holder
+  to_user_id    String? // custody handoff: next holder
+  phase_before  String?
+  phase_after   String?
+  location      String?
+  gps_lat       Float?
+  gps_lng       Float?
+  payload_json  Json?   // {quantity_kg, distance_km, report_id, product_id, note}
+  qr_token_hash String? // sha256 of the token consumed, if a scan happened
+  created_at    DateTime @default(now())
+
+  batch Batch @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  actor User @relation("EventActor", fields: [actor_user_id], references: [id])
+  from_user User? @relation("EventFrom", fields: [from_user_id], references: [id])
+  to_user   User? @relation("EventTo", fields: [to_user_id], references: [id])
+
+  transfer_request TransferRequest? @relation("CompletedByEvent") // phase 6 completion ref
+  transfer_proofs  TransferProof[]  @relation("TransferProofEvent")
+
+  @@index([batch_id, created_at])
+  @@index([event_type])
+  @@index([actor_user_id])
+  @@index([created_at])
+  @@map("batch_events")
+}
+
+// Every QR scan attempt — custody handoffs AND anonymous consumer views. This
+// is the tamper/counterfeit signal stream: an `unauthorized`, `expired` or
+// `replay` outcome on a custody scan is how diversion attempts surface, and
+// consumer_view rows feed counterfeit detection (the same lot scanned in
+// wildly different places, or scanned after sale). Merges phase-1's
+// qr_scan_logs + consumer_scans into one queryable stream — target_type /
+// purpose tell them apart. Append-only, high volume (coarse retention later).
+// target_type: batch | product_lot | product
+// purpose: custody_transfer | ownership_check | consumer_view
+// outcome: success | unauthorized | expired | replay | invalid | not_found
+model QrScanLog {
+  id            String   @id @default(cuid())
+  target_type   String // code list above
+  target_id     String? // null when the presented token is unknown (no batch yet)
+  purpose       String   @default("custody_transfer") // code list above
+  actor_user_id String? // null => anonymous consumer scan (plain FK, no relation)
+  device_id     String?
+  ip_address    String?
+  location      String?
+  gps_lat       Float?
+  gps_lng       Float?
+  outcome       String // code list above
+  failure_reason String?
+  created_at    DateTime @default(now())
+
+  @@index([target_type, target_id, created_at])
+  @@index([purpose, created_at])
+  @@index([outcome])
+  @@index([actor_user_id])
+  @@map("qr_scan_logs")
+}
