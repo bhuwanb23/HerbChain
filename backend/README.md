@@ -40,8 +40,10 @@ Seeded accounts: `admin@herbchain.in` / `Admin@123456` (admin), plus
 backend/
 ├── prisma/
 │   ├── schema/              # multi-file schema (25 .prisma files) + herbchain.db (dev)
-│   ├── scratch_new.db        # empty template copied by the test harness
-│   └── migrations/           # committed migrations (19 applied)
+│   │   └── migrations/      # committed migrations (20 applied, incl. consumer_feedback)
+│   ├── schema.legacy.prisma # archived single-file schema (reference only)
+│   ├── migrations.legacy/   # archived pre-multi-file migration (reference only)
+│   └── scratch_new.db        # empty template copied by the test harness
 ├── src/
 │   ├── index.js             # entry point (API + optional queue workers)
 │   ├── app.js               # Express app factory, route mounting, error box
