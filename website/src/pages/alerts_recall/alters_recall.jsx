@@ -11,16 +11,20 @@ export default function AlertsAndRecallsPage() {
   const [showRecallForm, setShowRecallForm] = useState(false)
   const [recallForm, setRecallForm] = useState({ batch_id: '', reason: '', severity: 'high' })
   const [submitting, setSubmitting] = useState(false)
+  const [formError, setFormError] = useState(null)
 
   const handleInitiateRecall = async (e) => {
     e.preventDefault()
     if (!recallForm.batch_id.trim() || !recallForm.reason.trim()) return
     setSubmitting(true)
+    setFormError(null)
     try {
-      await initiateRecall(recallForm.batch_id.trim(), recallForm.reason.trim())
+      await initiateRecall(recallForm.batch_id.trim(), recallForm.reason.trim(), recallForm.severity)
       setRecallForm({ batch_id: '', reason: '', severity: 'high' })
       setShowRecallForm(false)
-    } catch (_) {}
+    } catch (err) {
+      setFormError(err?.message || 'Failed to initiate recall')
+    }
     setSubmitting(false)
   }
 
@@ -49,11 +53,11 @@ export default function AlertsAndRecallsPage() {
         </div>
         <div className="bg-white rounded-xl p-4 border border-gray-200">
           <p className="text-sm text-gray-500">Critical</p>
-          <p className="text-2xl font-bold text-amber-600 mt-1">{criticalAlerts.filter(a => a.severity === 'critical' || a.severity === 'error').length}</p>
+          <p className="text-2xl font-bold text-amber-600 mt-1">{criticalAlerts.filter(a => a.severity === 'critical').length}</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-gray-200">
           <p className="text-sm text-gray-500">Warnings</p>
-          <p className="text-2xl font-bold text-yellow-500 mt-1">{criticalAlerts.filter(a => a.severity === 'warning').length}</p>
+          <p className="text-2xl font-bold text-yellow-500 mt-1">{criticalAlerts.filter(a => a.severity === 'high' || a.severity === 'medium').length}</p>
         </div>
       </div>
 
@@ -88,6 +92,9 @@ export default function AlertsAndRecallsPage() {
             className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50">
             {submitting ? 'Activating...' : 'Activate Recall'}
           </button>
+          {formError && (
+            <p className="mt-3 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{formError}</p>
+          )}
         </form>
       )}
 

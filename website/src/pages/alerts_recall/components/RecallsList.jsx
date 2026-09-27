@@ -11,11 +11,15 @@ export default function RecallsList({ recalls }) {
               <div className="flex items-center gap-3">
                 <span className="text-2xl">📦</span>
                 <div>
-                  <p className="font-medium text-gray-900">Batch {recall.id} has been recalled</p>
+                  <p className="font-medium text-gray-900">
+                    {recall.recall_no ? `Recall ${recall.recall_no}` : 'Recall'} — {recall.ref_type} {recall.ref_id}
+                  </p>
                   <p className="text-sm text-gray-600">Reason: {recall.reason}</p>
                 </div>
               </div>
-              <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">Recalled</span>
+              <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white capitalize">
+                {recall.status || 'issued'}
+              </span>
             </li>
           ))}
         </ul>

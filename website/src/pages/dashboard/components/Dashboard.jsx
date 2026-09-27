@@ -62,7 +62,8 @@ export default function Dashboard() {
         setError(null);
         const dash = await AdminAPI.stats(accessToken);
         if (cancelled) return;
-        setStats(dash);
+        // Route wraps the payload: { dashboard: { kpis, widgets, ... } }
+        setStats(dash?.dashboard || dash);
         // Recent batches for the list — universal search with an empty query
         // returns nothing, so pull by wildcard: search 'HERB' matches batch codes.
         try {
@@ -95,7 +96,7 @@ export default function Dashboard() {
   }, [stats]);
 
   const batchRows = useMemo(
-    () => batches.filter((r) => r.type === 'batch'),
+    () => batches.filter((r) => r.category === 'batch'),
     [batches],
   );
 
@@ -104,9 +105,10 @@ export default function Dashboard() {
     if (!needle) return batchRows;
     return batchRows.filter(
       (r) =>
-        (r.label || '').toLowerCase().includes(needle) ||
-        (r.id || '').toLowerCase().includes(needle) ||
-        (r.sublabel || '').toLowerCase().includes(needle),
+        String(r.code || '').toLowerCase().includes(needle) ||
+        String(r.id || '').toLowerCase().includes(needle) ||
+        String(r.species || '').toLowerCase().includes(needle) ||
+        String(r.phase || '').toLowerCase().includes(needle),
     );
   }, [batchRows, searchTerm]);
 
@@ -186,8 +188,10 @@ export default function Dashboard() {
                   spacing={1}
                   flexWrap="wrap"
                 >
-                  <Typography fontWeight={700}>{r.label || r.id}</Typography>
-                  {r.sublabel && <Chip label={r.sublabel} size="small" />}
+                  <Typography fontWeight={700}>{r.code || r.id}</Typography>
+                  {r.species && <Chip label={r.species} size="small" />}
+                  {r.phase && <Chip label={PHASE_LABEL[r.phase] || r.phase} size="small" variant="outlined" />}
+                  {r.test_status && <Chip label={r.test_status} size="small" color={r.test_status === 'certified' ? 'success' : r.test_status === 'rejected' ? 'error' : 'default'} />}
                 </Stack>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                   {r.id}
