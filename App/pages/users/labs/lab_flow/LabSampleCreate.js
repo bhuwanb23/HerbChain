@@ -6,8 +6,8 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
-import { useAuth } from '../../../contexts/AuthContext';
-import { LabsAPI } from '../../../services/apiClient';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { LabsAPI } from '../../../../services/apiClient';
 
 const SAMPLE_TYPES = ['herb_sample', 'root_sample', 'leaf_sample', 'flower_sample', 'extract_sample'];
 
