@@ -11,8 +11,8 @@ import React, { useState, useCallback } from 'react';
 import {
   ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
-import { useAuth } from '../../../contexts/AuthContext';
-import { ShipmentsAPI, UploadsAPI } from '../../../services/apiClient';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { ShipmentsAPI, UploadsAPI } from '../../../../services/apiClient';
 
 export default function DeliveryConfirm({ route, navigation }) {
   const { accessToken } = useAuth();

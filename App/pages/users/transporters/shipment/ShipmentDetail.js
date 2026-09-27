@@ -10,8 +10,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View,
 } from 'react-native';
-import { useAuth } from '../../../contexts/AuthContext';
-import { ShipmentsAPI } from '../../../services/apiClient';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { ShipmentsAPI } from '../../../../services/apiClient';
 
 const STATUS_COLORS = {
   pending_assigned: '#F59E0B',

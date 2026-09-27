@@ -7,8 +7,8 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
-import { useAuth } from '../../../contexts/AuthContext';
-import { ShipmentsAPI } from '../../../services/apiClient';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { ShipmentsAPI } from '../../../../services/apiClient';
 
 const FAILURE_REASONS = [
   { key: 'receiver_refused', label: 'Receiver refused delivery' },
