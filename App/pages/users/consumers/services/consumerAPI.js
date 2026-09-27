@@ -4,7 +4,7 @@
  * Consumer verification is PUBLIC (no auth) via VerifyAPI.
  * Batch detail, ownership, QR require auth via BatchesAPI/TransfersAPI.
  */
-import { BatchesAPI, VerifyAPI, TransfersAPI } from '../../../services/apiClient';
+import { BatchesAPI, VerifyAPI, TransfersAPI } from '../../../../services/apiClient';
 
 class ConsumerAPI {
   /**

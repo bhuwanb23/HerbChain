@@ -7,8 +7,8 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, RefreshControl,
 } from 'react-native';
-import { AnalyticsAPI } from '../../../services/apiClient';
-import { useAuth } from '../../../contexts/AuthContext';
+import { AnalyticsAPI } from '../../../../services/apiClient';
+import { useAuth } from '../../../../contexts/AuthContext';
 
 const DOMAINS = [
   { key: 'herbs', label: '🌿 Herbs', color: '#059669' },

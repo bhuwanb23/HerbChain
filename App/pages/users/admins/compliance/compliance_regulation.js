@@ -7,8 +7,8 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
-import { AdminAPI, AnalyticsAPI } from '../../../services/apiClient';
-import { useAuth } from '../../../contexts/AuthContext';
+import { AdminAPI, AnalyticsAPI } from '../../../../services/apiClient';
+import { useAuth } from '../../../../contexts/AuthContext';
 
 const SEVERITY_COLORS = {
   critical: '#DC2626', high: '#F59E0B', medium: '#3B82F6', low: '#9CA3AF',
