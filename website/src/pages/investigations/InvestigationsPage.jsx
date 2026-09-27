@@ -22,7 +22,7 @@ export default function InvestigationsPage() {
     try {
       const res = await AdminAPI.investigations(accessToken);
       setInvestigations(res?.investigations || []);
-    } catch (_) {}
+    } catch { /* ignore */ }
     setLoading(false);
   }, [accessToken]);
 
@@ -36,7 +36,7 @@ export default function InvestigationsPage() {
       if (res?.investigation) setInvestigations((prev) => [res.investigation, ...prev]);
       setForm({ title: '', description: '', entity_type: '', entity_id: '' });
       setShowForm(false);
-    } catch (_) {
+    } catch {
       alert('Failed to create investigation.');
     }
   };
@@ -45,7 +45,7 @@ export default function InvestigationsPage() {
     try {
       const res = await AdminAPI.investigation(accessToken, id);
       setSelected(res?.investigation);
-    } catch (_) {}
+    } catch { /* ignore */ }
   };
 
   if (selected) {

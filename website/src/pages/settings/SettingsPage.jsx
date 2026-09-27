@@ -47,7 +47,7 @@ export default function SettingsPage() {
     if (!accessToken) return;
     try {
       await navigator.clipboard.writeText(accessToken);
-    } catch (_e) {
+    } catch {
       // ignore
     }
   };

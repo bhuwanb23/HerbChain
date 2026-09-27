@@ -33,7 +33,7 @@ export function useReports() {
       const res = await ReportsAPI.generate(accessToken, payload);
       if (res?.report) setReports((prev) => [res.report, ...prev]);
       return res?.report;
-    } catch (_) {
+    } catch {
       return null;
     } finally {
       setGenerating(false);
@@ -45,7 +45,7 @@ export function useReports() {
     try {
       const res = await ReportsAPI.download(accessToken, reportId);
       return res;
-    } catch (_) {
+    } catch {
       return null;
     }
   }, [accessToken]);
@@ -55,7 +55,7 @@ export function useReports() {
     try {
       const res = await ReportsAPI.createSchedule(accessToken, payload);
       if (res?.schedule) setSchedules((prev) => [res.schedule, ...prev]);
-    } catch (_) {}
+    } catch { /* ignore */ }
   }, [accessToken]);
 
   // Derived chart data from analytics
