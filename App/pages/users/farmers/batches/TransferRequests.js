@@ -8,8 +8,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View,
 } from 'react-native';
-import { useAuth } from '../../../contexts/AuthContext';
-import { TransfersAPI } from '../../../services/apiClient';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { TransfersAPI } from '../../../../services/apiClient';
 
 const STATUS_COLORS = {
   pending: '#F59E0B', approved: '#10B981', rejected: '#EF4444', cancelled: '#9CA3AF', completed: '#0EA5E9',

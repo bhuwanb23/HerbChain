@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { REGISTRATION_STEPS } from '../constants';
 import { BatchesAPI, SpeciesAPI } from '../../../../../services/apiClient';
-import { useAuth } from '../../../../contexts/AuthContext';
+import { useAuth } from '../../../../../contexts/AuthContext';
 
 /**
  * Batch registration flow — second_backend P3 contract.
