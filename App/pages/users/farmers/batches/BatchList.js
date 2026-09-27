@@ -7,8 +7,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View,
 } from 'react-native';
-import { useAuth } from '../../../contexts/AuthContext';
-import { BatchesAPI } from '../../../services/apiClient';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { BatchesAPI } from '../../../../services/apiClient';
 
 const FILTERS = [
   { key: 'all', label: 'All' },

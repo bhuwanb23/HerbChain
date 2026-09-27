@@ -8,8 +8,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View,
 } from 'react-native';
-import { useAuth } from '../../../contexts/AuthContext';
-import { BatchesAPI } from '../../../services/apiClient';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { BatchesAPI } from '../../../../services/apiClient';
 
 const PHASE_COLORS = {
   with_farmer: '#10B981', in_transit_to_lab: '#F59E0B', at_lab: '#8B5CF6',
