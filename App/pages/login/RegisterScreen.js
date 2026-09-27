@@ -34,7 +34,6 @@ export default function RegisterScreen({ navigation }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [location, setLocation] = useState('');
   const [role, setRole] = useState('farmer');
   const [password, setPassword] = useState('');
 
@@ -43,8 +42,8 @@ export default function RegisterScreen({ navigation }) {
       Alert.alert('Required', 'Name, email and password are required');
       return;
     }
-    if (password.length < 6) {
-      Alert.alert('Weak password', 'Password must be at least 6 characters');
+    if (password.length < 8) {
+      Alert.alert('Weak password', 'Password must be at least 8 characters');
       return;
     }
     try {
@@ -53,7 +52,6 @@ export default function RegisterScreen({ navigation }) {
         name: name.trim(),
         email: email.trim().toLowerCase(),
         phone: phone.trim() || undefined,
-        location: location.trim() || undefined,
         password,
       });
       // AuthGate will redirect automatically.
@@ -121,22 +119,13 @@ export default function RegisterScreen({ navigation }) {
             keyboardType="phone-pad"
           />
 
-          <Text style={styles.label}>Location (optional)</Text>
-          <TextInput
-            style={styles.input}
-            value={location}
-            onChangeText={setLocation}
-            placeholder="City, State"
-            placeholderTextColor="#9CA3AF"
-          />
-
           <Text style={styles.label}>Password</Text>
           <TextInput
             style={styles.input}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            placeholder="At least 6 characters"
+            placeholder="At least 8 characters"
             placeholderTextColor="#9CA3AF"
           />
 
