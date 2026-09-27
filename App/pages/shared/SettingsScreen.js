@@ -61,7 +61,7 @@ export default function SettingsScreen() {
     }
     setSaving(true);
     try {
-      await AuthAPI.changePassword(accessToken, { current_password: currentPassword, new_password: newPassword });
+      await AuthAPI.changePassword(accessToken, { old_password: currentPassword, new_password: newPassword });
       Alert.alert('Success', 'Password changed successfully.');
       setCurrentPassword('');
       setNewPassword('');

@@ -1,10 +1,8 @@
 /**
- * Admin v1 home — real-time stats from the backend.
+ * Admin home — real-time portal dashboard from the backend.
  *
  * Backed by:
- *     GET /admin/api/stats
- *     GET /admin/api/users
- *     GET /admin/api/batches
+ *     GET /api/v1/admin/portal/dashboard -> { dashboard: { kpis, widgets, compliance_surface } }
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -21,16 +19,16 @@ import { AdminAPI } from '../../../services/apiClient';
 
 export default function AdminHome() {
   const { accessToken } = useAuth();
-  const [stats, setStats] = useState(null);
+  const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const data = await AdminAPI.stats(accessToken);
-      setStats(data);
+      const data = await AdminAPI.portalDashboard(accessToken);
+      setDashboard(data?.dashboard || data);
     } catch (err) {
-      Alert.alert('Could not load stats', err?.message || 'Network error');
+      Alert.alert('Could not load dashboard', err?.message || 'Network error');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -40,6 +38,10 @@ export default function AdminHome() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const kpis = dashboard?.kpis || {};
+  const widgets = dashboard?.widgets || {};
+  const surface = dashboard?.compliance_surface || {};
 
   return (
     <RoleHomeShell
@@ -51,43 +53,44 @@ export default function AdminHome() {
         load();
       }}
     >
-      {loading || !stats ? (
+      {loading || !dashboard ? (
         <View style={styles.center}>
           <ActivityIndicator color="#F59E0B" />
         </View>
       ) : (
         <>
           <View style={styles.grid}>
-            <StatCard label="Total users" value={stats.users?.total ?? 0} />
-            <StatCard label="Total batches" value={stats.batches?.total ?? 0} />
-            <StatCard label="Total products" value={stats.products?.total ?? 0} />
-            <StatCard label="Lab reports" value={stats.lab_reports?.total ?? 0} />
-            <StatCard
-              label="New batches (7d)"
-              value={stats.batches?.new_last_7_days ?? 0}
-            />
-            <StatCard
-              label="Events (7d)"
-              value={stats.events?.last_7_days ?? 0}
-            />
+            <StatCard label="Farmers" value={kpis.total_farmers ?? 0} />
+            <StatCard label="Labs" value={kpis.total_labs ?? 0} />
+            <StatCard label="Manufacturers" value={kpis.total_manufacturers ?? 0} />
+            <StatCard label="Transporters" value={kpis.total_transporters ?? 0} />
+            <StatCard label="Active batches" value={kpis.active_batches ?? 0} />
+            <StatCard label="Active shipments" value={kpis.active_shipments ?? 0} />
+            <StatCard label="Certified batches" value={kpis.certified_batches ?? 0} />
+            <StatCard label="Products" value={kpis.products_created ?? 0} />
           </View>
 
-          <Section title="Users by role">
-            {Object.entries(stats.users?.by_role || {}).map(([role, count]) => (
-              <Row key={role} label={role} value={count} />
-            ))}
+          <Section title="Supply chain">
+            <Row label="Rejected batches" value={kpis.rejected_batches ?? 0} />
+            <Row label="Recalled products" value={kpis.products_recalled ?? 0} />
+            <Row label="Blockchain transactions" value={kpis.blockchain_transactions ?? 0} />
+            <Row label="Pending approvals" value={kpis.pending_approvals ?? 0} />
           </Section>
 
-          <Section title="Batches by phase">
-            {Object.entries(stats.batches?.by_phase || {}).map(([phase, count]) => (
-              <Row key={phase} label={phase} value={count} />
-            ))}
+          <Section title="Compliance">
+            <Row label="Open alerts" value={kpis.compliance_alerts ?? 0} />
+            <Row label="Failed certifications" value={kpis.failed_certifications ?? 0} />
+            <Row label="Suspicious activities" value={surface.suspicious_activities ?? 0} />
+            <Row label="Certificates expiring soon" value={surface.certificate_expiry_soon ?? 0} />
           </Section>
 
-          <Section title="Test results">
-            {Object.entries(stats.batches?.by_test_result || {}).map(([k, count]) => (
-              <Row key={k} label={k} value={count} />
-            ))}
+          <Section title="Network activity">
+            <Row label="Farmers registered" value={widgets.farmers?.registered ?? 0} />
+            <Row label="Farmers verified" value={widgets.farmers?.verified ?? 0} />
+            <Row label="New farmers (30d)" value={widgets.farmers?.new_registrations_30d ?? 0} />
+            <Row label="Active labs" value={widgets.labs?.active_labs ?? 0} />
+            <Row label="Shipments in transit" value={widgets.logistics?.shipments_in_transit ?? 0} />
+            <Row label="Successful deliveries" value={widgets.logistics?.successful_deliveries ?? 0} />
           </Section>
         </>
       )}
@@ -146,6 +149,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontWeight: '700', fontSize: 14, color: '#92400E', marginBottom: 8 },
   row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
-  rowLabel: { color: '#374151', textTransform: 'capitalize' },
+  rowLabel: { color: '#374151' },
   rowValue: { fontWeight: '700', color: '#111827' },
 });
