@@ -18,6 +18,10 @@ const request = require("supertest");
 const PROJECT_ROOT = path.join(__dirname, "..");
 const TESTDB_DIR = path.join(PROJECT_ROOT, ".testdb");
 
+// Absolute file: URL — relative paths resolve against prisma/schema/ (multi-file
+// schema dir), which would place files in prisma/.testdb instead of .testdb/.
+const toUrl = (absPath) => "file:" + absPath.split(path.sep).join("/");
+
 /** Must be called before any require of ../src (config/db/app). */
 function setupDatabase() {
   fs.mkdirSync(TESTDB_DIR, { recursive: true });
@@ -26,14 +30,13 @@ function setupDatabase() {
   if (!fs.existsSync(template)) {
     execSync("npx prisma db push --skip-generate", {
       cwd: PROJECT_ROOT,
-      env: { ...process.env, DATABASE_URL: `file:../.testdb/${templateName}` },
+      env: { ...process.env, DATABASE_URL: toUrl(template) },
       stdio: "pipe",
     });
   }
   const dbName = `test-${process.pid}-${crypto.randomBytes(4).toString("hex")}.db`;
   fs.copyFileSync(template, path.join(TESTDB_DIR, dbName));
-  // Relative to prisma/schema.prisma -> second_backend/.testdb/<dbName>
-  process.env.DATABASE_URL = `file:../.testdb/${dbName}`;
+  process.env.DATABASE_URL = toUrl(path.join(TESTDB_DIR, dbName));
   // Weather tests need no live provider.
   delete process.env.OPENWEATHER_API_KEY;
 }
