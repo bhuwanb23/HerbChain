@@ -1,13 +1,11 @@
 import React, { useState } from 'react'
-import { useAuth } from '../../contexts/AuthContext'
 import { useAlertsRecalls } from './hooks/useAlertsRecalls'
 import AlertsList from './components/AlertsList.jsx'
 import RecallsList from './components/RecallsList.jsx'
 import { AdminAPI } from '../../services/apiClient'
 
 export default function AlertsAndRecallsPage() {
-  const { accessToken } = useAuth()
-  const { criticalAlerts, initiatedRecalls, loading, initiateRecall, resolveAlert } = useAlertsRecalls()
+  const { criticalAlerts, initiatedRecalls, initiateRecall } = useAlertsRecalls()
   const [showRecallForm, setShowRecallForm] = useState(false)
   const [recallForm, setRecallForm] = useState({ batch_id: '', reason: '', severity: 'high' })
   const [submitting, setSubmitting] = useState(false)

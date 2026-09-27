@@ -32,7 +32,7 @@ export function useComplianceMetrics() {
       // Re-fetch alerts after running rules
       const res = await AdminAPI.complianceAlerts(accessToken, { status: 'open' });
       setAlerts(res?.alerts || []);
-    } catch (_) {}
+    } catch { /* ignore */ }
   }, [accessToken]);
 
   const resolveAlert = useCallback(async (alertId, status) => {
@@ -40,7 +40,7 @@ export function useComplianceMetrics() {
     try {
       await AdminAPI.updateComplianceAlert(accessToken, alertId, { status });
       setAlerts((prev) => prev.filter((a) => a.id !== alertId));
-    } catch (_) {}
+    } catch { /* ignore */ }
   }, [accessToken]);
 
   const stats = complianceData || {};

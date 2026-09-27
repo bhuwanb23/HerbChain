@@ -42,7 +42,7 @@ export default function BlockchainExplorer() {
     try {
       await BlockchainAPI.process(accessToken);
       alert('Blockchain queue processed.');
-    } catch (_) {
+    } catch {
       alert('Failed to process queue.');
     }
   };
@@ -159,7 +159,7 @@ export default function BlockchainExplorer() {
               try {
                 const res = await BlockchainAPI.events(accessToken, { batch_id: verifyId.trim(), limit: 50 });
                 setVerifyResult(res?.events || []);
-              } catch (_) { setVerifyResult([]); }
+              } catch { setVerifyResult([]); }
               setVerifyLoading(false);
             }} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
               {verifyLoading ? 'Verifying...' : 'Verify'}
