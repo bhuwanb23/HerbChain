@@ -131,7 +131,7 @@ export default function BlockchainExplorer() {
           ))}
           {nodes.length === 0 && <p className="text-gray-500 col-span-3 text-center py-8">No nodes registered.</p>}
         </div>
-      ) : (
+      ) : activeTab === 'contracts' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {contracts.map((c) => (
             <div key={c.id || c.name} className="bg-white rounded-lg border border-gray-200 p-4">
