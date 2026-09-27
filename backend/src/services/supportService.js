@@ -11,10 +11,22 @@ const STATUSES = ["open", "in_progress", "resolved", "closed"];
 const PRIORITIES = ["low", "medium", "high", "urgent"];
 
 let seqCounter = 0;
-function nextTicketNo() {
+async function nextTicketNo() {
   const year = new Date().getFullYear();
-  seqCounter++;
-  return `TCK-${year}-${String(seqCounter).padStart(6, "0")}`;
+  const prefix = `TCK-${year}-`;
+  const last = await prisma.supportTicket.findFirst({
+    where: { ticket_no: { startsWith: prefix } },
+    orderBy: { ticket_no: "desc" },
+    select: { ticket_no: true },
+  });
+  let n;
+  if (last) {
+    const parsed = parseInt(last.ticket_no.slice(prefix.length), 10);
+    n = Number.isNaN(parsed) ? ++seqCounter : Math.max(parsed + 1, ++seqCounter);
+  } else {
+    n = ++seqCounter;
+  }
+  return `${prefix}${String(n).padStart(6, "0")}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -63,7 +75,7 @@ async function createTicket(user, { category, subject, description }) {
   const priority = cat === "technical" ? "high" : "medium";
   const ticket = await prisma.supportTicket.create({
     data: {
-      ticket_no: nextTicketNo(),
+      ticket_no: await nextTicketNo(),
       requester_user_id: user.id,
       category: cat,
       subject,

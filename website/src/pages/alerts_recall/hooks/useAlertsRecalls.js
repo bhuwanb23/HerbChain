@@ -68,7 +68,7 @@ export function useAlertsRecalls() {
       try {
         await AdminAPI.updateComplianceAlert(accessToken, alertId, { status: 'resolved' });
         setCriticalAlerts((prev) => prev.filter((a) => a.id !== alertId));
-      } catch (_) {}
+      } catch { /* ignore */ }
     },
     [accessToken]
   );

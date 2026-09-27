@@ -57,7 +57,7 @@ async function request(method, path, { body, token, headers } = {}) {
   if (text) {
     try {
       parsed = JSON.parse(text);
-    } catch (_e) {
+    } catch {
       parsed = { raw: text };
     }
   }
