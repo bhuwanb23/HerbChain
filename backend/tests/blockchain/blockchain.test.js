@@ -487,6 +487,10 @@ test("smart-contract gate: LINKED on an uncertified/rejected batch is refused (r
 test("node permissions: farmer/transporter no chain access; lab reads batches; manufacturer own products; admin governs", async () => {
   setProviderForTest(null); // defensive: a failed earlier test must not leak a faulty provider
   const { batch, product } = await runToCompletion({ qty: 20, consumeKg: 5 });
+  // Defensive: the failure-handling test parks retry rows in backoff (due in
+  // seconds); force them due and drain so the /process assertion below cannot
+  // race their re-maturity under parallel test load.
+  await prisma.blockchainEvent.updateMany({ where: { status: "pending" }, data: { next_attempt_at: null } });
   await processQueue({ actor: "test" });
 
   // Farmers / transporters have no chain access (backend only).
