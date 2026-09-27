@@ -1,35 +1,30 @@
-# HerbChain repo-wide tasks.
+# HerbChain repo-wide tasks (Node backend).
 #
 # Usage:
 #   make demo         install + migrate + seed + run backend (the headline target)
-#   make install      pip + npm installs for backend, website, mobile
-#   make migrate      apply Alembic migrations to the SQLite DB
+#   make install      npm installs for backend, website, mobile
+#   make migrate      apply committed Prisma migrations to the SQLite DB
 #   make seed         (re-)seed the demo dataset
-#   make run-backend  start the Flask API on :5000
+#   make run-backend  start the API on :5000 (node --watch)
 #   make run-website  start the Vite dev server on :5173
 #   make run-app      start the Expo dev server
-#   make test         run the backend pytest suite
+#   make test         run the backend test suite (builds the template DB if missing)
+#   make template-db  (re)build the empty test template DB
+#   make clean        remove caches and local DB state
 #
-# Cross-platform notes:
-# - On Windows, use Git Bash or msys2 so `make` is available, or run the
-#   equivalent commands in `scripts/demo.ps1`.
-# - Python entrypoint is `python` (works on both Windows and Linux); change to
-#   `python3` if your system needs it.
+# Windows without make: use scripts/demo.ps1 for the demo flow.
 
-PYTHON ?= python
-PIP    ?= pip
-NPM    ?= npm
+NPM ?= npm
 
 .PHONY: demo install install-backend install-website install-app \
-        migrate seed run-backend run-website run-app test \
-        clean archive-legacy
+        migrate seed template-db run-backend run-website run-app test clean
 
 demo: install migrate seed run-backend
 
 install: install-backend install-website install-app
 
 install-backend:
-	cd backend && $(PIP) install -r requirements.txt
+	cd backend && $(NPM) install
 
 install-website:
 	cd website && $(NPM) install
@@ -38,13 +33,17 @@ install-app:
 	cd App && $(NPM) install
 
 migrate:
-	cd backend/server && $(PYTHON) -m flask --app app db upgrade
+	cd backend && $(NPM) run generate && $(NPM) run migrate
 
 seed:
-	cd backend/server && $(PYTHON) scripts/seed_demo.py --fresh
+	cd backend && $(NPM) run seed
+
+# Empty template DB copied per-suite by backend/tests/_db.js (local only).
+template-db:
+	cd backend && $(NPM) run generate && $(NPM) run migrate && node scripts/create-test-template.mjs
 
 run-backend:
-	cd backend/server && $(PYTHON) -m flask --app app run --host 0.0.0.0 --port 5000
+	cd backend && $(NPM) run dev
 
 run-website:
 	cd website && $(NPM) run dev
@@ -52,16 +51,9 @@ run-website:
 run-app:
 	cd App && $(NPM) start
 
-test:
-	cd backend && $(PYTHON) -m pytest
+test: template-db
+	cd backend && $(NPM) test
 
 clean:
-	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
-
-# Move the unused prototype + blockchain scaffolds out of the active workspace.
-# Safe to re-run; uses `git mv` so history is preserved.
-archive-legacy:
-	@mkdir -p _archive
-	@if [ -d prototype ];           then git mv prototype _archive/prototype           || mv prototype _archive/prototype           ; fi
-	@if [ -d backend/blockchain ];  then git mv backend/blockchain _archive/blockchain || mv backend/blockchain _archive/blockchain ; fi
+	rm -rf backend/.testdb backend/.tmp backend/logs backend/uploads
+	rm -rf website/dist website/node_modules/.vite

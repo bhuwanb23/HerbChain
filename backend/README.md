@@ -1,9 +1,9 @@
 # HerbChain Backend (Node)
 
-Express + Prisma + SQLite API for the HerbChain AYUSH traceability platform.
-Prisma makes Postgres a drop-in via `DATABASE_URL`.
+Express + Prisma + SQLite API for the [HerbChain](../README.md) AYUSH
+traceability platform. Prisma makes Postgres a drop-in via `DATABASE_URL`.
 
-> Status: complete — 241 routes, 211 tests green (`npm test`).
+> Status: complete — 17 phases, ~241 routes, 211 tests green (`npm test`).
 
 ## Quick start
 
@@ -21,7 +21,7 @@ Seeded accounts: `admin@herbchain.in` / `Admin@123456` (admin), plus
 `consumer|farmer|transporter|lab|manufacturer|distributor|retailer@herbchain.in`
 / `Demo@123456`.
 
-## Scripts
+### Scripts
 
 | Script | What it does |
 | --- | --- |
@@ -34,16 +34,18 @@ Seeded accounts: `admin@herbchain.in` / `Admin@123456` (admin), plus
 | `npm run e2e` | Golden-path journey against a running server (`BASE_URL`, default `http://localhost:5000`) |
 | `npm run test:<suite>` | Single suite (`auth`, `batches`, `admin`, …) |
 
-## Layout
+### Layout
 
 ```
 backend/
 ├── prisma/
-│   ├── schema/              # multi-file schema (25 .prisma files) + herbchain.db (dev)
+│   ├── schema/              # multi-file schema (25 .prisma files, 129 models)
 │   │   └── migrations/      # committed migrations (20 applied, incl. consumer_feedback)
-│   ├── schema.legacy.prisma # archived single-file schema (reference only)
-│   ├── migrations.legacy/   # archived pre-multi-file migration (reference only)
-│   └── scratch_new.db        # empty template copied by the test harness
+│   └── scratch_new.db       # empty template copied by the test harness (local only)
+├── scripts/
+│   ├── e2e_journey.js       # golden-path HTTP journey (npm run e2e)
+│   ├── live_p17_prep.cjs    # offline-sync live smoke: seed fixture DB
+│   └── live_p17_smoke.cjs   # offline-sync live smoke: HTTP assertions
 ├── src/
 │   ├── index.js             # entry point (API + optional queue workers)
 │   ├── app.js               # Express app factory, route mounting, error box
@@ -81,3 +83,12 @@ backend/
   Prisma client loads.
 - Suites seed their own users/species/RBAC (the template DB is intentionally
   empty).
+- The template DB is local-only (gitignored). After a fresh clone, create it
+  with:
+
+  ```bash
+  npm run generate && npm run migrate
+  node scripts/create-test-template.mjs
+  ```
+
+  (CI does exactly this before `npm test`.)

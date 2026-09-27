@@ -48,9 +48,6 @@ export default function ComplianceRegulation({ navigation }) {
     try { await AdminAPI.runComplianceRules(accessToken); Alert.alert('Done', 'Compliance scan complete.'); fetchData(); } catch (_) {}
   };
 
-  const complianceRate = score?.compliance_rate || score?.complianceRate || 0;
-  const totalBatches = score?.total_batches || score?.totalBatches || 0;
-
   // ─── Detail View ───
   if (selected) {
     return (

@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="560" viewBox="0 0 1180 560" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748B"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1180" height="560" fill="#F8FAFC"/>
+  <text x="590" y="38" text-anchor="middle" font-size="24" font-weight="700" fill="#0F172A">Chain of Custody — QR Scan &amp; Ownership Transfer</text>
+  <text x="590" y="62" text-anchor="middle" font-size="13" fill="#64748B">Every handoff is an authenticated scan: verify signature → check active token → run state machine → append audit event → mint new QR</text>
+
+  <!-- lane: actors -->
+  <g>
+    <!-- farmer -->
+    <rect x="40" y="100" width="180" height="96" rx="10" fill="#ECFDF5" stroke="#10B981" stroke-width="1.5"/>
+    <text x="130" y="132" text-anchor="middle" font-size="15" font-weight="700" fill="#065F46">Farmer</text>
+    <text x="130" y="154" text-anchor="middle" font-size="11.5" fill="#047857">register harvest</text>
+    <text x="130" y="172" text-anchor="middle" font-size="11.5" fill="#047857">GPS + photo provenance</text>
+    <text x="130" y="188" text-anchor="middle" font-size="11.5" fill="#047857">mint QR #1</text>
+
+    <!-- transporter 1 -->
+    <rect x="270" y="100" width="180" height="96" rx="10" fill="#EFF6FF" stroke="#3B82F6" stroke-width="1.5"/>
+    <text x="360" y="132" text-anchor="middle" font-size="15" font-weight="700" fill="#1E3A8A">Transporter</text>
+    <text x="360" y="154" text-anchor="middle" font-size="11.5" fill="#1D4ED8">scan → custody to lab</text>
+    <text x="360" y="172" text-anchor="middle" font-size="11.5" fill="#1D4ED8">shipment + GPS pings</text>
+    <text x="360" y="188" text-anchor="middle" font-size="11.5" fill="#1D4ED8">mint QR #2</text>
+
+    <!-- lab -->
+    <rect x="500" y="100" width="180" height="96" rx="10" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.5"/>
+    <text x="590" y="132" text-anchor="middle" font-size="15" font-weight="700" fill="#92400E">Laboratory</text>
+    <text x="590" y="154" text-anchor="middle" font-size="11.5" fill="#B45309">receive · sample · test</text>
+    <text x="590" y="172" text-anchor="middle" font-size="11.5" fill="#B45309">review → certify / reject</text>
+    <text x="590" y="188" text-anchor="middle" font-size="11.5" fill="#B45309">COA attached to batch</text>
+
+    <!-- transporter 2 -->
+    <rect x="730" y="100" width="180" height="96" rx="10" fill="#EFF6FF" stroke="#3B82F6" stroke-width="1.5"/>
+    <text x="820" y="132" text-anchor="middle" font-size="15" font-weight="700" fill="#1E3A8A">Transporter</text>
+    <text x="820" y="154" text-anchor="middle" font-size="11.5" fill="#1D4ED8">scan → custody to manufacturer</text>
+    <text x="820" y="172" text-anchor="middle" font-size="11.5" fill="#1D4ED8">only if lab-approved</text>
+    <text x="820" y="188" text-anchor="middle" font-size="11.5" fill="#1D4ED8">mint QR #4</text>
+
+    <!-- manufacturer -->
+    <rect x="960" y="100" width="180" height="96" rx="10" fill="#F5F3FF" stroke="#8B5CF6" stroke-width="1.5"/>
+    <text x="1050" y="132" text-anchor="middle" font-size="15" font-weight="700" fill="#4C1D95">Manufacturer</text>
+    <text x="1050" y="154" text-anchor="middle" font-size="11.5" fill="#6D28D9">receive → GRN → inventory</text>
+    <text x="1050" y="172" text-anchor="middle" font-size="11.5" fill="#6D28D9">produce → product lots</text>
+    <text x="1050" y="188" text-anchor="middle" font-size="11.5" fill="#6D28D9">permanent product QR</text>
+
+    <line x1="220" y1="148" x2="262" y2="148" stroke="#64748B" stroke-width="2" marker-end="url(#arrow2)"/>
+    <line x1="450" y1="148" x2="492" y2="148" stroke="#64748B" stroke-width="2" marker-end="url(#arrow2)"/>
+    <line x1="680" y1="148" x2="722" y2="148" stroke="#64748B" stroke-width="2" marker-end="url(#arrow2)"/>
+    <line x1="910" y1="148" x2="952" y2="148" stroke="#64748B" stroke-width="2" marker-end="url(#arrow2)"/>
+  </g>
+
+  <!-- consumer row -->
+  <g>
+    <rect x="960" y="236" width="180" height="80" rx="10" fill="#FFF7ED" stroke="#F97316" stroke-width="1.5"/>
+    <text x="1050" y="264" text-anchor="middle" font-size="15" font-weight="700" fill="#7C2D12">Consumer</text>
+    <text x="1050" y="286" text-anchor="middle" font-size="11.5" fill="#9A3412">scan product QR — no login</text>
+    <text x="1050" y="304" text-anchor="middle" font-size="11.5" fill="#9A3412">full passport + certificate</text>
+    <line x1="1050" y1="196" x2="1050" y2="228" stroke="#64748B" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow2)"/>
+  </g>
+
+  <!-- engine box -->
+  <rect x="40" y="236" width="880" height="150" rx="10" fill="#FFFFFF" stroke="#94A3B8"/>
+  <rect x="40" y="236" width="880" height="6" rx="3" fill="#0EA5E9"/>
+  <text x="60" y="266" font-size="15" font-weight="700" fill="#0F172A">What happens on every custody scan (single Prisma transaction)</text>
+  <g font-size="12.5" fill="#334155">
+    <text x="70" y="296">1. Verify HS256 signature + expiry of the presented QR token</text>
+    <text x="70" y="316">2. Reject if it is not the batch's single ACTIVE token (stale/replay → logged to QrScanLog)</text>
+    <text x="70" y="336">3. Look up TRANSITIONS[current_phase + scanner_role] — the state machine is data, not code paths</text>
+    <text x="70" y="356">4. Atomically move custody + phase, append immutable BatchEvent, mint the next holder's QR</text>
+  </g>
+
+  <!-- state machine strip -->
+  <rect x="40" y="418" width="1100" height="112" rx="10" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <rect x="40" y="418" width="1100" height="6" rx="3" fill="#10B981"/>
+  <text x="60" y="448" font-size="14" font-weight="700" fill="#0F172A">Batch phase state machine (src/constants/enums.js — TRANSITIONS)</text>
+  <g font-size="12" font-family="Consolas, Menlo, monospace">
+    <rect x="66" y="470" width="150" height="36" rx="6" fill="#ECFDF5" stroke="#10B981"/>
+    <text x="141" y="492" text-anchor="middle" fill="#065F46">with_farmer</text>
+    <rect x="266" y="470" width="190" height="36" rx="6" fill="#EFF6FF" stroke="#3B82F6"/>
+    <text x="361" y="492" text-anchor="middle" fill="#1E3A8A">in_transit_to_lab</text>
+    <rect x="506" y="470" width="120" height="36" rx="6" fill="#FEF3C7" stroke="#F59E0B"/>
+    <text x="566" y="492" text-anchor="middle" fill="#92400E">at_lab</text>
+    <rect x="676" y="470" width="230" height="36" rx="6" fill="#EFF6FF" stroke="#3B82F6"/>
+    <text x="791" y="492" text-anchor="middle" fill="#1E3A8A">in_transit_to_manufacturer</text>
+    <rect x="956" y="470" width="170" height="36" rx="6" fill="#F5F3FF" stroke="#8B5CF6"/>
+    <text x="1041" y="492" text-anchor="middle" fill="#4C1D95">with_manufacturer</text>
+    <line x1="216" y1="488" x2="258" y2="488" stroke="#64748B" stroke-width="2" marker-end="url(#arrow2)"/>
+    <line x1="456" y1="488" x2="498" y2="488" stroke="#64748B" stroke-width="2" marker-end="url(#arrow2)"/>
+    <line x1="626" y1="488" x2="668" y2="488" stroke="#64748B" stroke-width="2" marker-end="url(#arrow2)"/>
+    <line x1="906" y1="488" x2="948" y2="488" stroke="#64748B" stroke-width="2" marker-end="url(#arrow2)"/>
+  </g>
+  <text x="60" y="524" font-size="11.5" fill="#64748B">Splits create child batches (parent may become consumed) · lab rejection returns custody per phase 8 rules · consumed is terminal</text>
+</svg>

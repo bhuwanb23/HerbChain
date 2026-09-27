@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="640" viewBox="0 0 1180 640" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748B"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1180" height="640" fill="#F8FAFC"/>
+  <text x="590" y="38" text-anchor="middle" font-size="24" font-weight="700" fill="#0F172A">HerbChain — System Architecture</text>
+  <text x="590" y="62" text-anchor="middle" font-size="13" fill="#64748B">Traceability for AYUSH herbs · signed QR custody · append-only audit timeline</text>
+
+  <!-- clients -->
+  <g>
+    <rect x="40" y="92" width="340" height="128" rx="10" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <rect x="40" y="92" width="340" height="6" rx="3" fill="#10B981"/>
+    <text x="60" y="124" font-size="15" font-weight="700" fill="#0F172A">Mobile App — React Native (Expo)</text>
+    <text x="60" y="148" font-size="12" fill="#475569">6 roles: farmer · transporter · lab</text>
+    <text x="60" y="166" font-size="12" fill="#475569">manufacturer · admin · consumer</text>
+    <text x="60" y="190" font-size="12" fill="#64748B">JWT auth · QR scanner · GPS capture</text>
+    <text x="60" y="208" font-size="12" fill="#64748B">on-device TFLite ID + backend re-rank</text>
+
+    <rect x="420" y="92" width="340" height="128" rx="10" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <rect x="420" y="92" width="340" height="6" rx="3" fill="#10B981"/>
+    <text x="440" y="124" font-size="15" font-weight="700" fill="#0F172A">Admin Web Portal — React + MUI</text>
+    <text x="440" y="148" font-size="12" fill="#475569">dashboard · traceability explorer</text>
+    <text x="440" y="166" font-size="12" fill="#475569">users · compliance · investigations</text>
+    <text x="440" y="190" font-size="12" fill="#64748B">blockchain explorer · recalls · reports</text>
+    <text x="440" y="208" font-size="12" fill="#64748B">JWT auth with role-guarded routes</text>
+
+    <rect x="800" y="92" width="340" height="128" rx="10" fill="#FFFFFF" stroke="#CBD5E1"/>
+    <rect x="800" y="92" width="340" height="6" rx="3" fill="#F59E0B"/>
+    <text x="820" y="124" font-size="15" font-weight="700" fill="#0F172A">Consumer — no login required</text>
+    <text x="820" y="148" font-size="12" fill="#475569">public /verify product passport</text>
+    <text x="820" y="166" font-size="12" fill="#475569">origin · journey · lab certificate</text>
+    <text x="820" y="190" font-size="12" fill="#64748B">feedback · report fake · scan analytics</text>
+    <text x="820" y="208" font-size="12" fill="#64748B">rate-limited public endpoints</text>
+  </g>
+
+  <!-- arrows clients -> api -->
+  <line x1="210" y1="220" x2="210" y2="272" stroke="#64748B" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <line x1="590" y1="220" x2="590" y2="272" stroke="#64748B" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <line x1="970" y1="220" x2="970" y2="272" stroke="#64748B" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <text x="222" y="242" font-size="11" fill="#64748B">HTTPS · REST · Bearer JWT</text>
+
+  <!-- API box -->
+  <rect x="40" y="272" width="1100" height="168" rx="10" fill="#FFFFFF" stroke="#94A3B8"/>
+  <rect x="40" y="272" width="1100" height="6" rx="3" fill="#0EA5E9"/>
+  <text x="60" y="304" font-size="16" font-weight="700" fill="#0F172A">Express REST API — backend/src  (http://localhost:5000)</text>
+  <text x="60" y="324" font-size="12" fill="#64748B">JWT auth middleware · RBAC permission checks · zod request validation · { data, error } response envelope</text>
+
+  <g font-size="12.5" fill="#334155">
+    <text x="70"  y="354" font-weight="600" fill="#0F172A">Supply chain</text>
+    <text x="70"  y="374">auth · batches</text>
+    <text x="70"  y="392">QR engine (phase 5)</text>
+    <text x="70"  y="410">governed transfers (6)</text>
+    <text x="70"  y="428">shipments &amp; GPS (7)</text>
+
+    <text x="430" y="354" font-weight="600" fill="#0F172A">Quality &amp; production</text>
+    <text x="430" y="374">lab certification (8)</text>
+    <text x="430" y="392">procurement / GRN (9)</text>
+    <text x="430" y="410">products &amp; lineage (10)</text>
+    <text x="430" y="428">species catalogue</text>
+
+    <text x="790" y="354" font-weight="600" fill="#0F172A">Platform</text>
+    <text x="790" y="374">verification passport (11)</text>
+    <text x="790" y="392">blockchain layer (12)</text>
+    <text x="790" y="410">admin portal (13) · notifications (14)</text>
+    <text x="790" y="428">documents (15) · analytics (16) · sync (17)</text>
+  </g>
+
+  <!-- arrows api -> db / workers -->
+  <line x1="300" y1="440" x2="300" y2="492" stroke="#64748B" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <text x="312" y="472" font-size="11" fill="#64748B">Prisma ORM</text>
+  <line x1="880" y1="440" x2="880" y2="492" stroke="#64748B" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <text x="892" y="472" font-size="11" fill="#64748B">event queues</text>
+
+  <!-- DB box -->
+  <rect x="40" y="492" width="520" height="118" rx="10" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <rect x="40" y="492" width="520" height="6" rx="3" fill="#8B5CF6"/>
+  <text x="60" y="522" font-size="15" font-weight="700" fill="#0F172A">SQLite — swap to Postgres via DATABASE_URL</text>
+  <text x="60" y="546" font-size="12" fill="#475569">129 models across 25 domain schema files</text>
+  <text x="60" y="564" font-size="12" fill="#475569">append-only BatchEvent custody timeline · QR scan logs</text>
+  <text x="60" y="582" font-size="12" fill="#475569">money as integer paise · TEXT enums validated in code</text>
+  <text x="60" y="600" font-size="12" fill="#64748B">20 committed migrations (prisma/schema/migrations)</text>
+
+  <!-- Workers box -->
+  <rect x="620" y="492" width="520" height="118" rx="10" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <rect x="620" y="492" width="520" height="6" rx="3" fill="#EF4444"/>
+  <text x="640" y="522" font-size="15" font-weight="700" fill="#0F172A">Background workers (env-gated)</text>
+  <text x="640" y="546" font-size="12" fill="#475569">blockchain anchoring (12) · notification delivery (14)</text>
+  <text x="640" y="564" font-size="12" fill="#475569">document virus-scan &amp; retention (15) · analytics ETL (16)</text>
+  <text x="640" y="582" font-size="12" fill="#64748B">BLOCKCHAIN_WORKER_ENABLED · NOTIFICATION_WORKER_ENABLED</text>
+  <text x="640" y="600" font-size="12" fill="#64748B">DOCUMENT_WORKER_ENABLED · ANALYTICS_WORKER_ENABLED</text>
+</svg>
