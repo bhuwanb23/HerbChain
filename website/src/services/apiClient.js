@@ -149,7 +149,7 @@ export const AdminAPI = {
   complianceAlerts: (token, opts = {}) =>
     api.get(`/api/v1/admin/portal/compliance-alerts?status=${opts.status || 'open'}`, { token }),
   updateComplianceAlert: (token, id, payload) =>
-    api.put(`/api/v1/admin/portal/compliance-alerts/${id}`, { token, body: payload }),
+    api.patch(`/api/v1/admin/portal/compliance-alerts/${id}`, { token, body: payload }),
   runComplianceRules: (token) =>
     api.post('/api/v1/admin/portal/compliance-alerts/run-rules', { token, body: {} }),
   investigations: (token) => api.get('/api/v1/admin/portal/investigations', { token }),
@@ -158,12 +158,11 @@ export const AdminAPI = {
   investigation: (token, id) => api.get(`/api/v1/admin/portal/investigations/${id}`, { token }),
   recalls: (token) => api.get('/api/v1/admin/portal/recalls', { token }),
   createRecall: (token, payload) => api.post('/api/v1/admin/portal/recalls', { token, body: payload }),
-  recall: (token, id) => api.get(`/api/v1/admin/portal/recalls/${id}`, { token }),
   failedCertifications: (token) => api.get('/api/v1/admin/portal/failed-certifications', { token }),
   audit: (token, opts = {}) => api.get(`/api/v1/admin/portal/audit?limit=${opts.limit || 100}`, { token }),
   portalNotifications: (token) => api.get('/api/v1/admin/portal/notifications', { token }),
   markPortalNotificationRead: (token, id) =>
-    api.put(`/api/v1/admin/portal/notifications/${id}/read`, { token, body: {} }),
+    api.post(`/api/v1/admin/portal/notifications/${id}/read`, { token, body: {} }),
   reports: (token) => api.get('/api/v1/admin/portal/reports', { token }),
   lab_reports: (token) => api.get('/api/v1/admin/portal/failed-certifications', { token }),
   health: () => api.get('/api/v1/ping'),
@@ -204,7 +203,7 @@ export const ReportsAPI = {
   schedules: (token) => api.get('/api/v1/reports/schedules', { token }),
   createSchedule: (token, payload) => api.post('/api/v1/reports/schedules', { token, body: payload }),
   runSchedule: (token, id) => api.post(`/api/v1/reports/schedules/${id}/run`, { token, body: {} }),
-  jobs: (token) => api.get('/api/v1/reports/jobs/runs', { token }),
+  jobs: (token) => api.get('/api/v1/analytics/jobs/runs', { token }),
 };
 
 // P13 blockchain audit center
@@ -225,10 +224,10 @@ export const BlockchainAPI = {
 
 // P12 consumer verification — public (no login)
 export const VerifyAPI = {
-  scan: (qrToken, meta = {}) => api.post('/api/v1/verify/scan', { body: { token: qrToken, ...meta } }),
-  passport: (qrToken) => api.get(`/api/v1/verify/product/${encodeURIComponent(qrToken)}`),
-  journey: (qrToken) => api.get(`/api/v1/verify/product/${encodeURIComponent(qrToken)}/journey`),
-  certificate: (qrToken) => api.get(`/api/v1/verify/product/${encodeURIComponent(qrToken)}/certificate`),
+  scan: (qrToken, meta = {}) => api.post('/verify/scan', { body: { token: qrToken, ...meta } }),
+  passport: (qrToken) => api.get(`/verify/product/${encodeURIComponent(qrToken)}`),
+  journey: (qrToken) => api.get(`/verify/product/${encodeURIComponent(qrToken)}/journey`),
+  certificate: (qrToken) => api.get(`/verify/product/${encodeURIComponent(qrToken)}/certificate`),
 };
 
 // P10 product lineage — replaces the old /traceability/* reads
@@ -236,7 +235,7 @@ export const TraceabilityAPI = {
   product: (token, productId) => api.get(`/api/v1/products/${productId}`, { token }),
   productLineage: (token, productId) => api.get(`/api/v1/products/${productId}/lineage`, { token }),
   batchProducts: (token, batchId) => api.get(`/api/v1/batches/${batchId}/products`, { token }),
-  resolve: (qrToken) => api.post('/api/v1/verify/scan', { body: { token: qrToken } }),
+  resolve: (qrToken) => api.post('/verify/scan', { body: { token: qrToken } }),
 };
 
 // P14 documents — evidence repository
@@ -249,8 +248,7 @@ export const DocumentsAPI = {
     return api.get(`/api/v1/documents${qs ? `?${qs}` : ''}`, { token });
   },
   get: (token, id) => api.get(`/api/v1/documents/${id}`, { token }),
-  metadata: (token, id, payload) => api.put(`/api/v1/documents/${id}/metadata`, { token, body: payload }),
-  verify: (token, id) => api.post(`/api/v1/documents/${id}/verify`, { token, body: {} }),
+  verify: (token, id) => api.get(`/api/v1/documents/${id}/verify`, { token }),
   logs: (token, id) => api.get(`/api/v1/documents/${id}/logs`, { token }),
 };
 
