@@ -53,7 +53,7 @@ async function main() {
 
   // 2. Login as admin
   console.log("\n2️⃣  Admin login");
-  const login = await req("POST", "/api/v1/auth/login", { body: { identifier: "admin@herbchain.com", password: PASSWORD } });
+  const login = await req("POST", "/api/v1/auth/login", { body: { identifier: "admin@herbchain.in", password: PASSWORD } });
   const adminToken = login.data?.access_token;
   ok("Admin login succeeds", !!adminToken);
 
