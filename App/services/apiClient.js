@@ -45,9 +45,13 @@ async function _fetch(method, path, { body, token, headers, timeoutMs } = {}) {
   }
   const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
 
+  // FormData bodies must be passed through untouched — fetch sets the
+  // multipart boundary itself, and JSON.stringify(form) would send "[object Object]".
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
+
   const finalHeaders = {
     'Accept': 'application/json',
-    ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+    ...(body !== undefined && !isForm ? { 'Content-Type': 'application/json' } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(headers || {}),
   };
@@ -63,7 +67,7 @@ async function _fetch(method, path, { body, token, headers, timeoutMs } = {}) {
     response = await fetch(url, {
       method,
       headers: finalHeaders,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: isForm ? body : body !== undefined ? JSON.stringify(body) : undefined,
       signal: controller.signal,
     });
   } catch (err) {
@@ -130,7 +134,8 @@ const api = {
     const form = new FormData();
     if (file) form.append('file', file);
     if (fields) Object.entries(fields).forEach(([k, v]) => form.append(k, String(v)));
-    return _fetch('POST', path, { token, headers: { 'Content-Type': 'multipart/form-data', ...(headers || {}) }, body: form, timeoutMs });
+    // no Content-Type here: fetch must add its own multipart boundary
+    return _fetch('POST', path, { token, headers, body: form, timeoutMs });
   },
 };
 
@@ -160,6 +165,16 @@ export const AuthAPI = {
 export const SpeciesAPI = {
   list: (token, q) =>
     api.get(`/api/v1/species${q ? `?q=${encodeURIComponent(q)}` : ''}`, { token }),
+  get: (token, code) => api.get(`/api/v1/species/${encodeURIComponent(code)}`, { token }),
+};
+
+// Catalogue screens speak "catalogue" but the backend resource is /species.
+export const CatalogueAPI = {
+  // opts: { q, category } (category is filtered client-side; server only takes q)
+  list: (token, opts = {}) => {
+    const q = typeof opts === 'string' ? opts : opts.q;
+    return api.get(`/api/v1/species${q ? `?q=${encodeURIComponent(q)}` : ''}`, { token });
+  },
   get: (token, code) => api.get(`/api/v1/species/${encodeURIComponent(code)}`, { token }),
 };
 
@@ -225,7 +240,7 @@ export const ShipmentsAPI = {
   assign: (token, shipmentId, transporterUserId) =>
     api.post(`/api/v1/shipments/${shipmentId}/assign`, { token, body: { transporter_user_id: transporterUserId } }),
   accept: (token, shipmentId) => api.post(`/api/v1/shipments/${shipmentId}/accept`, { token, body: {} }),
-  decline: (token, shipmentId) => api.post(`/api/v1/shipments/${shipmentId}/decline`, { token, body: {} }),
+  decline: (token, shipmentId, payload) => api.post(`/api/v1/shipments/${shipmentId}/decline`, { token, body: payload || {} }),
   pickup: (token, shipmentId, payload) => api.post(`/api/v1/shipments/${shipmentId}/pickup`, { token, body: payload }),
   location: (token, shipmentId, payload) => api.post(`/api/v1/shipments/${shipmentId}/location`, { token, body: payload }),
   delay: (token, shipmentId, payload) => api.post(`/api/v1/shipments/${shipmentId}/delay`, { token, body: payload }),
@@ -248,6 +263,7 @@ export const LabsAPI = {
   createTest: (token, payload) => api.post('/api/v1/labs/tests', { token, body: payload }),
   listTests: (token, opts = {}) => {
     const params = new URLSearchParams();
+    if (opts.batch_id) params.set('batch_id', opts.batch_id);
     if (opts.sample_id) params.set('sample_id', opts.sample_id);
     if (opts.status) params.set('status', opts.status);
     const qs = params.toString();
@@ -284,7 +300,7 @@ export const ManufacturerAPI = {
   receive: (token, payload) => api.post('/api/v1/manufacturer/receive', { token, body: payload }),
   inventory: (token) => api.get('/api/v1/manufacturer/inventory', { token }),
   inventoryHistory: (token) => api.get('/api/v1/manufacturer/inventory/history', { token }),
-  reserveItem: (token, itemId) => api.post(`/api/v1/manufacturer/inventory/${itemId}/reserve`, { token, body: {} }),
+  reserveItem: (token, itemId, payload) => api.post(`/api/v1/manufacturer/inventory/${itemId}/reserve`, { token, body: payload || {} }),
   releaseItem: (token, itemId) => api.post(`/api/v1/manufacturer/inventory/${itemId}/release`, { token, body: {} }),
   consumeItem: (token, itemId, payload) => api.post(`/api/v1/manufacturer/inventory/${itemId}/consume`, { token, body: payload }),
   adjustItem: (token, itemId, payload) => api.post(`/api/v1/manufacturer/inventory/${itemId}/adjust`, { token, body: payload }),
