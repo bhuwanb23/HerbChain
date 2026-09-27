@@ -1,96 +1,78 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { API_BASE_URL } from '../../../../../constants/api';
+import { useAuth } from '../../../../../contexts/AuthContext';
+import { AuthAPI } from '../../../../../services/apiClient';
+
+// Server user (GET/PATCH /api/v1/auth/me) -> profile screen shape
+const transformUser = (u) => ({
+  user_id: u.id,
+  name: u.name,
+  email: u.email,
+  phone: u.phone,
+  location: u.location ?? null,
+  role: u.role,
+  kyc_verified: u.kyc_status === 'verified',
+  language_pref: 'en',
+  created_at: u.created_at,
+  // Add lab-specific fields
+  labName: 'AYUSH Certified Lab',
+  certification: 'ISO 17025',
+  specialization: 'Herbal Medicine Testing',
+  accreditation: 'NABL Accredited',
+});
+
+const FALLBACK_PROFILE = {
+  user_id: 'lab_001',
+  name: 'Dr. Priya Sharma',
+  email: 'priya@example.com',
+  phone: '+91-9876543212',
+  location: 'Delhi, India',
+  role: 'lab',
+  kyc_verified: true,
+  language_pref: 'en',
+  labName: 'AYUSH Certified Lab',
+  certification: 'ISO 17025',
+  specialization: 'Herbal Medicine Testing',
+  accreditation: 'NABL Accredited',
+};
 
 export const useProfile = () => {
   const navigation = useNavigation();
+  const { accessToken } = useAuth();
   const [currentTab, setCurrentTab] = useState('profile');
   const [profileData, setProfileData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Default lab user ID for development
-  const LAB_USER_ID = 'lab_001';
-
   const fetchProfile = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/api/v1/users/${LAB_USER_ID}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch profile');
-      }
-      
-      const userData = await response.json();
-      
-      // Transform API data to match profile format
-      const transformedData = {
-        user_id: userData.user_id,
-        name: userData.name,
-        email: userData.email,
-        phone: userData.phone,
-        location: userData.location,
-        role: userData.role,
-        kyc_verified: userData.kyc_verified,
-        language_pref: userData.language_pref,
-        created_at: userData.created_at,
-        // Add lab-specific fields
-        labName: 'AYUSH Certified Lab',
-        certification: 'ISO 17025',
-        specialization: 'Herbal Medicine Testing',
-        accreditation: 'NABL Accredited'
-      };
-      
-      setProfileData(transformedData);
+      const { user } = await AuthAPI.me(accessToken);
+      setProfileData(transformUser(user));
     } catch (error) {
       console.error('Error fetching lab profile:', error);
       // Fallback to default data if API fails
-      setProfileData({
-        user_id: LAB_USER_ID,
-        name: 'Dr. Priya Sharma',
-        email: 'priya@example.com',
-        phone: '+91-9876543212',
-        location: 'Delhi, India',
-        role: 'lab',
-        kyc_verified: true,
-        language_pref: 'en',
-        labName: 'AYUSH Certified Lab',
-        certification: 'ISO 17025',
-        specialization: 'Herbal Medicine Testing',
-        accreditation: 'NABL Accredited'
-      });
+      setProfileData(FALLBACK_PROFILE);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [accessToken]);
 
   const updateProfile = useCallback(async (newData) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/users/${LAB_USER_ID}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newData),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to update profile');
-      }
-      
-      const updatedUser = await response.json();
-      
+      const { user } = await AuthAPI.updateMe(accessToken, newData);
+
       // Update local state
       setProfileData(prev => ({
         ...prev,
-        ...updatedUser.user,
+        ...transformUser(user),
       }));
-      
+
       return { success: true };
     } catch (error) {
       console.error('Error updating lab profile:', error);
       return { success: false, error: error.message };
     }
-  }, []);
+  }, [accessToken]);
 
   // Fetch profile on mount
   useEffect(() => {
