@@ -41,20 +41,20 @@ function setupDatabase() {
   delete process.env.OPENWEATHER_API_KEY;
 }
 
-/** Clear every table, children before parents. */
+/**
+ * Clear every table. Schema-independent: current schema replaced several old
+ * models (ProductBatchLink, LabReport, BatchState, FarmProfile, HerbCatalogue),
+ * so wipe by iterating sqlite_master instead of hardcoded Prisma delegates.
+ */
 async function wipe(prisma) {
-  await prisma.batchEvent.deleteMany();
-  await prisma.productBatchLink.deleteMany();
-  await prisma.product.deleteMany();
-  await prisma.labReport.deleteMany();
-  await prisma.batchState.deleteMany();
-  await prisma.herb.deleteMany();
-  await prisma.cropPlan.deleteMany();
-  await prisma.farmProfile.deleteMany();
-  await prisma.priceQuote.deleteMany();
-  await prisma.herbCatalogue.deleteMany();
-  await prisma.weatherSnapshot.deleteMany();
-  await prisma.user.deleteMany();
+  await prisma.$executeRawUnsafe("PRAGMA foreign_keys = OFF");
+  const rows = await prisma.$queryRawUnsafe(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_prisma%'"
+  );
+  for (const { name } of rows) {
+    await prisma.$executeRawUnsafe(`DELETE FROM "${name}"`);
+  }
+  await prisma.$executeRawUnsafe("PRAGMA foreign_keys = ON");
 }
 
 async function teardown(prisma) {
