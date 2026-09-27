@@ -1,14 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { FILTER_OPTIONS } from '../constants';
 
 const FilterTabs = ({ activeFilter, onFilterChange }) => {
-  const filters = [
-    { id: 'all', label: 'All', icon: '📋' },
-    { id: 'payment', label: 'Payments', icon: '💰' },
-    { id: 'lab', label: 'Lab Tests', icon: '🧪' },
-    { id: 'logistics', label: 'Logistics', icon: '🚚' },
-    { id: 'policy', label: 'AYUSH', icon: '📢' },
-  ];
+  const filters = FILTER_OPTIONS;
 
   return (
     <View style={styles.container}>
