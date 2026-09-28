@@ -114,6 +114,81 @@ async function seedSpecies() {
   return { species: created, synonyms: AYUSH_SPECIES.reduce((n, s) => n + (s.synonyms || []).length, 0) };
 }
 
+/**
+ * Quality-test vocabulary (AYUSH/WHO pharmacopoeia limits) used by the lab
+ * testing UI. Upserted by unique `code` so re-running the seed is safe.
+ */
+const TEST_PARAMETERS = [
+  { code: "moisture", name: "Moisture", category: "physical", unit: "%", method: "LOD/oven", limit_standard: "≤ 10%" },
+  { code: "pesticide", name: "pesticide", category: "pesticide", unit: "mg/kg", method: "GC-MS", limit_standard: "≤ 0.1" },
+  { code: "phytochemical", name: "active", category: "active", unit: "mg/g", method: "HPLC", limit_standard: null },
+  { code: "purity_percentage", name: "purity", category: "purity", unit: "%", method: "visual/organoleptic", limit_standard: "≥ 95%" },
+  { code: "heavy_metals_present", name: "heavy_metal", category: "heavy_metal", unit: null, method: "AAS/ICP-MS", limit_standard: "Absent" },
+  { code: "pesticides_detected", name: "pesticide", category: "pesticide", unit: null, method: "GC-MS", limit_standard: "None detected" },
+  { code: "ash_content", name: "purity", category: "purity", unit: "%", method: "muffle furnace", limit_standard: "≤ 5%" },
+  { code: "active_compounds", name: "active", category: "active", unit: null, method: null, limit_standard: null },
+  { code: "potency_rating", name: "other", category: "other", unit: null, method: null, limit_standard: null },
+  { code: "certification", name: "other", category: "other", unit: null, method: null, limit_standard: null },
+  { code: "certification_level", name: "other", category: "other", unit: null, method: null, limit_standard: null },
+];
+
+/** Upsert the quality-test parameter vocabulary (idempotent). */
+async function seedTestParameters() {
+  for (const p of TEST_PARAMETERS) {
+    await prisma.testParameter.upsert({
+      where: { code: p.code },
+      update: {
+        name: p.name,
+        category: p.category,
+        unit: p.unit,
+        method: p.method,
+        limit_standard: p.limit_standard,
+        is_active: true,
+      },
+      create: { ...p, is_active: true },
+    });
+  }
+  return TEST_PARAMETERS.length;
+}
+
+const DEMO_BATCH_CODE = "HERB-2026-900001";
+
+/**
+ * One demo batch already checked in at the demo lab so the lab queue has a
+ * testable row (receive is idempotent on an already-received batch). Upserted by
+ * unique `code`.
+ */
+async function seedDemoBatches(usersByRole) {
+  const farmer = usersByRole.farmer;
+  const lab = usersByRole.lab;
+  const species = await prisma.species.findUnique({ where: { code: "tulsi" } });
+  if (!farmer || !lab || !species) {
+    logger.warn("Skipping demo batch: farmer/lab user or tulsi species missing");
+    return 0;
+  }
+  await prisma.batch.upsert({
+    where: { code: DEMO_BATCH_CODE },
+    update: {
+      current_holder_user_id: lab.id,
+      phase: "at_lab",
+      test_status: "pending",
+    },
+    create: {
+      code: DEMO_BATCH_CODE,
+      farmer_id: farmer.id,
+      species_id: species.id,
+      harvest_date: new Date(),
+      weight_kg: 25,
+      location: "Demo Farm, Kerala",
+      cultivation_type: "organic",
+      phase: "at_lab",
+      test_status: "pending",
+      current_holder_user_id: lab.id,
+    },
+  });
+  return 1;
+}
+
 async function main() {
   const fresh = process.argv.includes("--fresh");
   if (fresh) {
@@ -127,6 +202,9 @@ async function main() {
 
   const catalogue = await seedSpecies();
   logger.info(`Species catalogue: ${catalogue.species} species, ${catalogue.synonyms} synonyms`);
+
+  const parameters = await seedTestParameters();
+  logger.info(`Test parameters: ${parameters} active`);
 
   const admin = await upsertAdmin();
   logger.info(`Admin ready: ${ADMIN_EMAIL}`);
@@ -144,9 +222,23 @@ async function main() {
   const retention = await seedRetentionRules();
   logger.info(`Document retention rules: ${retention} seeded`);
 
+  const usersByRole = {};
   for (const def of DEMO_ACCOUNTS) {
-    await ensureDemoAccount(def, admin);
+    usersByRole[def.role] = await ensureDemoAccount(def, admin);
   }
+
+  // The demo lab account doubles as the supervisor so the lab UI's analyst +
+  // supervisor actions are both exercisable in development.
+  if (usersByRole.lab && usersByRole.lab.lab_role !== "supervisor") {
+    usersByRole.lab = await prisma.user.update({
+      where: { id: usersByRole.lab.id },
+      data: { lab_role: "supervisor" },
+    });
+    logger.info(`  ~ lab           lab_role=supervisor (${usersByRole.lab.email})`);
+  }
+
+  const demoBatches = await seedDemoBatches(usersByRole);
+  logger.info(`Demo batches: ${demoBatches} lab-queue batch(es)`);
 
   const byRole = await prisma.user.groupBy({ by: ["role"], _count: true });
   logger.info("Users by role: " + byRole.map((r) => `${r.role}=${r._count}`).join(", "));

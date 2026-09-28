@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useGlobalTranslation } from '../../../../../language/GlobalTranslationContext';
-import { TEST_TYPES, UPLOAD_TYPES, MOCK_BATCHES, COLORS } from '../constants';
+import { TEST_TYPES, UPLOAD_TYPES, COLORS } from '../constants';
 
 const OfflineBanner = ({ isOffline }) => {
   const { t } = useGlobalTranslation();
@@ -30,9 +30,8 @@ const OfflineBanner = ({ isOffline }) => {
   );
 };
 
-const BatchHeaderCard = ({ batchId, isOffline }) => {
+const BatchHeaderCard = ({ batch, isOffline }) => {
   const { t } = useGlobalTranslation();
-  const batch = MOCK_BATCHES.find(b => b.id === batchId) || MOCK_BATCHES[0]; // Assuming MOCK_BATCHES is available from constants
 
   return (
     <View style={styles.batchHeaderCard}>
@@ -161,7 +160,7 @@ const ActionButtons = ({ onSaveOffline, onSubmitResults, isOffline }) => {
 };
 
 const TestingResultsEntry = ({
-  batchId,
+  batch,
   isOffline,
   testResults,
   uploadedFiles,
@@ -219,7 +218,7 @@ const TestingResultsEntry = ({
       <OfflineBanner isOffline={isOffline} />
 
       <BatchHeaderCard
-        batchId={batchId}
+        batch={batch}
         isOffline={isOffline}
       />
 

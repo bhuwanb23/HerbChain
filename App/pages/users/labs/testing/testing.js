@@ -10,6 +10,7 @@ const TestingPage = ({ navigation }) => {
   const { t } = useGlobalTranslation();
   const {
     selectedBatch,
+    archived,
     isOffline,
     testResults,
     uploadedFiles,
@@ -32,11 +33,14 @@ const TestingPage = ({ navigation }) => {
     resetSelection,
   } = useTesting();
 
+  const activeBatch = archived.find(b => (b.code || b.id) === selectedBatch)
+    || { id: selectedBatch, name: '', status: 'received', receivedDate: '' };
+
   const renderCurrentView = () => {
     if (currentMode === 'upload' && selectedBatch) {
       return (
         <TestingResultsEntry 
-          batchId={selectedBatch}
+          batch={activeBatch}
           isOffline={isOffline}
           testResults={testResults}
           uploadedFiles={uploadedFiles}
@@ -65,9 +69,9 @@ const TestingPage = ({ navigation }) => {
           />
           {isOffline && <OfflineSync 
             offlineData={offlineData}
-            onSync={handleSyncOfflineData}
-            onRetry={handleRetrySync}
-            onDelete={handleDeleteOfflineEntry}
+            onSyncEntry={handleSyncOfflineData}
+            onRetrySync={handleRetrySync}
+            onDeleteEntry={handleDeleteOfflineEntry}
             onSyncAll={handleSyncAll}
           />}
         </ScrollView>

@@ -9,7 +9,7 @@ import {
   Alert 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SYNC_STATUSES, MOCK_OFFLINE_DATA, COLORS } from '../constants';
+import { SYNC_STATUSES, COLORS } from '../constants';
 
 const SyncStatusBadge = ({ status }) => {
   const statusConfig = SYNC_STATUSES.find(s => s.id === status) || SYNC_STATUSES[0];

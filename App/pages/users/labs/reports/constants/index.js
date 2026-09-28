@@ -44,58 +44,6 @@ export const DATE_RANGE_FILTERS = [
   'Custom range',
 ];
 
-// Mock report data
-export const MOCK_REPORTS = [
-  {
-    id: 'TB-2024-156',
-    title: 'Tulsi Batch #TB-2024-156',
-    subtitle: 'Rajasthan • 2 days ago',
-    status: 'passed',
-    purity: 98.5,
-    herbType: 'Tulsi',
-    region: 'Rajasthan',
-    testDate: '2024-01-15',
-    farmer: 'Rajesh Kumar',
-    labTechnician: 'Dr. Priya Sharma',
-  },
-  {
-    id: 'AB-2024-143',
-    title: 'Ashwagandha Batch #AB-2024-143',
-    subtitle: 'Gujarat • 4 days ago',
-    status: 'retest',
-    purity: 89.2,
-    herbType: 'Ashwagandha',
-    region: 'Gujarat',
-    testDate: '2024-01-13',
-    farmer: 'Amit Patel',
-    labTechnician: 'Dr. Suresh Kumar',
-  },
-  {
-    id: 'NE-2024-089',
-    title: 'Neem Batch #NE-2024-089',
-    subtitle: 'Maharashtra • 1 week ago',
-    status: 'passed',
-    purity: 95.8,
-    herbType: 'Neem',
-    region: 'Maharashtra',
-    testDate: '2024-01-08',
-    farmer: 'Priya Singh',
-    labTechnician: 'Dr. Anjali Mehta',
-  },
-  {
-    id: 'BR-2024-201',
-    title: 'Brahmi Batch #BR-2024-201',
-    subtitle: 'Karnataka • 2 weeks ago',
-    status: 'failed',
-    purity: 76.3,
-    herbType: 'Brahmi',
-    region: 'Karnataka',
-    testDate: '2024-01-01',
-    farmer: 'Kumar Reddy',
-    labTechnician: 'Dr. Rajesh Gupta',
-  },
-];
-
 // Status configurations
 export const STATUS_CONFIG = {
   passed: {
@@ -163,27 +111,3 @@ export const EXPORT_OPTIONS = [
     color: '#22C55E',
   },
 ];
-
-// Mock chart data
-export const MOCK_CHART_DATA = {
-  contaminantTrends: {
-    title: 'Contaminant Trends (Last 6 Months)',
-    data: [
-      { month: 'Jul', value: 2.3 },
-      { month: 'Aug', value: 1.8 },
-      { month: 'Sep', value: 2.1 },
-      { month: 'Oct', value: 1.5 },
-      { month: 'Nov', value: 1.2 },
-      { month: 'Dec', value: 0.9 },
-    ],
-  },
-  herbPurityBreakdown: {
-    title: 'Herb Purity Breakdown',
-    data: [
-      { herb: 'Tulsi', purity: 95.2 },
-      { herb: 'Ashwagandha', purity: 89.7 },
-      { herb: 'Neem', purity: 92.1 },
-      { herb: 'Brahmi', purity: 87.3 },
-    ],
-  },
-};

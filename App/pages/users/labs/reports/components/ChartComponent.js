@@ -1,10 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { MOCK_CHART_DATA } from '../constants';
+
+const CHART_TITLES = {
+  contaminantTrends: 'Contaminant Trends (Last 6 Months)',
+  herbPurityBreakdown: 'Herb Purity Breakdown',
+  qualityHeatmap: 'Quality Heatmap',
+};
 
 const ChartComponent = ({ chartType = 'contaminantTrends', onDownload }) => {
-  const chartData = MOCK_CHART_DATA[chartType] || MOCK_CHART_DATA.contaminantTrends;
 
   const renderChartPlaceholder = () => {
     return (
@@ -24,7 +28,7 @@ const ChartComponent = ({ chartType = 'contaminantTrends', onDownload }) => {
     <View style={styles.container}>
       <View style={styles.chartCard}>
         <View style={styles.chartHeader}>
-          <Text style={styles.chartTitle}>{chartData.title}</Text>
+          <Text style={styles.chartTitle}>{CHART_TITLES[chartType] || 'Quality Heatmap'}</Text>
           <TouchableOpacity 
             onPress={() => onDownload && onDownload(chartType)}
             style={styles.downloadButton}

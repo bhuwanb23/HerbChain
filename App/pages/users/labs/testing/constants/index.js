@@ -152,64 +152,6 @@ export const SYNC_STATUSES = [
   { id: 'failed', title: 'Sync Failed', color: '#EF4444', icon: 'alert-circle-outline' },
 ];
 
-export const MOCK_BATCHES = [
-  {
-    id: 'BT-2024-001',
-    name: 'Echinacea Purpurea Extract',
-    status: 'testing',
-    receivedDate: '2024-01-15',
-    farmer: 'Green Valley Farms',
-    quantity: '50kg',
-    tests: ['moisture', 'pesticide', 'phytochemical', 'purity_percentage', 'heavy_metals_present', 'pesticides_detected', 'ash_content', 'active_compounds', 'potency_rating', 'certification', 'certification_level'],
-  },
-  {
-    id: 'BT-2024-002',
-    name: 'Ginseng Root Powder',
-    status: 'pending',
-    receivedDate: '2024-01-16',
-    farmer: 'Mountain Herbs Co.',
-    quantity: '25kg',
-    tests: ['moisture', 'pesticide', 'purity_percentage'],
-  },
-  {
-    id: 'BT-2024-003',
-    name: 'Turmeric Extract',
-    status: 'completed',
-    receivedDate: '2024-01-14',
-    farmer: 'Sunrise Agriculture',
-    quantity: '75kg',
-    tests: ['moisture', 'pesticide', 'phytochemical', 'purity_percentage', 'certification'],
-  },
-];
-
-export const MOCK_OFFLINE_DATA = [
-  {
-    id: '1',
-    batchId: 'BT-2024-001',
-    batchName: 'Echinacea Purpurea Extract',
-    testResults: {
-      moisture: '8.5',
-      pesticide: '0.02',
-      phytochemical: '2.3',
-    },
-    files: ['lab-certificate', 'microscope-image'],
-    timestamp: '2024-01-15T10:30:00Z',
-    status: 'pending',
-  },
-  {
-    id: '2',
-    batchId: 'BT-2024-002',
-    batchName: 'Ginseng Root Powder',
-    testResults: {
-      moisture: '6.2',
-      pesticide: '0.01',
-    },
-    files: ['lab-certificate'],
-    timestamp: '2024-01-16T14:20:00Z',
-    status: 'syncing',
-  },
-];
-
 export const COLORS = {
   primary: '#006B38',
   primaryLight: '#059669',

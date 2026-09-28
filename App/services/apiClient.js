@@ -277,6 +277,7 @@ export const LabsAPI = {
   listCertificates: (token, batchId) =>
     api.get(`/api/v1/labs/certificates${batchId ? `?batch_id=${batchId}` : ''}`, { token }),
   rejectBatch: (token, payload) => api.post('/api/v1/labs/reject', { token, body: payload }),
+  attachDocument: (token, payload) => api.post('/api/v1/labs/documents', { token, body: payload }),
   analytics: (token) => api.get('/api/v1/labs/analytics', { token }),
 };
 

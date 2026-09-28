@@ -23,7 +23,7 @@ const ReportCard = ({
                 {statusConfig.label}
               </Text>
             </View>
-            <Text style={styles.purityText}>{report.purity}% Purity</Text>
+            {report.purity != null && <Text style={styles.purityText}>{report.purity}% Purity</Text>}
           </View>
         </View>
         <View style={styles.reportItemActions}>
