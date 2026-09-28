@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- context provider + useAuth hook belong together */
 /**
  * Auth state for the website. Persists to localStorage so a refresh keeps the
  * admin signed in.
@@ -41,7 +42,7 @@ export function AuthProvider({ children }) {
               try {
                 const me = await AuthAPI.me(parsed.accessToken);
                 setSession((s) => ({ ...s, user: me.user }));
-              } catch (_e) {
+              } catch {
                 // Token no longer valid — clear the stale session.
                 setSession({ user: null, accessToken: null, refreshToken: null });
                 window.localStorage.removeItem(STORAGE_KEY);

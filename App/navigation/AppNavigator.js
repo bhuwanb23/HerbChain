@@ -50,14 +50,12 @@ import FarmerNotifications from '../pages/users/farmers/notifications/notificati
 import FarmerPayments from '../pages/users/farmers/payments/payements';
 import FarmerProfile from '../pages/users/farmers/profile/profile';
 import FarmerTraining from '../pages/users/farmers/trainings/training';
-import FarmerDashboard from '../pages/users/farmers/dashboard/dashboard';
 import HerbRegisterScreen from '../pages/users/farmers/herb_register/HerbRegisterScreen';
 import HerbListScreen from '../pages/users/farmers/herb_register/HerbListScreen';
 import HerbDetailsScreen from '../pages/users/farmers/herb_register/HerbDetailsScreen';
 
 // ─── Transporter screens ────────────────────────────────────────────────────
 import TransporterHome from '../pages/users/transporters/TransporterHome';
-import TransporterDashboard from '../pages/users/transporters/dashboard/dashboard';
 import TripsPage from '../pages/users/transporters/trips/index';
 import TransporterPayments from '../pages/users/transporters/payments/payments';
 import TransporterProfile from '../pages/users/transporters/profile/profile';
@@ -72,12 +70,8 @@ import DeliveryFailure from '../pages/users/transporters/shipment/DeliveryFailur
 
 // ─── Lab screens ────────────────────────────────────────────────────────────
 import LabHome from '../pages/users/labs/LabHome';
-import LabDashboard from '../pages/users/labs/dashboard/dashboard';
-import LabBatches from '../pages/users/labs/batches/batches';
 import LabTesting from '../pages/users/labs/testing/testing';
 import LabReports from '../pages/users/labs/reports/reports';
-import LabProfile from '../pages/users/labs/profile/profile';
-import LabsPage from '../pages/users/labs/labs';
 import LabQueue from '../pages/users/labs/lab_flow/LabQueue';
 import LabBatchDetail from '../pages/users/labs/lab_flow/LabBatchDetail';
 import LabSampleCreate from '../pages/users/labs/lab_flow/LabSampleCreate';
@@ -88,12 +82,7 @@ import LabReject from '../pages/users/labs/lab_flow/LabReject';
 
 // ─── Manufacturer screens ───────────────────────────────────────────────────
 import ManufacturerHome from '../pages/users/manufacturers/ManufacturerHome';
-import ManufacturerDashboard from '../pages/users/manufacturers/dashboard/dashboard';
-import RawHerbManagement from '../pages/users/manufacturers/raw_herb_management/raw_herb_management';
-import QRScannerScreen from '../pages/users/manufacturers/raw_herb_management/QRScannerScreen';
-import ProductionPage from '../pages/users/manufacturers/production/production';
 import ManufacturerReports from '../pages/users/manufacturers/reports/reports';
-import ManufacturerProfile from '../pages/users/manufacturers/profile/profile';
 import MarketplaceScreen from '../pages/users/manufacturers/marketplace/MarketplaceScreen';
 import BatchDossierScreen from '../pages/users/manufacturers/marketplace/BatchDossierScreen';
 import ProcurementTrackerScreen from '../pages/users/manufacturers/marketplace/ProcurementTrackerScreen';
@@ -109,16 +98,10 @@ import ProductLineageScreen from '../pages/users/manufacturers/lineage/ProductLi
 
 // ─── Admin screens ──────────────────────────────────────────────────────────
 import AdminHome from '../pages/users/admins/AdminHome';
-import AdminDashboard from '../pages/users/admins/dashboard/dashboard';
 import UserManagement from '../pages/users/admins/user_control/user_management';
 import ProfileSettings from '../pages/users/admins/user_control/profile_settings';
 import CompliancePage from '../pages/users/admins/compliance/index';
-import AlertsRecall from '../pages/users/admins/compliance/alerts_recall';
-import ComplianceRegulation from '../pages/users/admins/compliance/compliance_regulation';
 import ReportsAnalytics from '../pages/users/admins/reports/reports_analytics';
-import IncentivesFunding from '../pages/users/admins/reports/incentives_funding';
-import BatchTraceability from '../pages/users/admins/dashboard_monitoring/batch_traceability';
-import AdminDashboardMonitor from '../pages/users/admins/dashboard_monitoring/dashboard';
 import IntegrationAPI from '../pages/users/admins/integration/integration_api';
 import SupportDispute from '../pages/users/admins/integration/support_dispute';
 

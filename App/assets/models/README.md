@@ -22,6 +22,13 @@ App/assets/models/
 
 ## Swapping in a real model
 
+> **Note:** the repo currently ships a *placeholder* `plant_classifier.tflite`
+> (a small text stub) so Metro can resolve the static `require` and the app
+> bundles out of the box. It is **not** a valid model: on a dev client the
+> load fails, is caught by `tflite.js`, and the app reports the model as
+> unavailable and falls back to catalogue selection. Replace it with a real
+> model (below) to enable on-device inference.
+
 Pick a license-permitting plant classifier `.tflite` (for example, an
 EfficientNet or MobileNet variant trained on PlantCLEF), drop it here as
 `plant_classifier.tflite`, and write its class labels to `LABELS.txt`.

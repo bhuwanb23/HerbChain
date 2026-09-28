@@ -24,8 +24,8 @@ echo "    repo: $REPO_ROOT"
 
 if [ "$SKIP_INSTALL" -eq 0 ]; then
   echo
-  echo "==> Installing Python deps (backend/)"
-  (cd backend && python -m pip install -r requirements.txt)
+  echo "==> Installing JS deps (backend/)"
+  (cd backend && npm install)
   echo
   echo "==> Installing JS deps (website/)"
   (cd website && npm install)
@@ -37,30 +37,36 @@ else
 fi
 
 echo
-echo "==> Applying migrations"
-(cd backend/server && python -m flask --app app db upgrade) || \
-  echo "flask db upgrade failed — seed script will create tables via db.create_all()."
+echo "==> Generating Prisma client + applying migrations"
+(cd backend && npm run generate && npm run migrate)
 
 echo
-echo "==> Seeding demo data"
-(cd backend/server && python scripts/seed_demo.py --fresh)
+echo "==> Seeding demo data (users, RBAC, 25-species AYUSH catalogue)"
+(cd backend && npm run seed)
 
 echo
 echo "Demo data ready. Credentials:"
-echo "  farmer1@herbchain.local      / farmerpass     (farmer)"
-echo "  transporter1@herbchain.local / transpass      (transporter)"
-echo "  lab1@herbchain.local         / labpass        (lab)"
-echo "  manufacturer1@herbchain.local/ mfgpass        (manufacturer)"
-echo "  consumer1@herbchain.local    / conspass       (consumer)"
-echo "  admin@herbchain.local        / adminpass      (admin)"
+echo "  admin@herbchain.in          / Admin@123456  (admin)"
+echo "  farmer@herbchain.in         / Demo@123456   (farmer)"
+echo "  transporter@herbchain.in    / Demo@123456   (transporter)"
+echo "  lab@herbchain.in            / Demo@123456   (lab)"
+echo "  manufacturer@herbchain.in   / Demo@123456   (manufacturer)"
+echo "  distributor@herbchain.in    / Demo@123456   (distributor)"
+echo "  retailer@herbchain.in       / Demo@123456   (retailer)"
+echo "  consumer@herbchain.in       / Demo@123456   (consumer)"
+
+echo
+echo "Next terminals:"
+echo "  cd website && npm run dev      # http://localhost:5173"
+echo "  cd App && npx expo start       # scan with Expo Go"
 
 if [ "$SKIP_BACKEND" -eq 1 ]; then
   echo
   echo "Done. Start the backend manually with:"
-  echo "  cd backend/server && python -m flask --app app run --host 0.0.0.0 --port 5000"
+  echo "  cd backend && npm run dev"
   exit 0
 fi
 
 echo
 echo "==> Starting backend on http://localhost:5000 (Ctrl+C to stop)"
-exec bash -c "cd backend/server && python -m flask --app app run --host 0.0.0.0 --port 5000"
+cd backend && exec npm run dev

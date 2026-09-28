@@ -89,7 +89,7 @@ export const useTrips = (token) => {
 
       // Step 2: record pickup with QR scan
       await ShipmentsAPI.pickup(token, shipmentId, {
-        scanned_qr: scannedData,
+        token: scannedData,
         gps_lat: selectedBatch.origin_gps_lat || null,
         gps_lng: selectedBatch.origin_gps_lng || null,
         location: selectedBatch.origin_location || undefined,
@@ -125,7 +125,7 @@ export const useTrips = (token) => {
 
       // Step 2: deliver with POD scan
       await ShipmentsAPI.deliver(token, shipmentId, {
-        scanned_qr: scannedData,
+        token: scannedData,
         gps_lat: selectedBatch.destination_gps_lat || null,
         gps_lng: selectedBatch.destination_gps_lng || null,
         location: selectedBatch.destination_location || undefined,

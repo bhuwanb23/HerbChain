@@ -8,8 +8,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View,
 } from 'react-native';
-import { useAuth } from '../../../contexts/AuthContext';
-import { LabsAPI } from '../../../services/apiClient';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { LabsAPI } from '../../../../services/apiClient';
 
 export default function LabBatchDetail({ route, navigation }) {
   const { accessToken } = useAuth();

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="600" viewBox="0 0 1180 600" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <rect x="0" y="0" width="1180" height="600" fill="#F8FAFC"/>
+  <text x="590" y="38" text-anchor="middle" font-size="24" font-weight="700" fill="#0F172A">Repository Structure</text>
+  <text x="590" y="62" text-anchor="middle" font-size="13" fill="#64748B">Monorepo: Node backend · Expo mobile app · React admin portal · phase-spec docs</text>
+
+  <!-- backend -->
+  <rect x="40" y="92" width="520" height="200" rx="10" fill="#FFFFFF" stroke="#94A3B8"/>
+  <rect x="40" y="92" width="520" height="6" rx="3" fill="#0EA5E9"/>
+  <text x="60" y="122" font-size="15" font-weight="700" fill="#0F172A">backend/ — Express + Prisma + SQLite</text>
+  <g font-size="12" fill="#475569" font-family="Consolas, Menlo, monospace">
+    <text x="60" y="148">src/modules/     19 domain modules (routes + wiring)</text>
+    <text x="60" y="168">src/services/    business logic: transfer, qr, ledger…</text>
+    <text x="60" y="188">src/constants/   enums + TRANSITIONS state machine</text>
+    <text x="60" y="208">src/middleware/  requireAuth · requirePermission</text>
+    <text x="60" y="228">src/validation/  zod request schemas</text>
+    <text x="60" y="248">prisma/schema/   25 domain schema files, 129 models</text>
+    <text x="60" y="268">tests/           18 suites, isolated-DB harness</text>
+  </g>
+
+  <!-- App -->
+  <rect x="620" y="92" width="520" height="200" rx="10" fill="#FFFFFF" stroke="#94A3B8"/>
+  <rect x="620" y="92" width="520" height="6" rx="3" fill="#10B981"/>
+  <text x="640" y="122" font-size="15" font-weight="700" fill="#0F172A">App/ — React Native (Expo 54)</text>
+  <g font-size="12" fill="#475569" font-family="Consolas, Menlo, monospace">
+    <text x="640" y="148">navigation/      role-guarded tab navigators</text>
+    <text x="640" y="168">pages/users/     farmer · transporter · lab ·</text>
+    <text x="640" y="188">                 manufacturer · admin · consumer</text>
+    <text x="640" y="208">services/        apiClient + TFLite recognition</text>
+    <text x="640" y="228">contexts/        AuthContext · NetworkContext</text>
+    <text x="640" y="248">language/        i18n scaffolding</text>
+    <text x="640" y="268">assets/models/   plant_classifier.tflite (optional)</text>
+  </g>
+
+  <!-- website -->
+  <rect x="40" y="316" width="520" height="128" rx="10" fill="#FFFFFF" stroke="#94A3B8"/>
+  <rect x="40" y="316" width="520" height="6" rx="3" fill="#F59E0B"/>
+  <text x="60" y="346" font-size="15" font-weight="700" fill="#0F172A">website/ — React 19 + Vite + MUI</text>
+  <g font-size="12" fill="#475569" font-family="Consolas, Menlo, monospace">
+    <text x="60" y="372">src/pages/       dashboard · trace · users · blockchain</text>
+    <text x="60" y="392">                 compliance · investigations · reports…</text>
+    <text x="60" y="412">src/services/    apiClient (typed backend helpers)</text>
+    <text x="60" y="432">src/contexts/    AuthContext + RequireAuth guard</text>
+  </g>
+
+  <!-- docs -->
+  <rect x="620" y="316" width="520" height="128" rx="10" fill="#FFFFFF" stroke="#94A3B8"/>
+  <rect x="620" y="316" width="520" height="6" rx="3" fill="#8B5CF6"/>
+  <text x="640" y="346" font-size="15" font-weight="700" fill="#0F172A">docs/ — the spec of record</text>
+  <g font-size="12" fill="#475569" font-family="Consolas, Menlo, monospace">
+    <text x="640" y="372">phase_1..17.md   backend phase specs</text>
+    <text x="640" y="392">app/             mobile plan (A0–A9) + role docs</text>
+    <text x="640" y="412">gap/             current status + gap plans</text>
+    <text x="640" y="432">diagrams/        SVG/PNG sources for the README</text>
+  </g>
+
+  <!-- scripts row -->
+  <rect x="40" y="468" width="1100" height="100" rx="10" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <rect x="40" y="468" width="1100" height="6" rx="3" fill="#64748B"/>
+  <text x="60" y="498" font-size="15" font-weight="700" fill="#0F172A">Tooling at the root</text>
+  <g font-size="12" fill="#475569" font-family="Consolas, Menlo, monospace">
+    <text x="60" y="524">Makefile · scripts/demo.sh · scripts/demo.ps1   — one-command bootstrap (install → migrate → seed → run)</text>
+    <text x="60" y="544">backend/scripts/e2e_journey.js · backend/scripts/live_p17_smoke.cjs — golden-path + offline-sync smoke tests</text>
+  </g>
+</svg>

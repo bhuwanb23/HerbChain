@@ -7,8 +7,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View,
 } from 'react-native';
-import { useAuth } from '../../../contexts/AuthContext';
-import { BatchesAPI, QrAPI } from '../../../services/apiClient';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { BatchesAPI, QrAPI } from '../../../../services/apiClient';
 
 export default function FarmerQR({ route }) {
   const { accessToken } = useAuth();

@@ -7,8 +7,8 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
-import { AdminAPI, AnalyticsAPI } from '../../../services/apiClient';
-import { useAuth } from '../../../contexts/AuthContext';
+import { AdminAPI, AnalyticsAPI } from '../../../../services/apiClient';
+import { useAuth } from '../../../../contexts/AuthContext';
 
 const SEVERITY_COLORS = {
   critical: '#DC2626', high: '#F59E0B', medium: '#3B82F6', low: '#9CA3AF',
@@ -18,7 +18,7 @@ const SEVERITY_COLORS = {
 export default function ComplianceRegulation({ navigation }) {
   const { accessToken } = useAuth();
   const [alerts, setAlerts] = useState([]);
-  const [score, setScore] = useState(null);
+  const [complianceRate, setComplianceRate] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState(null);
@@ -28,10 +28,12 @@ export default function ComplianceRegulation({ navigation }) {
     try {
       const [alertRes, scoreRes] = await Promise.all([
         AdminAPI.complianceAlerts(accessToken, { status: 'open' }),
-        AnalyticsAPI.compliance(accessToken, 'monthly'),
+        AnalyticsAPI.compliance(accessToken, { period: 'monthly' }),
       ]);
       setAlerts(alertRes?.alerts || []);
-      setScore(scoreRes);
+      const rows = scoreRes?.rows || [];
+      const allRow = rows.find((r) => r.actor_type === 'all') || rows[0];
+      setComplianceRate(allRow ? Math.round(allRow.avg_score || 0) : 0);
     } catch (_) {}
   }, [accessToken]);
 
@@ -45,9 +47,6 @@ export default function ComplianceRegulation({ navigation }) {
   const runRules = async () => {
     try { await AdminAPI.runComplianceRules(accessToken); Alert.alert('Done', 'Compliance scan complete.'); fetchData(); } catch (_) {}
   };
-
-  const complianceRate = score?.compliance_rate || score?.complianceRate || 0;
-  const totalBatches = score?.total_batches || score?.totalBatches || 0;
 
   // ─── Detail View ───
   if (selected) {

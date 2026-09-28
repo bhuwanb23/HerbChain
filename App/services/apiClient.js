@@ -45,9 +45,13 @@ async function _fetch(method, path, { body, token, headers, timeoutMs } = {}) {
   }
   const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
 
+  // FormData bodies must be passed through untouched — fetch sets the
+  // multipart boundary itself, and JSON.stringify(form) would send "[object Object]".
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
+
   const finalHeaders = {
     'Accept': 'application/json',
-    ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+    ...(body !== undefined && !isForm ? { 'Content-Type': 'application/json' } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(headers || {}),
   };
@@ -63,7 +67,7 @@ async function _fetch(method, path, { body, token, headers, timeoutMs } = {}) {
     response = await fetch(url, {
       method,
       headers: finalHeaders,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: isForm ? body : body !== undefined ? JSON.stringify(body) : undefined,
       signal: controller.signal,
     });
   } catch (err) {
@@ -130,7 +134,8 @@ const api = {
     const form = new FormData();
     if (file) form.append('file', file);
     if (fields) Object.entries(fields).forEach(([k, v]) => form.append(k, String(v)));
-    return _fetch('POST', path, { token, headers: { 'Content-Type': 'multipart/form-data', ...(headers || {}) }, body: form, timeoutMs });
+    // no Content-Type here: fetch must add its own multipart boundary
+    return _fetch('POST', path, { token, headers, body: form, timeoutMs });
   },
 };
 
@@ -160,6 +165,16 @@ export const AuthAPI = {
 export const SpeciesAPI = {
   list: (token, q) =>
     api.get(`/api/v1/species${q ? `?q=${encodeURIComponent(q)}` : ''}`, { token }),
+  get: (token, code) => api.get(`/api/v1/species/${encodeURIComponent(code)}`, { token }),
+};
+
+// Catalogue screens speak "catalogue" but the backend resource is /species.
+export const CatalogueAPI = {
+  // opts: { q, category } (category is filtered client-side; server only takes q)
+  list: (token, opts = {}) => {
+    const q = typeof opts === 'string' ? opts : opts.q;
+    return api.get(`/api/v1/species${q ? `?q=${encodeURIComponent(q)}` : ''}`, { token });
+  },
   get: (token, code) => api.get(`/api/v1/species/${encodeURIComponent(code)}`, { token }),
 };
 
@@ -225,7 +240,7 @@ export const ShipmentsAPI = {
   assign: (token, shipmentId, transporterUserId) =>
     api.post(`/api/v1/shipments/${shipmentId}/assign`, { token, body: { transporter_user_id: transporterUserId } }),
   accept: (token, shipmentId) => api.post(`/api/v1/shipments/${shipmentId}/accept`, { token, body: {} }),
-  decline: (token, shipmentId) => api.post(`/api/v1/shipments/${shipmentId}/decline`, { token, body: {} }),
+  decline: (token, shipmentId, payload) => api.post(`/api/v1/shipments/${shipmentId}/decline`, { token, body: payload || {} }),
   pickup: (token, shipmentId, payload) => api.post(`/api/v1/shipments/${shipmentId}/pickup`, { token, body: payload }),
   location: (token, shipmentId, payload) => api.post(`/api/v1/shipments/${shipmentId}/location`, { token, body: payload }),
   delay: (token, shipmentId, payload) => api.post(`/api/v1/shipments/${shipmentId}/delay`, { token, body: payload }),
@@ -234,7 +249,6 @@ export const ShipmentsAPI = {
   pod: (token, shipmentId, payload) => api.post(`/api/v1/shipments/${shipmentId}/pod`, { token, body: payload }),
   fail: (token, shipmentId, payload) => api.post(`/api/v1/shipments/${shipmentId}/fail`, { token, body: payload }),
   cancel: (token, shipmentId) => api.post(`/api/v1/shipments/${shipmentId}/cancel`, { token, body: {} }),
-  documents: (token, shipmentId) => api.get(`/api/v1/shipments/${shipmentId}/documents`, { token }),
 };
 
 export const LabsAPI = {
@@ -249,6 +263,7 @@ export const LabsAPI = {
   createTest: (token, payload) => api.post('/api/v1/labs/tests', { token, body: payload }),
   listTests: (token, opts = {}) => {
     const params = new URLSearchParams();
+    if (opts.batch_id) params.set('batch_id', opts.batch_id);
     if (opts.sample_id) params.set('sample_id', opts.sample_id);
     if (opts.status) params.set('status', opts.status);
     const qs = params.toString();
@@ -258,12 +273,10 @@ export const LabsAPI = {
   saveResults: (token, testId, payload) => api.post(`/api/v1/labs/tests/${testId}/results`, { token, body: payload }),
   submitTest: (token, testId) => api.post(`/api/v1/labs/tests/${testId}/submit`, { token, body: {} }),
   review: (token, payload) => api.post('/api/v1/labs/reviews', { token, body: payload }),
-  listReviews: (token) => api.get('/api/v1/labs/reviews', { token }),
   issueCertificate: (token, payload) => api.post('/api/v1/labs/certificates', { token, body: payload }),
   listCertificates: (token, batchId) =>
     api.get(`/api/v1/labs/certificates${batchId ? `?batch_id=${batchId}` : ''}`, { token }),
   rejectBatch: (token, payload) => api.post('/api/v1/labs/reject', { token, body: payload }),
-  documents: (token) => api.get('/api/v1/labs/documents', { token }),
   analytics: (token) => api.get('/api/v1/labs/analytics', { token }),
 };
 
@@ -287,12 +300,11 @@ export const ManufacturerAPI = {
   receive: (token, payload) => api.post('/api/v1/manufacturer/receive', { token, body: payload }),
   inventory: (token) => api.get('/api/v1/manufacturer/inventory', { token }),
   inventoryHistory: (token) => api.get('/api/v1/manufacturer/inventory/history', { token }),
-  reserveItem: (token, itemId) => api.post(`/api/v1/manufacturer/inventory/${itemId}/reserve`, { token, body: {} }),
+  reserveItem: (token, itemId, payload) => api.post(`/api/v1/manufacturer/inventory/${itemId}/reserve`, { token, body: payload || {} }),
   releaseItem: (token, itemId) => api.post(`/api/v1/manufacturer/inventory/${itemId}/release`, { token, body: {} }),
   consumeItem: (token, itemId, payload) => api.post(`/api/v1/manufacturer/inventory/${itemId}/consume`, { token, body: payload }),
   adjustItem: (token, itemId, payload) => api.post(`/api/v1/manufacturer/inventory/${itemId}/adjust`, { token, body: payload }),
   discardItem: (token, itemId, payload) => api.post(`/api/v1/manufacturer/inventory/${itemId}/discard`, { token, body: payload }),
-  qualityHolds: (token) => api.get('/api/v1/manufacturer/quality-holds', { token }),
   resolveHold: (token, holdId, payload) => api.post(`/api/v1/manufacturer/quality-holds/${holdId}/resolve`, { token, body: payload }),
   analytics: (token) => api.get('/api/v1/manufacturer/analytics', { token }),
 };
@@ -339,17 +351,14 @@ export const ProductsAPI = {
   addFormula: (token, productId, payload) => api.post(`/api/v1/products/${productId}/formulas`, { token, body: payload }),
   removeFormula: (token, productId, formulaId) => api.delete(`/api/v1/products/${productId}/formulas/${formulaId}`, { token }),
   verifyQr: (token, qrToken) => api.post('/api/v1/products/qr/verify', { token, body: { token: qrToken } }),
-  impacts: (token) => api.get('/api/v1/products/impacts', { token }),
-  createImpact: (token, payload) => api.post('/api/v1/products/impacts', { token, body: payload }),
-  resolveImpact: (token, impactId) => api.post(`/api/v1/products/impacts/${impactId}/resolve`, { token, body: {} }),
 };
 
 export const VerifyAPI = {
   // public (no login) — the consumer journey
-  scan: (qrToken, meta = {}) => api.post('/api/v1/verify/scan', { body: { token: qrToken, ...meta } }),
-  passport: (qrToken) => api.get(`/api/v1/verify/product/${encodeURIComponent(qrToken)}`),
-  journey: (qrToken) => api.get(`/api/v1/verify/product/${encodeURIComponent(qrToken)}/journey`),
-  certificate: (qrToken) => api.get(`/api/v1/verify/product/${encodeURIComponent(qrToken)}/certificate`),
+  scan: (qrToken, meta = {}) => api.post('/verify/scan', { body: { token: qrToken, ...meta } }),
+  passport: (qrToken) => api.get(`/verify/product/${encodeURIComponent(qrToken)}`),
+  journey: (qrToken) => api.get(`/verify/product/${encodeURIComponent(qrToken)}/journey`),
+  certificate: (qrToken) => api.get(`/verify/product/${encodeURIComponent(qrToken)}/certificate`),
   // authed analytics (lab/manufacturer/admin)
   analytics: (token) => api.get('/api/v1/verify/analytics', { token }),
   scans: (token, opts = {}) => {
@@ -396,7 +405,6 @@ export const SupportAPI = {
   },
   get: (token, id) => api.get(`/api/v1/support/${id}`, { token }),
   create: (token, payload) => api.post('/api/v1/support', { token, body: payload }),
-  reply: (token, id, payload) => api.post(`/api/v1/support/${id}/messages`, { token, body: payload }),
   update: (token, id, payload) => api.put(`/api/v1/support/${id}`, { token, body: payload }),
   constants: (token) => api.get('/api/v1/support/constants', { token }),
 };
@@ -431,8 +439,7 @@ export const DocumentsAPI = {
   },
   get: (token, id) => api.get(`/api/v1/documents/${id}`, { token }),
   upload: (token, file, fields) => api.upload('/api/v1/documents/upload', { token, file, fields }),
-  metadata: (token, id, payload) => api.put(`/api/v1/documents/${id}/metadata`, { token, body: payload }),
-  verify: (token, id) => api.post(`/api/v1/documents/${id}/verify`, { token, body: {} }),
+  verify: (token, id) => api.get(`/api/v1/documents/${id}/verify`, { token }),
   logs: (token, id) => api.get(`/api/v1/documents/${id}/logs`, { token }),
   createShare: (token, id, payload) => api.post(`/api/v1/documents/${id}/shares`, { token, body: payload }),
   revokeShare: (token, id, shareId) => api.delete(`/api/v1/documents/${id}/shares/${shareId}`, { token }),
@@ -486,7 +493,7 @@ export const ReportsAPI = {
   schedules: (token) => api.get('/api/v1/reports/schedules', { token }),
   createSchedule: (token, payload) => api.post('/api/v1/reports/schedules', { token, body: payload }),
   runSchedule: (token, id) => api.post(`/api/v1/reports/schedules/${id}/run`, { token, body: {} }),
-  jobs: (token) => api.get('/api/v1/reports/jobs/runs', { token }),
+  jobs: (token) => api.get('/api/v1/analytics/jobs/runs', { token }),
 };
 
 export const BlockchainAPI = {
@@ -539,18 +546,17 @@ export const AdminAPI = {
   complianceAlerts: (token, opts = {}) =>
     api.get(`/api/v1/admin/portal/compliance-alerts?status=${opts.status || 'open'}`, { token }),
   updateComplianceAlert: (token, id, payload) =>
-    api.put(`/api/v1/admin/portal/compliance-alerts/${id}`, { token, body: payload }),
+    api.patch(`/api/v1/admin/portal/compliance-alerts/${id}`, { token, body: payload }),
   runComplianceRules: (token) => api.post('/api/v1/admin/portal/compliance-alerts/run-rules', { token, body: {} }),
   investigations: (token) => api.get('/api/v1/admin/portal/investigations', { token }),
   createInvestigation: (token, payload) => api.post('/api/v1/admin/portal/investigations', { token, body: payload }),
   investigation: (token, id) => api.get(`/api/v1/admin/portal/investigations/${id}`, { token }),
   recalls: (token) => api.get('/api/v1/admin/portal/recalls', { token }),
   createRecall: (token, payload) => api.post('/api/v1/admin/portal/recalls', { token, body: payload }),
-  recall: (token, id) => api.get(`/api/v1/admin/portal/recalls/${id}`, { token }),
   failedCertifications: (token) => api.get('/api/v1/admin/portal/failed-certifications', { token }),
   audit: (token, opts = {}) => api.get(`/api/v1/admin/portal/audit?limit=${opts.limit || 100}`, { token }),
   portalNotifications: (token) => api.get('/api/v1/admin/portal/notifications', { token }),
-  markPortalNotificationRead: (token, id) => api.put(`/api/v1/admin/portal/notifications/${id}/read`, { token, body: {} }),
+  markPortalNotificationRead: (token, id) => api.post(`/api/v1/admin/portal/notifications/${id}/read`, { token, body: {} }),
   reports: (token) => api.get('/api/v1/admin/portal/reports', { token }),
   map: (token, opts = {}) => api.get(`/api/v1/admin/portal/map`, { token }),
   health: () => api.get('/api/v1/ping'),

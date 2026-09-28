@@ -1,11 +1,11 @@
 /**
  * Farm profile screen — view and edit the farmer's land/soil/cert info.
  *
- * Backed by GET/PUT /api/v1/farm/me.
+ * The backend has no farm-profile endpoint yet, so the form is a local draft
+ * and Save reports "coming soon" instead of calling a missing API.
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   ScrollView,
   StyleSheet,
@@ -14,9 +14,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
-import { useAuth } from '../../../../contexts/AuthContext';
-import { FarmProfileAPI } from '../../../../services/apiClient';
 
 const SOIL = ['alluvial', 'black', 'red', 'laterite', 'sandy', 'loamy', 'clay', 'saline', 'other'];
 const IRRIG = ['rainfed', 'drip', 'sprinkler', 'flood', 'borewell', 'canal', 'mixed', 'other'];
@@ -31,8 +28,6 @@ function Pill({ active, label, onPress }) {
 }
 
 export default function FarmProfileScreen({ navigation }) {
-  const { accessToken } = useAuth();
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const [farmName, setFarmName] = useState('');
@@ -45,33 +40,6 @@ export default function FarmProfileScreen({ navigation }) {
   const [lng, setLng] = useState('');
   const [notes, setNotes] = useState('');
 
-  const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await FarmProfileAPI.getMine(accessToken);
-      const f = data.farm;
-      if (f) {
-        setFarmName(f.farm_name || '');
-        setLandSize(f.land_size_acres ? String(f.land_size_acres) : '');
-        setSoilType(f.soil_type || null);
-        setIrrigationType(f.irrigation_type || null);
-        setCertifications(f.certifications || []);
-        setAddress(f.address || '');
-        setLat(f.gps_lat != null ? String(f.gps_lat) : '');
-        setLng(f.gps_lng != null ? String(f.gps_lng) : '');
-        setNotes(f.notes || '');
-      }
-    } catch (err) {
-      Alert.alert('Could not load farm profile', err?.message || 'Network error');
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
   const toggleCert = (cert) => {
     setCertifications((prev) =>
       prev.includes(cert) ? prev.filter((c) => c !== cert) : [...prev, cert],
@@ -81,33 +49,14 @@ export default function FarmProfileScreen({ navigation }) {
   const save = async () => {
     setSaving(true);
     try {
-      const payload = {
-        farm_name: farmName.trim() || null,
-        land_size_acres: landSize ? Number(landSize) : null,
-        soil_type: soilType,
-        irrigation_type: irrigationType,
-        certifications,
-        address: address.trim() || null,
-        gps_lat: lat ? Number(lat) : null,
-        gps_lng: lng ? Number(lng) : null,
-        notes: notes.trim() || null,
-      };
-      await FarmProfileAPI.upsertMine(accessToken, payload);
-      Alert.alert('Saved', 'Farm profile updated.');
-    } catch (err) {
-      Alert.alert('Could not save', err?.message || 'Network error');
+      Alert.alert(
+        'Coming soon',
+        'Farm profiles are not connected to the backend yet — your entries stay on this device.',
+      );
     } finally {
       setSaving(false);
     }
   };
-
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator color="#10B981" />
-      </View>
-    );
-  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
@@ -117,6 +66,11 @@ export default function FarmProfileScreen({ navigation }) {
 
       <Text style={styles.title}>Farm Profile & Land Records</Text>
       <Text style={styles.subtitle}>Used by weather, crop calendar, and regulator reports.</Text>
+
+      <Text style={styles.banner}>
+        Coming soon — farm profiles aren't connected to the backend yet. This form
+        is a local draft.
+      </Text>
 
       <Text style={styles.label}>Farm name</Text>
       <TextInput value={farmName} onChangeText={setFarmName} style={styles.input} placeholder="e.g. Green Valley" placeholderTextColor="#9CA3AF" />
@@ -176,6 +130,16 @@ const styles = StyleSheet.create({
   backText: { color: '#10B981', fontWeight: '700' },
   title: { fontSize: 22, fontWeight: '700', color: '#065F46', marginTop: 6 },
   subtitle: { color: '#6B7280', marginBottom: 16 },
+  banner: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#FCD34D',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    color: '#92400E',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
   label: { fontWeight: '600', color: '#374151', marginTop: 16, marginBottom: 6 },
   input: {
     backgroundColor: '#FFF',

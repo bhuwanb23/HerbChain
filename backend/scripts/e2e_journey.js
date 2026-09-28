@@ -7,13 +7,13 @@
  *   → consumer verify → admin sees analytics
  *
  * Usage:
- *   BASE_URL=http://localhost:5000 node scripts/e2e_journey.js
+ *   BASE_URL=http://127.0.0.1:5000 node scripts/e2e_journey.js
  *   npm run e2e  (via package.json script)
  */
 const assert = require("assert");
 const http = require("http");
 
-const BASE = process.env.BASE_URL || "http://localhost:5000";
+const BASE = process.env.BASE_URL || "http://127.0.0.1:5000";
 const PASSWORD = "Admin@123456";
 let passed = 0;
 let failed = 0;
@@ -53,8 +53,8 @@ async function main() {
 
   // 2. Login as admin
   console.log("\n2️⃣  Admin login");
-  const login = await req("POST", "/api/v1/auth/login", { body: { identifier: "admin@herbchain.com", password: PASSWORD } });
-  const adminToken = login.data?.access_token;
+  const login = await req("POST", "/api/v1/auth/login", { body: { identifier: "admin@herbchain.in", password: PASSWORD } });
+  const adminToken = login.data?.data?.access_token;
   ok("Admin login succeeds", !!adminToken);
 
   // 3. Admin portal dashboard

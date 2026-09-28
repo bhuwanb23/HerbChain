@@ -4,10 +4,10 @@
     Bootstrap HerbChain locally on Windows without GNU make.
 
 .DESCRIPTION
-    1. Installs pip + npm deps for backend, website, and mobile (skippable with -SkipInstall).
-    2. Applies Alembic migrations to the SQLite DB.
-    3. Seeds 6 demo users + 3 demo batches.
-    4. Optionally starts the Flask backend (skippable with -SkipBackend).
+    1. Installs npm deps for backend, website, and mobile (skippable with -SkipInstall).
+    2. Generates the Prisma client and applies committed migrations.
+    3. Seeds demo users, RBAC, and the 25-species AYUSH catalogue.
+    4. Optionally starts the backend (skippable with -SkipBackend).
 
     Run the website and mobile dev servers in separate terminals afterwards:
         cd website && npm run dev
@@ -32,9 +32,9 @@ Write-Host "==> HerbChain demo bootstrap" -ForegroundColor Cyan
 Write-Host "    repo: $repoRoot"
 
 if (-not $SkipInstall) {
-    Write-Host "`n==> Installing Python deps (backend/)" -ForegroundColor Cyan
+    Write-Host "`n==> Installing JS deps (backend/)" -ForegroundColor Cyan
     Push-Location backend
-    python -m pip install -r requirements.txt
+    npm install
     Pop-Location
 
     Write-Host "`n==> Installing JS deps (website/)" -ForegroundColor Cyan
@@ -50,35 +50,38 @@ if (-not $SkipInstall) {
     Write-Host "Skipping installs (-SkipInstall)." -ForegroundColor Yellow
 }
 
-Write-Host "`n==> Applying migrations" -ForegroundColor Cyan
-Push-Location backend\server
-try {
-    python -m flask --app app db upgrade
-} catch {
-    Write-Host "flask db upgrade failed — falling back to db.create_all() via seed script." -ForegroundColor Yellow
-}
+Write-Host "`n==> Generating Prisma client + applying migrations" -ForegroundColor Cyan
+Push-Location backend
+npm run generate
+npm run migrate
 Pop-Location
 
 Write-Host "`n==> Seeding demo data" -ForegroundColor Cyan
-Push-Location backend\server
-python scripts\seed_demo.py --fresh
+Push-Location backend
+npm run seed
 Pop-Location
 
 Write-Host "`nDemo data ready. Credentials:" -ForegroundColor Green
-Write-Host "  farmer1@herbchain.local      / farmerpass     (farmer)"
-Write-Host "  transporter1@herbchain.local / transpass      (transporter)"
-Write-Host "  lab1@herbchain.local         / labpass        (lab)"
-Write-Host "  manufacturer1@herbchain.local/ mfgpass        (manufacturer)"
-Write-Host "  consumer1@herbchain.local    / conspass       (consumer)"
-Write-Host "  admin@herbchain.local        / adminpass      (admin)"
+Write-Host "  admin@herbchain.in          / Admin@123456  (admin)"
+Write-Host "  farmer@herbchain.in         / Demo@123456   (farmer)"
+Write-Host "  transporter@herbchain.in    / Demo@123456   (transporter)"
+Write-Host "  lab@herbchain.in            / Demo@123456   (lab)"
+Write-Host "  manufacturer@herbchain.in   / Demo@123456   (manufacturer)"
+Write-Host "  distributor@herbchain.in    / Demo@123456   (distributor)"
+Write-Host "  retailer@herbchain.in       / Demo@123456   (retailer)"
+Write-Host "  consumer@herbchain.in       / Demo@123456   (consumer)"
+
+Write-Host "`nNext terminals:" -ForegroundColor Cyan
+Write-Host "  cd website; npm run dev      # http://localhost:5173"
+Write-Host "  cd App;     npx expo start   # scan with Expo Go"
 
 if ($SkipBackend) {
     Write-Host "`nDone. Start the backend manually with:" -ForegroundColor Cyan
-    Write-Host "  cd backend\server; python -m flask --app app run --host 0.0.0.0 --port 5000"
+    Write-Host "  cd backend; npm run dev"
     exit 0
 }
 
 Write-Host "`n==> Starting backend on http://localhost:5000 (Ctrl+C to stop)" -ForegroundColor Cyan
-Push-Location backend\server
-python -m flask --app app run --host 0.0.0.0 --port 5000
+Push-Location backend
+npm run dev
 Pop-Location

@@ -35,15 +35,23 @@ export default function PricesScreen({ navigation }) {
 
   const load = useCallback(async () => {
     try {
-      const data = await PricesAPI.list(accessToken);
-      setRows(data.prices || []);
+      const data = await PricesAPI.list();
+      const raw = data?.latest || data?.prices || [];
+      setRows(
+        raw.map((p) => ({
+          ...p,
+          common_name: p.species?.common_name || '',
+          scientific_name: p.species?.scientific_name || '',
+          price_per_kg_inr: Math.round((p.price_per_kg_paise || 0) / 100),
+        })),
+      );
     } catch (err) {
       Alert.alert('Could not load prices', err?.message || 'Network error');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [accessToken]);
+  }, []);
 
   useEffect(() => {
     load();

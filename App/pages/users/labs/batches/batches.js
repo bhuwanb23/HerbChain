@@ -8,12 +8,14 @@ import { useEffect } from 'react';
 import { Alert } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { ShipmentsAPI } from '../../../../services/apiClient';
+import { useAuth } from '../../../../contexts/AuthContext';
 
 const BatchesPage = ({ navigation }) => {
   const { t } = useGlobalTranslation();
+  const { accessToken } = useAuth();
   const [tab, setTab] = useState('all'); // 'all' | 'accepted' | 'archived'
   const [detail, setDetail] = useState(null);
-  const { all, accepted, archived, loading, refresh, acceptHerb } = useLabBatches();
+  const { all, accepted, archived, loading, refresh, acceptHerb } = useLabBatches(accessToken);
 
   const counts = {
     all: Array.isArray(all) ? all.length : 0,
@@ -30,8 +32,8 @@ const BatchesPage = ({ navigation }) => {
         try {
           // Use the new shipments contract for lab delivery
           const shipmentId = batchId; // batchId may actually be shipmentId from scanner
-          await ShipmentsAPI.deliver(shipmentId, {
-            scanned_qr: scannedData,
+          await ShipmentsAPI.deliver(accessToken, shipmentId, {
+            token: scannedData,
             location: 'Lab Facility',
           });
           Alert.alert(t.labBatches?.deliverySuccess || 'Delivery Success', t.labBatches?.ownershipTransferred || 'Ownership transferred to lab.');

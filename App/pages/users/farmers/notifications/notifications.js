@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet, Alert, ActivityIndicator, Text } from 'react-native';
 import { useNotifications } from './hooks';
 import {
   NotificationHeader,
@@ -12,6 +12,7 @@ const NotificationsScreen = ({ navigation }) => {
     groupedNotifications,
     activeFilter,
     unreadCount,
+    loading,
     markAsRead,
     markAllAsRead,
     togglePin,
@@ -38,6 +39,15 @@ const NotificationsScreen = ({ navigation }) => {
   const handlePinNotification = (notificationId) => {
     togglePin(notificationId);
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2563EB" />
+        <Text style={styles.loadingText}>Loading notifications...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -86,6 +96,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F9FAFB',
+  },
+  loadingText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#6B7280',
   },
   scrollView: {
     flex: 1,

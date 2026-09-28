@@ -8,8 +8,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
-import { useAuth } from '../../../contexts/AuthContext';
-import { LabsAPI } from '../../../services/apiClient';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { LabsAPI } from '../../../../services/apiClient';
 
 const COMMON_PARAMS = [
   { code: 'moisture', label: 'Moisture Content (%)', ref: '≤ 12.0' },

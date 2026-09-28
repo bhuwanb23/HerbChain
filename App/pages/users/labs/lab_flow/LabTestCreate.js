@@ -6,8 +6,8 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View,
 } from 'react-native';
-import { useAuth } from '../../../contexts/AuthContext';
-import { LabsAPI } from '../../../services/apiClient';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { LabsAPI } from '../../../../services/apiClient';
 
 const TEST_CATEGORIES = [
   'moisture', 'purity', 'heavy_metals', 'microbial', 'pesticide',

@@ -22,12 +22,23 @@ export default function ShipmentMapScreen({ navigation, route }) {
   const fetchData = useCallback(async () => {
     if (!accessToken || !shipmentId) return;
     try {
-      const [detail, locs] = await Promise.all([
-        ShipmentsAPI.detail(accessToken, shipmentId),
-        ShipmentsAPI.locations(accessToken, shipmentId).catch(() => ({ locations: [] })),
+      const [detail, tl] = await Promise.all([
+        ShipmentsAPI.get(accessToken, shipmentId),
+        ShipmentsAPI.timeline(accessToken, shipmentId).catch(() => ({ timeline: [] })),
       ]);
       setShipmentData(detail?.shipment || detail);
-      setLocations(locs?.locations || locs || []);
+      const events = tl?.timeline || [];
+      setLocations(
+        events
+          .filter((e) => e.event_type === 'GPS_UPDATED' && e.event_data)
+          .map((e) => ({
+            lat: e.event_data.gps_lat,
+            lng: e.event_data.gps_lng,
+            speed: e.event_data.speed_kph,
+            heading: null,
+            timestamp: e.created_at,
+          }))
+      );
       setLastUpdate(new Date());
     } catch (_) {}
   }, [accessToken, shipmentId]);
@@ -37,8 +48,10 @@ export default function ShipmentMapScreen({ navigation, route }) {
 
   const s = shipmentData || {};
   const lastLoc = locations.length > 0 ? locations[locations.length - 1] : null;
-  const origin = s.origin || {};
-  const destination = s.destination || {};
+  const origin = s.origin_location
+    || (s.origin_gps?.lat != null ? `${s.origin_gps.lat.toFixed(2)}, ${s.origin_gps.lng.toFixed(2)}` : null);
+  const destination = s.destination_location
+    || (s.destination_gps?.lat != null ? `${s.destination_gps.lat.toFixed(2)}, ${s.destination_gps.lng.toFixed(2)}` : null);
 
   // Calculate stats
   const totalStops = locations.filter((l) => l.speed === 0 || l.speed < 1).length;
@@ -48,7 +61,7 @@ export default function ShipmentMapScreen({ navigation, route }) {
     <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}><Text style={styles.backBtn}>← Back</Text></TouchableOpacity>
-        <Text style={styles.headerTitle}>🗺️ {s.shipment_code || s.id?.slice(0, 12) || 'Shipment'}</Text>
+        <Text style={styles.headerTitle}>🗺️ {s.shipment_no || s.shipment_code || s.id?.slice(0, 12) || 'Shipment'}</Text>
         <View style={{ width: 60 }} />
       </View>
 
@@ -102,12 +115,12 @@ export default function ShipmentMapScreen({ navigation, route }) {
         <Text style={styles.cardTitle}>Route</Text>
         <View style={styles.routeRow}>
           <View style={[styles.routeDot, { backgroundColor: '#10B981' }]} />
-          <Text style={styles.routeLabel}>Origin: {origin.location || origin.state || '-'}</Text>
+          <Text style={styles.routeLabel}>Origin: {origin || '-'}</Text>
         </View>
         <View style={styles.routeLine} />
         <View style={styles.routeRow}>
           <View style={[styles.routeDot, { backgroundColor: '#EF4444' }]} />
-          <Text style={styles.routeLabel}>Destination: {destination.location || destination.state || '-'}</Text>
+          <Text style={styles.routeLabel}>Destination: {destination || '-'}</Text>
         </View>
       </View>
 

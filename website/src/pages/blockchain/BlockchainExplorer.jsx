@@ -42,7 +42,7 @@ export default function BlockchainExplorer() {
     try {
       await BlockchainAPI.process(accessToken);
       alert('Blockchain queue processed.');
-    } catch (_) {
+    } catch {
       alert('Failed to process queue.');
     }
   };
@@ -131,7 +131,7 @@ export default function BlockchainExplorer() {
           ))}
           {nodes.length === 0 && <p className="text-gray-500 col-span-3 text-center py-8">No nodes registered.</p>}
         </div>
-      ) : (
+      ) : activeTab === 'contracts' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {contracts.map((c) => (
             <div key={c.id || c.name} className="bg-white rounded-lg border border-gray-200 p-4">
@@ -159,7 +159,7 @@ export default function BlockchainExplorer() {
               try {
                 const res = await BlockchainAPI.events(accessToken, { batch_id: verifyId.trim(), limit: 50 });
                 setVerifyResult(res?.events || []);
-              } catch (_) { setVerifyResult([]); }
+              } catch { setVerifyResult([]); }
               setVerifyLoading(false);
             }} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
               {verifyLoading ? 'Verifying...' : 'Verify'}

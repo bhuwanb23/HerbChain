@@ -7,8 +7,8 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   TextInput, ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
-import { AdminAPI } from '../../../services/apiClient';
-import { useAuth } from '../../../contexts/AuthContext';
+import { AdminAPI } from '../../../../services/apiClient';
+import { useAuth } from '../../../../contexts/AuthContext';
 
 const ROLES = ['All', 'farmer', 'transporter', 'lab', 'manufacturer', 'admin'];
 const STATUSES = ['All', 'active', 'suspended', 'pending', 'rejected'];

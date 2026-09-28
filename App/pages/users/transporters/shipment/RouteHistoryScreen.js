@@ -17,17 +17,29 @@ export default function RouteHistoryScreen({ navigation, route }) {
   useEffect(() => {
     if (!accessToken || !shipmentId) return;
     Promise.all([
-      ShipmentsAPI.detail(accessToken, shipmentId),
-      ShipmentsAPI.locations(accessToken, shipmentId).catch(() => ({ locations: [] })),
-    ]).then(([detail, locs]) => {
+      ShipmentsAPI.get(accessToken, shipmentId),
+      ShipmentsAPI.timeline(accessToken, shipmentId).catch(() => ({ timeline: [] })),
+    ]).then(([detail, tl]) => {
       setShipment(detail?.shipment || detail);
-      setLocations(locs?.locations || locs || []);
+      const events = tl?.timeline || [];
+      setLocations(
+        events
+          .filter((e) => e.event_type === 'GPS_UPDATED' && e.event_data)
+          .map((e) => ({
+            lat: e.event_data.gps_lat,
+            lng: e.event_data.gps_lng,
+            speed: e.event_data.speed_kph,
+            timestamp: e.created_at,
+          }))
+      );
     }).finally(() => setLoading(false));
   }, [accessToken, shipmentId]);
 
   const s = shipment || {};
-  const origin = s.origin || {};
-  const destination = s.destination || {};
+  const origin = s.origin_location
+    || (s.origin_gps?.lat != null ? `${s.origin_gps.lat.toFixed(2)}, ${s.origin_gps.lng.toFixed(2)}` : null);
+  const destination = s.destination_location
+    || (s.destination_gps?.lat != null ? `${s.destination_gps.lat.toFixed(2)}, ${s.destination_gps.lng.toFixed(2)}` : null);
 
   // Calculate stats
   const totalDistance = locations.reduce((sum, l, i) => {
@@ -68,7 +80,7 @@ export default function RouteHistoryScreen({ navigation, route }) {
 
       {/* Route summary */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>{s.shipment_code || s.id?.slice(0, 12) || 'Shipment'}</Text>
+        <Text style={styles.cardTitle}>{s.shipment_no || s.shipment_code || s.id?.slice(0, 12) || 'Shipment'}</Text>
         <Text style={styles.cardStatus}>Status: {s.status || '-'}</Text>
       </View>
 
@@ -87,7 +99,7 @@ export default function RouteHistoryScreen({ navigation, route }) {
           <View style={[styles.routeNode, { backgroundColor: '#10B981' }]}>
             <Text style={styles.routeNodeIcon}>🌱</Text>
             <Text style={styles.routeNodeLabel}>Farm</Text>
-            <Text style={styles.routeNodeSub}>{origin.location || origin.state || 'Origin'}</Text>
+            <Text style={styles.routeNodeSub}>{origin || 'Origin'}</Text>
           </View>
           <View style={styles.routeArrow}>
             {locations.map((_, i) => <View key={i} style={styles.routeDot} />)}
@@ -95,7 +107,7 @@ export default function RouteHistoryScreen({ navigation, route }) {
           <View style={[styles.routeNode, { backgroundColor: '#EF4444' }]}>
             <Text style={styles.routeNodeIcon}>🏭</Text>
             <Text style={styles.routeNodeLabel}>Destination</Text>
-            <Text style={styles.routeNodeSub}>{destination.location || destination.state || 'End'}</Text>
+            <Text style={styles.routeNodeSub}>{destination || 'End'}</Text>
           </View>
         </View>
       </View>

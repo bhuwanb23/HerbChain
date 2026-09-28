@@ -1,205 +1,261 @@
-# HerbChain
+<div align="center">
 
-End-to-end traceability for AYUSH herbs: every step from farmer to consumer is a
-signed QR scan that atomically transfers ownership of a batch. Local-first,
-SQLite-backed, no blockchain.
+# 🌿 HerbChain
+
+**End-to-end traceability for AYUSH herbs — from farm to consumer, one signed QR scan at a time.**
+
+Every custody handoff is an authenticated scan that verifies a signed QR token,
+invalidates the previous one, atomically transfers ownership, and mints the
+next QR — leaving an append-only audit trail that powers consumer-facing
+product passports.
+
+[![CI](https://github.com/bhuwanb23/HerbChain/actions/workflows/ci.yml/badge.svg)](./.github/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-10B981.svg)](./LICENSE)
+[![Node](https://img.shields.io/badge/Node-%E2%89%A520-339933?logo=nodedotjs&logoColor=white)](./backend/package.json)
+[![Backend tests](https://img.shields.io/badge/backend%20tests-211%20passing-0EA5E9)](./backend)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-8B5CF6.svg)](./CONTRIBUTING.md)
+
+</div>
+
+---
+
+## Why HerbChain
+
+AYUSH (Ayurveda, Yoga & Naturopathy, Unani, Siddha, Homoeopathy) herb supply
+chains suffer from **stock manipulation, adulteration, diversion, and zero
+consumer transparency**. HerbChain fixes this with a chain of custody that is:
+
+- **Cryptographically signed** — every batch QR is an HMAC-SHA256 JWT; a
+  leaked QR dies the moment the next holder scans and a new one is minted.
+- **State-machine governed** — ownership can only move along allowed
+  `(current_phase, receiver_role)` transitions, and (phase 6) only through a
+  two-party request/approve handshake.
+- **Append-only auditable** — every fact lands in an immutable `BatchEvent`
+  timeline; a permissioned blockchain layer (phase 12) anchors trusted events.
+- **Consumer-verifiable** — anyone can scan a product QR (no login) and see
+  the origin farm, lab certificate, journey, and manufacturer.
+
+![Chain of custody](docs/diagrams/custody-flow.png)
+
+## Architecture
 
 ```
-Farmer --QR--> Transporter --QR--> Lab --QR--> Transporter --QR--> Manufacturer --product QR--> Consumer
+Farmer ──QR──▶ Transporter ──QR──▶ Lab ──QR──▶ Transporter ──QR──▶ Manufacturer ──product QR──▶ Consumer
 ```
 
-Each arrow is an authenticated scan that (a) verifies the QR's HMAC signature,
-(b) invalidates the previous QR, (c) transfers ownership, (d) mints the next QR.
+- **`backend/`** — Express 4 + Prisma + SQLite REST API (19 domain modules,
+  129 models across 25 schema files, ~241 routes). Swap to Postgres by
+  changing `DATABASE_URL` — nothing else.
+- **`App/`** — React Native (Expo 54) mobile app with role-specific
+  navigation for farmers, transporters, labs, manufacturers, admins, and
+  consumers. Includes offline-sync support and on-device AI herb recognition.
+- **`website/`** — React 19 + Vite + MUI admin portal (the AYUSH regulatory
+  control tower): dashboards, traceability explorer, investigations,
+  recalls, blockchain explorer.
 
-## What's in this repo
+![System architecture](docs/diagrams/architecture.png)
 
-| Folder | Stack | What it is |
-| --- | --- | --- |
-| [`backend/`](backend/) | Flask 3 + SQLAlchemy + Flask-Migrate | REST API, auth, QR + transfer services, SQLite database. |
-| [`App/`](App/) | React Native (Expo) | Mobile app, one home screen per role (farmer / transporter / lab / manufacturer / consumer / admin). |
-| [`website/`](website/) | React + Vite + MUI | Admin dashboard: stats, batch traceability, user management, settings. |
-| [`_archive/`](_archive/) | — | Old prototype and Hyperledger Fabric scaffold, kept for reference but not part of v1. |
+### What happens on a scan
 
-## One-command demo (`make demo`)
+1. The scanner presents the batch's QR token (HS256 JWT with
+   `typ/sub/holder/phase/nonce` claims).
+2. Backend verifies signature + expiry, then rejects anything that isn't the
+   **single active token** for that batch — stale and replayed tokens are
+   logged to `qr_scan_logs` as a tamper signal.
+3. The `TRANSITIONS` state machine decides whether
+   `(current_phase, scanner_role)` is a legal custody move.
+4. Inside one Prisma transaction: custody + phase update, immutable
+   `BatchEvent` append, and the next holder's QR minted.
 
-If you have GNU make installed (Git Bash, WSL, msys, or `choco install make`):
+## Feature highlights
+
+| Role | What they get |
+| --- | --- |
+| **Farmer** | Batch registration with GPS + photo provenance, AI-assisted species ID (on-device TFLite + backend re-rank), 25-species AYUSH catalogue, crop calendar, batch splitting, QR printing, transfer inbox |
+| **Transporter** | Trip list, shipment lifecycle (assign → accept → pickup → GPS pings → deliver → POD), delivery failure handling |
+| **Lab** | Intake queue, samples, structured tests, two-level review, certificate (COA) issuance, batch rejection |
+| **Manufacturer** | Certified-batch marketplace, procurement requests, GRN receiving, inventory with allocations & quality holds, manufacturing runs, product lineage, recall impact analysis |
+| **Consumer** | Public `/verify` product passport — origin, journey, lab certificate — plus feedback & fake-reporting, no account needed |
+| **Admin** | Regulatory control tower: dashboards, universal search, compliance alerts & scores, investigations, recalls, shipment map, audit trail, blockchain governance |
+
+## Quick start
+
+**Prerequisites:** Node.js ≥ 20, npm. For the mobile app, the
+[Expo Go](https://expo.dev/go) app on your phone.
+
+### One command (Git Bash / WSL / macOS / Linux)
 
 ```bash
-make demo
+make demo        # install → migrate → seed → run backend on :5000
 ```
 
-That runs, in order:
-
-1. `make install` — pip install + npm install for all three projects
-2. `make migrate` — apply Alembic migrations to SQLite
-3. `make seed` — seed 6 demo users and 3 demo batches (different phases)
-4. `make run-backend` — start the Flask API on `:5000`
-
-After it prints the credentials, open `website/` and `App/` in two more
-terminals and run `make run-website` / `make run-app`.
-
-### Windows-friendly (no make)
+On Windows without `make`:
 
 ```powershell
 ./scripts/demo.ps1
 ```
 
-Does the same thing using PowerShell — installs, migrates, seeds, then prints
-the demo credentials. Start the website and app in separate terminals afterwards.
+Both scripts print the demo credentials when done; then start the website
+and mobile app in separate terminals as shown below.
 
-## Manual setup (3 terminals)
+### Manual setup (3 terminals)
 
-### Terminal 1 — backend
+**Terminal 1 — backend**
 
 ```bash
 cd backend
-python -m venv .venv
-. .venv/Scripts/activate           # Windows PowerShell: .venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-cp env.example .env                # tweak JWT_SECRET_KEY + QR_SIGNING_KEY for non-dev
-cd server
-flask --app app db upgrade         # apply migrations
-python scripts/seed_demo.py --fresh
-flask --app app run --host 0.0.0.0 --port 5000
-# or, for prod-style: waitress-serve --listen=0.0.0.0:5000 app:app
+cp .env.example .env        # dev defaults are safe; see Security notes
+npm install
+npm run generate            # prisma generate (multi-file schema)
+npm run migrate             # apply committed migrations
+npm run seed                # demo users + 25-species AYUSH catalogue
+npm run dev                 # http://localhost:5000
 ```
 
-### Terminal 2 — website
+**Terminal 2 — website**
 
 ```bash
 cd website
-cp .env.example .env.local         # set VITE_API_BASE_URL if backend isn't on localhost:5000
 npm install
-npm run dev                        # http://localhost:5173
+npm run dev                 # http://localhost:5173
 ```
 
-### Terminal 3 — mobile app
+**Terminal 3 — mobile app**
 
 ```bash
 cd App
 npm install
-npx expo start
+npx expo start              # scan the QR in the terminal with Expo Go
 ```
 
-Open the Expo Go app on your phone (same Wi-Fi as the laptop) and scan the QR
-shown in the terminal. The mobile client auto-detects the dev host; if the
-backend lives elsewhere, edit `App/app.json` →  `expo.extra.API_BASE_URL`.
+The mobile client auto-detects the dev host on the same Wi-Fi. To point it
+elsewhere, set `expo.extra.API_BASE_URL` in `App/app.json`.
 
 ## Demo credentials
 
-After `python scripts/seed_demo.py --fresh`:
-
 | Email | Password | Role |
 | --- | --- | --- |
-| `farmer1@herbchain.local` | `farmerpass` | farmer |
-| `transporter1@herbchain.local` | `transpass` | transporter |
-| `lab1@herbchain.local` | `labpass` | lab |
-| `manufacturer1@herbchain.local` | `mfgpass` | manufacturer |
-| `consumer1@herbchain.local` | `conspass` | consumer |
-| `admin@herbchain.local` | `adminpass` | admin |
+| `admin@herbchain.in` | `Admin@123456` | admin |
+| `farmer@herbchain.in` | `Demo@123456` | farmer |
+| `transporter@herbchain.in` | `Demo@123456` | transporter |
+| `lab@herbchain.in` | `Demo@123456` | lab |
+| `manufacturer@herbchain.in` | `Demo@123456` | manufacturer |
+| `distributor@herbchain.in` | `Demo@123456` | distributor |
+| `retailer@herbchain.in` | `Demo@123456` | retailer |
+| `consumer@herbchain.in` | `Demo@123456` | consumer |
 
-The seeded batches:
-
-- `HERB-…` (Ashwagandha) — currently `with_farmer`, ready for a transporter pickup.
-- `HERB-…` (Tulsi) — `in_transit_to_lab`, transporter holds it.
-- `HERB-…` (Brahmi) — went the whole way: farmer → transporter → lab (approved) → transporter → manufacturer → product `PROD-…`.
-- `HERB-…` (Moringa) — parent batch that's been split into two children (7 kg + 5 kg); demonstrates the batch-split flow.
-
-Trace the third one in the website at `/trace/<HERB-…>` to see the full timeline.
-
-## Farmer feature pack
-
-In addition to the core scan-and-transfer flow, farmers have a quick-action
-shelf on their home screen with seven AYUSH-focused tools:
-
-| Feature | Backend | Mobile screen |
-| --- | --- | --- |
-| **Farm Profile & Land Records** | `GET/PUT /api/v1/farm/me` | `FarmProfileScreen` |
-| **Herb Catalogue (25 AYUSH species)** | `GET /api/v1/catalogue`, `GET /api/v1/catalogue/<id>` | `CatalogueScreen`, `CatalogueDetailScreen` |
-| **Crop Planning Calendar** | `GET/POST/PUT/DELETE /api/v1/crop-plans` | `CropCalendarScreen` |
-| **AI Hybrid Recognition** | `POST /api/v1/recognition/herbs` | `SmartRegisterScreen` |
-| **Weather Integration** | `GET /api/v1/weather?lat=&lng=` (OpenWeatherMap + stub fallback) | `WeatherCard`, `WeatherScreen` |
-| **Batch Splitting** | `POST /api/v1/batches/<id>/split` | `BatchSplitScreen` |
-| **Price Discovery** | `GET /api/v1/prices`, `GET /api/v1/prices/<species_id>` | `PricesScreen` |
-
-The AI recognition is **hybrid**: the mobile app runs an on-device TFLite plant
-classifier (via `react-native-fast-tflite`) to get a top-N list of `{label, score}`
-candidates, then the backend re-ranks those against the AYUSH `herb_catalogue`
-using fuzzy synonym matching. The Expo Go fallback (no native module available)
-shows the catalogue picker so the user can still drive the rerank manually.
-
-Set `OPENWEATHER_API_KEY` in `backend/.env` to get live weather data; without
-it, the endpoint returns a deterministic stubbed payload so the demo still
-works offline. See [`backend/env.example`](backend/env.example).
-
-Drop a real plant `.tflite` model + matching `LABELS.txt` into
-[`App/assets/models/`](App/assets/models/) and build a custom Expo dev client to
-enable on-device inference. Without those, the manual catalogue picker still
-calls the backend re-ranker and continues into batch registration.
-
-## Architecture in one screen
-
-```
-                 +-----------------+      +-----------------+
-   Expo Go --->  |  React Native   |      |     Vite +      |
-                 |   mobile app    |      |   React MUI     |  <--- browser
-                 +--------+--------+      +--------+--------+
-                          |                        |
-                          v                        v
-                 +-----------------------------------------+
-                 |   Flask API (gunicorn / waitress)       |
-                 |   /api/v1/* + /admin/* + /trace/...     |
-                 +--------------------+--------------------+
-                                      |
-                                      v
-                       +--------------+--------------+
-                       |  SQLite (backend/.../*.db)  |
-                       +-----------------------------+
-```
-
-Key design decisions are in [`backend/server/README.md`](backend/server/README.md):
-
-- Schema split between `Herb` (immutable facts), `BatchState` (mutable current state), `BatchEvent` (append-only audit log).
-- QR payloads are signed JWTs (`HMAC-SHA256` with `QR_SIGNING_KEY`); the old token dies the moment the next holder scans.
-- All write endpoints are protected by Flask-JWT-Extended + role decorators (`@require_role`).
-- One unified `POST /api/v1/batches/<id>/transfer` endpoint drives the state machine.
+> These accounts exist for local demos only. Override with `ADMIN_PASSWORD` /
+> `DEMO_PASSWORD` env vars when seeding.
 
 ## Testing
 
 ```bash
 cd backend
-pytest              # auth, transfer flow, QR security, traceability
+npm test            # 18 suites, 211 tests — node:test + supertest
+npm run test:qr     # single suite (auth, batches, transfers, shipments, lab, …)
+npm run e2e         # golden-path journey against a running server (BASE_URL)
 ```
 
-## Project layout
+Each suite runs against an isolated SQLite database (a template copied to a
+temp dir), so suites never interfere. The website has ESLint (`npm run lint`);
+the mobile app is exercised via Expo.
+
+## Repository structure
+
+![Repository structure](docs/diagrams/repo-structure.png)
 
 ```
 HerbChain/
-├── App/                          # React Native (Expo) mobile app
-├── backend/
-│   ├── env.example
-│   ├── pytest.ini
-│   ├── requirements.txt
-│   └── server/
-│       ├── app.py                # Flask application factory
-│       ├── models/               # SQLAlchemy models (Herb, BatchState, BatchEvent, HerbCatalogue, FarmProfile, CropPlan, PriceQuote, WeatherSnapshot, ...)
-│       ├── routes/               # auth / batches / lab_reports / products / traceability / admin / catalogue / farm / crop_plans / recognition / weather / prices
-│       ├── schemas/              # marshmallow request schemas
-│       ├── services/             # qr_service, transfer_service (incl. split_batch), traceability_service, recognition_service, weather_service
-│       ├── utils/                # auth decorators, response helpers
-│       ├── tests/                # pytest suite
-│       └── scripts/
-│           ├── seed_demo.py
-│           └── migrate_legacy_data.py
-├── website/                      # React admin dashboard
-├── scripts/                      # repo-wide demo scripts
-├── _archive/
-│   ├── prototype/                # original HTML/CSS prototype
-│   └── blockchain/               # Hyperledger Fabric scaffold (out of v1 scope)
-├── Makefile
-└── README.md
+├── backend/            # Express + Prisma + SQLite REST API
+│   ├── prisma/schema/  #   25 domain schema files, 129 models, 20 migrations
+│   ├── src/modules/    #   19 domain modules (routes + wiring)
+│   ├── src/services/   #   business logic (transfer, qr, ledger, workers…)
+│   ├── src/constants/  #   enums + the TRANSITIONS state machine
+│   └── tests/          #   18 node:test suites with isolated-DB harness
+├── App/                # React Native (Expo) mobile app — 6 roles
+├── website/            # React + Vite + MUI admin portal
+├── docs/               # phase specs (the spec of record) + diagrams
+│   ├── phase_1..17.md  #   backend phase-by-phase specs
+│   ├── app/            #   mobile plan + per-role screen docs
+│   └── diagrams/       #   SVG sources + PNG renders used in this README
+└── scripts/            # demo bootstrap (bash + PowerShell) + tooling
 ```
+
+## API surface
+
+All endpoints are versioned under `/api/v1/*` and return a consistent
+`{ data, error }` envelope. The full route map is served by the API itself:
+
+```bash
+curl http://localhost:5000/ | jq
+```
+
+Highlights:
+
+| Area | Endpoints |
+| --- | --- |
+| Auth | `/api/v1/auth` — register, login, refresh, sessions, password flows |
+| Batches & QR | `/api/v1/batches`, `/api/v1/qr` (validate · transfer · regenerate) |
+| Transfers | `/api/v1/transfers` (request · approve · reject · execute · recover) |
+| Shipments | `/api/v1/shipments` (assign · pickup · location · deliver · pod) |
+| Lab | `/api/v1/labs` (receive · samples · tests · reviews · certificates) |
+| Procurement | `/api/v1/manufacturer` (marketplace · requests · GRN · inventory) |
+| Products | `/api/v1/products`, `/api/v1/manufacturing` (runs · lots · lineage) |
+| Public verify | `/verify/*` — consumer passport, no auth, rate-limited |
+| Admin portal | `/api/v1/admin/portal` — dashboard · search · recalls · scores |
+| Platform | notifications · documents · analytics · reports · sync · support |
+
+Typed client helpers for both frontends live in
+`App/services/apiClient.js` and `website/src/services/apiClient.js`.
+
+## Tech stack
+
+| Layer | Tools |
+| --- | --- |
+| Backend | Node.js ≥ 20, Express 4, Prisma 6, SQLite (Postgres-ready), zod, JWT, bcryptjs, sharp, multer, qrcode |
+| Mobile | React Native 0.81, Expo SDK 54, React Navigation, AsyncStorage, expo-camera/barcode-scanner/location, react-native-fast-tflite |
+| Website | React 19, Vite 7, MUI 7, Tailwind CSS 4, Chart.js, Leaflet, React Router 7 |
+| Testing | `node:test` + supertest (18 isolated-DB suites), golden-path E2E script |
+| Infra | Background queue workers (blockchain, notifications, documents, analytics), env-gated |
+
+## Project status
+
+- **Backend — complete.** 17 phases implemented and tested; see
+  [CHANGELOG.md](CHANGELOG.md) for the full list.
+- **Mobile — ~70% wired.** Core flows for all roles are live; a few shared
+  screens (notifications center, offline sync UI) and consumer portal extras
+  are stubs — tracked in `docs/gap/current_status.md`.
+- **Website — core migrated.** Dashboard, users, trace, settings, login,
+  blockchain and investigations use the current API; some secondary pages are
+  still on the legacy contract.
+
+Roadmap phases and screen-level status live in
+[`docs/gap/current_status.md`](docs/gap/current_status.md).
+
+## Documentation map
+
+| Doc | Contents |
+| --- | --- |
+| [`docs/phase_1.md` … `phase_17.md`](docs/) | Backend phase specs — the spec of record |
+| [`backend/docs/database/architecture.md`](backend/docs/database/architecture.md) | Schema conventions, ER diagram, domain layout |
+| [`docs/app/overview.md`](docs/app/overview.md) | Mobile app architecture & role navigation |
+| [`docs/gap/current_status.md`](docs/gap/current_status.md) | Live status of every screen & page |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Setup, workflow, conventions |
+| [`SECURITY.md`](SECURITY.md) | Vulnerability reporting + security-relevant code areas |
+
+## Security notes
+
+HerbChain ships **development defaults** (dev secrets, published demo
+passwords, `CORS_ORIGINS=*`, SQLite) so it runs out of the box. These are not
+production settings — see [SECURITY.md](SECURITY.md) for the hardening
+checklist and how to report vulnerabilities privately.
+
+## Contributing
+
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for local
+setup, conventions, and the PR process. Please follow the
+[Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
-This project is part of the HerbChain SIH 2024 submission. Educational use.
+[MIT](./LICENSE) © HerbChain Contributors

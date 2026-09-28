@@ -4,13 +4,18 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 const NotificationCard = ({ notification, onPin, onPress }) => {
   const getIconBackgroundColor = (type) => {
     switch (type) {
-      case 'payment':
+      case 'batch':
         return '#DCFCE7'; // green-100
+      case 'shipment':
       case 'lab':
         return '#DBEAFE'; // blue-100
-      case 'logistics':
+      case 'manufacturer':
+      case 'ownership':
         return '#FED7AA'; // orange-100
-      case 'policy':
+      case 'recall':
+      case 'security':
+        return '#FEE2E2'; // red-100
+      case 'reports':
         return '#F3E8FF'; // purple-100
       default:
         return '#F3F4F6'; // gray-100
@@ -19,14 +24,24 @@ const NotificationCard = ({ notification, onPin, onPress }) => {
 
   const getIcon = (type) => {
     switch (type) {
-      case 'payment':
-        return '💰';
+      case 'batch':
+        return '🌿';
+      case 'shipment':
+        return '🚚';
+      case 'ownership':
+        return '🔄';
       case 'lab':
         return '🧪';
-      case 'logistics':
-        return '🚚';
-      case 'policy':
-        return '📢';
+      case 'manufacturer':
+        return '🏭';
+      case 'recall':
+        return '⚠️';
+      case 'security':
+        return '🔒';
+      case 'user':
+        return '👤';
+      case 'reports':
+        return '📊';
       default:
         return '📋';
     }

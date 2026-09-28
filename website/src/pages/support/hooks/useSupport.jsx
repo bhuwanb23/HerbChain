@@ -28,7 +28,7 @@ export function useSupport() {
     try {
       const res = await SupportAPI.create(accessToken, { subject, description, category });
       if (res?.ticket) setTickets((prev) => [res.ticket, ...prev]);
-    } catch (_) {}
+    } catch { /* ignore */ }
   }, [accessToken]);
 
   const closeTicket = useCallback(async (ticketId) => {
@@ -36,7 +36,7 @@ export function useSupport() {
     try {
       await SupportAPI.update(accessToken, ticketId, { status: 'closed' });
       setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, status: 'closed' } : t)));
-    } catch (_) {}
+    } catch { /* ignore */ }
   }, [accessToken]);
 
   return { tickets, loading, getStatusClass, submitTicket, closeTicket };

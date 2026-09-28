@@ -9,19 +9,29 @@ export default function AlertsList({ alerts, onInitiateRecall }) {
           {alerts.map((alert) => (
             <li key={alert.id} className="flex items-center justify-between py-4">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{alert.type?.includes('Contamination') ? '☣️' : '⚠️'}</span>
+                <span className="text-2xl">{alert.severity === 'critical' ? '☣️' : '⚠️'}</span>
                 <div>
                   <p className="font-medium text-gray-900">{alert.type}</p>
                   <p className="text-sm text-gray-600">{alert.reason}</p>
-                  <p className="text-xs text-gray-500">Batch ID: {alert.batchId}</p>
+                  <p className="text-xs text-gray-500">
+                    {alert.batchId
+                      ? `${alert.entity_type || 'entity'}: ${alert.batchId}`
+                      : alert.entity_type
+                        ? `${alert.entity_type} (no recall target)`
+                        : 'No target entity'}
+                  </p>
                 </div>
               </div>
-              <button
-                className="rounded-full bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700"
-                onClick={() => onInitiateRecall(alert.batchId)}
-              >
-                Initiate Recall
-              </button>
+              {alert.batchId ? (
+                <button
+                  className="rounded-full bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700"
+                  onClick={() => onInitiateRecall(alert.batchId)}
+                >
+                  Initiate Recall
+                </button>
+              ) : (
+                <span className="text-xs italic text-gray-400">Not recallable</span>
+              )}
             </li>
           ))}
         </ul>
@@ -31,5 +41,3 @@ export default function AlertsList({ alerts, onInitiateRecall }) {
     </div>
   )
 }
-
-
